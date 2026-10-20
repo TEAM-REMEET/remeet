@@ -1,8 +1,5 @@
-# remeet
+# REMEET
 회의록 기반 Follow-up AI Agent 서비스
-
-# 프로젝트 시작 안내
-
 
 ## 처음 시작하기
 
