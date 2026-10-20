@@ -1,0 +1,20 @@
+---
+name: 할 일(Issue)
+about: "[구분] 기능_이름"
+title: ''
+labels: ''
+assignees: ''
+
+---
+
+구분 : playground, feat, chore
+브랜치 : 구분/기능/이름  예) playground/llm/eunje
+
+## 할 일
+<!-- 한 문장으로. 하루 안에 끝낼 수 있게 작게 -->
+
+## 완료 조건
+- [ ]
+
+## 참고
+<!-- 관련 문서/링크 -->
