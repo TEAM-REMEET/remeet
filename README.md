@@ -1,5 +1,5 @@
 # REMEET
-> 회의록 기반 Follow-up AI Agent 서비스
+> 회의록 기반 Follow-up AI Agent 서비스          
 > Remember + Meet = 회의를 기억하다 의 의미를 가진 서비스
 
 ## 처음 시작하기
@@ -9,7 +9,7 @@ cd remeet
 
 uv sync                              # 의존성 설치 (루트 pyproject.toml/uv.lock 하나로 통합. 각자 uv init 금지)       
 uv run nbstripout --install          # 노트북 출력 자동 제거 (1회)       
-cp .env.example .env                 # 환경변수 파일 만들기 → DB_* 등 값은 팀원에게 받아서 채우기       
+# cp .env.example .env                 # 환경변수 파일 만들기 → DB_* 등 값은 팀원에게 받아서 채우기 (아직 X)        
 ```
 ## 채워야 할 내용
 회의 등록 → 전처리·주제 청킹 → 요약·액션 병렬 추출 → 경로별 병합·검증 → 담당자 추천 → 관리자 검토·확정 → 저장·열람을 구현한다.       
