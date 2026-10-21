@@ -1,6 +1,6 @@
 ---
-name: 할 일(Issue)
-about: "[구분] 기능/이름"
+name: 'Issue : [구분] 기능/이름'
+about: 할일 (Issue)
 title: ''
 labels: ''
 assignees: ''
