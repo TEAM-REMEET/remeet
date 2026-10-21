@@ -5,6 +5,8 @@ data/
 __pycache__/
 *.py[codz]
 *$py.class
+outputs/
+.ipynb_checkpoints/
 
 # C extensions
 *.so
