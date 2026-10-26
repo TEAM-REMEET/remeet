@@ -1,0 +1,277 @@
+{
+  "meeting_id": "IS1009b",
+  "created_date": "2026-10-26",
+  "annotation_basis": "input/criteria.md",
+  "source_transcript": "input/IS1009b.txt",
+  "utterance_mapping_source": "meetings/IS1009b.json",
+  "utterance_count": 685,
+  "position_definition": "메타데이터 3행과 빈 줄을 제외한 발화의 1부터 시작하는 순서. position은 새 구간의 첫 발화이며 경계는 position-1과 position 사이이다.",
+  "annotation_scope": "전체 전사 흐름에서 의미 있는 후보를 선정했다. 후보에 없는 위치도 경계가 아니며 boundary_positions가 채택 경계의 전체 목록이다.",
+  "segment_note": "연속 구간 안에 제외된 잡담·측면 전환·재논의가 포함될 수 있다. 같은 결정으로의 복귀는 새 경계로 세지 않는다.",
+  "verification_note": "동일 분석자가 근거와 제외 기준을 다시 대조했다. 독립된 인간 검수나 다중 평가자 합의는 수행하지 않았다.",
+  "boundary_positions": [
+    28,
+    89,
+    182,
+    424,
+    503,
+    678
+  ],
+  "segments": [
+    {
+      "start_utterance": 1,
+      "subject": "발표 준비와 마케팅부터 시작할 순서를 정한다.",
+      "summary": "발표 준비와 마케팅부터 시작할 순서를 정한다.",
+      "segment_id": 1,
+      "end_utterance": 27,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 28,
+      "subject": "상품의 기능 선정과 판매 전략을 보고한다.",
+      "summary": "제안을 예산·기간·사용성으로 걸러 우선순위를 정하고 25유로 충동구매 상품으로 크리스마스 전 출시하자는 전략을 제시했다.",
+      "segment_id": 2,
+      "end_utterance": 88,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 89,
+      "subject": "회사 요구에 따라 제품 범위와 제외 기능을 확정한다.",
+      "summary": "TV 전용·문자 방송 제외·회사 이미지 적용 지시를 전달했다. 마케팅 보고가 재개돼 짧은 학습과 찾기 기능을 강조했다.",
+      "segment_id": 3,
+      "end_utterance": 181,
+      "excluded_candidate_positions": [
+        122
+      ]
+    },
+    {
+      "start_utterance": 182,
+      "subject": "작동 구조와 구현 가능한 추가 기능을 보고한다.",
+      "summary": "칩·배터리·적외선 구조와 형광 표시·경고음·어린이 잠금·외관 변형·시계를 제안했다. 단일 기능 버튼과 분명한 형태의 장점을 논의했다.",
+      "segment_id": 4,
+      "end_utterance": 423,
+      "excluded_candidate_positions": [
+        243,
+        286
+      ]
+    },
+    {
+      "start_utterance": 424,
+      "subject": "UI 기능과 안전·접근성 요구를 제안한다.",
+      "summary": "전원·예약 타이머·채널 잠금·알람·형광 표시, 콤팩트한 T형과 무해한 소재·둥근 외관을 제안했다.",
+      "segment_id": 5,
+      "end_utterance": 502,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 503,
+      "subject": "목표 고객과 공통 제품·하위 그룹 변형의 범위를 결정한다.",
+      "summary": "대상은 TV가 있는 모든 사람으로 두고 공통 전자부품에 외관·버튼을 달리하는 가능성을 검토했다. 하위 그룹별 변형은 비용 조사 조건부다.",
+      "segment_id": 6,
+      "end_utterance": 677,
+      "excluded_candidate_positions": [
+        611
+      ]
+    },
+    {
+      "start_utterance": 678,
+      "subject": "회의를 종료하고 다음 단계로 이동한다.",
+      "summary": "비용에 따라 하위 그룹 기능을 검토하기로 정리한 뒤 점심시간으로 마무리했다.",
+      "segment_id": 7,
+      "end_utterance": 685,
+      "excluded_candidate_positions": []
+    }
+  ],
+  "candidates": [
+    {
+      "position": 28,
+      "before_subject": "발표 준비와 마케팅부터 시작할 순서를 정한다.",
+      "after_subject": "상품의 기능 선정과 판매 전략을 보고한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "자기소개와 슬라이드 준비를 마칩니다 [11]-[26]. 마케팅 담당자가 기능 선정 방식과 판매 전략을 발표합니다 [28]-[88].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 0
+    },
+    {
+      "position": 89,
+      "before_subject": "상품의 기능 선정과 판매 전략을 보고한다.",
+      "after_subject": "회사 요구에 따라 제품 범위와 제외 기능을 확정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "마케팅은 여러 기기 조작 확장을 제안합니다 [82]-[88]. PM이 개입해 상위 지시로 범위를 제한하므로 제품 제약 결정이 새 대상입니다 [89]-[116].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 1
+    },
+    {
+      "position": 122,
+      "before_subject": "회사 요구로 제품 범위를 확인한다.",
+      "after_subject": "마케팅의 불만 조사와 판매 전략 보고를 재개한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "PM의 제약 안내로 마케팅 발표가 중단됐습니다 [82]-[116]. 조사에서 알게 된 다른 내용으로 돌아가 같은 보고를 계속하므로 새 경계가 아닙니다 [122]-[153].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 2
+    },
+    {
+      "position": 182,
+      "before_subject": "회사 요구에 따라 제품 범위와 제외 기능을 확정한다.",
+      "after_subject": "작동 구조와 구현 가능한 추가 기능을 보고한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "마케팅 보고가 끝납니다 [148]-[153]. 작동 설계 발표로 바뀌어 구성과 기술적 가능성을 설명합니다 [182]-[221].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 3
+    },
+    {
+      "position": 243,
+      "before_subject": "작동 설계와 추가 구현 가능성을 보고한다.",
+      "after_subject": "여러 모양과 색상의 제품 가능성을 검토한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "기술 보고에서 저비용 추가 기능을 제안합니다 [225]-[237]. 형상과 색상도 같은 구현 가능성 보고의 일부입니다 [243]-[284].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 4
+    },
+    {
+      "position": 286,
+      "before_subject": "작동 설계의 추가 기능을 검토한다.",
+      "after_subject": "버튼 다중 기능과 촉각 식별의 절충을 검토한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "형상과 기능을 제품에 넣는 가능성을 설명합니다 [243]-[284]. 모드 변경과 버튼 형태는 같은 부품·기능 설계 제안의 세부 검토입니다 [286]-[334].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 5
+    },
+    {
+      "position": 424,
+      "before_subject": "작동 구조와 구현 가능한 추가 기능을 보고한다.",
+      "after_subject": "UI 기능과 안전·접근성 요구를 제안한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "작동 설계 발표와 참고 자료 질문을 마칩니다 [394]-[403]. UI 담당자가 사용자 기능과 외관·안전 요구를 보고합니다 [424]-[496].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 6
+    },
+    {
+      "position": 503,
+      "before_subject": "UI 기능과 안전·접근성 요구를 제안한다.",
+      "after_subject": "목표 고객과 공통 제품·하위 그룹 변형의 범위를 결정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "발표들이 끝났음을 알립니다 [501]-[502]. 이번에 결정할 대상으로 목표 그룹을 제시하고 공통 모델과 변형을 검토합니다 [503]-[598].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 7
+    },
+    {
+      "position": 611,
+      "before_subject": "고객 하위 그룹에 맞춘 공통 모델 변형을 검토한다.",
+      "after_subject": "교체 커버를 변형 방식으로 제안한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "전자 부품은 같고 케이스가 다른 제품을 검토합니다 [598]-[609]. 휴대폰식 교체 커버는 같은 변형 전략의 대안이며 비용 확인이 필요합니다 [611]-[672].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 8
+    },
+    {
+      "position": 678,
+      "before_subject": "목표 고객과 공통 제품·하위 그룹 변형의 범위를 결정한다.",
+      "after_subject": "회의를 종료하고 다음 단계로 이동한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "전체 고객과 비용 조건을 정리하고 동의를 확인합니다 [663]-[673]. 점심시간으로 전환하며 회의를 끝냅니다 [678]-[685].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 9
+    }
+  ]
+}

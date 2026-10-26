@@ -1,0 +1,296 @@
+{
+  "meeting_id": "IS1009d",
+  "created_date": "2026-10-26",
+  "annotation_basis": "input/criteria.md",
+  "source_transcript": "input/IS1009d.txt",
+  "utterance_mapping_source": "meetings/IS1009d.json",
+  "utterance_count": 777,
+  "position_definition": "메타데이터 3행과 빈 줄을 제외한 발화의 1부터 시작하는 순서. position은 새 구간의 첫 발화이며 경계는 position-1과 position 사이이다.",
+  "annotation_scope": "전체 전사 흐름에서 의미 있는 후보를 선정했다. 후보에 없는 위치도 경계가 아니며 boundary_positions가 채택 경계의 전체 목록이다.",
+  "segment_note": "연속 구간 안에 제외된 잡담·측면 전환·재논의가 포함될 수 있다. 같은 결정으로의 복귀는 새 경계로 세지 않는다.",
+  "verification_note": "동일 분석자가 근거와 제외 기준을 다시 대조했다. 독립된 인간 검수나 다중 평가자 합의는 수행하지 않았다.",
+  "boundary_positions": [
+    51,
+    275,
+    309,
+    444,
+    685,
+    744
+  ],
+  "segments": [
+    {
+      "start_utterance": 1,
+      "subject": "지난 콘셉트 회의의 제안과 결정을 재확인한다.",
+      "summary": "지난 콘셉트 회의의 제안과 결정을 재확인한다.",
+      "segment_id": 1,
+      "end_utterance": 50,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 51,
+      "subject": "프로토타입의 구조·기능·조작 편의를 검토한다.",
+      "summary": "달팽이형 플라스틱 본체와 고무 버튼, 주요 조작·메뉴·전환·음성 기능 및 거치대를 제시했다. 기호 표기와 한 손 조작을 확인했다.",
+      "segment_id": 2,
+      "end_utterance": 274,
+      "excluded_candidate_positions": [
+        97,
+        212
+      ]
+    },
+    {
+      "start_utterance": 275,
+      "subject": "제품의 핵심 판매 포인트를 정한다.",
+      "summary": "음성 인식과 귀여운 외관을 두 핵심 판매 포인트로 삼았다.",
+      "segment_id": 3,
+      "end_utterance": 308,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 309,
+      "subject": "부품 원가를 계산해 생산비 한도를 확인한다.",
+      "summary": "부품표를 계산하고 예산 내라고 보았지만 후속 평가에서 음성 인식 비용 누락이 드러났다. 전사에 7.6과 8.20이 모두 언급되어 단일 확정 원가로 보지 않는다.",
+      "segment_id": 4,
+      "end_utterance": 443,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 444,
+      "subject": "시제품의 판매 가능성과 요구 충족을 평가한다.",
+      "summary": "소비자·안전 검토를 제안하고 외관·크기·색·촉감·기능성을 평가했다. 음성 인식 비용 누락과 약 4.30유로 여유의 충분성은 추가 확인 대상으로 남겼다.",
+      "segment_id": 5,
+      "end_utterance": 684,
+      "excluded_candidate_positions": [
+        509,
+        557,
+        644
+      ]
+    },
+    {
+      "start_utterance": 685,
+      "subject": "프로젝트의 창의성·리더십·협업·도구를 회고한다.",
+      "summary": "성과와 팀워크에 대체로 만족했고 화이트보드의 위치·사용 부족을 지적했다.",
+      "segment_id": 6,
+      "end_utterance": 743,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 744,
+      "subject": "프로젝트 종료를 확인하고 회의를 마친다.",
+      "summary": "예산과 평가 완료를 확인하고 감사와 축하로 마지막 회의를 끝냈다.",
+      "segment_id": 7,
+      "end_utterance": 777,
+      "excluded_candidate_positions": []
+    }
+  ],
+  "candidates": [
+    {
+      "position": 51,
+      "before_subject": "지난 콘셉트 회의의 제안과 결정을 재확인한다.",
+      "after_subject": "프로토타입의 구조·기능·조작 편의를 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "지난 회의록 정리를 마칩니다 [46]-[50]. 프로토타입 발표로 전환해 실제 모형과 기능을 설명합니다 [51]-[149].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 0
+    },
+    {
+      "position": 97,
+      "before_subject": "같은 프로토타입을 설명한다.",
+      "after_subject": "UI 담당자가 버튼 기능 설명을 이어 간다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": false
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "모형의 외관·소재를 설명합니다 [57]-[94]. 담당자가 바뀌어도 같은 모형의 버튼 기능을 이어 설명하므로 경계가 아닙니다 [97]-[149].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 1
+    },
+    {
+      "position": 212,
+      "before_subject": "프로토타입의 사용성을 검토한다.",
+      "after_subject": "버튼의 기호와 국제 사용 가능성을 확인한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "모형의 한 손 사용과 주요 버튼을 확인합니다 [157]-[208]. 기호·글자 질문도 같은 프로토타입의 조작 편의 검토입니다 [212]-[245].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 2
+    },
+    {
+      "position": 275,
+      "before_subject": "프로토타입의 구조·기능·조작 편의를 검토한다.",
+      "after_subject": "제품의 핵심 판매 포인트를 정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "거치대와 달팽이 이미지의 활용을 논의합니다 [247]-[274]. 마케팅을 위한 특별 기능을 묻고 광고에서 강조할 두 가지를 선택합니다 [275]-[303].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 3
+    },
+    {
+      "position": 309,
+      "before_subject": "제품의 핵심 판매 포인트를 정한다.",
+      "after_subject": "부품 원가를 계산해 생산비 한도를 확인한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "두 판매 포인트와 발표 순서를 확인합니다 [299]-[307]. 재무로 넘어가 전원·칩·케이스·버튼의 원가표를 채웁니다 [309]-[420].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 4
+    },
+    {
+      "position": 444,
+      "before_subject": "부품 원가를 계산해 생산비 한도를 확인한다.",
+      "after_subject": "시제품의 판매 가능성과 요구 충족을 평가한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "재무가 간단히 끝났다고 정리합니다 [436]-[442]. 마케팅의 제품 평가 발표와 팀 채점으로 전환합니다 [444]-[505], [557]-[641].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 5
+    },
+    {
+      "position": 509,
+      "before_subject": "제품의 판매성과 요구 충족을 평가한다.",
+      "after_subject": "음성 인식 비용의 누락을 재검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "앞선 재무 계산에서 예산 내라고 판단했습니다 [407]-[420]. 핵심 기능 비용이 빠졌다고 돌아가므로 기존 원가 결정의 재검토입니다 [509]-[548].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 6
+    },
+    {
+      "position": 557,
+      "before_subject": "제품 평가를 진행한다.",
+      "after_subject": "화이트보드에서 팀원별 점수를 모은다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "마케팅이 평가 항목과 자신의 점수를 제시합니다 [468]-[505]. 팀 전체의 채점은 같은 제품 평가를 완성하는 절차입니다 [557]-[641].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 7
+    },
+    {
+      "position": 644,
+      "before_subject": "제품 평가와 후속 검토를 정리한다.",
+      "after_subject": "창의성 질문에 제품 기능 개선안을 제시한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "추가 평가 사항을 묻습니다 [638]-[642]. 답변은 버튼·음성 녹음·예산 등 기존 제품 설계를 재검토하고 실제 과정 평가는 [685]에서 시작합니다 [644]-[678].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 8
+    },
+    {
+      "position": 685,
+      "before_subject": "시제품의 판매 가능성과 요구 충족을 평가한다.",
+      "after_subject": "프로젝트의 창의성·리더십·협업·도구를 회고한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "창의성 질문 뒤 남은 제품 개선과 음성 비용을 재논의합니다 [644]-[678]. 실제 질문은 프로젝트 과정이라고 명확히 하며 리더십·팀워크·도구 회고를 진행합니다 [685]-[735].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 9
+    },
+    {
+      "position": 744,
+      "before_subject": "프로젝트의 창의성·리더십·협업·도구를 회고한다.",
+      "after_subject": "프로젝트 종료를 확인하고 회의를 마친다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "예산과 프로젝트 평가를 했는지 확인합니다 [738]-[743]. 축하와 감사로 종료를 선언하고 회의를 마무리합니다 [744]-[758].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 10
+    }
+  ]
+}
