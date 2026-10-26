@@ -1960,7 +1960,7 @@ dependencies = [
     { name = "streamlit" },
     { name = "tiktoken" },
     { name = "torchvision" },
->>>>>>> origin
+    { name = "transformers" },
 ]
 
 [package.metadata]
@@ -1979,7 +1979,7 @@ requires-dist = [
     { name = "streamlit", specifier = ">=1.66.0" },
     { name = "tiktoken", specifier = ">=0.14.0" },
     { name = "torchvision", specifier = ">=0.29.1" },
->>>>>>> origin
+    { name = "transformers", specifier = ">=5.20.2" },
 ]
 
 [[package]]
