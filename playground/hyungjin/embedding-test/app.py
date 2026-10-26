@@ -11,7 +11,7 @@ import pipeline as p
 st.set_page_config(page_title="회의 주제 나누기", layout="wide")
 p.load_environment()
 st.title("회의 주제 나누기")
-st.caption("전사문 → 문자 길이 기반 임베딩 → 경계 후보 → LLM 검토 → 주제별 전문")
+st.caption("전사문 → 문자 길이 기반 임베딩 → 경계 후보 → 주변 발화 경계 선택 → 상위 주제별 전문")
 
 
 def show_text(text):
@@ -52,8 +52,14 @@ with st.sidebar:
     embedding_provider = st.selectbox("임베딩 제공자", list(p.EMBEDDING_MODELS))
     embedding_model = st.text_input("임베딩 모델", p.EMBEDDING_MODELS[embedding_provider], key=f"embed_{embedding_provider}")
     llm_provider = st.selectbox("검토 LLM 제공자", ["openai", "gemini"])
-    llm_model = st.text_input("검토 LLM 모델", "gpt-4.1-mini" if llm_provider == "openai" else "gemini-2.5-flash", key=f"llm_{llm_provider}")
+    llm_model = st.text_input("검토 LLM 모델", "gpt-6-luna" if llm_provider == "openai" else "gemini-2.5-flash", key=f"llm_{llm_provider}")
     base_url = st.text_input("검토 API 주소", "https://api.openai.com/v1" if llm_provider == "openai" else "https://generativelanguage.googleapis.com/v1beta/openai/", key=f"url_{llm_provider}")
+    reasoning_effort, max_completion_tokens = None, None
+    if llm_provider == "openai" and llm_model == "gpt-6-luna":
+        reasoning_effort = st.selectbox("추론 강도", p.REASONING_EFFORTS, index=1)
+        max_completion_tokens = st.number_input("응답·추론 토큰 상한", min_value=256, max_value=128000, value=16384)
+        st.caption("추론 토큰도 상한과 출력 비용에 포함됩니다. 강도가 높으면 시간과 비용이 늘어날 수 있습니다.")
+        st.caption("예상 검토 비용: Standard 기준 100만 토큰당 입력 $0.10 · 캐시 입력 $0.01 · 출력 $0.50 (2026-10-22).")
 
 blocks = None
 if raw:
@@ -85,17 +91,18 @@ with st.form("settings"):
     threshold = a.number_input("유사도 임계값", min_value=-1.0, max_value=1.0, value=0.5)
     quantile = b.number_input("하위 비율", min_value=0.01, max_value=0.99, value=0.2)
     top_k = c.number_input("최대 K개", min_value=1, value=5)
-    a, b, c = st.columns(3)
+    a, b = st.columns(2)
     min_depth = a.number_input("최소 depth", min_value=0.0, value=0.05)
     depth_radius = b.number_input("depth 주변 비교 범위", min_value=1, value=3)
-    min_distance_chars = c.number_input("후보 간 최소 문자 거리", min_value=0, value=400)
-    st.subheader("3. 후보를 가운데에 두고 LLM 검토")
+    st.caption("후보 사이와 본문 양끝에 최소 거리를 적용하지 않습니다. depth는 첫·마지막 검사점도 한쪽 이웃과 비교합니다.")
+    st.subheader("3. 후보 주변의 실제 상위 경계 선택")
     a, b, c = st.columns(3)
     left_chars = a.number_input("왼쪽 문맥 문자 수", min_value=1, max_value=400, value=400)
     right_chars = b.number_input("오른쪽 문맥 문자 수", min_value=1, max_value=400, value=400)
     max_candidates = c.number_input("검토 후보 수 제한 (0 = 전체)", min_value=0, value=0)
     with st.expander("시스템 프롬프트 편집"):
         system_prompt = st.text_area("시스템 프롬프트", p.SYSTEM_PROMPT, height=300)
+    st.caption("제공된 전체 문맥의 발화 시작점을 모두 선택지로 제공합니다. 후보와의 거리로 제한하지 않으며 여러 경계를 선택할 수 있습니다.")
     reuse = st.checkbox("같은 입력과 설정의 저장 결과 재사용", value=True)
     device = st.selectbox("Hugging Face 실행 장치", ["자동", "cpu", "cuda"])
     st.caption("실행 버튼을 눌렀을 때만 모델을 호출합니다. API 모델 사용 시 텍스트가 해당 제공자로 전송되며 비용이 발생할 수 있습니다.")
@@ -108,9 +115,11 @@ if candidates_only or verify:
                   llm_provider=llm_provider, llm_model=llm_model, base_url=base_url, window_chars=window_chars,
                   overlap_chars=overlap_chars, batch_size=batch_size, method=method, threshold=threshold,
                   quantile=quantile, top_k=top_k, min_depth=min_depth, depth_radius=depth_radius,
-                  min_distance_chars=min_distance_chars, left_chars=left_chars, right_chars=right_chars,
+                  min_distance_chars=0, left_chars=left_chars, right_chars=right_chars,
                   max_candidates=max_candidates, system_prompt=system_prompt, reuse=reuse,
                   device=None if device == "자동" else device)
+    if reasoning_effort is not None:
+        config.update(reasoning_effort=reasoning_effort, max_completion_tokens=max_completion_tokens)
     if not raw:
         st.error("전사문을 입력하세요.")
     else:
@@ -133,6 +142,30 @@ if "result" in st.session_state:
     if result.get("error"):
         st.error(result["error"]["message"])
     st.caption(f"임베딩: {meta['embed_model']} · 검토: {meta.get('llm_model') or '미실행'}")
+    if meta.get("reasoning_effort"):
+        st.caption(f"검토 추론 강도: {meta['reasoning_effort']}")
+    summary = result["provenance"].get("llm_usage_summary")
+    if summary:
+        current = summary["new_api"]
+        with st.expander("검토 LLM 토큰·예상 비용", expanded=True):
+            a, b, c = st.columns(3)
+            a.metric("신규 입력 토큰", f"{current['input_tokens']:,}" if current["input_tokens"] is not None else "확인 불가")
+            b.metric("신규 출력 토큰 (추론 포함)", f"{current['output_tokens']:,}" if current["output_tokens"] is not None else "확인 불가")
+            cost = current["estimated_cost_usd"]
+            c.metric("이번 검토 예상 비용 (USD)", f"${cost:.8f}" if cost is not None else "계산 불가")
+            st.caption("실행 후 API 사용량으로 계산합니다. 임베딩 비용·세금은 제외하며 실제 청구와 다를 수 있습니다.")
+            st.caption("로컬 재사용 응답의 과거 토큰은 아래 표에서 분리하며 이번 비용은 0입니다. API 캐시 할인과는 별개입니다.")
+            if current["missing_usage_calls"]:
+                st.warning("사용량을 받지 못한 호출이 있어 이번 실행의 전체 비용을 계산할 수 없습니다.")
+            st.dataframe(pd.DataFrame([{"구분": "이번 API 호출", **current},
+                                      {"구분": "로컬 응답 재사용", **summary["local_reuse"]}]), hide_index=True)
+            pricing = result["provenance"].get("llm_pricing")
+            if pricing:
+                st.caption(f"단가 확인일: {pricing['checked_at']} · [공식 단가]({pricing['source']})")
+            else:
+                st.caption("이 모델·API 주소의 단가가 등록되지 않아 비용은 계산하지 않습니다.")
+            if result["provenance"].get("llm_calls"):
+                st.dataframe(pd.DataFrame(result["provenance"]["llm_calls"]), hide_index=True)
     st.caption(f"일시: {meta.get('date') or '없음'} · 참석자: {', '.join(meta.get('members', [])) or '없음'}")
     if result["analysis_scope"]["is_partial"]:
         st.warning("이 결과는 전사문 일부만 분석한 결과입니다.")
@@ -158,6 +191,11 @@ if "result" in st.session_state:
             selected = st.selectbox("검토할 후보", range(len(requests)), format_func=lambda i: f"{requests[i]['candidate_id']} · 문자 {requests[i]['candidate_char']}", key=f"candidate_{result['provenance'].get('result_path')}")
             request = requests[selected]
             st.caption(f"실제 문맥: 왼쪽 {len(request['left_context'])}자 · 오른쪽 {len(request['right_context'])}자")
+            if request.get("boundary_options") is not None:
+                st.caption("후보는 탐색 중심입니다. 아래 발화 ID 중 실제 상위 경계의 시작점을 선택합니다.")
+                edges = [label for key, label in (("at_meeting_start", "회의 시작에 닿음"), ("at_meeting_end", "회의 끝에 닿음")) if request.get(key)]
+                if edges:
+                    st.caption(" · ".join(edges))
             a, b = st.columns(2)
             with a:
                 st.markdown("**왼쪽 문맥**")
@@ -170,6 +208,8 @@ if "result" in st.session_state:
                 st.json(decision)
             else:
                 st.caption("아직 검토하지 않은 후보입니다.")
+            if request.get("boundary_options"):
+                st.dataframe(pd.DataFrame(request["boundary_options"]), hide_index=True)
         st.dataframe(pd.DataFrame(data["candidates"]), hide_index=True)
     with chart:
         if data["scores"]:
@@ -180,7 +220,11 @@ if "result" in st.session_state:
                 ax.set_ylabel(column)
                 for row in data["candidates"]:
                     ax.axvline(row["candidate_char"], alpha=0.25, color="tomato")
-            axes[-1].set_xlabel("Character position (red = candidate)")
+                selected_positions = {boundary["start_char"] for review in data["boundary_reviews"]
+                                      if review["decision"] == "keep" for boundary in review.get("boundaries", [])}
+                for position in selected_positions:
+                    ax.axvline(position, alpha=0.7, color="royalblue", linestyle="--")
+            axes[-1].set_xlabel("Character position (red = candidate, blue = selected boundary)")
             st.pyplot(fig)
             plt.close(fig)
         else:
