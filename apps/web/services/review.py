@@ -214,3 +214,4 @@ def confirm(meeting: dict, members: list[dict], who: str) -> dict:
                 m["load"] += per[m["id"]]
                 m["history"] = [a["title"] for a in approved if a["assignee"] == m["id"]] + m["history"]
     return {"version": meeting["version"], "per": per}
+
