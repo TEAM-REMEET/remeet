@@ -1,0 +1,671 @@
+/* RE:MEET · Streamlit 기본 위젯 덮어쓰기
+   styles.css가 화면 디자인(카드·배지·히어로)을 맡고, 이 파일은 Streamlit이 그리는 요소(버튼·입력·탭 등)를
+   프로토타입과 같은 모양으로 맞춥니다. 클래스 규칙:
+   - st.container(key="panel_xxx")  → 흰 패널        - key="panel0_xxx" → 안쪽 여백 없는 흰 패널
+   - st.container(key="tap_xxx")    → 영역 전체 클릭 (안의 마지막 버튼이 영역을 덮음)
+   - st.container(key="tr_xxx")     → 표의 한 줄      - key="trf_xxx" → 강조(실패) 줄
+   - st.container(key="bleed_xxx")  → 화면 너비 가득 */
+
+/* ---------- 페이지 폭 ---------- */
+.stMainBlockContainer {
+  max-width: 1440px !important;
+  padding: 0 40px 0 !important;
+}
+[data-testid="stAppViewContainer"] {
+  background: var(--bg);
+}
+.stMainBlockContainer > div > [data-testid="stVerticalBlock"] {
+  gap: 18px;
+}
+
+/* 화면 너비 가득 채우는 띠(헤더·푸터·소개 섹션) */
+[class*="st-key-bleed_"] {
+  width: 100vw !important;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding-left: max(40px, calc(50vw - 680px));
+  padding-right: max(40px, calc(50vw - 680px));
+  box-sizing: border-box;
+}
+
+/* ---------- 흰 패널 ---------- */
+[class*="st-key-panel_"] {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 22px;
+  gap: 12px;
+}
+[class*="st-key-panel0_"] {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.pbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 14px;
+}
+.pbar h3 {
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.p-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+}
+.p-h h3 {
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.p-h .side {
+  font-size: 13px;
+  color: var(--muted);
+}
+.sub-h {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-3);
+}
+
+/* ---------- 영역 전체 클릭 ---------- */
+[class*="st-key-tap_"] {
+  position: relative;
+  cursor: pointer;
+}
+[class*="st-key-tap_"]:hover {
+  background: var(--surface-2);
+}
+[class*="st-key-tap_"]
+  > [data-testid="stElementContainer"]:has(.stButton):last-child {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  z-index: 1;
+  margin: 0;
+}
+[class*="st-key-tap_"]
+  > [data-testid="stElementContainer"]:has(.stButton):last-child
+  * {
+  width: 100%;
+  height: 100%;
+}
+[class*="st-key-tap_"]
+  > [data-testid="stElementContainer"]:has(.stButton):last-child
+  button {
+  opacity: 0;
+  min-height: 0;
+  border: 0;
+}
+
+/* ---------- 표 ---------- */
+.thead {
+  display: grid;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-3);
+  padding: 10px 12px;
+  border-top: 2px solid var(--line-strong);
+  border-bottom: 1px solid var(--field);
+  background: var(--surface-2);
+}
+[class*="st-key-tr_"],
+[class*="st-key-trf_"] {
+  border-bottom: 1px solid var(--line-2);
+  padding: 8px 12px;
+  gap: 0;
+}
+[class*="st-key-trf_"] {
+  background: var(--err-soft);
+}
+[class*="st-key-tr_"] [data-testid="stHorizontalBlock"],
+[class*="st-key-trf_"] [data-testid="stHorizontalBlock"] {
+  gap: 12px;
+}
+
+/* ---------- 버튼 ---------- */
+.stButton button,
+.stDownloadButton button,
+.stFormSubmitButton button,
+[data-testid="stPopoverButton"] {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: none;
+}
+[data-testid="stBaseButton-secondary"],
+[data-testid="stPopoverButton"] {
+  background: var(--surface);
+  border: 1px solid var(--field);
+  color: var(--fg-2);
+}
+[data-testid="stBaseButton-secondary"]:hover,
+[data-testid="stPopoverButton"]:hover {
+  background: var(--surface-2);
+  border-color: var(--field);
+  color: var(--fg);
+}
+[data-testid="stBaseButton-primary"] {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+[data-testid="stBaseButton-primary"]:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: #fff;
+}
+.stButton button p,
+[data-testid="stPopoverButton"] p {
+  font-size: inherit;
+  font-weight: inherit;
+}
+/* tertiary = 글자 링크 */
+[data-testid="stBaseButton-tertiary"] {
+  min-height: 28px !important;
+  padding: 2px 0 !important;
+  color: var(--accent-ink);
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+[data-testid="stBaseButton-tertiary"]:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+/* 작은 버튼: key="sm_..." */
+[class*="st-key-sm_"] button {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+}
+/* 파란 테두리 버튼: key="line_..." */
+[class*="st-key-line_"] button {
+  border-color: var(--accent) !important;
+  color: var(--accent-ink) !important;
+  font-weight: 600 !important;
+}
+/* 둥근 칩: key="chip_..." */
+[class*="st-key-chip_"] button {
+  min-height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 16px !important;
+  font-size: 13px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--field) !important;
+  color: var(--fg-2) !important;
+  font-weight: 500 !important;
+}
+[class*="st-key-chip_"] button:hover {
+  border-color: var(--accent) !important;
+  color: var(--accent-ink) !important;
+  text-decoration: none;
+}
+
+/* ---------- 입력 ---------- */
+[data-testid="stWidgetLabel"] p {
+  font-size: 13px !important;
+  font-weight: 600;
+  color: var(--fg-2);
+}
+[data-testid="stTextInputRootElement"],
+.stTextArea textarea,
+.stNumberInput [data-baseweb="input"],
+.stDateInput [data-baseweb="input"],
+.stSelectbox [role="group"],
+.stMultiSelect [data-baseweb="select"] > div,
+.stTimeInput [data-baseweb="input"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--field) !important;
+  border-radius: 4px !important;
+}
+[data-testid="stTextInputRootElement"]:focus-within,
+.stTextArea textarea:focus,
+.stSelectbox [role="group"]:focus-within {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+[data-testid="stTextInputRootElement"] input,
+.stSelectbox input,
+.stNumberInput input,
+.stDateInput input {
+  background: transparent !important;
+  font-size: 14px;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--faint) !important;
+}
+.stTextArea textarea {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.stCheckbox label p {
+  font-size: 14px;
+}
+
+/* 파일 업로드: 영어 안내를 한국어 드롭존으로 */
+[data-testid="stFileUploaderDropzone"] {
+  border: 1.5px dashed var(--field);
+  border-radius: 8px;
+  background: var(--surface-3);
+  padding: 26px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+[data-testid="stFileUploaderDropzone"]::before {
+  content: "회의록 파일을 끌어다 놓거나 눌러서 선택하세요";
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+[data-testid="stFileUploaderDropzone"] button {
+  min-height: 34px;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] {
+  display: none;
+}
+.st-key-ref_box [data-testid="stFileUploaderDropzone"] {
+  padding: 12px;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+.st-key-ref_box [data-testid="stFileUploaderDropzone"]::before {
+  content: "참고 자료를 끌어다 놓거나";
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* ---------- 탭 ---------- */
+[data-testid="stTabs"] [role="tablist"] {
+  gap: 26px;
+  border-bottom: 1px solid var(--line-2);
+  padding: 0 20px;
+}
+[data-testid="stTab"] {
+  padding: 14px 0 12px;
+  font-size: 15px;
+  color: var(--fg-3);
+}
+[data-testid="stTab"] p {
+  font-size: 15px !important;
+}
+[data-testid="stTab"][data-selected="true"] {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+[data-testid="stTab"][data-selected="true"] p {
+  font-weight: 700;
+}
+[data-testid="stTab"] .react-aria-SelectionIndicator {
+  background: var(--accent);
+  height: 2px;
+}
+
+/* ---------- 세그먼트 ---------- */
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+  background: var(--surface);
+  border-color: var(--field);
+  color: var(--fg-3);
+}
+[data-testid="stButtonGroup"]
+  button[data-variant="segmented_control"][data-selected="true"] {
+  background: var(--fg-2);
+  border-color: var(--fg-2);
+  color: #fff;
+  font-weight: 600;
+}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] p {
+  font-size: 13px;
+}
+/* 밑줄 탭 모양: key="ultab_..." */
+[class*="st-key-ultab_"] [role="radiogroup"] {
+  gap: 24px;
+  flex-wrap: wrap;
+}
+[class*="st-key-ultab_"] button[data-variant="segmented_control"] {
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  padding: 6px 2px 10px !important;
+  color: var(--fg-3) !important;
+  min-height: 0;
+}
+[class*="st-key-ultab_"] button[data-variant="segmented_control"] p {
+  font-size: 15px !important;
+}
+[class*="st-key-ultab_"]
+  button[data-variant="segmented_control"][data-selected="true"] {
+  border-bottom-color: var(--accent) !important;
+  color: var(--accent-ink) !important;
+  font-weight: 700;
+}
+[class*="st-key-ultab_"]
+  button[data-variant="segmented_control"][data-selected="true"]
+  p {
+  font-weight: 700;
+}
+
+/* ---------- 기타 ---------- */
+[data-testid="stExpander"] details {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+[data-testid="stExpander"] summary p {
+  font-size: 14px;
+  font-weight: 600;
+}
+[data-testid="stAlert"] {
+  border-radius: 8px;
+}
+[data-testid="stDialog"] [role="dialog"] {
+  border-radius: 12px;
+}
+[data-testid="stProgress"] [role="progressbar"] > div > div {
+  background: var(--accent);
+}
+[data-testid="stCaptionContainer"] {
+  color: var(--muted);
+}
+hr {
+  margin: 8px 0 !important;
+  border-color: var(--line-2) !important;
+}
+[data-testid="stToast"] {
+  background: var(--fg);
+  color: #fff;
+}
+[data-testid="stToast"] p {
+  color: #fff;
+}
+
+/* ---------- 마크다운 여백 정리 ---------- */
+/* Streamlit은 문단 아래 여백을 음수 margin으로 상쇄하는데, div로 그린 HTML은 겹쳐 보여서 0으로 맞춥니다. */
+[data-testid="stMarkdownContainer"] {
+  margin-bottom: 0 !important;
+}
+[data-testid="stMarkdownContainer"] > p:last-child,
+[data-testid="stMarkdownContainer"] > ul:last-child,
+[data-testid="stMarkdownContainer"] > ol:last-child {
+  margin-bottom: 0;
+}
+/* CSS를 넣는 빈 요소가 위쪽 간격을 만들지 않도록 */
+[data-testid="stElementContainer"]:has(> .stMarkdown style) {
+  display: none;
+}
+.st-key-bleed_header {
+  margin-bottom: 10px;
+}
+.st-key-cells > div + div [class*="st-key-tap_cell"] {
+  border-left: 1px solid var(--line-2);
+}
+.p-h .tt,
+.pbar .tt {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+/* 업로드 버튼 문구 한국어로 */
+[data-testid="stFileUploaderDropzone"] button {
+  font-size: 0 !important;
+}
+[data-testid="stFileUploaderDropzone"] button::after {
+  content: "파일 선택";
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-testid="stFileUploaderDropzone"] button > * {
+  display: none;
+}
+
+/* =====================================================================
+   2차 맞춤: 프로토타입의 글자 크기·두께, 버튼 크기, 높이 맞춤, 안쪽 스크롤
+   ===================================================================== */
+/* 페이지 여백을 프로토타입(48px)과 같게 */
+.stMainBlockContainer {
+  padding: 0 48px 0 !important;
+}
+[class*="st-key-bleed_"] {
+  padding-left: max(48px, calc(50vw - 672px));
+  padding-right: max(48px, calc(50vw - 672px));
+}
+.feat {
+  padding-left: max(48px, calc(50vw - 672px)) !important;
+  padding-right: max(48px, calc(50vw - 672px)) !important;
+}
+
+/* 마크다운 기본 글자(16px)를 화면 기본 14px로 */
+[data-testid="stMarkdownContainer"] {
+  font-size: 14px;
+}
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li {
+  font-size: inherit;
+}
+.page-desc {
+  font-size: 14px !important;
+  color: var(--fg-3);
+}
+.st-key-bleed_footer [data-testid="stMarkdownContainer"] {
+  font-size: 13px;
+}
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p {
+  font-size: 13px !important;
+}
+
+/* 버튼 안 글자는 버튼 설정을 그대로 따름 */
+.stButton button *,
+.stDownloadButton button *,
+[data-testid="stPopoverButton"] * {
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  color: inherit;
+}
+[data-testid="stBaseButton-primary"] {
+  font-weight: 600 !important;
+}
+[data-testid="stBaseButton-secondary"],
+[data-testid="stPopoverButton"] {
+  font-weight: 500 !important;
+}
+/* 글자 링크: 기본 13px 보통 두께, 행동 유도 링크는 key="cta_..."로 굵게 */
+[data-testid="stBaseButton-tertiary"] {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  padding: 4px 0 !important;
+}
+[class*="st-key-cta_"] [data-testid="stBaseButton-tertiary"] {
+  font-weight: 600 !important;
+}
+/* 파란 테두리 버튼은 작은 크기(34px) */
+[class*="st-key-line_"] button {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+[class*="st-key-chip_"] button {
+  font-weight: 400 !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+}
+/* 큰 검색창 */
+.st-key-panel_search [data-testid="stTextInputRootElement"] {
+  min-height: 50px;
+}
+.st-key-panel_search [data-testid="stTextInputRootElement"] input {
+  font-size: 16px;
+}
+.st-key-panel_search [data-testid="stBaseButton-primary"] {
+  min-height: 50px;
+  padding: 0 24px;
+}
+
+/* ---------- 같은 높이로 맞추는 2단 배치: st.container(key="eq_...") 안의 st.columns ----------
+   각 열의 마지막 패널이 남은 높이를 채워 좌우 패널 아래 끝이 맞습니다. */
+[class*="st-key-eq_"]
+  [data-testid="stColumn"]
+  > [data-testid="stVerticalBlock"] {
+  height: 100% !important;
+}
+[class*="st-key-eq_"]
+  [data-testid="stColumn"]
+  > [data-testid="stVerticalBlock"]
+  > [data-testid="stLayoutWrapper"]:last-child {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+[class*="st-key-eq_"]
+  [data-testid="stColumn"]
+  > [data-testid="stVerticalBlock"]
+  > [data-testid="stLayoutWrapper"]:last-child
+  > [data-testid="stVerticalBlock"] {
+  flex: 1 1 auto;
+}
+
+/* ---------- 안쪽 스크롤: key="scroll_..." (내용이 길어지면 패널 안에서 스크롤) ---------- */
+[class*="st-key-scroll_"] {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+[class*="st-key-scrollsm_"] {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+[class*="st-key-scrolllg_"] {
+  max-height: 560px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+
+/* ---------- 모달: 화면 높이를 넘지 않고 안에서 스크롤 ---------- */
+[data-testid="stDialog"] [role="dialog"] {
+  max-height: calc(100vh - 96px) !important;
+  overflow-y: auto !important;
+  max-width: min(880px, calc(100vw - 32px)) !important;
+  margin-top: 32px !important;
+  margin-bottom: 32px !important;
+  scrollbar-width: thin;
+}
+[data-testid="stDialog"] [role="dialog"] h2 {
+  font-size: 20px !important;
+}
+
+/* ---------- 결과 검토: 원문 패널과 탭 패널을 같은 높이로, 안쪽만 스크롤 ---------- */
+.st-key-panel0_src,
+.st-key-panel0_tabs {
+  height: max(600px, calc(100vh - 200px)) !important;
+  flex: 0 0 auto !important;
+}
+.st-key-panel0_src > *,
+.st-key-panel0_tabs > * {
+  min-height: 0 !important;
+  flex-shrink: 0 !important;
+}
+.st-key-panel0_src > *:has(.st-key-src_scroll) {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.st-key-src_scroll {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+}
+.st-key-panel0_tabs > *:has([data-testid="stTabs"]) {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.st-key-panel0_tabs [data-testid="stTabs"] {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.st-key-panel0_tabs [data-testid="stTabs"] > div:not([role]) {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.st-key-panel0_tabs [role="tabpanel"] {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+}
+/* 체크박스 글자는 보통 두께(프로토타입과 같게) */
+.stCheckbox [data-testid="stWidgetLabel"] p,
+.stCheckbox label p,
+.stCheckbox label div {
+  font-weight: 400 !important;
+  font-size: 14px !important;
+}
+.stCheckbox label strong {
+  font-weight: 700 !important;
+}
+[data-testid="stDialog"] div:has(> [role="dialog"]) {
+  max-width: min(880px, calc(100vw - 32px)) !important;
+  max-height: calc(100vh - 96px) !important;
+  margin: 40px auto !important;
+}
+[data-testid="stDialog"] [role="dialog"] {
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+/* 비활성 기본 버튼은 연한 파랑(프로토타입과 같게) */
+[data-testid="stBaseButton-primary"]:disabled {
+  background: #8faee8 !important;
+  border-color: #8faee8 !important;
+  color: #fff !important;
+  opacity: 1;
+}
+/* 여러 개 선택·날짜 입력도 흰 바탕 + 테두리 */
+.stMultiSelect [role="group"],
+.stDateInput [role="group"],
+.stMultiSelect [data-baseweb="select"] > div,
+.stDateInput [data-baseweb="input"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--field) !important;
+  border-radius: 4px !important;
+}
+.stDateInput input,
+.stMultiSelect input {
+  background: transparent !important;
+}
