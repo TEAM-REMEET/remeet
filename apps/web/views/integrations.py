@@ -53,7 +53,7 @@ def render() -> None:
     if not can:
         st.info("연동 설정은 회의 주관자와 시스템 관리자만 바꿀 수 있어요.")
 
-    left, right = st.columns([2.75, 1], gap="medium")
+    left, right = st.container(key="eq_ig").columns([2.75, 1], gap="medium")   # eq_: 왼쪽 칸 높이를 오른쪽에 맞춤
     with left, panel("ig_tools", flush=True):
         html('<div class="pbar"><span class="tt">외부 도구</span><span class="small muted">조직 · 데모컴퍼니</span></div>')
         with st.container(key="ig_tools_body"):
