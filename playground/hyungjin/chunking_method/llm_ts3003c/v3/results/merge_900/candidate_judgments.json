@@ -1,0 +1,743 @@
+[
+  {
+    "request_id": "R0001",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 0,
+        "before_subject": "발표에서 다뤄야 할 콘셉트 명세와 트렌드 관찰 항목을 안내하고 있다.",
+        "after_subject": "참석자들이 몇 분 뒤 발표에서 해당 항목들을 보여줄 것임을 확인하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[13]에서 발표에서 다루길 바라는 내용을 말한 뒤, [14]에서 그 내용을 몇 분 뒤 보여 달라고 이어서 말합니다. 뒤 발화는 앞에서 제시한 발표 항목에 대한 요청의 연속이므로 논의 대상이 바뀌지 않습니다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 1,
+        "before_subject": "참석자들이 준비 과정에서 문제가 있었는지 확인하고 있다.",
+        "after_subject": "지난 회의에서 합의한 요구 사항과 목표 시장을 다시 검토하고 있다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": true,
+          "independent_summary": true
+        },
+        "shift_type": "new_agenda",
+        "shift_result": true,
+        "verdict": "O",
+        "evidence": "[23]~[27]에서는 준비 과정에 문제가 없었는지 확인하고, [27]의 긍정적 반응으로 해당 확인을 마무리합니다. [28]에서 지난 회의의 내용을 되짚는 새 논의로 전환하며, [29]~[30]은 요구 사항과 목표 시장을 별도로 요약할 수 있습니다.",
+        "boundary_position": 28
+      }
+    ]
+  },
+  {
+    "request_id": "R0002",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 2,
+        "before_subject": "참가자들이 합의한 요구 사항과 목표 시장을 확인하고 추가 의견을 받을지 다룬다.",
+        "after_subject": "기존 요구 사항에 다른 내용이나 새로 알아낸 점이 있는지 제안하도록 요청한다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[30]~[31]에서 요구 사항과 소재를 제시하고, [34]~[36]에서는 그 요구 사항에 대한 추가 의견을 요청하므로 논의 대상은 계속 동일합니다. [35]는 앞서 제시한 요구 사항을 보완하는 발화입니다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 3,
+        "before_subject": "발표를 어떤 순서로 진행할지 확인하고 첫 발표자를 정한다.",
+        "after_subject": "시장 조사와 트렌드 관찰 결과 및 주요 디자인 요소를 보고한다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": true,
+          "independent_summary": true
+        },
+        "shift_type": "new_agenda",
+        "shift_result": true,
+        "verdict": "O",
+        "evidence": "[42]~[45]에서는 발표 순서와 시작 여부를 정리하고, [49]부터는 트렌드 관찰과 시장 조사 결과를 보고합니다. 발표 진행에 관한 조율이 끝난 뒤 실제 조사 결과 보고라는 별도의 논의 대상으로 넘어가며, 뒤 구간은 독립적으로 요약할 수 있습니다.",
+        "boundary_position": 49
+      }
+    ]
+  },
+  {
+    "request_id": "R0003",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 4,
+        "before_subject": "트렌드 조사를 위해 설문과 관찰원 자문을 진행한 방법을 설명하고 있다.",
+        "after_subject": "조사에서 확인된 디자인·혁신성·사용 편의성의 중요도 결과를 설명하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[49]~[53]은 트렌드 조사의 진행 방법을 설명하고, [55]~[60]은 같은 조사에서 나온 결과를 설명한다. 조사 방법에서 조사 결과로 설명 측면은 바뀌지만, 모두 트렌드 관찰 및 조사 결과를 보고하는 동일한 대상이다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 5,
+        "before_subject": "조사 결과에서 디자인·혁신성·사용 편의성이 얼마나 중요한지 설명하고 있다.",
+        "after_subject": "집중 대상인 60~80세 그룹에서 해당 요소들의 중요도가 어떻게 달라지는지 설명하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[56]~[60]은 전체적인 중요도 결과를 제시하고, [61]은 같은 결과를 집중 대상 연령 그룹에 맞춰 구체화한다. 새 안건으로 전환한 것이 아니라 동일한 조사 결과의 그룹별 측면을 덧붙인 것이다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0004",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 6,
+        "before_subject": "그룹별 설문 결과를 바탕으로 나이 든 사람들이 선호하는 리모컨의 색상, 모양, 소재와 외관을 설명한다.",
+        "after_subject": "리모컨과 거치대가 방에 자연스럽게 어우러지도록 할 디자인 방향과 주요 기능을 제시한다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": true,
+          "independent_summary": true
+        },
+        "shift_type": "new_agenda",
+        "shift_result": true,
+        "verdict": "O",
+        "evidence": "[63]~[67]에서는 그룹별 조사 결과와 고령층의 색상·모양·소재 선호를 설명하고, [68]에서 개인적인 선호로 넘어간다고 명시합니다. 이어지는 발화는 조사 결과의 설명이 아니라 리모컨과 거치대의 디자인 방향 및 주요 기능을 제시하므로 논의 대상이 바뀝니다.",
+        "boundary_position": 68
+      }
+    ]
+  },
+  {
+    "request_id": "R0005",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 7,
+        "before_subject": "리모컨의 트렌드와 디자인 방향에 대한 질문을 받고 논의를 마무리한다.",
+        "after_subject": "인터페이스 디자인 조사 결과와 리모컨 조작 방식 및 기능을 정한다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": true,
+          "independent_summary": true
+        },
+        "shift_type": "new_agenda",
+        "shift_result": true,
+        "verdict": "O",
+        "evidence": "앞에서는 트렌드 관련 질문이 있는지 확인한 뒤, [94]의 “좋아요”와 [95]의 “다음으로 넘어가죠”로 해당 논의를 마무리하고 전환합니다. 뒤에서는 [97]부터 인터페이스 디자인 조사와 버튼, 음성 인식, 디스플레이를 다루므로 별도의 논의 대상으로 볼 수 있습니다.",
+        "boundary_position": 97
+      }
+    ]
+  },
+  {
+    "request_id": "R0006",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 8,
+        "before_subject": "리모컨에서 자막을 한 번 또는 두 번 눌러 작은 자막이나 큰 자막을 표시하는 버튼을 어떻게 구성할지 논의한다.",
+        "after_subject": "리모컨에 필요한 일반 조작 버튼과 버튼 기능 및 현재 채널을 보여 주는 디스플레이를 어떻게 구성할지 논의한다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "앞에서는 리모컨 자막 버튼의 동작을 설명하고, 뒤에서는 같은 리모컨의 일반 버튼과 디스플레이 구성을 설명하므로 리모컨 설계라는 동일 대상의 다른 측면이다 [130]-[139]. [136]의 “그래서 음”은 앞 논의의 결론이나 명시적 전환으로 보기 어렵다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0007",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 9,
+        "before_subject": "기기의 디스플레이와 버튼 배치 및 기능을 정하는 논의이다.",
+        "after_subject": "기기의 형태와 케이스 디자인을 정하는 논의이다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "앞에서는 전원·채널·자막 버튼과 디스플레이의 배치 및 기능을 설명하고, 뒤에서는 제품 형태에 관해 논의해야 한다고 말한다[151][155][156]. 다루는 측면은 달라지지만 모두 같은 기기의 디자인을 정하는 내용이므로 같은 대상의 측면 변화로 본다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 10,
+        "before_subject": "배터리와 운동 에너지 방식 중 어떤 에너지원을 사용할지 검토하는 논의이다.",
+        "after_subject": "운동 에너지 방식을 선택하지 않기로 결론짓는 논의이다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "no_shift",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[166]에서 운동 에너지 방식을 선택하면 거치대를 쓸 수 없다고 설명하고, [167]에서 그 선택지는 실제로 선택할 수 없다고 정리한다. 같은 에너지원 선택 논의가 이어지는 것이므로 새로운 안건으로 바뀌지 않는다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0008",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 11,
+        "before_subject": "제품의 에너지원과 케이스 구성 및 추가 요소를 검토하고 있다.",
+        "after_subject": "버튼과 칩셋, 소재 등 제품의 디자인·구성 선택지를 검토하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[171]의 미끄럼 방지 띠와 [172]의 버튼 소재는 모두 제품 구성 요소의 선택지를 다루므로 논의 대상이 바뀌지 않습니다. 앞뒤 발화를 각각 요약할 수는 있지만, 같은 제품 디자인 검토 안에서 구성 요소의 측면만 달라진 경우입니다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 12,
+        "before_subject": "제품의 형태가 기능을 따라야 한다는 디자인 원칙을 확인하고 있다.",
+        "after_subject": "운동 에너지원을 채택할지 여부를 다시 논의할 필요가 있는지 살펴보고 있다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "re_discussion",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[179]에서는 제품 형태와 기능의 관계를 말하다가 [180]~[182]에서는 운동 에너지원의 매력과 채택 여부로 화제가 옮겨갑니다. 다만 운동 에너지원은 앞서 [163]~[167]에서 이미 검토한 선택지이므로, 새 안건이 아니라 같은 결정에 대한 재논의로 판단합니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0009",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 13,
+        "before_subject": "제품 콘셉트의 전반적인 디자인 방향과 구성 요소(소재, 형태, 에너지원, 케이스·버튼, 칩셋)에 대한 의견을 정리하고 있다.",
+        "after_subject": "제품의 에너지원 선택지를 검토하고, 운동 에너지를 예산 안에서 사용할 수 있는지 판단하려 한다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": true,
+          "independent_summary": true
+        },
+        "shift_type": "new_agenda",
+        "shift_result": true,
+        "verdict": "O",
+        "evidence": "앞 구간은 제품 디자인과 구성 요소에 관한 의견을 제시한 뒤 [186]에서 마무리하고 [187]~[190]에서 콘셉트 논의로 전환한다. 뒤 구간은 [194]~[197]에서 에너지원 선택과 예산 적합성 검토라는 구체적인 결론을 목표로 하므로 별도 안건으로 볼 수 있다.",
+        "boundary_position": 190
+      }
+    ]
+  },
+  {
+    "request_id": "R0010",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 14,
+        "before_subject": "거치대가 불필요해질 수 있다는 우려와 거치대의 기능을 논의하고 있다.",
+        "after_subject": "거치대를 제품의 마케팅 요소로 활용할 수 있는지 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[229]에서 거치대에 대한 발화를 시작한 뒤 [230]에서 그 거치대의 마케팅 가치를 설명하므로 같은 대상에 대한 논의가 이어진다. [229]의 문장이 [230]으로 이어져 앞 논의의 종결 신호도 없다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 15,
+        "before_subject": "거치대에 배터리와 리모컨 찾기 기능을 넣는 방안을 논의하고 있다.",
+        "after_subject": "거치대가 리모컨을 정해진 자리에 두도록 도와주는 장점을 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[244]~[245]의 배터리 용량 논의에서 [249]~[253]의 거치대 보관 편의성으로 넘어가지만, 모두 거치대의 효용을 검토하는 같은 논의 대상이다. [247]~[248]은 발화의 머뭇거림이고 종결 신호가 아니며, [249]는 앞서 언급된 거치대의 장점을 이어 설명한다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0011",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 16,
+        "before_subject": "리모컨 음성 인식 기능의 생산 가격 영향을 확인하고 제조 부서에 문의할지 논의하고 있다.",
+        "after_subject": "시장 조사 결과를 바탕으로 대상 그룹이 음성 인식 기능에 추가 비용을 지불할 의향이 있는지 검토하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[265]~[268]은 음성 인식의 비용 영향을 확인하려는 내용이고, [270]~[275]는 같은 기능의 가격 수용성을 시장 조사로 살펴보는 내용입니다. 검토 측면은 바뀌지만 리모컨에 음성 인식을 넣을지 판단하는 동일한 논의이므로 새 안건으로 보지 않습니다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 17,
+        "before_subject": "시장 조사에서 대상 그룹이 리모컨 음성 인식 기능에 추가 비용을 지불할 의향이 있는지 확인하고, 그 결과를 제품 적용 판단에 반영하고 있다.",
+        "after_subject": "대상 그룹의 지불 의향을 근거로 음성 인식 기능을 해당 리모컨에 넣을지, 다른 제품에 적용할지 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[277]의 조사 결과에서 [279]~[285]의 적용 권고로 이어지며, 모두 음성 인식을 리모컨에 적용할지에 관한 같은 판단을 다룹니다. 뒤 발화는 앞선 결과의 의미와 제품 적용 방안을 설명하는 것이므로 새 안건이 아닙니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0012",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 18,
+        "before_subject": "리모컨의 LCD 화면이 사용 편의성에 도움이 되는지와 조사에서 상정한 화면의 크기를 확인하고 있다.",
+        "after_subject": "추가 정보를 보여 주는 LCD 화면을 리모컨에 넣어도 사용자가 부담을 느끼지 않을지 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "앞에서는 LCD 화면의 사용 편의성과 조사에서 언급한 LCD의 크기를 확인하고, 뒤에서는 같은 LCD 화면을 추가 정보 표시용으로 넣는 것에 대한 우려를 논의합니다[304][306][311]. 논의 대상은 같은 LCD 기능의 특성에 머물러 있어 새 안건으로 보지 않습니다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 19,
+        "before_subject": "리모컨의 추가 정보 표시용 LCD 화면에 대한 반대 여부와 그 정보의 성격을 논의하고 있다.",
+        "after_subject": "추가 정보는 원하면 무시하거나 사용하지 않아도 된다는 점을 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "뒤의 발화는 추가 정보 표시용 LCD 화면에 대해 사용자가 원하지 않으면 무시하거나 사용하지 않아도 된다는 설명으로, 앞서 말한 같은 화면 기능의 사용 방식에 관한 내용입니다[311][312][314][316]. 따라서 논의 대상이 바뀐 것이 아니라 같은 대상의 측면을 이어서 다루고 있습니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0013",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 20,
+        "before_subject": "음성 인식 포함 여부와 배터리 방식 등 에너지 사용을 고려해 전원 방식을 정한다.",
+        "after_subject": "디스플레이에 맞는 칩의 등급을 정한다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": true,
+          "independent_summary": true
+        },
+        "shift_type": "new_agenda",
+        "shift_result": true,
+        "verdict": "O",
+        "evidence": "배터리를 최선의 선택으로 정하고 “배터리로 정할게요”라고 결론을 낸 뒤, “칩으로 넘어가죠”라고 다음 논의 대상으로 전환합니다[333][335][336]. 뒤에서는 디스플레이에 사용할 칩 등급을 논의하므로 앞의 전원 방식 결정과 별개의 안건입니다[338][341].",
+        "boundary_position": 338
+      },
+      {
+        "candidate_id": 21,
+        "before_subject": "케이스를 나무색으로 할지 검정·회색으로 할지, 또는 둘 다 적용할지 검토한다.",
+        "after_subject": "나무 소재와 나무색 케이스의 비용 및 마케팅상 매력을 검토한다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "뒤에서는 나무 케이스의 생산 비용과 고급스러운 이미지, 실제 나무가 아니라 나무색만 적용하는 방안 등을 살펴봅니다[350][352][358][359]. 이는 새 안건으로 넘어간 것이 아니라 같은 케이스의 소재·색상 선택을 다른 측면에서 검토하는 내용입니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0014",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 22,
+        "before_subject": "리모컨에 나무색을 입히는 데 드는 비용과 제작 난이도를 확인하려는 논의다.",
+        "after_subject": "표준 리모컨에 교체 가능한 케이스를 적용해 별도로 판매할 수 있는지 검토하는 논의다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "앞 구간은 나무색 외관의 비용·제작 난이도를 살펴보며, 해당 비용은 조사해 보겠다고 했을 뿐 논의를 종결하지 않았습니다 [364][367][373]. 뒤 구간의 교체형 케이스 제안은 같은 리모컨의 외관 선택지를 다루는 측면의 확장이므로 새 안건으로 보지 않습니다 [374][378][384][386].",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0015",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 23,
+        "before_subject": "리모컨 케이스를 별도로 판매하고 선물용으로 광고하는 방안을 논의한다.",
+        "after_subject": "케이스가 다른 리모컨과 차별화되는 부가 장점이 될 수 있는지 논의한다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[392]에서 새 케이스를 선물하자는 광고 문구를 제안하고, [394]-[397]에서는 이를 같은 케이스 판매 방안의 부가적 장점으로 설명한다. 논의 대상이 바뀌거나 앞 안건이 종결된 것이 아니라 같은 케이스 아이디어를 이어서 다루므로 경계가 아니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0016",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 24,
+        "before_subject": "리모컨 하나에 나무 커버와 플라스틱 커버를 모두 적용할 수 있도록 디자인하는 방안을 논의하고 있다.",
+        "after_subject": "두 종류의 커버를 교체해 사용할 수 있는 리모컨 디자인에 동의하는지 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "no_shift",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[419]에서 나무 커버와 플라스틱 커버 모두에 어울리는 리모컨을 논의하고, 후보 뒤의 [420]은 이에 대한 맞장구입니다. 이어 [425]에서 커버 교체에 동의하는지 확인하므로 논의 대상이 바뀌지 않았고, [419]에서도 안건이 종결되었다고 보기 어렵습니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0017",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 25,
+        "before_subject": "케이스의 곡면 형태 선택이 가격이나 기능성에 미치는 영향을 확인하고 있다.",
+        "after_subject": "케이스 형태는 원하는 대로 선택할 수 있다는 점을 확인하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[443]에서 가격이나 기능성에 큰 차이가 없다고 설명한 뒤, [444]-[446]에서는 그에 이어 형태를 원하는 대로 고르면 된다고 정리하고 있어 같은 케이스 형태 선택 논의입니다. 새 논의 대상으로 전환하는 종결 신호도 없습니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0018",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 26,
+        "before_subject": "리모컨의 채널 변경 버튼을 오른쪽에 배치할지 논의하고 있다.",
+        "after_subject": "오른쪽 버튼을 엄지로 쉽게 조작할 수 있는지 설명하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[476]에서 채널 버튼을 오른쪽에 두려는 배경을 말하고, [477]은 엄지로 쉽게 조작할 수 있다는 이유를 이어서 설명한다. 논의 대상이 버튼 배치와 조작 편의성으로 이어지며 종결 신호도 없다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 27,
+        "before_subject": "채널 변경 버튼을 왼쪽과 오른쪽 양쪽에 둘지 논의하고 있다.",
+        "after_subject": "양쪽 버튼 배치가 왼손잡이 사용자에게도 도움이 되는지 설명하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[484]에서 버튼을 양쪽에 두자는 제안이 나오고, [485]~[486]은 그 제안의 대상이 무엇인지, 즉 왼손잡이 사용자도 고려하기 위해서임을 설명한다. 이는 버튼 배치 논의의 같은 측면을 구체화하는 내용이며 별도의 안건으로 전환되거나 앞 논의가 종결된 신호는 없다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0019",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 28,
+        "before_subject": "채널과 볼륨 버튼을 리모컨 양쪽에 나누어 배치하는 것이 가능한지, 사용 편의성에 어떤 영향을 주는지 논의하고 있다.",
+        "after_subject": "양쪽에 채널 변경 버튼과 볼륨 변경 버튼을 두는 배치가 사용성을 떨어뜨릴 수 있는지 평가하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[499]-[500]에서 버튼 배치의 가능성과 사용 편의성을 논의하고, [501]-[502]는 같은 사용성 평가를 이어간다. 새 논의 대상으로 전환되거나 앞 논의가 종결된 신호가 없다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 29,
+        "before_subject": "리모컨 양쪽에 버튼을 배치하는 방안이 버튼 수와 사용자 혼란을 늘릴 수 있는지 논의하고 있다.",
+        "after_subject": "버튼에 같은 글자가 쓰일 때 생기는 혼란과 왼손잡이용 또는 뒤집어 쓸 수 있는 리모컨의 가능성을 검토하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[511]-[515]에서 버튼이 많아지면 사용자가 헷갈릴 수 있다는 우려를 제기하고, [517]-[520]은 같은 우려와 양손잡이용 설계 방안을 이어서 다룬다. 리모컨 버튼 배치와 사용성이라는 같은 대상의 세부 측면이므로 새 안건으로 보지 않는다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0020",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 30,
+        "before_subject": "왼손잡이도 사용할 수 있도록 뒤집어 쓸 수 있는 리모컨을 만들 수 있는지 논의하고 있다.",
+        "after_subject": "리모컨의 플러스·마이너스 버튼 배치가 사용하기 편한지 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[520]에서 뒤집어 쓸 수 있는 리모컨을 제안하고 [531]에서 LCD 화면을 언급한 뒤, [533]~[536]에서 플러스·마이너스 배치를 검토하므로 모두 같은 리모컨 설계 논의의 일부다. [532]의 재검토 발언은 앞 논의를 종결하는 신호가 아니며, 버튼 배치 논의도 앞의 리모컨 설계 맥락과 분리되지 않는다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0021",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 31,
+        "before_subject": "채널 선택 기능의 조작부 모양을 일반적인 형태로 둘지 논의한다.",
+        "after_subject": "기기의 케이스 형태를 정하고, 평면·곡면 등 구체적인 외형을 검토한다.",
+        "checks": {
+          "subject_change": true,
+          "closure_signal": true,
+          "independent_summary": true
+        },
+        "shift_type": "new_agenda",
+        "shift_result": true,
+        "verdict": "O",
+        "evidence": "앞 구간에서는 조작부를 일반적인 모양으로 두자는 방향이 제시됩니다[554]. 이어서 케이스를 기반으로 삼고 외형을 그려 보자는 논의로 대상이 바뀝니다[560][567][569].",
+        "boundary_position": 557
+      }
+    ]
+  },
+  {
+    "request_id": "R0022",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 32,
+        "before_subject": "리모컨 케이스의 평면·곡면 형태 선택지를 살펴본다.",
+        "after_subject": "세 가지 형태 중 단일 곡면을 선택하고 화면 배치와 사용 편의성을 검토한다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "앞에서는 케이스 형태의 선택지를 살펴보고, 뒤에서는 그중 단일 곡면을 제안하며 화면을 넣었을 때의 장점을 논의합니다[581][584][587]-[590]. 논의 대상은 같은 케이스 형태 선택의 연속적인 검토이므로 새 안건으로 보지 않습니다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 33,
+        "before_subject": "단일 곡면 케이스에서 화면을 어느 위치에 둘지 확인한다.",
+        "after_subject": "화면이 놓이는 방향을 확인하며 케이스의 위아래와 외형을 검토한다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "앞에서는 화면을 여기에 둘 것인지 확인하고, 뒤에서는 들고 있는 방향과 위아래를 바로잡습니다[593]-[598][602]-[612]. 이는 같은 케이스의 화면 배치와 방향을 구체화하는 과정이지 별도 논의 대상으로의 전환은 아닙니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0023",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 34,
+        "before_subject": "리모컨의 위아래 방향과 어느 쪽을 형태로 만들지 논의하고 있다.",
+        "after_subject": "리모컨의 색상과 손에 맞는 형태, 화면 및 버튼 배치를 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": true
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "앞에서는 리모컨의 위아래 방향과 형태를 살펴보고, 이어서 색상과 손에 맞는 형태를 논의합니다[611]-[618]. 이후 화면과 채널 변경 버튼의 위치도 다루므로 논의 대상은 계속 같은 리모컨의 디자인이며, 측면만 바뀐 경우입니다[623]-[640].",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0024",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 35,
+        "before_subject": "디스플레이를 기기의 위쪽에 둘지에 대해 배치의 적절성을 논의하고 있다.",
+        "after_subject": "디스플레이를 위쪽에 두는 것이 더 논리적인 이유를 덧붙이고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[645]에서 디스플레이가 손에 가릴 수 있다는 점을 말한 뒤, [648]~[649]에서는 위쪽 배치를 지지하는 이유를 보탭니다. 논의 대상이 디스플레이 위치로 이어지고 있고 종결 신호도 없습니다.",
+        "boundary_position": null
+      },
+      {
+        "candidate_id": 36,
+        "before_subject": "기기의 곡면에 디스플레이와 버튼을 배치하고 좌우 사용자에 맞게 조정하는 방안을 논의하고 있다.",
+        "after_subject": "나머지 버튼과 전원 버튼의 위치, 모서리 형태 등 기기 조작부와 외형의 세부 배치를 논의하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[665]~[668]의 디스플레이·버튼 배치 논의는 [671]~[679]의 나머지 버튼, 전원 버튼, 모서리 형태에 관한 세부 논의로 이어집니다. 같은 기기 디자인 안에서 배치와 형태의 측면을 구체화하는 흐름이므로 새 안건 경계로 보지 않습니다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0025",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 37,
+        "before_subject": "리모컨의 버튼 배치와 모서리 형태 등 물리적 디자인 요소를 정하는 논의이다.",
+        "after_subject": "앞서 논의한 리모컨 콘셉트와 소재 아이디어를 정리하고 다음 회의에서 다룰 디자인 과제를 안내하는 내용이다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "digression_return",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[688]의 마우스를 찾는 말은 잠시 논의에서 벗어난 발화이고, [689]는 리모컨 콘셉트와 소재 아이디어를 정리하며 앞선 디자인 논의로 돌아온다. 따라서 새 논의 대상으로 넘어간 것이 아니라 잠깐의 이탈 뒤 원래 주제로 복귀한 경우다.",
+        "boundary_position": null
+      }
+    ]
+  },
+  {
+    "request_id": "R0026",
+    "status": "valid",
+    "judgments": [
+      {
+        "candidate_id": 38,
+        "before_subject": "프로젝트를 함께 시작할지 설문지를 먼저 작성할지 등 진행 절차를 안내하고 있다.",
+        "after_subject": "설문 절차에 이어 메시지를 받게 될 것이라고 안내하고 있다.",
+        "checks": {
+          "subject_change": false,
+          "closure_signal": false,
+          "independent_summary": false
+        },
+        "shift_type": "same_subject_aspect",
+        "shift_result": false,
+        "verdict": "X",
+        "evidence": "[705]~[709]에서는 바로 함께 작업할지 설문지를 먼저 작성할지 진행 순서를 설명하고, [710]은 그 절차에 이어 메시지를 받게 된다고 안내한다. 논의 대상이 바뀌거나 앞 안건이 종결된 것이 아니라 같은 진행 절차에 대한 설명이 이어진다.",
+        "boundary_position": null
+      }
+    ]
+  }
+]

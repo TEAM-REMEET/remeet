@@ -1,0 +1,218 @@
+{
+  "meeting_id": "TS3003c",
+  "gold_boundary_count": 11,
+  "gold_positions": [
+    28,
+    49,
+    95,
+    162,
+    190,
+    265,
+    286,
+    336,
+    345,
+    465,
+    691
+  ],
+  "expected_boundary_coverage": {
+    "expected_boundaries": [
+      14,
+      28,
+      35,
+      49,
+      54,
+      61,
+      68,
+      94,
+      137,
+      156,
+      167,
+      172,
+      180,
+      191,
+      230,
+      249,
+      267,
+      278,
+      305,
+      314,
+      334,
+      348,
+      368,
+      393,
+      420,
+      444,
+      477,
+      485,
+      501,
+      517,
+      533,
+      557,
+      583,
+      596,
+      616,
+      649,
+      669,
+      689,
+      710
+    ],
+    "gold_exact": [
+      28,
+      49
+    ],
+    "gold_within_3": [
+      28,
+      49,
+      95,
+      190,
+      265,
+      336,
+      345,
+      691
+    ]
+  },
+  "conditions": {
+    "baseline": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "model": "gpt-6-luna"
+      },
+      "requests": 39,
+      "status": "complete",
+      "failed_requests": [],
+      "candidate_judgments": 39,
+      "golden_candidates": 39,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0028",
+        "u0049",
+        "u0094",
+        "u0156",
+        "u0180",
+        "u0191"
+      ],
+      "scores": {
+        "0": {
+          "tp": 2,
+          "fp": 4,
+          "fn": 9,
+          "precision": 0.3333333333333333,
+          "recall": 0.18181818181818182,
+          "f1": 0.23529411764705885
+        },
+        "3": {
+          "tp": 4,
+          "fp": 2,
+          "fn": 7,
+          "precision": 0.6666666666666666,
+          "recall": 0.36363636363636365,
+          "f1": 0.4705882352941177
+        }
+      }
+    },
+    "merge_900": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "model": "gpt-6-luna"
+      },
+      "requests": 26,
+      "status": "complete",
+      "failed_requests": [],
+      "candidate_judgments": 39,
+      "golden_candidates": 39,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0028",
+        "u0049",
+        "u0094",
+        "u0557"
+      ],
+      "scores": {
+        "0": {
+          "tp": 2,
+          "fp": 2,
+          "fn": 9,
+          "precision": 0.5,
+          "recall": 0.18181818181818182,
+          "f1": 0.26666666666666666
+        },
+        "3": {
+          "tp": 3,
+          "fp": 1,
+          "fn": 8,
+          "precision": 0.75,
+          "recall": 0.2727272727272727,
+          "f1": 0.39999999999999997
+        }
+      }
+    },
+    "merge_1200": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "model": "gpt-6-luna"
+      },
+      "requests": 16,
+      "status": "complete",
+      "failed_requests": [],
+      "candidate_judgments": 39,
+      "golden_candidates": 39,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0028",
+        "u0049",
+        "u0068",
+        "u0094",
+        "u0180",
+        "u0191",
+        "u0334",
+        "u0557",
+        "u0689"
+      ],
+      "scores": {
+        "0": {
+          "tp": 2,
+          "fp": 7,
+          "fn": 9,
+          "precision": 0.2222222222222222,
+          "recall": 0.18181818181818182,
+          "f1": 0.19999999999999998
+        },
+        "3": {
+          "tp": 6,
+          "fp": 3,
+          "fn": 5,
+          "precision": 0.6666666666666666,
+          "recall": 0.5454545454545454,
+          "f1": 0.6
+        }
+      }
+    }
+  },
+  "usage": {
+    "requests": 81,
+    "input_tokens": 114794,
+    "output_tokens": 41628,
+    "reasoning_tokens": 18293,
+    "retries": 0,
+    "seconds_total": 496.96,
+    "estimated_cost_usd": 0.032293
+  }
+}

@@ -1,0 +1,260 @@
+{
+  "config_id": "BAAI--bge-m3__w200_o100_sentence_depth_0.10",
+  "candidate_positions": [
+    282,
+    455,
+    624,
+    1281,
+    1492,
+    1771,
+    2179,
+    2476,
+    2674,
+    2975,
+    3172,
+    3484,
+    3906,
+    4279,
+    4698,
+    4896,
+    5269,
+    5589,
+    5872,
+    6261,
+    6480,
+    6794,
+    7166
+  ],
+  "candidates": [
+    {
+      "pair_index": 0,
+      "left_window_index": 0,
+      "right_window_index": 1,
+      "candidate_char": 282,
+      "region_start_char": 238,
+      "region_end_char": 327,
+      "similarity": 0.577130138874054,
+      "depth": 0.3818402886390686
+    },
+    {
+      "pair_index": 2,
+      "left_window_index": 2,
+      "right_window_index": 3,
+      "candidate_char": 455,
+      "region_start_char": 425,
+      "region_end_char": 486,
+      "similarity": 0.5710263252258301,
+      "depth": 0.7710988521575928
+    },
+    {
+      "pair_index": 4,
+      "left_window_index": 4,
+      "right_window_index": 5,
+      "candidate_char": 624,
+      "region_start_char": 624,
+      "region_end_char": 624,
+      "similarity": 0.4824388325214386,
+      "depth": 0.752907931804657
+    },
+    {
+      "pair_index": 9,
+      "left_window_index": 9,
+      "right_window_index": 10,
+      "candidate_char": 1281,
+      "region_start_char": 1235,
+      "region_end_char": 1327,
+      "similarity": 0.746551513671875,
+      "depth": 0.15247321128845215
+    },
+    {
+      "pair_index": 11,
+      "left_window_index": 11,
+      "right_window_index": 12,
+      "candidate_char": 1492,
+      "region_start_char": 1433,
+      "region_end_char": 1552,
+      "similarity": 0.7676361799240112,
+      "depth": 0.12023484706878662
+    },
+    {
+      "pair_index": 14,
+      "left_window_index": 14,
+      "right_window_index": 15,
+      "candidate_char": 1771,
+      "region_start_char": 1726,
+      "region_end_char": 1816,
+      "similarity": 0.7244341969490051,
+      "depth": 0.30153870582580566
+    },
+    {
+      "pair_index": 18,
+      "left_window_index": 18,
+      "right_window_index": 19,
+      "candidate_char": 2179,
+      "region_start_char": 2129,
+      "region_end_char": 2230,
+      "similarity": 0.6877390146255493,
+      "depth": 0.31946873664855957
+    },
+    {
+      "pair_index": 21,
+      "left_window_index": 21,
+      "right_window_index": 22,
+      "candidate_char": 2476,
+      "region_start_char": 2430,
+      "region_end_char": 2522,
+      "similarity": 0.7858176827430725,
+      "depth": 0.1557334065437317
+    },
+    {
+      "pair_index": 23,
+      "left_window_index": 23,
+      "right_window_index": 24,
+      "candidate_char": 2674,
+      "region_start_char": 2631,
+      "region_end_char": 2717,
+      "similarity": 0.7643448114395142,
+      "depth": 0.23891562223434448
+    },
+    {
+      "pair_index": 26,
+      "left_window_index": 26,
+      "right_window_index": 27,
+      "candidate_char": 2975,
+      "region_start_char": 2938,
+      "region_end_char": 3013,
+      "similarity": 0.5762938261032104,
+      "depth": 0.5590702891349792
+    },
+    {
+      "pair_index": 28,
+      "left_window_index": 28,
+      "right_window_index": 29,
+      "candidate_char": 3172,
+      "region_start_char": 3137,
+      "region_end_char": 3208,
+      "similarity": 0.7480551600456238,
+      "depth": 0.29216432571411133
+    },
+    {
+      "pair_index": 31,
+      "left_window_index": 31,
+      "right_window_index": 32,
+      "candidate_char": 3484,
+      "region_start_char": 3427,
+      "region_end_char": 3541,
+      "similarity": 0.7101777791976929,
+      "depth": 0.29429978132247925
+    },
+    {
+      "pair_index": 35,
+      "left_window_index": 35,
+      "right_window_index": 36,
+      "candidate_char": 3906,
+      "region_start_char": 3836,
+      "region_end_char": 3977,
+      "similarity": 0.7208840847015381,
+      "depth": 0.26808375120162964
+    },
+    {
+      "pair_index": 39,
+      "left_window_index": 39,
+      "right_window_index": 40,
+      "candidate_char": 4279,
+      "region_start_char": 4226,
+      "region_end_char": 4333,
+      "similarity": 0.8163390159606934,
+      "depth": 0.12982392311096191
+    },
+    {
+      "pair_index": 43,
+      "left_window_index": 43,
+      "right_window_index": 44,
+      "candidate_char": 4698,
+      "region_start_char": 4662,
+      "region_end_char": 4734,
+      "similarity": 0.7855758666992188,
+      "depth": 0.18700939416885376
+    },
+    {
+      "pair_index": 45,
+      "left_window_index": 45,
+      "right_window_index": 46,
+      "candidate_char": 4896,
+      "region_start_char": 4860,
+      "region_end_char": 4932,
+      "similarity": 0.7024140357971191,
+      "depth": 0.4132605195045471
+    },
+    {
+      "pair_index": 49,
+      "left_window_index": 49,
+      "right_window_index": 50,
+      "candidate_char": 5269,
+      "region_start_char": 5236,
+      "region_end_char": 5302,
+      "similarity": 0.7322404384613037,
+      "depth": 0.39255332946777344
+    },
+    {
+      "pair_index": 52,
+      "left_window_index": 52,
+      "right_window_index": 53,
+      "candidate_char": 5589,
+      "region_start_char": 5539,
+      "region_end_char": 5639,
+      "similarity": 0.7059801816940308,
+      "depth": 0.35138463973999023
+    },
+    {
+      "pair_index": 55,
+      "left_window_index": 55,
+      "right_window_index": 56,
+      "candidate_char": 5872,
+      "region_start_char": 5814,
+      "region_end_char": 5931,
+      "similarity": 0.6581199765205383,
+      "depth": 0.3266103267669678
+    },
+    {
+      "pair_index": 59,
+      "left_window_index": 59,
+      "right_window_index": 60,
+      "candidate_char": 6261,
+      "region_start_char": 6230,
+      "region_end_char": 6293,
+      "similarity": 0.6998395919799805,
+      "depth": 0.32343965768814087
+    },
+    {
+      "pair_index": 61,
+      "left_window_index": 61,
+      "right_window_index": 62,
+      "candidate_char": 6480,
+      "region_start_char": 6456,
+      "region_end_char": 6504,
+      "similarity": 0.7119981050491333,
+      "depth": 0.40062564611434937
+    },
+    {
+      "pair_index": 64,
+      "left_window_index": 64,
+      "right_window_index": 65,
+      "candidate_char": 6794,
+      "region_start_char": 6756,
+      "region_end_char": 6833,
+      "similarity": 0.7182778120040894,
+      "depth": 0.3295365571975708
+    },
+    {
+      "pair_index": 68,
+      "left_window_index": 68,
+      "right_window_index": 69,
+      "candidate_char": 7166,
+      "region_start_char": 7129,
+      "region_end_char": 7203,
+      "similarity": 0.7698270082473755,
+      "depth": 0.21690380573272705
+    }
+  ]
+}

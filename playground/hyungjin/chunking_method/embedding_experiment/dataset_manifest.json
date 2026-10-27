@@ -1,0 +1,619 @@
+{
+  "created_at": "2026-10-26T20:20:42.821414+09:00",
+  "input_root": "C:\\Users\\hyung\\Desktop\\2차 프로젝트\\remeet\\playground\\hyungjin\\test\\input",
+  "gold_root": "C:\\Users\\hyung\\Desktop\\2차 프로젝트\\remeet\\playground\\hyungjin\\test\\llm_golden",
+  "input_count": 20,
+  "gold_boundary_count": 153,
+  "exclusions": [
+    "criteria.md",
+    "README.md"
+  ],
+  "meetings": [
+    {
+      "meeting": "ES2004a",
+      "input": "test\\input\\ES2004a.txt",
+      "gold": "test\\llm_golden\\ES2004a.json",
+      "input_sha256": "94bc130fc5c581f14c80e0c393f20b31e066546fe515e7b1f7998934567126cc",
+      "source_sha256": "f7adaf9859bdc29c03f7bf5847f8bb4783bad31a259150bd78b7f8650ac9e339",
+      "gold_sha256": "4098b00cf9b718c90185356e84de9dd0217ae36913593c69b08c87674b7f1584",
+      "utterances": 469,
+      "body_chars": 7276,
+      "gold_boundaries": 6,
+      "boundary_positions": [
+        32,
+        53,
+        200,
+        270,
+        395,
+        422
+      ],
+      "boundary_chars": {
+        "u0032": 592,
+        "u0053": 1002,
+        "u0200": 3013,
+        "u0270": 3985,
+        "u0395": 6293,
+        "u0422": 6710
+      }
+    },
+    {
+      "meeting": "ES2004b",
+      "input": "test\\input\\ES2004b.txt",
+      "gold": "test\\llm_golden\\ES2004b.json",
+      "input_sha256": "6aacaef7064fd57511f716ee6796a36d608e512ae9c6b14fd7b923e5b994fd29",
+      "source_sha256": "6d6451c2b8d87a0313228fd1c15e13c6ae5b0dfd02f9b70bd0874470bf4821bd",
+      "gold_sha256": "3e24924da26dc5ad7f53d605a344d6c8855db469616195dbaa6ffe10174d1bbf",
+      "utterances": 867,
+      "body_chars": 16804,
+      "gold_boundaries": 13,
+      "boundary_positions": [
+        47,
+        152,
+        231,
+        282,
+        324,
+        365,
+        397,
+        485,
+        513,
+        579,
+        652,
+        692,
+        845
+      ],
+      "boundary_chars": {
+        "u0047": 954,
+        "u0152": 3272,
+        "u0231": 4879,
+        "u0282": 6404,
+        "u0324": 7217,
+        "u0365": 7950,
+        "u0397": 8533,
+        "u0485": 10145,
+        "u0513": 10771,
+        "u0579": 11782,
+        "u0652": 13233,
+        "u0692": 13820,
+        "u0845": 16607
+      }
+    },
+    {
+      "meeting": "ES2004c",
+      "input": "test\\input\\ES2004c.txt",
+      "gold": "test\\llm_golden\\ES2004c.json",
+      "input_sha256": "d8c6c2cced0d36d43bbe39cd9d5f2f0d20e9e9b4716fced783de823916e6179e",
+      "source_sha256": "bd177f1e392a9788d8a47afa53b3b7814684f5a3e62bb5db2c97507dc966ad1f",
+      "gold_sha256": "96d8a9728b837316ca1765fd6fa45222a7b735cb806c46c0003c37824e2ffda4",
+      "utterances": 944,
+      "body_chars": 16810,
+      "gold_boundaries": 8,
+      "boundary_positions": [
+        55,
+        105,
+        283,
+        319,
+        354,
+        436,
+        575,
+        929
+      ],
+      "boundary_chars": {
+        "u0055": 916,
+        "u0105": 2165,
+        "u0283": 5181,
+        "u0319": 5770,
+        "u0354": 6549,
+        "u0436": 7960,
+        "u0575": 10512,
+        "u0929": 16716
+      }
+    },
+    {
+      "meeting": "ES2004d",
+      "input": "test\\input\\ES2004d.txt",
+      "gold": "test\\llm_golden\\ES2004d.json",
+      "input_sha256": "7f20af4070c47ff8361be7ae425481a87fb29ad08befdaff80d39df10c2f29a4",
+      "source_sha256": "5962f7791a25539723e96bfe693a46cf7f74b6735f0ffc8ea6e65943801568cf",
+      "gold_sha256": "3c7c4697a2c247b529b71f4d33003da430d5af0abcbb5e697fcdb36bc2090e9a",
+      "utterances": 1112,
+      "body_chars": 16082,
+      "gold_boundaries": 5,
+      "boundary_positions": [
+        26,
+        182,
+        493,
+        829,
+        1076
+      ],
+      "boundary_chars": {
+        "u0026": 576,
+        "u0182": 3042,
+        "u0493": 7610,
+        "u0829": 11798,
+        "u1076": 15708
+      }
+    },
+    {
+      "meeting": "ES2014a",
+      "input": "test\\input\\ES2014a.txt",
+      "gold": "test\\llm_golden\\ES2014a.json",
+      "input_sha256": "e5f8e2958b9897f3e3b941c3159301b609b74d052293f94a94da93e94a0b3364",
+      "source_sha256": "81c1568636742b82c5aab95b4f0530fc1305ac27bcd3670a8fcd36e9578701f0",
+      "gold_sha256": "3d43547539222726ab94b0d32f705b3030c833b95669cd23175707839d463434",
+      "utterances": 301,
+      "body_chars": 5601,
+      "gold_boundaries": 6,
+      "boundary_positions": [
+        31,
+        46,
+        150,
+        159,
+        181,
+        241
+      ],
+      "boundary_chars": {
+        "u0031": 532,
+        "u0046": 981,
+        "u0150": 2861,
+        "u0159": 3148,
+        "u0181": 3539,
+        "u0241": 4813
+      }
+    },
+    {
+      "meeting": "ES2014b",
+      "input": "test\\input\\ES2014b.txt",
+      "gold": "test\\llm_golden\\ES2014b.json",
+      "input_sha256": "c4ea04a037c64178324f71c193a92ebf241e4fd2a4c6ce2a788b2169d313c368",
+      "source_sha256": "8b61e4cc0cd9c458fd4b37d43a734186cbcd61d8057746f3eb5baf24dd3eb9bd",
+      "gold_sha256": "7d3d155998453556111c68d3f20f076b15be864e582e187bbfd8e82f25a74b81",
+      "utterances": 822,
+      "body_chars": 14762,
+      "gold_boundaries": 7,
+      "boundary_positions": [
+        73,
+        156,
+        317,
+        363,
+        465,
+        568,
+        816
+      ],
+      "boundary_chars": {
+        "u0073": 1099,
+        "u0156": 2684,
+        "u0317": 5789,
+        "u0363": 7122,
+        "u0465": 8986,
+        "u0568": 10891,
+        "u0816": 14809
+      }
+    },
+    {
+      "meeting": "ES2014c",
+      "input": "test\\input\\ES2014c.txt",
+      "gold": "test\\llm_golden\\ES2014c.json",
+      "input_sha256": "60b6d3a6bd1c06c32df178c5fe5d2351c4f3e0acd69126b3f07fce5b8ef71cab",
+      "source_sha256": "a4c089b23ef4bc223002c62cd18d07618a3d04bef32f79cdd989dad7f0773f37",
+      "gold_sha256": "0c634df9975b88121e34b368446e70aa4bbc870bd553d54e8099756d4cfe88c5",
+      "utterances": 880,
+      "body_chars": 15713,
+      "gold_boundaries": 10,
+      "boundary_positions": [
+        35,
+        107,
+        135,
+        172,
+        233,
+        295,
+        412,
+        461,
+        548,
+        848
+      ],
+      "boundary_chars": {
+        "u0035": 765,
+        "u0107": 2527,
+        "u0135": 2999,
+        "u0172": 3632,
+        "u0233": 4716,
+        "u0295": 5618,
+        "u0412": 7826,
+        "u0461": 8690,
+        "u0548": 10628,
+        "u0848": 15412
+      }
+    },
+    {
+      "meeting": "ES2014d",
+      "input": "test\\input\\ES2014d.txt",
+      "gold": "test\\llm_golden\\ES2014d.json",
+      "input_sha256": "400335adfe1071074f969f389bbdfa35f0b0c9e874dec8fdec53db2a07a7d338",
+      "source_sha256": "01fe0df8fe11625648ffb6ca6f386a661d0729f654ae4408ddb1bb1623527283",
+      "gold_sha256": "a5b51c7c12885858d1bc03294de3e59126d1af700da4d22d6e765b0c00a730f9",
+      "utterances": 1144,
+      "body_chars": 18625,
+      "gold_boundaries": 5,
+      "boundary_positions": [
+        14,
+        111,
+        282,
+        922,
+        1132
+      ],
+      "boundary_chars": {
+        "u0014": 321,
+        "u0111": 1913,
+        "u0282": 4908,
+        "u0922": 15030,
+        "u1132": 18566
+      }
+    },
+    {
+      "meeting": "IS1009a",
+      "input": "test\\input\\IS1009a.txt",
+      "gold": "test\\llm_golden\\IS1009a.json",
+      "input_sha256": "b39cc078058eac1f64fa6666a8ef3d60397b038d050776acb4669e244974c539",
+      "source_sha256": "e0aafc126ea50c92d20aa866e4ac32d9bdd33f85d4d371381f395993ceb701a2",
+      "gold_sha256": "f00a06943e4fdbc3e488a8ebd51f1a706d65187b86a1ebc3b4c5dcc1fca689d0",
+      "utterances": 317,
+      "body_chars": 5274,
+      "gold_boundaries": 7,
+      "boundary_positions": [
+        45,
+        71,
+        109,
+        123,
+        164,
+        183,
+        252
+      ],
+      "boundary_chars": {
+        "u0045": 833,
+        "u0071": 1242,
+        "u0109": 1837,
+        "u0123": 2122,
+        "u0164": 2884,
+        "u0183": 3169,
+        "u0252": 4466
+      }
+    },
+    {
+      "meeting": "IS1009b",
+      "input": "test\\input\\IS1009b.txt",
+      "gold": "test\\llm_golden\\IS1009b.json",
+      "input_sha256": "5e430f9188cd889bd6c74f906371955088b3b0e1fbee1874f8a36502dbf3f34d",
+      "source_sha256": "5254ad9e0170b21ca21cac16331a223e100b1cbfb479bb39ab60868a39565d6a",
+      "gold_sha256": "1e520e6bb4dde8d53e8cca2709328969b4d525b9b695d784393e502c10d0f779",
+      "utterances": 685,
+      "body_chars": 14301,
+      "gold_boundaries": 6,
+      "boundary_positions": [
+        28,
+        89,
+        182,
+        424,
+        503,
+        678
+      ],
+      "boundary_chars": {
+        "u0028": 496,
+        "u0089": 2197,
+        "u0182": 4078,
+        "u0424": 8869,
+        "u0503": 10782,
+        "u0678": 14355
+      }
+    },
+    {
+      "meeting": "IS1009c",
+      "input": "test\\input\\IS1009c.txt",
+      "gold": "test\\llm_golden\\IS1009c.json",
+      "input_sha256": "3619b6db0e2021526a53e5d314e11f2affe0067afd67c8f3d33ea53978adfa37",
+      "source_sha256": "354f3f339bd8f0cc932e00d931a225db3b64052ce5c9dc6dc4467be15c092206",
+      "gold_sha256": "5110cab489034364b0ab30da1ea99586d035efa5aece2ac2858cda0cd01823d4",
+      "utterances": 526,
+      "body_chars": 11674,
+      "gold_boundaries": 8,
+      "boundary_positions": [
+        70,
+        196,
+        370,
+        402,
+        446,
+        457,
+        462,
+        504
+      ],
+      "boundary_chars": {
+        "u0070": 1710,
+        "u0196": 4584,
+        "u0370": 8560,
+        "u0402": 9655,
+        "u0446": 10507,
+        "u0457": 10647,
+        "u0462": 10702,
+        "u0504": 11358
+      }
+    },
+    {
+      "meeting": "IS1009d",
+      "input": "test\\input\\IS1009d.txt",
+      "gold": "test\\llm_golden\\IS1009d.json",
+      "input_sha256": "747178aab91e47eeaaa1595fed91d7e30cdbecbe136cc7c29e8f9a1185114f32",
+      "source_sha256": "5ab4369601aa4fe40c1ac5c2a395ca89a27df82809297fa33bd6c5c88bd9e632",
+      "gold_sha256": "24bc49814dad1b53c4a9ab3854286b3f0debdaa61e7dd4a0d19f828f8451b9b3",
+      "utterances": 777,
+      "body_chars": 12284,
+      "gold_boundaries": 6,
+      "boundary_positions": [
+        51,
+        275,
+        309,
+        444,
+        685,
+        744
+      ],
+      "boundary_chars": {
+        "u0051": 1695,
+        "u0275": 4980,
+        "u0309": 5474,
+        "u0444": 6946,
+        "u0685": 11063,
+        "u0744": 11979
+      }
+    },
+    {
+      "meeting": "TS3003a",
+      "input": "test\\input\\TS3003a.txt",
+      "gold": "test\\llm_golden\\TS3003a.json",
+      "input_sha256": "cf3ba89c767474d5894ba1264ce767520fed9db68ed55b21e879f78d77b55bff",
+      "source_sha256": "ae4315a310a37e5e0d2ea88311bcc6ac5b585d9fba536c5f9dc56ed4aaa66afd",
+      "gold_sha256": "dcce2a144a5abd2dc3bb5a711879b1e75b64c597497774146f6e3951720643c7",
+      "utterances": 484,
+      "body_chars": 6881,
+      "gold_boundaries": 7,
+      "boundary_positions": [
+        80,
+        101,
+        321,
+        371,
+        423,
+        444,
+        466
+      ],
+      "boundary_chars": {
+        "u0080": 1359,
+        "u0101": 1946,
+        "u0321": 4710,
+        "u0371": 5500,
+        "u0423": 6288,
+        "u0444": 6526,
+        "u0466": 6775
+      }
+    },
+    {
+      "meeting": "TS3003b",
+      "input": "test\\input\\TS3003b.txt",
+      "gold": "test\\llm_golden\\TS3003b.json",
+      "input_sha256": "4a309512b7b2f0d130540858c7a2ce6878d56b46031df9c063ad9657cb7dc272",
+      "source_sha256": "2b8f9cb6c2cc8bb861582d8afb40369d76d61c66934fb8f70adeb34153864482",
+      "gold_sha256": "1eb59369988794ae6d13b1c8e9d8ca704d0c1967b8baded21bcef63a4fb8167b",
+      "utterances": 714,
+      "body_chars": 12364,
+      "gold_boundaries": 13,
+      "boundary_positions": [
+        13,
+        27,
+        51,
+        139,
+        248,
+        298,
+        343,
+        442,
+        535,
+        593,
+        634,
+        665,
+        698
+      ],
+      "boundary_chars": {
+        "u0013": 346,
+        "u0027": 535,
+        "u0051": 899,
+        "u0139": 2951,
+        "u0248": 4782,
+        "u0298": 5653,
+        "u0343": 6666,
+        "u0442": 8412,
+        "u0535": 9961,
+        "u0593": 10709,
+        "u0634": 11314,
+        "u0665": 11844,
+        "u0698": 12169
+      }
+    },
+    {
+      "meeting": "TS3003c",
+      "input": "test\\input\\TS3003c.txt",
+      "gold": "test\\llm_golden\\TS3003c.json",
+      "input_sha256": "5c0be49e33105b1d8efc9e0f11eb5a157ecfb2043b278ad4e498375c2f3088d4",
+      "source_sha256": "88ae26cbda42b8d3518fafca68cb7cc86da9971da6548d0526b9d643dcfb2f84",
+      "gold_sha256": "3d6c8660df902cc490784710130694cde5252f22d1e8e9cc15e3cf91918123d6",
+      "utterances": 726,
+      "body_chars": 12159,
+      "gold_boundaries": 11,
+      "boundary_positions": [
+        28,
+        49,
+        95,
+        162,
+        190,
+        265,
+        286,
+        336,
+        345,
+        465,
+        691
+      ],
+      "boundary_chars": {
+        "u0028": 583,
+        "u0049": 987,
+        "u0095": 2198,
+        "u0162": 3853,
+        "u0190": 4575,
+        "u0265": 5820,
+        "u0286": 6175,
+        "u0336": 7012,
+        "u0345": 7102,
+        "u0465": 8917,
+        "u0691": 11732
+      }
+    },
+    {
+      "meeting": "TS3003d",
+      "input": "test\\input\\TS3003d.txt",
+      "gold": "test\\llm_golden\\TS3003d.json",
+      "input_sha256": "9ffbbc47bd36d1cea1d7f32d12cd69a98e4a6237dee8793db19c3c2f2085fa71",
+      "source_sha256": "ce9ca108c4876712ab4277dbd51e46f5c0d0a9cd441b0935bb9fa47c5b320577",
+      "gold_sha256": "440f1e3a286a6c762f319b8340bdbbb10d846e0ca4d06dc105994470746a2bc5",
+      "utterances": 1025,
+      "body_chars": 14596,
+      "gold_boundaries": 5,
+      "boundary_positions": [
+        38,
+        150,
+        593,
+        776,
+        966
+      ],
+      "boundary_chars": {
+        "u0038": 762,
+        "u0150": 2573,
+        "u0593": 9332,
+        "u0776": 11567,
+        "u0966": 14006
+      }
+    },
+    {
+      "meeting": "TS3007a",
+      "input": "test\\input\\TS3007a.txt",
+      "gold": "test\\llm_golden\\TS3007a.json",
+      "input_sha256": "04d1cfb6664ca2823b8281edfb546ad9da9f759f69d9984c0028e9f4f60a779e",
+      "source_sha256": "8d86fac1ab3a2a965206f90674a97e38efb6232a08030c949b9424b2812124e6",
+      "gold_sha256": "5bf9f701fc3804e5657d7f556e7aabe783c4d5433bc57e1fb589e3f8531eaa4d",
+      "utterances": 655,
+      "body_chars": 9258,
+      "gold_boundaries": 5,
+      "boundary_positions": [
+        61,
+        87,
+        415,
+        437,
+        550
+      ],
+      "boundary_chars": {
+        "u0061": 1034,
+        "u0087": 1575,
+        "u0415": 5594,
+        "u0437": 6011,
+        "u0550": 7943
+      }
+    },
+    {
+      "meeting": "TS3007b",
+      "input": "test\\input\\TS3007b.txt",
+      "gold": "test\\llm_golden\\TS3007b.json",
+      "input_sha256": "f3f043698586baa5d14d4b2bcdc784d90c656a0d2c2e704a9771e0558929cbc8",
+      "source_sha256": "cf4f016841bcad882ddbb1ce0aecd37e625c9997b1237d4b8081effe6fbb625b",
+      "gold_sha256": "052f5b20dd33f50b133a5d96d332466c669ae94cc49c3eb4e73c4c67f11857fd",
+      "utterances": 973,
+      "body_chars": 16936,
+      "gold_boundaries": 8,
+      "boundary_positions": [
+        26,
+        48,
+        152,
+        289,
+        515,
+        631,
+        655,
+        851
+      ],
+      "boundary_chars": {
+        "u0026": 508,
+        "u0048": 1041,
+        "u0152": 3234,
+        "u0289": 5951,
+        "u0515": 10432,
+        "u0631": 12224,
+        "u0655": 12708,
+        "u0851": 15605
+      }
+    },
+    {
+      "meeting": "TS3007c",
+      "input": "test\\input\\TS3007c.txt",
+      "gold": "test\\llm_golden\\TS3007c.json",
+      "input_sha256": "b49293f24baf7cb7ba5bf49b17fe6d88cdb1004f0f4d0a37f986e927d09d35bf",
+      "source_sha256": "068ea4b865ebf3a718b1ee73a573900fd504c1d03a49964d6d3e1d3c4d9c001b",
+      "gold_sha256": "589259c84010f9da35297e85767aa2eb6872fb14384295a663226574443b5249",
+      "utterances": 972,
+      "body_chars": 18228,
+      "gold_boundaries": 12,
+      "boundary_positions": [
+        46,
+        233,
+        269,
+        336,
+        345,
+        472,
+        542,
+        677,
+        790,
+        809,
+        842,
+        908
+      ],
+      "boundary_chars": {
+        "u0046": 967,
+        "u0233": 4472,
+        "u0269": 4946,
+        "u0336": 5964,
+        "u0345": 6112,
+        "u0472": 8506,
+        "u0542": 10295,
+        "u0677": 13084,
+        "u0790": 15099,
+        "u0809": 15473,
+        "u0842": 16061,
+        "u0908": 17374
+      }
+    },
+    {
+      "meeting": "TS3007d",
+      "input": "test\\input\\TS3007d.txt",
+      "gold": "test\\llm_golden\\TS3007d.json",
+      "input_sha256": "878cdf76ef77115240be2f593aa5a7474d81f5865466e35d03437f00302a4407",
+      "source_sha256": "eba3d398b5c6f81cd129aabbf1b534a193546ae922594b68f5898e577a7965ac",
+      "gold_sha256": "acc72ad2a0546c04ab08f6cf602ed3d8282d064e934ee668968bea08faedaf49",
+      "utterances": 1483,
+      "body_chars": 21556,
+      "gold_boundaries": 5,
+      "boundary_positions": [
+        37,
+        221,
+        554,
+        894,
+        1282
+      ],
+      "boundary_chars": {
+        "u0037": 713,
+        "u0221": 4188,
+        "u0554": 8463,
+        "u0894": 12890,
+        "u1282": 18586
+      }
+    }
+  ]
+}
