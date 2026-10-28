@@ -1,0 +1,5 @@
+user_id,skill_id,level,updated_at
+person:TS3003:A,skill:project_coordination,2,2026-10-27
+person:TS3003:B,skill:user_interface_concept,2,2026-10-27
+person:TS3003:C,skill:industrial_design_components,2,2026-10-27
+person:TS3003:D,skill:marketing_trend_research,3,2026-10-27
