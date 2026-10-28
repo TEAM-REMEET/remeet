@@ -1,0 +1,111 @@
+{
+  "status": "complete",
+  "created_at": "2026-10-27T15:07:28.437898+09:00",
+  "model": "gpt-6-luna",
+  "settings": {
+    "base_url": "https://api.openai.com/v1/chat/completions",
+    "reasoning_effort": "low",
+    "max_completion_tokens": 16384,
+    "service_tier": "default",
+    "window_chars": 200,
+    "overlap_chars": 100,
+    "candidate_depth_threshold": 0.1
+  },
+  "pricing": {
+    "input": 0.1,
+    "output": 0.5,
+    "per_tokens": 1000000
+  },
+  "input_sha256": "5c0be49e33105b1d8efc9e0f11eb5a157ecfb2043b278ad4e498375c2f3088d4",
+  "gold_sha256_local_only": "3d6c8660df902cc490784710130694cde5252f22d1e8e9cc15e3cf91918123d6",
+  "selection_sha256": "21ba84f45b03792f7652e8d99719fda4ddebbf60b28abcc61cd19ef11ced8de7",
+  "system_prompt_sha256": "a1e311299a36b567c7398bc065baaf9438e945c64d3d524bd4fd2937c7783ab5",
+  "bundle_sha256": {
+    "baseline": "f96d86fa9529fdd42091d51065061cbf3757b11b94d28e50c71026d853a76003",
+    "merge_900": "2a2fb2faf39b12df104048715b5f1f33df4864ff8dd5cb328de615078afe4c3c",
+    "merge_1200": "bb5d9250bc05a359a6ec35f936903958a8756a0325974df12f4ac7e48bc376d5"
+  },
+  "counts": {
+    "baseline": {
+      "requests": 39,
+      "candidates": 39,
+      "context_chars": 23249
+    },
+    "merge_900": {
+      "requests": 26,
+      "candidates": 39,
+      "context_chars": 18108
+    },
+    "merge_1200": {
+      "requests": 16,
+      "candidates": 39,
+      "context_chars": 15809
+    }
+  },
+  "schedule_requests": 81,
+  "gold_in_api_payload": false,
+  "input_contract": "system prompt + numbered chunk source text + expected boundaries (nearest utterance start to each embedding candidate)",
+  "output_contract": "per request: one O/X judgment per expected boundary in the gold candidate fields; no position adjustment",
+  "expected_boundary_coverage": {
+    "expected_boundaries": [
+      14,
+      28,
+      35,
+      49,
+      54,
+      61,
+      68,
+      94,
+      137,
+      156,
+      167,
+      172,
+      180,
+      191,
+      230,
+      249,
+      267,
+      278,
+      305,
+      314,
+      334,
+      348,
+      368,
+      393,
+      420,
+      444,
+      477,
+      485,
+      501,
+      517,
+      533,
+      557,
+      583,
+      596,
+      616,
+      649,
+      669,
+      689,
+      710
+    ],
+    "gold_exact": [
+      28,
+      49
+    ],
+    "gold_within_3": [
+      28,
+      49,
+      95,
+      190,
+      265,
+      336,
+      345,
+      691
+    ]
+  },
+  "result_format": "results/<condition>/TS3003c.json in the test/llm_golden/TS3003c.json layout",
+  "meetings_sha256": "5f1aaa22ec65c35e9126e57434646e99fd9cc5f787b99133e61dd0996ece47e3",
+  "completed_requests": 81,
+  "failed_requests": {},
+  "completed_at": "2026-10-27T15:18:39.654386+09:00"
+}

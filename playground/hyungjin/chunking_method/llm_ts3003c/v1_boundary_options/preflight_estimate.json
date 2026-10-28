@@ -1,0 +1,6 @@
+{
+  "input_chars_including_system": 1107267,
+  "approx_input_tokens_chars_div_2": 553634,
+  "max_output_tokens": 1327104,
+  "max_cost_usd_at_output_cap": 0.6636
+}
