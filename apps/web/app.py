@@ -4,14 +4,18 @@
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import streamlit as st
 
-st.set_page_config(page_title="RE:MEET", page_icon="🗒️", layout="wide", initial_sidebar_state="collapsed")
+FAVICON = Path(__file__).parent / "assets" / "logo_header.svg"   
+st.set_page_config(page_title="RE:MEET", page_icon=str(FAVICON), layout="wide", initial_sidebar_state="collapsed")
 
-from core import auth, router  # noqa: E402
-from core.state import init_state, show_flash, tick_analysis  # noqa: E402
-from ui.layout import app_header, footer, public_header  # noqa: E402
-from ui.theme import inject_css  # noqa: E402
+
+from core import auth, router  
+from core.state import init_state, show_flash, tick_analysis 
+from ui.layout import app_header, footer, public_header  
+from ui.theme import inject_css  
 from views import dashboard, delivery, integrations, main, meetings as meetings_view, members, progress, register, review, search  # noqa: E402
 
 PAGES = {
@@ -38,7 +42,7 @@ def _page(name: str):
 
 def _render(name: str) -> None:
     router.sync(name)
-    if name != "main" and not auth.user():  # 로그인 전에는 메인으로
+    if name != "main" and not auth.user():  
         router.go_now("main")
     if name == "main":
         public_header()
@@ -56,7 +60,7 @@ def main_app() -> None:
     pages = {name: _page(name) for name in PAGES}
     current = st.navigation(list(pages.values()), position="hidden")
     target = router.pending()
-    if target:  # 콜백에서 router.go()로 요청한 이동 → 주소를 바꿔 브라우저 기록에 남깁니다
+    if target:  
         name, args = target
         st.switch_page(pages.get(name, pages["main"]), query_params=args or None)
     current.run()
