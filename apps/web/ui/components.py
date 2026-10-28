@@ -13,7 +13,8 @@ def html(markup: str, width: str | int = "stretch") -> None:
 
 
 def logo_html() -> str:
-    return f'<div class="logo"><img src="{logo_data_uri()}" width="26" height="26" alt="">RE<b>:</b>MEET</div>'
+    """사이트 로고(RE:MEET 글자 로고, assets/logo.svg)."""
+    return f'<div class="logo"><img src="{logo_data_uri()}" height="40" alt="RE:MEET"></div>'
 
 
 def status_badge(status: str) -> str:
