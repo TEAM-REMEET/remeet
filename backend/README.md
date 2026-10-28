@@ -15,7 +15,7 @@ python -m unittest discover -s backend/tests/unit -p "test_*.py"
 
 - 입력은 UTF-8 TXT, DOCX, HWPX를 지원한다. 문서의 문단·표 텍스트를 읽으며 이미지/OCR은 지원하지 않는다.
 - 메타데이터는 입력과 같은 위치의 `회의명.metadata.json`을 읽거나 `--metadata 경로`로 지정한다.
-- 기본 데이터는 `evals/datasets/TS3003c/`이다. 원본은 `playground/hyungjin/test/input/TS3003c.txt`이다.
+- 기본 데이터셋은 `evals/datasets/` 아래의 번역 회의 20개이다. 원본은 `playground/hyungjin/test/input/`에서 복사했고, 회의별 메타데이터 JSON도 함께 준비했다. 예: `python backend/run_base_agent.py evals/datasets/TS3003c/TS3003c.txt`.
 - 글자 수는 줄바꿈·공백을 포함한 Python 문자열 길이로 계산하며, 겹침 없이 나눈다.
 - 실행 결과는 `outputs/base-agent/회의명_실행시각/`에 저장한다. `--output 경로`로 새 폴더를 지정할 수 있으며 기존 폴더를 덮어쓰지 않는다.
 - `run.json`에는 성공/실패, 실패 단계, 모델, 사용량, 입력 해시를 기록한다. 프롬프트·분할 원문·청크 결과도 실행 폴더에 보관한다.
