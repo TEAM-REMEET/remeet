@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--chunk-size", type=int, default=1000)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    load_dotenv(ROOT.parent / ".env", override=False, encoding="utf-8-sig")
+    load_dotenv(ROOT / ".env", override=False, encoding="utf-8-sig")
     metadata_path = args.metadata or args.source.with_suffix(".metadata.json")
     metadata = json.loads(metadata_path.read_text(encoding="utf-8-sig")) if metadata_path.exists() else {}
     if args.metadata and not metadata_path.exists():
