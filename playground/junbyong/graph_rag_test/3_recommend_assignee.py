@@ -58,7 +58,7 @@ CATALOG_QUERIES = {
 # ASSIGNED_TO is matched in either direction because the meeting graph owns that edge.
 CANDIDATE_QUERY = """
     MATCH (u:Entity:User) WHERE u.source_type = $source
-    OPTIONAL MATCH (u)-[bt:BELONGS_TO]->(t:Entity:Team) WHERE bt.source_type = $source
+    OPTIONAL MATCH (u)-[bt:MEMBER_OF]->(t:Entity:Team) WHERE bt.source_type = $source
     OPTIONAL MATCH (u)-[hr:HAS_ROLE]->(r:Entity:Role) WHERE hr.source_type = $source
     WITH u,
         [x IN collect(DISTINCT {id: t.id, name: t.name}) WHERE x.id IS NOT NULL] AS teams,
@@ -374,6 +374,7 @@ def load_env(env_file: Path | None) -> bool:
         script_dir = Path(__file__).resolve().parent
         load_dotenv(script_dir / ".env", override=False)
         load_dotenv(script_dir.parent / ".env", override=False)
+        load_dotenv(script_dir.parents[2] / ".env", override=False)  # repo root
     return True
 
 
