@@ -25,7 +25,7 @@ SOURCE = "user_db_csv"
 # Fixed parameterized read: LLM output is never executed as Cypher.
 CONTEXT_QUERY = """
     MATCH (u:Entity:User) WHERE u.source_type = $source
-    OPTIONAL MATCH (u)-[bt:BELONGS_TO]->(t:Entity:Team)
+    OPTIONAL MATCH (u)-[bt:MEMBER_OF]->(t:Entity:Team)
     WHERE bt.source_type = $source
     OPTIONAL MATCH (u)-[hr:HAS_ROLE]->(r:Entity:Role)
     WHERE hr.source_type = $source
@@ -103,6 +103,7 @@ def main(argv=None) -> int:
         script_dir = Path(__file__).resolve().parent
         load_dotenv(script_dir / ".env", override=False)
         load_dotenv(script_dir.parent / ".env", override=False)
+        load_dotenv(script_dir.parents[2] / ".env", override=False)  # repo root
     if not os.getenv("OPENAI_API_KEY"):
         print("질의응답에 OPENAI_API_KEY가 필요합니다.", file=sys.stderr)
         return 2

@@ -55,7 +55,7 @@ NODE_QUERIES = {
 
 TEAM_LINK = """UNWIND $rows AS row
     MATCH (u:Entity:User {id: row.id}), (t:Entity:Team {id: row.team_id})
-    MERGE (u)-[r:BELONGS_TO {source_type: $source}]->(t)
+    MERGE (u)-[r:MEMBER_OF {source_type: $source}]->(t)
     RETURN count(r) AS written"""
 ROLE_LINK = """UNWIND $rows AS row
     MATCH (u:Entity:User {id: row.id}), (r:Entity:Role {id: row.role})
@@ -162,7 +162,7 @@ def import_dataset(tx, data: dict, batch_size: int) -> None:
         write(NODE_QUERIES[table], data[table])
     # Replace only this importer's relationships for the users in this CSV.
     # Nodes and relationships from other sources are retained.
-    tx.run("""MATCH (u:Entity:User)-[r:BELONGS_TO|HAS_ROLE|HAS_SKILL]->()
+    tx.run("""MATCH (u:Entity:User)-[r:MEMBER_OF|BELONGS_TO|HAS_ROLE|HAS_SKILL]->()
         WHERE u.id IN $ids AND r.source_type = $source DELETE r""",
         ids=[u["id"] for u in data["users"]], source=SOURCE).consume()
     write(TEAM_LINK, data["users"])
@@ -203,6 +203,7 @@ def main(argv=None) -> int:
         script_dir = Path(__file__).resolve().parent
         load_dotenv(script_dir / ".env", override=False)
         load_dotenv(script_dir.parent / ".env", override=False)
+        load_dotenv(script_dir.parents[2] / ".env", override=False)  # repo root
     password = os.getenv("NEO4J_PASSWORD")
     if not password and sys.stdin.isatty():
         password = getpass.getpass("Neo4j 비밀번호: ")

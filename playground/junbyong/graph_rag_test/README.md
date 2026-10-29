@@ -124,14 +124,14 @@ python 3_recommend_assignee.py --task "다음 회의 전까지 리모컨 시장 
 ## 4. Neo4j에 만들어지는 그래프
 
 ```
-(:Entity:User:Person:TeamMember) -[:BELONGS_TO]-> (:Entity:Team)
+(:Entity:User:Person:TeamMember) -[:MEMBER_OF]-> (:Entity:Team)
                                  -[:HAS_ROLE]---> (:Entity:Role)
                                  -[:HAS_SKILL {level}]-> (:Entity:Skill)
 ```
 
 | 관계 | 만드는 근거 | 관계 속성 |
 |---|---|---|
-| `BELONGS_TO` | `users.csv`의 `team_id` | `source_type` |
+| `MEMBER_OF` | `users.csv`의 `team_id` | `source_type` |
 | `HAS_ROLE` | `users.csv`의 `role` | `source_type` |
 | `HAS_SKILL` | `user_skills.csv`의 행 1개 = 관계 1개 | `level`, `proficiency`, `updated_at`, `verification_status='inferred_unverified'`, `source_file`, `source_type` |
 
