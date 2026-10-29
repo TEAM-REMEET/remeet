@@ -2,6 +2,23 @@
 
 ## 베이스 에이전트 실행
 
+실행 흐름은 LangGraph `StateGraph`로 구성한다.
+
+```text
+START -> prepare -> summarize -> extract_actions
+                       ^              |
+                       +-- 다음 청크 --+
+                                      |
+                                모든 청크 완료
+                                      v
+                               merge_summary -> save_results -> END
+```
+
+`prepare`는 입력·프롬프트 로드와 분할, `summarize`와 `extract_actions`는 현재 청크의 독립 추출,
+`merge_summary`는 최종 요약, `save_results`는 최종 파일 저장을 담당한다.
+노드 실행 중 예외는 기존과 같이 실패로 기록하며 자동 재시도하지 않는다.
+프로젝트 의존성에 LangGraph가 추가되었으므로 실행 환경에서 의존성을 설치해야 한다.
+
 프로젝트 루트(`remeet/`)에서 Python 3.12 이상으로 실행한다. 프로젝트 의존성인 `python-dotenv`를 사용한다.
 기본 모델은 기존 TS3003c 실험과 같은 `gpt-6-luna`이며, 추론 수준은 `low`이다.
 `remeet` 바로 상위 폴더의 `.env`를 자동으로 읽는다. 파일에 `OPENAI_API_KEY=본인의_API_키`를 설정한다.
