@@ -1,0 +1,5 @@
+user_id,name,is_active,position,team_id,role,email,created_at
+person:TS3003:A,Bart,true,,team:TS3003,role:PM,,2026-10-27
+person:TS3003:B,화자 B,true,,team:TS3003,role:UI,,2026-10-27
+person:TS3003:C,화자 C,true,,team:TS3003,role:ID,,2026-10-27
+person:TS3003:D,화자 D,true,,team:TS3003,role:ME,,2026-10-27
