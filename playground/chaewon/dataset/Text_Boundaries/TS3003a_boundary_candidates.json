@@ -1,0 +1,3795 @@
+{
+  "meeting_id": "TS3003a",
+  "metadata": {
+    "회의 대주제": "Real Reaction 신제품 TV 리모컨 개발 프로젝트 1차 회의 - 킥오프",
+    "참여자": "프로젝트 매니저, 산업 디자이너, UI 디자이너, 마케팅 담당자 (4명)",
+    "일시": "2004-10-11 (회의 길이 약 25분)"
+  },
+  "chunking": {
+    "unit": "chars",
+    "chunk_size": 200,
+    "chunk_overlap": 100,
+    "num_chunks": 64
+  },
+  "chunks": [
+    {
+      "text": "그럼 어\n좋은 아침입니다.\n안녕하세요.\n안녕하세요.\n안녕하세요.\n다들 자리를 찾으셨네요.\n다들 맞는 자리에 앉으셨죠? 네?\n네.\n그런 것 같네요.\n그럼\n어디 보자.\n먼저 제 소개를 할게요.\n어, 다들 저를 아시는지 모르겠어서,\n그래서\n저는 Bart예요,\n제 이름은 Frank예요.\n안녕하세요. 안녕하세요.\n저는.\nBart예요.\n안녕하세요.\n안녕하세요.",
+      "metadata": {
+        "chunk_index": 0,
+        "char_count": 196,
+        "utterance_start": 0,
+        "utterance_end": 20
+      }
+    },
+    {
+      "text": "어, 다들 저를 아시는지 모르겠어서,\n그래서\n저는 Bart예요,\n제 이름은 Frank예요.\n안녕하세요. 안녕하세요.\n저는.\nBart예요.\n안녕하세요.\n안녕하세요.\nBart예요.\n환영합니다.\n고마워요.\n어, 어디 보자. 어\n음, 간단한 발표로 시작할게요.\n어, 먼저 환경에 대해 조금 말씀드릴게요.\n여기 카메라가 몇 대 보이시죠.",
+      "metadata": {
+        "chunk_index": 1,
+        "char_count": 183,
+        "utterance_start": 12,
+        "utterance_end": 27
+      }
+    },
+    {
+      "text": "안녕하세요.\nBart예요.\n환영합니다.\n고마워요.\n어, 어디 보자. 어\n음, 간단한 발표로 시작할게요.\n어, 먼저 환경에 대해 조금 말씀드릴게요.\n여기 카메라가 몇 대 보이시죠.\n어, 그게 우리 행동을 녹화할 거고\n선이랑 마이크가 있어서 목소리를 녹음할 거예요.\n어, 저기에도 마이크가 몇 개 있는데\n음, 그건 너무 신경 쓰지 않으셔도 돼요,",
+      "metadata": {
+        "chunk_index": 2,
+        "char_count": 191,
+        "utterance_start": 20,
+        "utterance_end": 31
+      }
+    },
+    {
+      "text": "어, 그게 우리 행동을 녹화할 거고\n선이랑 마이크가 있어서 목소리를 녹음할 거예요.\n어, 저기에도 마이크가 몇 개 있는데\n음, 그건 너무 신경 쓰지 않으셔도 돼요,\n신경 쓰지 않으면 어, 의식에서 사라질 거예요.\n그래서\n프로젝트 문서 폴더가 있나요?\n이미 메모랑 문서가 좀 들어 있네요.\n어, 킥오프 발표부터 시작할게요.\n관리자가 수정 중입니다.",
+      "metadata": {
+        "chunk_index": 3,
+        "char_count": 193,
+        "utterance_start": 28,
+        "utterance_end": 37
+      }
+    },
+    {
+      "text": "그래서\n프로젝트 문서 폴더가 있나요?\n이미 메모랑 문서가 좀 들어 있네요.\n어, 킥오프 발표부터 시작할게요.\n관리자가 수정 중입니다.\n어, 좋아요.\n흠, 흥미롭네요.\n읽기 전용으로 하죠.\n음\n눈치채셨는지 모르겠지만 어, 우리는 Real Reaction에서 일하고 있어요.\n어, 전자 제품 회사예요.\n우리는 전자 제품에 패션을 입히고,\n어, 작동하게 만들고,",
+      "metadata": {
+        "chunk_index": 4,
+        "char_count": 199,
+        "utterance_start": 33,
+        "utterance_end": 45
+      }
+    },
+    {
+      "text": "음\n눈치채셨는지 모르겠지만 어, 우리는 Real Reaction에서 일하고 있어요.\n어, 전자 제품 회사예요.\n우리는 전자 제품에 패션을 입히고,\n어, 작동하게 만들고,\n어, 디자인과 제품 자체에 많은 노력을 기울여요.\n저는 프로젝트 매니저 Bart고\n프로젝트를 이끌어 갈 거예요.\n이게 우리 안건이에요.",
+      "metadata": {
+        "chunk_index": 5,
+        "char_count": 170,
+        "utterance_start": 41,
+        "utterance_end": 49
+      }
+    },
+    {
+      "text": "어, 작동하게 만들고,\n어, 디자인과 제품 자체에 많은 노력을 기울여요.\n저는 프로젝트 매니저 Bart고\n프로젝트를 이끌어 갈 거예요.\n이게 우리 안건이에요.\n어, 시작, 인사, 도구 사용 연습, 프로젝트 계획 설명, 마무리가 있어요.\n어, 앉아도 될 것 같네요,\n그러면 메모를 좀 할 수 있으니까요\n아니면\n어디 보자.",
+      "metadata": {
+        "chunk_index": 6,
+        "char_count": 178,
+        "utterance_start": 45,
+        "utterance_end": 54
+      }
+    },
+    {
+      "text": "어, 시작, 인사, 도구 사용 연습, 프로젝트 계획 설명, 마무리가 있어요.\n어, 앉아도 될 것 같네요,\n그러면 메모를 좀 할 수 있으니까요\n아니면\n어디 보자.\n가끔 회의록을 좀 적어 주실 수 있을까요.\n그럼요.\n그렇게 일이 많진 않아요,\n그냥 어, 적을 만한 게 들리면 적어 주세요.\n어, 보시다시피 어, 시작, 인사, 도구 사용 연습이에요.",
+      "metadata": {
+        "chunk_index": 7,
+        "char_count": 192,
+        "utterance_start": 50,
+        "utterance_end": 59
+      }
+    },
+    {
+      "text": "그럼요.\n그렇게 일이 많진 않아요,\n그냥 어, 적을 만한 게 들리면 적어 주세요.\n어, 보시다시피 어, 시작, 인사, 도구 사용 연습이에요.\n인사는 조금 했죠.\n음, 다들 회사 웹사이트는 보셨어요?\n네. 들어가 봤어요.\n네.\n네.\n거기서 잘못된 거 보셨어요?\n저는 하나 찾은 것 같아요.\n못 보셨어요?\n흠?\n그렇게 주의 깊게 보진 않았어요,",
+      "metadata": {
+        "chunk_index": 8,
+        "char_count": 190,
+        "utterance_start": 56,
+        "utterance_end": 69
+      }
+    },
+    {
+      "text": "음, 다들 회사 웹사이트는 보셨어요?\n네. 들어가 봤어요.\n네.\n네.\n거기서 잘못된 거 보셨어요?\n저는 하나 찾은 것 같아요.\n못 보셨어요?\n흠?\n그렇게 주의 깊게 보진 않았어요,\n이렇게 하면 되는지 볼게요.\n아니요, 여기선 안 되네요.\n좋아요, 문제없어요.\n그런데 음, 회사 정보 쪽에 Real Reaction 대신 Real Remote라고 되어 있었어요.",
+      "metadata": {
+        "chunk_index": 9,
+        "char_count": 200,
+        "utterance_start": 61,
+        "utterance_end": 73
+      }
+    },
+    {
+      "text": "이렇게 하면 되는지 볼게요.\n아니요, 여기선 안 되네요.\n좋아요, 문제없어요.\n그런데 음, 회사 정보 쪽에 Real Reaction 대신 Real Remote라고 되어 있었어요.\n아, 네.\nReal Remote는 우리 회사가 아니지만,\n그냥 작은 실수예요.\n그렇군요. 네.\n음, 좋아요,\n우리가 뭘 할 거냐면요?",
+      "metadata": {
+        "chunk_index": 10,
+        "char_count": 174,
+        "utterance_start": 70,
+        "utterance_end": 79
+      }
+    },
+    {
+      "text": "아, 네.\nReal Remote는 우리 회사가 아니지만,\n그냥 작은 실수예요.\n그렇군요. 네.\n음, 좋아요,\n우리가 뭘 할 거냐면요?\n어, 보시다시피 우리 프로젝트 목표는 새 리모컨이에요.\n독창적이고 트렌디하고 사용하기 쉬워야 해요.\n그래서 어, 여러분을 채용한 이유가 이거예요.\n어, 트렌디하고 사용하기 쉬운 외관을 위해 마케팅 전문가가 있고요.\n네.",
+      "metadata": {
+        "chunk_index": 11,
+        "char_count": 197,
+        "utterance_start": 74,
+        "utterance_end": 84
+      }
+    },
+    {
+      "text": "독창적이고 트렌디하고 사용하기 쉬워야 해요.\n그래서 어, 여러분을 채용한 이유가 이거예요.\n어, 트렌디하고 사용하기 쉬운 외관을 위해 마케팅 전문가가 있고요.\n네.\n그리고 산업 디자이너는 어, 사용 편의성과 약간의 독창성을 맡고요.\n그리고 UI 디자이너가 있어요.\n네.\n그도 어\n새 리모컨에 대해선 그 정도예요.",
+      "metadata": {
+        "chunk_index": 12,
+        "char_count": 174,
+        "utterance_start": 81,
+        "utterance_end": 89
+      }
+    },
+    {
+      "text": "네.\n그리고 산업 디자이너는 어, 사용 편의성과 약간의 독창성을 맡고요.\n그리고 UI 디자이너가 있어요.\n네.\n그도 어\n새 리모컨에 대해선 그 정도예요.\n어, 프로젝트 방법은 음, 어, 세 단계를 거치게 돼요.\n첫째는 기능 설계, 어, 각자 작업, 회의예요.\n기능 설계 다음에 콘셉트 설계와 상세 설계가 있어요.\n여기 역할 안내를 좀 적어 뒀는데요.",
+      "metadata": {
+        "chunk_index": 13,
+        "char_count": 195,
+        "utterance_start": 84,
+        "utterance_end": 93
+      }
+    },
+    {
+      "text": "첫째는 기능 설계, 어, 각자 작업, 회의예요.\n기능 설계 다음에 콘셉트 설계와 상세 설계가 있어요.\n여기 역할 안내를 좀 적어 뒀는데요.\n이미 다 알고 계실 것 같아요.\n산업 디자이너는 작동 설계, 어, 부품 설계, 그리고 외관과 느낌 디자인을 조금 맡을 거예요.",
+      "metadata": {
+        "chunk_index": 14,
+        "char_count": 148,
+        "utterance_start": 91,
+        "utterance_end": 95
+      }
+    },
+    {
+      "text": "여기 역할 안내를 좀 적어 뒀는데요.\n이미 다 알고 계실 것 같아요.\n산업 디자이너는 작동 설계, 어, 부품 설계, 그리고 외관과 느낌 디자인을 조금 맡을 거예요.\n어, UI 디자이너는 기술적 기능 설계, 사용자 인터페이스 콘셉트, 사용자 인터페이스 디자인을 할 거고요.",
+      "metadata": {
+        "chunk_index": 15,
+        "char_count": 151,
+        "utterance_start": 93,
+        "utterance_end": 96
+      }
+    },
+    {
+      "text": "어, UI 디자이너는 기술적 기능 설계, 사용자 인터페이스 콘셉트, 사용자 인터페이스 디자인을 할 거고요.\n그리고 마케팅 전문가는 사용자 요구 사항 명세, 트렌드 관찰, 제품 어, 평가를 조금씩 할 거예요.\n그게 여러분이 할 일의 대략이에요.\n하지만 그건 어, 다른 회의에서 다 정리될 거예요.\n그다음에 첫 도구 사용 연습이 있어요.",
+      "metadata": {
+        "chunk_index": 16,
+        "char_count": 186,
+        "utterance_start": 96,
+        "utterance_end": 100
+      }
+    },
+    {
+      "text": "그게 여러분이 할 일의 대략이에요.\n하지만 그건 어, 다른 회의에서 다 정리될 거예요.\n그다음에 첫 도구 사용 연습이 있어요.\n여기서 첨단 도구를 많이 쓸 거라서,\n먼저 연습을 좀 해 두면 편해요.\n보시다시피 여기랑 여기 화이트보드에 스마트보드가 있어요.\n음, 여기 화이트보드 이쪽에 작은 도구 모음이 있어요.\n여기 기능들이 있고요.\n저장할 수 있어요.\n그",
+      "metadata": {
+        "chunk_index": 17,
+        "char_count": 199,
+        "utterance_start": 98,
+        "utterance_end": 107
+      }
+    },
+    {
+      "text": "보시다시피 여기랑 여기 화이트보드에 스마트보드가 있어요.\n음, 여기 화이트보드 이쪽에 작은 도구 모음이 있어요.\n여기 기능들이 있고요.\n저장할 수 있어요.\n그\n어, 이 기능들은 우리랑 상관없고,\n되돌리기만, 그림 일부를 되돌릴 수 있어요.\n사람마다 빈 새 문서요.\n어, 펜을 고르고,\n지우개.\n캡처는 우리가 쓸 일 없어요.",
+      "metadata": {
+        "chunk_index": 18,
+        "char_count": 180,
+        "utterance_start": 103,
+        "utterance_end": 113
+      }
+    },
+    {
+      "text": "그\n어, 이 기능들은 우리랑 상관없고,\n되돌리기만, 그림 일부를 되돌릴 수 있어요.\n사람마다 빈 새 문서요.\n어, 펜을 고르고,\n지우개.\n캡처는 우리가 쓸 일 없어요.\n어, 그다음에 펜이 있어요. 이 펜이요.\n정말 재밌는데\n네.\n이걸로 이 페이지에 그릴 수 있거든요, 음, 그런 형태로요.\n현재 색이랑 선 굵기도 고를 수 있어요.\n흠.",
+      "metadata": {
+        "chunk_index": 19,
+        "char_count": 187,
+        "utterance_start": 107,
+        "utterance_end": 119
+      }
+    },
+    {
+      "text": "어, 그다음에 펜이 있어요. 이 펜이요.\n정말 재밌는데\n네.\n이걸로 이 페이지에 그릴 수 있거든요, 음, 그런 형태로요.\n현재 색이랑 선 굵기도 고를 수 있어요.\n흠.\n그런데 먼저 펜 기능을 선택해야 해요.\n그래도 곧 이걸로 작업해 볼 거예요.\n그럼 좋아요. 어\n아주 간단하고\n거기에 알아낸 것이나 그림을 그리기 쉬워요.\n어, 그다음은 문서에 대해 짧게요.",
+      "metadata": {
+        "chunk_index": 20,
+        "char_count": 199,
+        "utterance_start": 114,
+        "utterance_end": 125
+      }
+    },
+    {
+      "text": "그래도 곧 이걸로 작업해 볼 거예요.\n그럼 좋아요. 어\n아주 간단하고\n거기에 알아낸 것이나 그림을 그리기 쉬워요.\n어, 그다음은 문서에 대해 짧게요.\n공유 폴더가 있어요,\n프로젝트, 프로젝트\n뭐였죠?\n프로젝트 문서였던 것 같아요.\n그래도 다들 이미 찾으셨을 거예요\n이미 문서가 많이 들어 있으니까,\n괜찮을 거예요.\n그리고 이건 스마트보드에서도 쓸 수 있어요,",
+      "metadata": {
+        "chunk_index": 21,
+        "char_count": 200,
+        "utterance_start": 121,
+        "utterance_end": 133
+      }
+    },
+    {
+      "text": "뭐였죠?\n프로젝트 문서였던 것 같아요.\n그래도 다들 이미 찾으셨을 거예요\n이미 문서가 많이 들어 있으니까,\n괜찮을 거예요.\n그리고 이건 스마트보드에서도 쓸 수 있어요,\n그러니까 보여 주고 싶은 문서가 있으면 폴더에서 열기만 하면 돼요.\n좋아요.\n네.\n여기 간단한 도구 모음이 있어요.\n방금 말씀드린 건데,\n저장, 인쇄, 한 페이지 앞뒤로 이동이에요.",
+      "metadata": {
+        "chunk_index": 22,
+        "char_count": 195,
+        "utterance_start": 128,
+        "utterance_end": 139
+      }
+    },
+    {
+      "text": "좋아요.\n네.\n여기 간단한 도구 모음이 있어요.\n방금 말씀드린 건데,\n저장, 인쇄, 한 페이지 앞뒤로 이동이에요.\n여러 그림 사이를 오갈 수 있어요.\n그리고 화이트보드를 써 볼 거예요.\n그래서\n보시다시피 다들 동물을 하나씩 그릴 거예요. 그냥 어, 어, 좀 익숙해지려고요.\n마우스가 도망가진 않았네요.\n흥미롭네요.\n누가 마우스를 만지고 있나요?\n아니죠.",
+      "metadata": {
+        "chunk_index": 23,
+        "char_count": 197,
+        "utterance_start": 135,
+        "utterance_end": 147
+      }
+    },
+    {
+      "text": "그래서\n보시다시피 다들 동물을 하나씩 그릴 거예요. 그냥 어, 어, 좀 익숙해지려고요.\n마우스가 도망가진 않았네요.\n흥미롭네요.\n누가 마우스를 만지고 있나요?\n아니죠.\n좋아요.\n무죄예요.\n어, 동물을 그릴 거예요.\n그리고 어, 그 동물이 좋은 특징 몇 가지를 정리하는 거예요.\n음, 신경 쓸 건 다른 색과 다른 선 굵기를 쓰는 것뿐이에요.\n어, 그게",
+      "metadata": {
+        "chunk_index": 24,
+        "char_count": 195,
+        "utterance_start": 142,
+        "utterance_end": 153
+      }
+    },
+    {
+      "text": "무죄예요.\n어, 동물을 그릴 거예요.\n그리고 어, 그 동물이 좋은 특징 몇 가지를 정리하는 거예요.\n음, 신경 쓸 건 다른 색과 다른 선 굵기를 쓰는 것뿐이에요.\n어, 그게\n지금 시작해도 되겠네요. 제가 할게요.\n이 펜은 어린아이처럼 잡고 쓰면 돼요.\n이렇게 잡으면 센서가 가려져서\n그림이 제대로 안 그려지거든요.\n좋아요.\n네.",
+      "metadata": {
+        "chunk_index": 25,
+        "char_count": 183,
+        "utterance_start": 149,
+        "utterance_end": 159
+      }
+    },
+    {
+      "text": "어, 그게\n지금 시작해도 되겠네요. 제가 할게요.\n이 펜은 어린아이처럼 잡고 쓰면 돼요.\n이렇게 잡으면 센서가 가려져서\n그림이 제대로 안 그려지거든요.\n좋아요.\n네.\n또 하나는 좀 천천히 해야 한다는 거예요.\n정말 빨리 그리면 음, 펜이 따라오질 못하거든요.\n그래서\n현재 색 형식을 고르고\n어, 회색이 적당할 것 같네요.\n그다음은 선 굵기.",
+      "metadata": {
+        "chunk_index": 26,
+        "char_count": 190,
+        "utterance_start": 153,
+        "utterance_end": 165
+      }
+    },
+    {
+      "text": "네.\n또 하나는 좀 천천히 해야 한다는 거예요.\n정말 빨리 그리면 음, 펜이 따라오질 못하거든요.\n그래서\n현재 색 형식을 고르고\n어, 회색이 적당할 것 같네요.\n그다음은 선 굵기.\n7이 좋을 것 같아요.\n이제 제 그림 실력을 보시겠네요.\n별로 대단하진 않지만,\n그래도 어\n어, 보세요\n정말 천천히 해야 해요.\n오\n그럼요.\n아\n돌고래를 그리려고 했는데,",
+      "metadata": {
+        "chunk_index": 27,
+        "char_count": 196,
+        "utterance_start": 159,
+        "utterance_end": 175
+      }
+    },
+    {
+      "text": "7이 좋을 것 같아요.\n이제 제 그림 실력을 보시겠네요.\n별로 대단하진 않지만,\n그래도 어\n어, 보세요\n정말 천천히 해야 해요.\n오\n그럼요.\n아\n돌고래를 그리려고 했는데,\n코가 좀 더\n그래도 비슷하네요.\n저는 황새치가 떠오르는데요.\n그러니까 뭐\n네. 네.\n네, 이건 좀 황새치 같네요.\n네,\n눈이 없네요.\n음.\n워.\n이제 다른 기능이 있어요.",
+      "metadata": {
+        "chunk_index": 28,
+        "char_count": 191,
+        "utterance_start": 166,
+        "utterance_end": 186
+      }
+    },
+    {
+      "text": "코가 좀 더\n그래도 비슷하네요.\n저는 황새치가 떠오르는데요.\n그러니까 뭐\n네. 네.\n네, 이건 좀 황새치 같네요.\n네,\n눈이 없네요.\n음.\n워.\n이제 다른 기능이 있어요.\n지우개가 있어요.\n그리고 되돌리기로\n이걸 쉽게 할 수 있어요.\n.\n고기.\n아, 괜찮아요.\n그리고 특징을 몇 가지 적어야 해요.\n어, 그게\n텍스트 도구는 없네요, 없어요. 어.\n좋아요.",
+      "metadata": {
+        "chunk_index": 29,
+        "char_count": 198,
+        "utterance_start": 176,
+        "utterance_end": 196
+      }
+    },
+    {
+      "text": "그리고 되돌리기로\n이걸 쉽게 할 수 있어요.\n.\n고기.\n아, 괜찮아요.\n그리고 특징을 몇 가지 적어야 해요.\n어, 그게\n텍스트 도구는 없네요, 없어요. 어.\n좋아요.\n이건 전형적인 되돌리기 동작인 것 같아요.\n네.\n펜.\n좀 거꾸로 잡아야 할 수도 있어요.\n그런 것 같아요\n이렇게 하려고 하면 줄무늬가 되거든요.\n그런데 잘 모르겠어요,\n그냥 해 보는 거예요.",
+      "metadata": {
+        "chunk_index": 30,
+        "char_count": 199,
+        "utterance_start": 188,
+        "utterance_end": 204
+      }
+    },
+    {
+      "text": "네.\n펜.\n좀 거꾸로 잡아야 할 수도 있어요.\n그런 것 같아요\n이렇게 하려고 하면 줄무늬가 되거든요.\n그런데 잘 모르겠어요,\n그냥 해 보는 거예요.\n이건 제 일이 아니에요,\n좋아요.\n흠.\n아마 써야 할 건\n아.\n어. 제 생각엔 이게\n다른 동물을 그리고 싶은가 봐요?\n모르겠네요.\n재미로 살아요.\n그래서\n이게 돌고래에 대한 제 어, 특징이에요. 재미로 산다.",
+      "metadata": {
+        "chunk_index": 31,
+        "char_count": 199,
+        "utterance_start": 198,
+        "utterance_end": 215
+      }
+    },
+    {
+      "text": "흠.\n아마 써야 할 건\n아.\n어. 제 생각엔 이게\n다른 동물을 그리고 싶은가 봐요?\n모르겠네요.\n재미로 살아요.\n그래서\n이게 돌고래에 대한 제 어, 특징이에요. 재미로 산다.\n좋아요.\n그럼\n좋아요.\n이제 새 빈 페이지에서 펜을 넘겨 드릴게요.\n하세요.\n고마워요.\n좋아요.\n다른 선 굵기를 쓸게요.\n그리고 검은색으로 그릴게요.\n됐어요.\n네,",
+      "metadata": {
+        "chunk_index": 32,
+        "char_count": 189,
+        "utterance_start": 207,
+        "utterance_end": 226
+      }
+    },
+    {
+      "text": "좋아요.\n그럼\n좋아요.\n이제 새 빈 페이지에서 펜을 넘겨 드릴게요.\n하세요.\n고마워요.\n좋아요.\n다른 선 굵기를 쓸게요.\n그리고 검은색으로 그릴게요.\n됐어요.\n네,\n제가 그림을 별로 못 그리지만,\n해 볼게요.\n선 굵기가 가는 게 그리기 더 쉬운 것 같아요.\n흠.\n저보다 훨씬 잘 되고 있잖아요.\n양이네요.\n음.\n좋아요.\n이게 제 음, 흠.\n양이에요.\n좋네요.",
+      "metadata": {
+        "chunk_index": 33,
+        "char_count": 200,
+        "utterance_start": 216,
+        "utterance_end": 237
+      }
+    },
+    {
+      "text": "해 볼게요.\n선 굵기가 가는 게 그리기 더 쉬운 것 같아요.\n흠.\n저보다 훨씬 잘 되고 있잖아요.\n양이네요.\n음.\n좋아요.\n이게 제 음, 흠.\n양이에요.\n좋네요.\n물론\n엉덩이에 늘 칠해 두는 작은 파란 점도 있어요.\n어.\n진짜 죽은 양이네요,\n됐어요.\n네.\n네.\n구별하려고요,\n네, 그렇군요.\n음, 어디에 이름도 좀 써 주시겠어요.\n네.\n그냥\n양들은\n어서.",
+      "metadata": {
+        "chunk_index": 34,
+        "char_count": 199,
+        "utterance_start": 228,
+        "utterance_end": 251
+      }
+    },
+    {
+      "text": "어.\n진짜 죽은 양이네요,\n됐어요.\n네.\n네.\n구별하려고요,\n네, 그렇군요.\n음, 어디에 이름도 좀 써 주시겠어요.\n네.\n그냥\n양들은\n어서.\n글씨 쓸 때는 정말 천천히 해야 해요.\n네.\n양은 훌륭한 동물이에요.\n그리고 이건 그냥 저를 나타내는 작은 거예요.\n그래서.\nUI 디자이너한테 펜을 넘길게요.\n좋아요.\n좋네요.\n음, 저는 어, 머리만 그릴게요,",
+      "metadata": {
+        "chunk_index": 35,
+        "char_count": 196,
+        "utterance_start": 240,
+        "utterance_end": 260
+      }
+    },
+    {
+      "text": "네.\n양은 훌륭한 동물이에요.\n그리고 이건 그냥 저를 나타내는 작은 거예요.\n그래서.\nUI 디자이너한테 펜을 넘길게요.\n좋아요.\n좋네요.\n음, 저는 어, 머리만 그릴게요,\n그런데 음\n어디 보자.\n음. 어.\n좋아요.\n흥미롭네요.\n귀엽네요.\n네.\n이게 뭔지 아세요?\n아니면 누군지?\n토끼요?\n가필드요.\n아, 네, 맞아요.\n가필드. 네.\n그냥\n음. 맞혀 보세요.",
+      "metadata": {
+        "chunk_index": 36,
+        "char_count": 199,
+        "utterance_start": 253,
+        "utterance_end": 275
+      }
+    },
+    {
+      "text": "어디 보자.\n음. 어.\n좋아요.\n흥미롭네요.\n귀엽네요.\n네.\n이게 뭔지 아세요?\n아니면 누군지?\n토끼요?\n가필드요.\n아, 네, 맞아요.\n가필드. 네.\n그냥\n음. 맞혀 보세요.\n그래서 어\n네. 이 정도면 됐어요.\n음, 빈 페이지라고 하셨죠,\n아니면\n네, 그냥 빈 페이지요.\n좋아요.\n음\n저도 고양이를 그리려고 했는데,\n그래서.\n다른 걸 해 볼게요.\n아니요.",
+      "metadata": {
+        "chunk_index": 37,
+        "char_count": 198,
+        "utterance_start": 262,
+        "utterance_end": 286
+      }
+    },
+    {
+      "text": "그래서 어\n네. 이 정도면 됐어요.\n음, 빈 페이지라고 하셨죠,\n아니면\n네, 그냥 빈 페이지요.\n좋아요.\n음\n저도 고양이를 그리려고 했는데,\n그래서.\n다른 걸 해 볼게요.\n아니요.\n가필드와는 다른 걸로요.\n제 건 좀 더 말랐어요.\n네,\n꽤 마른 고양이네요.\n네.\n그런데 어\n그리고 꼬리가 정말 독특하네요.\n당신 고양이예요,\n아니면 길에서 데려왔어요?\n음,",
+      "metadata": {
+        "chunk_index": 38,
+        "char_count": 198,
+        "utterance_start": 276,
+        "utterance_end": 296
+      }
+    },
+    {
+      "text": "가필드와는 다른 걸로요.\n제 건 좀 더 말랐어요.\n네,\n꽤 마른 고양이네요.\n네.\n그런데 어\n그리고 꼬리가 정말 독특하네요.\n당신 고양이예요,\n아니면 길에서 데려왔어요?\n음,\n고양이라고 그린 거예요.\n저는 고양이를 좋아해요\n어, 독립적이라서요.\n아.\n펜이요.\n그래서.\n좋아요.\n꽤 분명하네요.\n그럼\n이제 다들 화이트보드 쓰는 법 아시죠?\n그러니까\n네.",
+      "metadata": {
+        "chunk_index": 39,
+        "char_count": 196,
+        "utterance_start": 287,
+        "utterance_end": 308
+      }
+    },
+    {
+      "text": "고양이라고 그린 거예요.\n저는 고양이를 좋아해요\n어, 독립적이라서요.\n아.\n펜이요.\n그래서.\n좋아요.\n꽤 분명하네요.\n그럼\n이제 다들 화이트보드 쓰는 법 아시죠?\n그러니까\n네.\n아이디어가 있거나 화이트보드에 뭘 그리고 싶으면 말씀하시고\n펜이요.\n하시면 돼요.\n꽤 어, 쉬워요.\n네.\n그\n귀신이 들렸나 봐요.\n귀신 들린 화이트보드네요.\n그래서",
+      "metadata": {
+        "chunk_index": 40,
+        "char_count": 190,
+        "utterance_start": 297,
+        "utterance_end": 317
+      }
+    },
+    {
+      "text": "그러니까\n네.\n아이디어가 있거나 화이트보드에 뭘 그리고 싶으면 말씀하시고\n펜이요.\n하시면 돼요.\n꽤 어, 쉬워요.\n네.\n그\n귀신이 들렸나 봐요.\n귀신 들린 화이트보드네요.\n그래서\n도구 어, 소개는 끝났어요.\n우리는\n프로젝트 재무로 넘어가죠.\n음, 보시다시피 우리 리모컨의 판매 가격은 어, 25유로예요. 판매 가격이요.\n어, 목표 수익은 5천만 유로예요.",
+      "metadata": {
+        "chunk_index": 41,
+        "char_count": 198,
+        "utterance_start": 307,
+        "utterance_end": 322
+      }
+    },
+    {
+      "text": "도구 어, 소개는 끝났어요.\n우리는\n프로젝트 재무로 넘어가죠.\n음, 보시다시피 우리 리모컨의 판매 가격은 어, 25유로예요. 판매 가격이요.\n어, 목표 수익은 5천만 유로예요.\n어, 그게 리모컨으로 최소한 벌어야 하는 금액이라서,\n목표를 달성하려면 함께 일해야 해요.\n어, 국제적으로 할 수 있으니까,",
+      "metadata": {
+        "chunk_index": 42,
+        "char_count": 168,
+        "utterance_start": 318,
+        "utterance_end": 325
+      }
+    },
+    {
+      "text": "어, 목표 수익은 5천만 유로예요.\n어, 그게 리모컨으로 최소한 벌어야 하는 금액이라서,\n목표를 달성하려면 함께 일해야 해요.\n어, 국제적으로 할 수 있으니까,\n다양한 사용자, 다양한 문화, 다양한 트렌드에도 초점을 맞춰야 해요.\n음, 그건 다 나중 단계의 일이에요.\n생산 비용은 음, 최대 12.5유로라서,\n그것도 염두에 둬야 할 점이에요,",
+      "metadata": {
+        "chunk_index": 43,
+        "char_count": 191,
+        "utterance_start": 322,
+        "utterance_end": 329
+      }
+    },
+    {
+      "text": "음, 그건 다 나중 단계의 일이에요.\n생산 비용은 음, 최대 12.5유로라서,\n그것도 염두에 둬야 할 점이에요,\n리모컨 안에 작은 TV 같은 걸 넣지는 않을 거라는 거죠.\n그건 안 돼요.\n그래서",
+      "metadata": {
+        "chunk_index": 44,
+        "char_count": 108,
+        "utterance_start": 327,
+        "utterance_end": 332
+      }
+    },
+    {
+      "text": "생산 비용은 음, 최대 12.5유로라서,\n그것도 염두에 둬야 할 점이에요,\n리모컨 안에 작은 TV 같은 걸 넣지는 않을 거라는 거죠.\n그건 안 돼요.\n그래서\n이 점들을 기억해 주세요. 판매 가격 25, 목표 수익 5천만, 음, 하지만 더 중요한 건 우리가 노리는 국제 시장이고요. 그리고 생산 비용은 어, 최대 12.5유로.\n그래서",
+      "metadata": {
+        "chunk_index": 45,
+        "char_count": 185,
+        "utterance_start": 328,
+        "utterance_end": 334
+      }
+    },
+    {
+      "text": "이 점들을 기억해 주세요. 판매 가격 25, 목표 수익 5천만, 음, 하지만 더 중요한 건 우리가 노리는 국제 시장이고요. 그리고 생산 비용은 어, 최대 12.5유로.\n그래서\n이제 간단한 논의로 넘어가죠.\n논의할 시간이 5분에서 10분 정도 남았어요.\n그러니까\n저는 앉을게요.\n그게 더 편하네요.\n네,\n메시지가 왔네요.\n메시지가 왔어요.\n5분이요.",
+      "metadata": {
+        "chunk_index": 46,
+        "char_count": 194,
+        "utterance_start": 333,
+        "utterance_end": 343
+      }
+    },
+    {
+      "text": "그래서\n이제 간단한 논의로 넘어가죠.\n논의할 시간이 5분에서 10분 정도 남았어요.\n그러니까\n저는 앉을게요.\n그게 더 편하네요.\n네,\n메시지가 왔네요.\n메시지가 왔어요.\n5분이요.\n5분이요, 좋아요.\n좋아요,\n어, 타이밍이 좋네요.\n그런데\n그냥 딴 얘기인데, 제 노트북이 왜 까만 화면만 나오죠?\n음?\n어, 마법의 주문을 말해야 할지도요.\n네. 그렇겠죠.",
+      "metadata": {
+        "chunk_index": 47,
+        "char_count": 198,
+        "utterance_start": 334,
+        "utterance_end": 351
+      }
+    },
+    {
+      "text": "5분이요, 좋아요.\n좋아요,\n어, 타이밍이 좋네요.\n그런데\n그냥 딴 얘기인데, 제 노트북이 왜 까만 화면만 나오죠?\n음?\n어, 마법의 주문을 말해야 할지도요.\n네. 그렇겠죠.\n뭐 반응이 있어요?\n없어요.\n그냥 덮었다가? 음, 다시 열어 보세요.\n슬라이드 쇼가 없네요. 흠.\n이제 꺼졌어요.\n꺼졌네요.\n이제 다시 켜야\n아, 네.\n괜찮을 것 같아요.\n음,",
+      "metadata": {
+        "chunk_index": 48,
+        "char_count": 196,
+        "utterance_start": 344,
+        "utterance_end": 361
+      }
+    },
+    {
+      "text": "뭐 반응이 있어요?\n없어요.\n그냥 덮었다가? 음, 다시 열어 보세요.\n슬라이드 쇼가 없네요. 흠.\n이제 꺼졌어요.\n꺼졌네요.\n이제 다시 켜야\n아, 네.\n괜찮을 것 같아요.\n음,\n켜져 있었는데,\n그런데\n음\n노트북이 다 그렇죠.\n아,\n됐네요.\n좋아요.\n좋아요. 그런데 음",
+      "metadata": {
+        "chunk_index": 49,
+        "char_count": 149,
+        "utterance_start": 352,
+        "utterance_end": 369
+      }
+    },
+    {
+      "text": "이제 꺼졌어요.\n꺼졌네요.\n이제 다시 켜야\n아, 네.\n괜찮을 것 같아요.\n음,\n켜져 있었는데,\n그런데\n음\n노트북이 다 그렇죠.\n아,\n됐네요.\n좋아요.\n좋아요. 그런데 음\n다들 음, 리모컨 써 본 경험 있으시죠, 그러니까 일반 리모컨 말고 좀 다른 것, 다른 용도로 쓸 수 있는 것 같은 거요?\n음.\n아, 그래요?\n없어요?\n흠.\n당신은요?\n음,\n저희 집에는",
+      "metadata": {
+        "chunk_index": 50,
+        "char_count": 198,
+        "utterance_start": 356,
+        "utterance_end": 377
+      }
+    },
+    {
+      "text": "음.\n아, 그래요?\n없어요?\n흠.\n당신은요?\n음,\n저희 집에는\n아니요, 저도 없어요.\n그게\n집에 꽤 큰 TV랑 DVD 플레이어가 있어서,\n리모컨이 엄청 많아요, TV용, 비디오용, DVD 플레이어용이요.\n아, 네.\n그래서 전부 조작할 수 있는 리모컨 하나를 만드는 게 제일 좋을 것 같아요.\n네. 네\n그럼요. 네.\n저는 집에 하나 있어요.",
+      "metadata": {
+        "chunk_index": 51,
+        "char_count": 189,
+        "utterance_start": 371,
+        "utterance_end": 386
+      }
+    },
+    {
+      "text": "아, 네.\n그래서 전부 조작할 수 있는 리모컨 하나를 만드는 게 제일 좋을 것 같아요.\n네. 네\n그럼요. 네.\n저는 집에 하나 있어요.\n그리고 어, 기기를 여덟 개쯤 프로그래밍할 수 있어서,\nTV든 뭐든 쓸 수 있어요.\n그렇군요, 네. 네.\n그리고 적외선으로도 작동해서,\n방 안에 작은 장치를 둬야 하는데,\n그러면 3층이나 2층에서도 조작할 수 있어요.",
+      "metadata": {
+        "chunk_index": 52,
+        "char_count": 197,
+        "utterance_start": 382,
+        "utterance_end": 392
+      }
+    },
+    {
+      "text": "TV든 뭐든 쓸 수 있어요.\n그렇군요, 네. 네.\n그리고 적외선으로도 작동해서,\n방 안에 작은 장치를 둬야 하는데,\n그러면 3층이나 2층에서도 조작할 수 있어요.\n그렇군요, 네.\n아\n정말요.\n그러니까 비디오나 DVD 플레이어가 아래층에 있고 2층 TV에 연결돼 있으면 꽤 편리해요. 그러니까 꽤 편리한 음\n흠.\n아.\n네.\n음.\n물건이에요.\n음, 그런데",
+      "metadata": {
+        "chunk_index": 53,
+        "char_count": 196,
+        "utterance_start": 388,
+        "utterance_end": 402
+      }
+    },
+    {
+      "text": "아\n정말요.\n그러니까 비디오나 DVD 플레이어가 아래층에 있고 2층 TV에 연결돼 있으면 꽤 편리해요. 그러니까 꽤 편리한 음\n흠.\n아.\n네.\n음.\n물건이에요.\n음, 그런데\n여러 기기를 리모컨 하나에 넣을 수 있으면 훨씬 편해지는 것 같아요.\n그게 어\n네.\n아.\n그건 기억해 둘 만하네요.\n그럼\n다시 회의록을 적으셔도 될 것 같아요.\n네,\n그게 좋겠네요.",
+      "metadata": {
+        "chunk_index": 54,
+        "char_count": 198,
+        "utterance_start": 394,
+        "utterance_end": 411
+      }
+    },
+    {
+      "text": "그게 어\n네.\n아.\n그건 기억해 둘 만하네요.\n그럼\n다시 회의록을 적으셔도 될 것 같아요.\n네,\n그게 좋겠네요.\n그게 당신 일이니까요.\n그래서\n여러 기능을 원하고\n네.\n어, 적외선으로 뭔가 할 수 있는지 볼 수 있겠네요.\n그런데 그게 생산 비용을 넘을지는 모르겠어요.\n그러니까 어, 그건 우리가 알아봐야 할 것 같아요.\n음.\n네.",
+      "metadata": {
+        "chunk_index": 55,
+        "char_count": 184,
+        "utterance_start": 404,
+        "utterance_end": 420
+      }
+    },
+    {
+      "text": "네.\n어, 적외선으로 뭔가 할 수 있는지 볼 수 있겠네요.\n그런데 그게 생산 비용을 넘을지는 모르겠어요.\n그러니까 어, 그건 우리가 알아봐야 할 것 같아요.\n음.\n네.\n그래도 그렇게 할 수 있으면 정말 좋겠네요.\n그리고 리모컨의 다른 기능은요?\n아마 우리가 어, 어\n음.\n음.\n충격에 강해야 할 것 같아요\n그럼요, 네.\n왜냐하면\n충격에 강하게.",
+      "metadata": {
+        "chunk_index": 56,
+        "char_count": 192,
+        "utterance_start": 415,
+        "utterance_end": 429
+      }
+    },
+    {
+      "text": "그래도 그렇게 할 수 있으면 정말 좋겠네요.\n그리고 리모컨의 다른 기능은요?\n아마 우리가 어, 어\n음.\n음.\n충격에 강해야 할 것 같아요\n그럼요, 네.\n왜냐하면\n충격에 강하게.\n제 리모컨은 자주 떨어지거든요.\n방수,\n아니면 어\n그러니까\n어, 어떻게 될지 모르잖아요, 어,\n그럼요.\n그러니까 어\n방수.\n좋아요. 그러니까",
+      "metadata": {
+        "chunk_index": 57,
+        "char_count": 177,
+        "utterance_start": 421,
+        "utterance_end": 438
+      }
+    },
+    {
+      "text": "그럼요, 네.\n왜냐하면\n충격에 강하게.\n제 리모컨은 자주 떨어지거든요.\n방수,\n아니면 어\n그러니까\n어, 어떻게 될지 모르잖아요, 어,\n그럼요.\n그러니까 어\n방수.\n좋아요. 그러니까\n이게 우리가 생각할 수 있는 몇 가지네요.\n음, 이번 회의 회의록은 어, 프로젝트 폴더에 올려 둘게요.\n네.\n네,\n작은 거 하나 더요.",
+      "metadata": {
+        "chunk_index": 58,
+        "char_count": 176,
+        "utterance_start": 427,
+        "utterance_end": 443
+      }
+    },
+    {
+      "text": "그러니까 어\n방수.\n좋아요. 그러니까\n이게 우리가 생각할 수 있는 몇 가지네요.\n음, 이번 회의 회의록은 어, 프로젝트 폴더에 올려 둘게요.\n네.\n네,\n작은 거 하나 더요.\n배터리 상태 표시를 넣으면 편할 것 같아요.\n그러면 볼 수 있잖아요\n그건\n배터리 상태.\n좋아요, 네.\n배터리가 얼마나 남았는지요.\n그런데 그것도 생산 비용을 많이 끌어올릴 테니까,",
+      "metadata": {
+        "chunk_index": 59,
+        "char_count": 197,
+        "utterance_start": 436,
+        "utterance_end": 450
+      }
+    },
+    {
+      "text": "배터리 상태 표시를 넣으면 편할 것 같아요.\n그러면 볼 수 있잖아요\n그건\n배터리 상태.\n좋아요, 네.\n배터리가 얼마나 남았는지요.\n그런데 그것도 생산 비용을 많이 끌어올릴 테니까,\n그것도 따져 봐야 할 것 같아요.\n네.\n음.\n어.\n그래도 작은 LED 정도면,\n모르겠네요.\n그것도 아이디어네요.\n다른 아이디어 있어요? 빠르게요.\n없어요.\n다 나온 것 같아요,",
+      "metadata": {
+        "chunk_index": 60,
+        "char_count": 199,
+        "utterance_start": 444,
+        "utterance_end": 460
+      }
+    },
+    {
+      "text": "그것도 따져 봐야 할 것 같아요.\n네.\n음.\n어.\n그래도 작은 LED 정도면,\n모르겠네요.\n그것도 아이디어네요.\n다른 아이디어 있어요? 빠르게요.\n없어요.\n다 나온 것 같아요,\n음.\n그래서\n좋아요.\n네.\n이 어, 발표에 대해 질문 있으세요? 킥오프 발표요.\n음. 아니요, 없는 것 같아요.\n없어요?\n좋아요,",
+      "metadata": {
+        "chunk_index": 61,
+        "char_count": 171,
+        "utterance_start": 451,
+        "utterance_end": 468
+      }
+    },
+    {
+      "text": "없어요.\n다 나온 것 같아요,\n음.\n그래서\n좋아요.\n네.\n이 어, 발표에 대해 질문 있으세요? 킥오프 발표요.\n음. 아니요, 없는 것 같아요.\n없어요?\n좋아요,\n그럼 이번 회의 회의록은 프로젝트 폴더에 올려 두고,\n그다음에 각자 작업하면 돼요.\n이제 회의를 마치세요.\n좋아요.\n좋아요.\n그리고 다들 어, 각자 맡은 작업을 하면 돼요.\n알겠습니다.\n좋아요",
+      "metadata": {
+        "chunk_index": 62,
+        "char_count": 197,
+        "utterance_start": 459,
+        "utterance_end": 476
+      }
+    },
+    {
+      "text": "그다음에 각자 작업하면 돼요.\n이제 회의를 마치세요.\n좋아요.\n좋아요.\n그리고 다들 어, 각자 맡은 작업을 하면 돼요.\n알겠습니다.\n좋아요\n그럼 30분쯤 후에 봬요.\n30분이요.\n좋아요.\n좋아요.\n좋아요.\n그럼 행운을 빌어요.\n네.",
+      "metadata": {
+        "chunk_index": 63,
+        "char_count": 129,
+        "utterance_start": 470,
+        "utterance_end": 483
+      }
+    }
+  ],
+  "detection": {
+    "embedding_model": "BAAI/bge-m3",
+    "embedding_mode": "pooled",
+    "filler_max_chars": 4,
+    "block_size": 2,
+    "score": "depth score of block cosine similarity (TextTiling)",
+    "depth_std_k": 0.0,
+    "depth_threshold": 0.0412,
+    "merge_gap_chars": 400,
+    "merge_max_span_chars": 800,
+    "segment_overlap_chars": 200,
+    "num_utterances": 484,
+    "num_gaps": 63,
+    "num_candidates": 22,
+    "num_spans": 7,
+    "num_segments": 8
+  },
+  "candidates": [
+    {
+      "candidate_id": 0,
+      "boundary_position": 24,
+      "gap_index": 1,
+      "similarity": 0.897,
+      "depth_score": 0.0657
+    },
+    {
+      "candidate_id": 1,
+      "boundary_position": 35,
+      "gap_index": 3,
+      "similarity": 0.8954,
+      "depth_score": 0.0816
+    },
+    {
+      "candidate_id": 2,
+      "boundary_position": 47,
+      "gap_index": 5,
+      "similarity": 0.8922,
+      "depth_score": 0.0577
+    },
+    {
+      "candidate_id": 3,
+      "boundary_position": 65,
+      "gap_index": 8,
+      "similarity": 0.8564,
+      "depth_score": 0.0999
+    },
+    {
+      "candidate_id": 4,
+      "boundary_position": 77,
+      "gap_index": 10,
+      "similarity": 0.8102,
+      "depth_score": 0.1598
+    },
+    {
+      "candidate_id": 5,
+      "boundary_position": 87,
+      "gap_index": 12,
+      "similarity": 0.8576,
+      "depth_score": 0.0716
+    },
+    {
+      "candidate_id": 6,
+      "boundary_position": 96,
+      "gap_index": 15,
+      "similarity": 0.8728,
+      "depth_score": 0.0504
+    },
+    {
+      "candidate_id": 7,
+      "boundary_position": 99,
+      "gap_index": 16,
+      "similarity": 0.7691,
+      "depth_score": 0.3249
+    },
+    {
+      "candidate_id": 8,
+      "boundary_position": 105,
+      "gap_index": 17,
+      "similarity": 0.8854,
+      "depth_score": 0.0545
+    },
+    {
+      "candidate_id": 9,
+      "boundary_position": 123,
+      "gap_index": 20,
+      "similarity": 0.9218,
+      "depth_score": 0.0487
+    },
+    {
+      "candidate_id": 10,
+      "boundary_position": 137,
+      "gap_index": 22,
+      "similarity": 0.875,
+      "depth_score": 0.1327
+    },
+    {
+      "candidate_id": 11,
+      "boundary_position": 171,
+      "gap_index": 27,
+      "similarity": 0.9289,
+      "depth_score": 0.0517
+    },
+    {
+      "candidate_id": 12,
+      "boundary_position": 211,
+      "gap_index": 31,
+      "similarity": 0.932,
+      "depth_score": 0.0412
+    },
+    {
+      "candidate_id": 13,
+      "boundary_position": 303,
+      "gap_index": 39,
+      "similarity": 0.8898,
+      "depth_score": 0.0516
+    },
+    {
+      "candidate_id": 14,
+      "boundary_position": 312,
+      "gap_index": 40,
+      "similarity": 0.845,
+      "depth_score": 0.1659
+    },
+    {
+      "candidate_id": 15,
+      "boundary_position": 320,
+      "gap_index": 41,
+      "similarity": 0.8705,
+      "depth_score": 0.044
+    },
+    {
+      "candidate_id": 16,
+      "boundary_position": 330,
+      "gap_index": 44,
+      "similarity": 0.875,
+      "depth_score": 0.0435
+    },
+    {
+      "candidate_id": 17,
+      "boundary_position": 339,
+      "gap_index": 46,
+      "similarity": 0.7633,
+      "depth_score": 0.2809
+    },
+    {
+      "candidate_id": 18,
+      "boundary_position": 348,
+      "gap_index": 47,
+      "similarity": 0.8743,
+      "depth_score": 0.0542
+    },
+    {
+      "candidate_id": 19,
+      "boundary_position": 363,
+      "gap_index": 49,
+      "similarity": 0.8782,
+      "depth_score": 0.085
+    },
+    {
+      "candidate_id": 20,
+      "boundary_position": 408,
+      "gap_index": 54,
+      "similarity": 0.8316,
+      "depth_score": 0.1916
+    },
+    {
+      "candidate_id": 21,
+      "boundary_position": 464,
+      "gap_index": 61,
+      "similarity": 0.8795,
+      "depth_score": 0.0764
+    }
+  ],
+  "spans": [
+    {
+      "span_id": 0,
+      "span_start": 24,
+      "span_end": 65,
+      "span_chars": 669,
+      "member_candidate_ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "member_positions": [
+        24,
+        35,
+        47,
+        65
+      ],
+      "boundary_position": 65,
+      "depth_score": 0.0999
+    },
+    {
+      "span_id": 1,
+      "span_start": 77,
+      "span_end": 105,
+      "span_chars": 680,
+      "member_candidate_ids": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "member_positions": [
+        77,
+        87,
+        96,
+        99,
+        105
+      ],
+      "boundary_position": 99,
+      "depth_score": 0.3249
+    },
+    {
+      "span_id": 2,
+      "span_start": 123,
+      "span_end": 137,
+      "span_chars": 202,
+      "member_candidate_ids": [
+        9,
+        10
+      ],
+      "member_positions": [
+        123,
+        137
+      ],
+      "boundary_position": 137,
+      "depth_score": 0.1327
+    },
+    {
+      "span_id": 3,
+      "span_start": 171,
+      "span_end": 211,
+      "span_chars": 351,
+      "member_candidate_ids": [
+        11,
+        12
+      ],
+      "member_positions": [
+        171,
+        211
+      ],
+      "boundary_position": 171,
+      "depth_score": 0.0517
+    },
+    {
+      "span_id": 4,
+      "span_start": 303,
+      "span_end": 363,
+      "span_chars": 797,
+      "member_candidate_ids": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "member_positions": [
+        303,
+        312,
+        320,
+        330,
+        339,
+        348,
+        363
+      ],
+      "boundary_position": 339,
+      "depth_score": 0.2809
+    },
+    {
+      "span_id": 5,
+      "span_start": 408,
+      "span_end": 408,
+      "span_chars": 0,
+      "member_candidate_ids": [
+        20
+      ],
+      "member_positions": [
+        408
+      ],
+      "boundary_position": 408,
+      "depth_score": 0.1916
+    },
+    {
+      "span_id": 6,
+      "span_start": 464,
+      "span_end": 464,
+      "span_chars": 0,
+      "member_candidate_ids": [
+        21
+      ],
+      "member_positions": [
+        464
+      ],
+      "boundary_position": 464,
+      "depth_score": 0.0764
+    }
+  ],
+  "segments": [
+    {
+      "segment_id": 0,
+      "utterance_start": 0,
+      "utterance_end": 64,
+      "num_utterances": 65,
+      "char_count": 863,
+      "utterances": [
+        {
+          "utterance_index": 0,
+          "text": "그럼 어"
+        },
+        {
+          "utterance_index": 1,
+          "text": "좋은 아침입니다."
+        },
+        {
+          "utterance_index": 2,
+          "text": "안녕하세요."
+        },
+        {
+          "utterance_index": 3,
+          "text": "안녕하세요."
+        },
+        {
+          "utterance_index": 4,
+          "text": "안녕하세요."
+        },
+        {
+          "utterance_index": 5,
+          "text": "다들 자리를 찾으셨네요."
+        },
+        {
+          "utterance_index": 6,
+          "text": "다들 맞는 자리에 앉으셨죠? 네?"
+        },
+        {
+          "utterance_index": 7,
+          "text": "네."
+        },
+        {
+          "utterance_index": 8,
+          "text": "그런 것 같네요."
+        },
+        {
+          "utterance_index": 9,
+          "text": "그럼"
+        },
+        {
+          "utterance_index": 10,
+          "text": "어디 보자."
+        },
+        {
+          "utterance_index": 11,
+          "text": "먼저 제 소개를 할게요."
+        },
+        {
+          "utterance_index": 12,
+          "text": "어, 다들 저를 아시는지 모르겠어서,"
+        },
+        {
+          "utterance_index": 13,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 14,
+          "text": "저는 Bart예요,"
+        },
+        {
+          "utterance_index": 15,
+          "text": "제 이름은 Frank예요."
+        },
+        {
+          "utterance_index": 16,
+          "text": "안녕하세요. 안녕하세요."
+        },
+        {
+          "utterance_index": 17,
+          "text": "저는."
+        },
+        {
+          "utterance_index": 18,
+          "text": "Bart예요."
+        },
+        {
+          "utterance_index": 19,
+          "text": "안녕하세요."
+        },
+        {
+          "utterance_index": 20,
+          "text": "안녕하세요."
+        },
+        {
+          "utterance_index": 21,
+          "text": "Bart예요."
+        },
+        {
+          "utterance_index": 22,
+          "text": "환영합니다."
+        },
+        {
+          "utterance_index": 23,
+          "text": "고마워요."
+        },
+        {
+          "utterance_index": 24,
+          "text": "어, 어디 보자. 어"
+        },
+        {
+          "utterance_index": 25,
+          "text": "음, 간단한 발표로 시작할게요."
+        },
+        {
+          "utterance_index": 26,
+          "text": "어, 먼저 환경에 대해 조금 말씀드릴게요."
+        },
+        {
+          "utterance_index": 27,
+          "text": "여기 카메라가 몇 대 보이시죠."
+        },
+        {
+          "utterance_index": 28,
+          "text": "어, 그게 우리 행동을 녹화할 거고"
+        },
+        {
+          "utterance_index": 29,
+          "text": "선이랑 마이크가 있어서 목소리를 녹음할 거예요."
+        },
+        {
+          "utterance_index": 30,
+          "text": "어, 저기에도 마이크가 몇 개 있는데"
+        },
+        {
+          "utterance_index": 31,
+          "text": "음, 그건 너무 신경 쓰지 않으셔도 돼요,"
+        },
+        {
+          "utterance_index": 32,
+          "text": "신경 쓰지 않으면 어, 의식에서 사라질 거예요."
+        },
+        {
+          "utterance_index": 33,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 34,
+          "text": "프로젝트 문서 폴더가 있나요?"
+        },
+        {
+          "utterance_index": 35,
+          "text": "이미 메모랑 문서가 좀 들어 있네요."
+        },
+        {
+          "utterance_index": 36,
+          "text": "어, 킥오프 발표부터 시작할게요."
+        },
+        {
+          "utterance_index": 37,
+          "text": "관리자가 수정 중입니다."
+        },
+        {
+          "utterance_index": 38,
+          "text": "어, 좋아요."
+        },
+        {
+          "utterance_index": 39,
+          "text": "흠, 흥미롭네요."
+        },
+        {
+          "utterance_index": 40,
+          "text": "읽기 전용으로 하죠."
+        },
+        {
+          "utterance_index": 41,
+          "text": "음"
+        },
+        {
+          "utterance_index": 42,
+          "text": "눈치채셨는지 모르겠지만 어, 우리는 Real Reaction에서 일하고 있어요."
+        },
+        {
+          "utterance_index": 43,
+          "text": "어, 전자 제품 회사예요."
+        },
+        {
+          "utterance_index": 44,
+          "text": "우리는 전자 제품에 패션을 입히고,"
+        },
+        {
+          "utterance_index": 45,
+          "text": "어, 작동하게 만들고,"
+        },
+        {
+          "utterance_index": 46,
+          "text": "어, 디자인과 제품 자체에 많은 노력을 기울여요."
+        },
+        {
+          "utterance_index": 47,
+          "text": "저는 프로젝트 매니저 Bart고"
+        },
+        {
+          "utterance_index": 48,
+          "text": "프로젝트를 이끌어 갈 거예요."
+        },
+        {
+          "utterance_index": 49,
+          "text": "이게 우리 안건이에요."
+        },
+        {
+          "utterance_index": 50,
+          "text": "어, 시작, 인사, 도구 사용 연습, 프로젝트 계획 설명, 마무리가 있어요."
+        },
+        {
+          "utterance_index": 51,
+          "text": "어, 앉아도 될 것 같네요,"
+        },
+        {
+          "utterance_index": 52,
+          "text": "그러면 메모를 좀 할 수 있으니까요"
+        },
+        {
+          "utterance_index": 53,
+          "text": "아니면"
+        },
+        {
+          "utterance_index": 54,
+          "text": "어디 보자."
+        },
+        {
+          "utterance_index": 55,
+          "text": "가끔 회의록을 좀 적어 주실 수 있을까요."
+        },
+        {
+          "utterance_index": 56,
+          "text": "그럼요."
+        },
+        {
+          "utterance_index": 57,
+          "text": "그렇게 일이 많진 않아요,"
+        },
+        {
+          "utterance_index": 58,
+          "text": "그냥 어, 적을 만한 게 들리면 적어 주세요."
+        },
+        {
+          "utterance_index": 59,
+          "text": "어, 보시다시피 어, 시작, 인사, 도구 사용 연습이에요."
+        },
+        {
+          "utterance_index": 60,
+          "text": "인사는 조금 했죠."
+        },
+        {
+          "utterance_index": 61,
+          "text": "음, 다들 회사 웹사이트는 보셨어요?"
+        },
+        {
+          "utterance_index": 62,
+          "text": "네. 들어가 봤어요."
+        },
+        {
+          "utterance_index": 63,
+          "text": "네."
+        },
+        {
+          "utterance_index": 64,
+          "text": "네."
+        }
+      ],
+      "overlap_start": 0,
+      "overlap_end": 76,
+      "overlap_before_chars": 0,
+      "overlap_after_chars": 194,
+      "overlap_before": [],
+      "overlap_after": [
+        {
+          "utterance_index": 65,
+          "text": "거기서 잘못된 거 보셨어요?"
+        },
+        {
+          "utterance_index": 66,
+          "text": "저는 하나 찾은 것 같아요."
+        },
+        {
+          "utterance_index": 67,
+          "text": "못 보셨어요?"
+        },
+        {
+          "utterance_index": 68,
+          "text": "흠?"
+        },
+        {
+          "utterance_index": 69,
+          "text": "그렇게 주의 깊게 보진 않았어요,"
+        },
+        {
+          "utterance_index": 70,
+          "text": "이렇게 하면 되는지 볼게요."
+        },
+        {
+          "utterance_index": 71,
+          "text": "아니요, 여기선 안 되네요."
+        },
+        {
+          "utterance_index": 72,
+          "text": "좋아요, 문제없어요."
+        },
+        {
+          "utterance_index": 73,
+          "text": "그런데 음, 회사 정보 쪽에 Real Reaction 대신 Real Remote라고 되어 있었어요."
+        },
+        {
+          "utterance_index": 74,
+          "text": "아, 네."
+        },
+        {
+          "utterance_index": 75,
+          "text": "Real Remote는 우리 회사가 아니지만,"
+        },
+        {
+          "utterance_index": 76,
+          "text": "그냥 작은 실수예요."
+        }
+      ]
+    },
+    {
+      "segment_id": 1,
+      "utterance_start": 65,
+      "utterance_end": 98,
+      "num_utterances": 34,
+      "char_count": 726,
+      "utterances": [
+        {
+          "utterance_index": 65,
+          "text": "거기서 잘못된 거 보셨어요?"
+        },
+        {
+          "utterance_index": 66,
+          "text": "저는 하나 찾은 것 같아요."
+        },
+        {
+          "utterance_index": 67,
+          "text": "못 보셨어요?"
+        },
+        {
+          "utterance_index": 68,
+          "text": "흠?"
+        },
+        {
+          "utterance_index": 69,
+          "text": "그렇게 주의 깊게 보진 않았어요,"
+        },
+        {
+          "utterance_index": 70,
+          "text": "이렇게 하면 되는지 볼게요."
+        },
+        {
+          "utterance_index": 71,
+          "text": "아니요, 여기선 안 되네요."
+        },
+        {
+          "utterance_index": 72,
+          "text": "좋아요, 문제없어요."
+        },
+        {
+          "utterance_index": 73,
+          "text": "그런데 음, 회사 정보 쪽에 Real Reaction 대신 Real Remote라고 되어 있었어요."
+        },
+        {
+          "utterance_index": 74,
+          "text": "아, 네."
+        },
+        {
+          "utterance_index": 75,
+          "text": "Real Remote는 우리 회사가 아니지만,"
+        },
+        {
+          "utterance_index": 76,
+          "text": "그냥 작은 실수예요."
+        },
+        {
+          "utterance_index": 77,
+          "text": "그렇군요. 네."
+        },
+        {
+          "utterance_index": 78,
+          "text": "음, 좋아요,"
+        },
+        {
+          "utterance_index": 79,
+          "text": "우리가 뭘 할 거냐면요?"
+        },
+        {
+          "utterance_index": 80,
+          "text": "어, 보시다시피 우리 프로젝트 목표는 새 리모컨이에요."
+        },
+        {
+          "utterance_index": 81,
+          "text": "독창적이고 트렌디하고 사용하기 쉬워야 해요."
+        },
+        {
+          "utterance_index": 82,
+          "text": "그래서 어, 여러분을 채용한 이유가 이거예요."
+        },
+        {
+          "utterance_index": 83,
+          "text": "어, 트렌디하고 사용하기 쉬운 외관을 위해 마케팅 전문가가 있고요."
+        },
+        {
+          "utterance_index": 84,
+          "text": "네."
+        },
+        {
+          "utterance_index": 85,
+          "text": "그리고 산업 디자이너는 어, 사용 편의성과 약간의 독창성을 맡고요."
+        },
+        {
+          "utterance_index": 86,
+          "text": "그리고 UI 디자이너가 있어요."
+        },
+        {
+          "utterance_index": 87,
+          "text": "네."
+        },
+        {
+          "utterance_index": 88,
+          "text": "그도 어"
+        },
+        {
+          "utterance_index": 89,
+          "text": "새 리모컨에 대해선 그 정도예요."
+        },
+        {
+          "utterance_index": 90,
+          "text": "어, 프로젝트 방법은 음, 어, 세 단계를 거치게 돼요."
+        },
+        {
+          "utterance_index": 91,
+          "text": "첫째는 기능 설계, 어, 각자 작업, 회의예요."
+        },
+        {
+          "utterance_index": 92,
+          "text": "기능 설계 다음에 콘셉트 설계와 상세 설계가 있어요."
+        },
+        {
+          "utterance_index": 93,
+          "text": "여기 역할 안내를 좀 적어 뒀는데요."
+        },
+        {
+          "utterance_index": 94,
+          "text": "이미 다 알고 계실 것 같아요."
+        },
+        {
+          "utterance_index": 95,
+          "text": "산업 디자이너는 작동 설계, 어, 부품 설계, 그리고 외관과 느낌 디자인을 조금 맡을 거예요."
+        },
+        {
+          "utterance_index": 96,
+          "text": "어, UI 디자이너는 기술적 기능 설계, 사용자 인터페이스 콘셉트, 사용자 인터페이스 디자인을 할 거고요."
+        },
+        {
+          "utterance_index": 97,
+          "text": "그리고 마케팅 전문가는 사용자 요구 사항 명세, 트렌드 관찰, 제품 어, 평가를 조금씩 할 거예요."
+        },
+        {
+          "utterance_index": 98,
+          "text": "그게 여러분이 할 일의 대략이에요."
+        }
+      ],
+      "overlap_start": 51,
+      "overlap_end": 108,
+      "overlap_before_chars": 186,
+      "overlap_after_chars": 190,
+      "overlap_before": [
+        {
+          "utterance_index": 51,
+          "text": "어, 앉아도 될 것 같네요,"
+        },
+        {
+          "utterance_index": 52,
+          "text": "그러면 메모를 좀 할 수 있으니까요"
+        },
+        {
+          "utterance_index": 53,
+          "text": "아니면"
+        },
+        {
+          "utterance_index": 54,
+          "text": "어디 보자."
+        },
+        {
+          "utterance_index": 55,
+          "text": "가끔 회의록을 좀 적어 주실 수 있을까요."
+        },
+        {
+          "utterance_index": 56,
+          "text": "그럼요."
+        },
+        {
+          "utterance_index": 57,
+          "text": "그렇게 일이 많진 않아요,"
+        },
+        {
+          "utterance_index": 58,
+          "text": "그냥 어, 적을 만한 게 들리면 적어 주세요."
+        },
+        {
+          "utterance_index": 59,
+          "text": "어, 보시다시피 어, 시작, 인사, 도구 사용 연습이에요."
+        },
+        {
+          "utterance_index": 60,
+          "text": "인사는 조금 했죠."
+        },
+        {
+          "utterance_index": 61,
+          "text": "음, 다들 회사 웹사이트는 보셨어요?"
+        },
+        {
+          "utterance_index": 62,
+          "text": "네. 들어가 봤어요."
+        },
+        {
+          "utterance_index": 63,
+          "text": "네."
+        },
+        {
+          "utterance_index": 64,
+          "text": "네."
+        }
+      ],
+      "overlap_after": [
+        {
+          "utterance_index": 99,
+          "text": "하지만 그건 어, 다른 회의에서 다 정리될 거예요."
+        },
+        {
+          "utterance_index": 100,
+          "text": "그다음에 첫 도구 사용 연습이 있어요."
+        },
+        {
+          "utterance_index": 101,
+          "text": "여기서 첨단 도구를 많이 쓸 거라서,"
+        },
+        {
+          "utterance_index": 102,
+          "text": "먼저 연습을 좀 해 두면 편해요."
+        },
+        {
+          "utterance_index": 103,
+          "text": "보시다시피 여기랑 여기 화이트보드에 스마트보드가 있어요."
+        },
+        {
+          "utterance_index": 104,
+          "text": "음, 여기 화이트보드 이쪽에 작은 도구 모음이 있어요."
+        },
+        {
+          "utterance_index": 105,
+          "text": "여기 기능들이 있고요."
+        },
+        {
+          "utterance_index": 106,
+          "text": "저장할 수 있어요."
+        },
+        {
+          "utterance_index": 107,
+          "text": "그"
+        },
+        {
+          "utterance_index": 108,
+          "text": "어, 이 기능들은 우리랑 상관없고,"
+        }
+      ]
+    },
+    {
+      "segment_id": 2,
+      "utterance_start": 99,
+      "utterance_end": 136,
+      "num_utterances": 38,
+      "char_count": 597,
+      "utterances": [
+        {
+          "utterance_index": 99,
+          "text": "하지만 그건 어, 다른 회의에서 다 정리될 거예요."
+        },
+        {
+          "utterance_index": 100,
+          "text": "그다음에 첫 도구 사용 연습이 있어요."
+        },
+        {
+          "utterance_index": 101,
+          "text": "여기서 첨단 도구를 많이 쓸 거라서,"
+        },
+        {
+          "utterance_index": 102,
+          "text": "먼저 연습을 좀 해 두면 편해요."
+        },
+        {
+          "utterance_index": 103,
+          "text": "보시다시피 여기랑 여기 화이트보드에 스마트보드가 있어요."
+        },
+        {
+          "utterance_index": 104,
+          "text": "음, 여기 화이트보드 이쪽에 작은 도구 모음이 있어요."
+        },
+        {
+          "utterance_index": 105,
+          "text": "여기 기능들이 있고요."
+        },
+        {
+          "utterance_index": 106,
+          "text": "저장할 수 있어요."
+        },
+        {
+          "utterance_index": 107,
+          "text": "그"
+        },
+        {
+          "utterance_index": 108,
+          "text": "어, 이 기능들은 우리랑 상관없고,"
+        },
+        {
+          "utterance_index": 109,
+          "text": "되돌리기만, 그림 일부를 되돌릴 수 있어요."
+        },
+        {
+          "utterance_index": 110,
+          "text": "사람마다 빈 새 문서요."
+        },
+        {
+          "utterance_index": 111,
+          "text": "어, 펜을 고르고,"
+        },
+        {
+          "utterance_index": 112,
+          "text": "지우개."
+        },
+        {
+          "utterance_index": 113,
+          "text": "캡처는 우리가 쓸 일 없어요."
+        },
+        {
+          "utterance_index": 114,
+          "text": "어, 그다음에 펜이 있어요. 이 펜이요."
+        },
+        {
+          "utterance_index": 115,
+          "text": "정말 재밌는데"
+        },
+        {
+          "utterance_index": 116,
+          "text": "네."
+        },
+        {
+          "utterance_index": 117,
+          "text": "이걸로 이 페이지에 그릴 수 있거든요, 음, 그런 형태로요."
+        },
+        {
+          "utterance_index": 118,
+          "text": "현재 색이랑 선 굵기도 고를 수 있어요."
+        },
+        {
+          "utterance_index": 119,
+          "text": "흠."
+        },
+        {
+          "utterance_index": 120,
+          "text": "그런데 먼저 펜 기능을 선택해야 해요."
+        },
+        {
+          "utterance_index": 121,
+          "text": "그래도 곧 이걸로 작업해 볼 거예요."
+        },
+        {
+          "utterance_index": 122,
+          "text": "그럼 좋아요. 어"
+        },
+        {
+          "utterance_index": 123,
+          "text": "아주 간단하고"
+        },
+        {
+          "utterance_index": 124,
+          "text": "거기에 알아낸 것이나 그림을 그리기 쉬워요."
+        },
+        {
+          "utterance_index": 125,
+          "text": "어, 그다음은 문서에 대해 짧게요."
+        },
+        {
+          "utterance_index": 126,
+          "text": "공유 폴더가 있어요,"
+        },
+        {
+          "utterance_index": 127,
+          "text": "프로젝트, 프로젝트"
+        },
+        {
+          "utterance_index": 128,
+          "text": "뭐였죠?"
+        },
+        {
+          "utterance_index": 129,
+          "text": "프로젝트 문서였던 것 같아요."
+        },
+        {
+          "utterance_index": 130,
+          "text": "그래도 다들 이미 찾으셨을 거예요"
+        },
+        {
+          "utterance_index": 131,
+          "text": "이미 문서가 많이 들어 있으니까,"
+        },
+        {
+          "utterance_index": 132,
+          "text": "괜찮을 거예요."
+        },
+        {
+          "utterance_index": 133,
+          "text": "그리고 이건 스마트보드에서도 쓸 수 있어요,"
+        },
+        {
+          "utterance_index": 134,
+          "text": "그러니까 보여 주고 싶은 문서가 있으면 폴더에서 열기만 하면 돼요."
+        },
+        {
+          "utterance_index": 135,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 136,
+          "text": "네."
+        }
+      ],
+      "overlap_start": 95,
+      "overlap_end": 149,
+      "overlap_before_chars": 185,
+      "overlap_after_chars": 188,
+      "overlap_before": [
+        {
+          "utterance_index": 95,
+          "text": "산업 디자이너는 작동 설계, 어, 부품 설계, 그리고 외관과 느낌 디자인을 조금 맡을 거예요."
+        },
+        {
+          "utterance_index": 96,
+          "text": "어, UI 디자이너는 기술적 기능 설계, 사용자 인터페이스 콘셉트, 사용자 인터페이스 디자인을 할 거고요."
+        },
+        {
+          "utterance_index": 97,
+          "text": "그리고 마케팅 전문가는 사용자 요구 사항 명세, 트렌드 관찰, 제품 어, 평가를 조금씩 할 거예요."
+        },
+        {
+          "utterance_index": 98,
+          "text": "그게 여러분이 할 일의 대략이에요."
+        }
+      ],
+      "overlap_after": [
+        {
+          "utterance_index": 137,
+          "text": "여기 간단한 도구 모음이 있어요."
+        },
+        {
+          "utterance_index": 138,
+          "text": "방금 말씀드린 건데,"
+        },
+        {
+          "utterance_index": 139,
+          "text": "저장, 인쇄, 한 페이지 앞뒤로 이동이에요."
+        },
+        {
+          "utterance_index": 140,
+          "text": "여러 그림 사이를 오갈 수 있어요."
+        },
+        {
+          "utterance_index": 141,
+          "text": "그리고 화이트보드를 써 볼 거예요."
+        },
+        {
+          "utterance_index": 142,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 143,
+          "text": "보시다시피 다들 동물을 하나씩 그릴 거예요. 그냥 어, 어, 좀 익숙해지려고요."
+        },
+        {
+          "utterance_index": 144,
+          "text": "마우스가 도망가진 않았네요."
+        },
+        {
+          "utterance_index": 145,
+          "text": "흥미롭네요."
+        },
+        {
+          "utterance_index": 146,
+          "text": "누가 마우스를 만지고 있나요?"
+        },
+        {
+          "utterance_index": 147,
+          "text": "아니죠."
+        },
+        {
+          "utterance_index": 148,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 149,
+          "text": "무죄예요."
+        }
+      ]
+    },
+    {
+      "segment_id": 3,
+      "utterance_start": 137,
+      "utterance_end": 170,
+      "num_utterances": 34,
+      "char_count": 501,
+      "utterances": [
+        {
+          "utterance_index": 137,
+          "text": "여기 간단한 도구 모음이 있어요."
+        },
+        {
+          "utterance_index": 138,
+          "text": "방금 말씀드린 건데,"
+        },
+        {
+          "utterance_index": 139,
+          "text": "저장, 인쇄, 한 페이지 앞뒤로 이동이에요."
+        },
+        {
+          "utterance_index": 140,
+          "text": "여러 그림 사이를 오갈 수 있어요."
+        },
+        {
+          "utterance_index": 141,
+          "text": "그리고 화이트보드를 써 볼 거예요."
+        },
+        {
+          "utterance_index": 142,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 143,
+          "text": "보시다시피 다들 동물을 하나씩 그릴 거예요. 그냥 어, 어, 좀 익숙해지려고요."
+        },
+        {
+          "utterance_index": 144,
+          "text": "마우스가 도망가진 않았네요."
+        },
+        {
+          "utterance_index": 145,
+          "text": "흥미롭네요."
+        },
+        {
+          "utterance_index": 146,
+          "text": "누가 마우스를 만지고 있나요?"
+        },
+        {
+          "utterance_index": 147,
+          "text": "아니죠."
+        },
+        {
+          "utterance_index": 148,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 149,
+          "text": "무죄예요."
+        },
+        {
+          "utterance_index": 150,
+          "text": "어, 동물을 그릴 거예요."
+        },
+        {
+          "utterance_index": 151,
+          "text": "그리고 어, 그 동물이 좋은 특징 몇 가지를 정리하는 거예요."
+        },
+        {
+          "utterance_index": 152,
+          "text": "음, 신경 쓸 건 다른 색과 다른 선 굵기를 쓰는 것뿐이에요."
+        },
+        {
+          "utterance_index": 153,
+          "text": "어, 그게"
+        },
+        {
+          "utterance_index": 154,
+          "text": "지금 시작해도 되겠네요. 제가 할게요."
+        },
+        {
+          "utterance_index": 155,
+          "text": "이 펜은 어린아이처럼 잡고 쓰면 돼요."
+        },
+        {
+          "utterance_index": 156,
+          "text": "이렇게 잡으면 센서가 가려져서"
+        },
+        {
+          "utterance_index": 157,
+          "text": "그림이 제대로 안 그려지거든요."
+        },
+        {
+          "utterance_index": 158,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 159,
+          "text": "네."
+        },
+        {
+          "utterance_index": 160,
+          "text": "또 하나는 좀 천천히 해야 한다는 거예요."
+        },
+        {
+          "utterance_index": 161,
+          "text": "정말 빨리 그리면 음, 펜이 따라오질 못하거든요."
+        },
+        {
+          "utterance_index": 162,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 163,
+          "text": "현재 색 형식을 고르고"
+        },
+        {
+          "utterance_index": 164,
+          "text": "어, 회색이 적당할 것 같네요."
+        },
+        {
+          "utterance_index": 165,
+          "text": "그다음은 선 굵기."
+        },
+        {
+          "utterance_index": 166,
+          "text": "7이 좋을 것 같아요."
+        },
+        {
+          "utterance_index": 167,
+          "text": "이제 제 그림 실력을 보시겠네요."
+        },
+        {
+          "utterance_index": 168,
+          "text": "별로 대단하진 않지만,"
+        },
+        {
+          "utterance_index": 169,
+          "text": "그래도 어"
+        },
+        {
+          "utterance_index": 170,
+          "text": "어, 보세요"
+        }
+      ],
+      "overlap_start": 124,
+      "overlap_end": 194,
+      "overlap_before_chars": 195,
+      "overlap_after_chars": 187,
+      "overlap_before": [
+        {
+          "utterance_index": 124,
+          "text": "거기에 알아낸 것이나 그림을 그리기 쉬워요."
+        },
+        {
+          "utterance_index": 125,
+          "text": "어, 그다음은 문서에 대해 짧게요."
+        },
+        {
+          "utterance_index": 126,
+          "text": "공유 폴더가 있어요,"
+        },
+        {
+          "utterance_index": 127,
+          "text": "프로젝트, 프로젝트"
+        },
+        {
+          "utterance_index": 128,
+          "text": "뭐였죠?"
+        },
+        {
+          "utterance_index": 129,
+          "text": "프로젝트 문서였던 것 같아요."
+        },
+        {
+          "utterance_index": 130,
+          "text": "그래도 다들 이미 찾으셨을 거예요"
+        },
+        {
+          "utterance_index": 131,
+          "text": "이미 문서가 많이 들어 있으니까,"
+        },
+        {
+          "utterance_index": 132,
+          "text": "괜찮을 거예요."
+        },
+        {
+          "utterance_index": 133,
+          "text": "그리고 이건 스마트보드에서도 쓸 수 있어요,"
+        },
+        {
+          "utterance_index": 134,
+          "text": "그러니까 보여 주고 싶은 문서가 있으면 폴더에서 열기만 하면 돼요."
+        },
+        {
+          "utterance_index": 135,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 136,
+          "text": "네."
+        }
+      ],
+      "overlap_after": [
+        {
+          "utterance_index": 171,
+          "text": "정말 천천히 해야 해요."
+        },
+        {
+          "utterance_index": 172,
+          "text": "오"
+        },
+        {
+          "utterance_index": 173,
+          "text": "그럼요."
+        },
+        {
+          "utterance_index": 174,
+          "text": "아"
+        },
+        {
+          "utterance_index": 175,
+          "text": "돌고래를 그리려고 했는데,"
+        },
+        {
+          "utterance_index": 176,
+          "text": "코가 좀 더"
+        },
+        {
+          "utterance_index": 177,
+          "text": "그래도 비슷하네요."
+        },
+        {
+          "utterance_index": 178,
+          "text": "저는 황새치가 떠오르는데요."
+        },
+        {
+          "utterance_index": 179,
+          "text": "그러니까 뭐"
+        },
+        {
+          "utterance_index": 180,
+          "text": "네. 네."
+        },
+        {
+          "utterance_index": 181,
+          "text": "네, 이건 좀 황새치 같네요."
+        },
+        {
+          "utterance_index": 182,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 183,
+          "text": "눈이 없네요."
+        },
+        {
+          "utterance_index": 184,
+          "text": "음."
+        },
+        {
+          "utterance_index": 185,
+          "text": "워."
+        },
+        {
+          "utterance_index": 186,
+          "text": "이제 다른 기능이 있어요."
+        },
+        {
+          "utterance_index": 187,
+          "text": "지우개가 있어요."
+        },
+        {
+          "utterance_index": 188,
+          "text": "그리고 되돌리기로"
+        },
+        {
+          "utterance_index": 189,
+          "text": "이걸 쉽게 할 수 있어요."
+        },
+        {
+          "utterance_index": 190,
+          "text": "."
+        },
+        {
+          "utterance_index": 191,
+          "text": "고기."
+        },
+        {
+          "utterance_index": 192,
+          "text": "아, 괜찮아요."
+        },
+        {
+          "utterance_index": 193,
+          "text": "그리고 특징을 몇 가지 적어야 해요."
+        },
+        {
+          "utterance_index": 194,
+          "text": "어, 그게"
+        }
+      ]
+    },
+    {
+      "segment_id": 4,
+      "utterance_start": 171,
+      "utterance_end": 338,
+      "num_utterances": 168,
+      "char_count": 1687,
+      "utterances": [
+        {
+          "utterance_index": 171,
+          "text": "정말 천천히 해야 해요."
+        },
+        {
+          "utterance_index": 172,
+          "text": "오"
+        },
+        {
+          "utterance_index": 173,
+          "text": "그럼요."
+        },
+        {
+          "utterance_index": 174,
+          "text": "아"
+        },
+        {
+          "utterance_index": 175,
+          "text": "돌고래를 그리려고 했는데,"
+        },
+        {
+          "utterance_index": 176,
+          "text": "코가 좀 더"
+        },
+        {
+          "utterance_index": 177,
+          "text": "그래도 비슷하네요."
+        },
+        {
+          "utterance_index": 178,
+          "text": "저는 황새치가 떠오르는데요."
+        },
+        {
+          "utterance_index": 179,
+          "text": "그러니까 뭐"
+        },
+        {
+          "utterance_index": 180,
+          "text": "네. 네."
+        },
+        {
+          "utterance_index": 181,
+          "text": "네, 이건 좀 황새치 같네요."
+        },
+        {
+          "utterance_index": 182,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 183,
+          "text": "눈이 없네요."
+        },
+        {
+          "utterance_index": 184,
+          "text": "음."
+        },
+        {
+          "utterance_index": 185,
+          "text": "워."
+        },
+        {
+          "utterance_index": 186,
+          "text": "이제 다른 기능이 있어요."
+        },
+        {
+          "utterance_index": 187,
+          "text": "지우개가 있어요."
+        },
+        {
+          "utterance_index": 188,
+          "text": "그리고 되돌리기로"
+        },
+        {
+          "utterance_index": 189,
+          "text": "이걸 쉽게 할 수 있어요."
+        },
+        {
+          "utterance_index": 190,
+          "text": "."
+        },
+        {
+          "utterance_index": 191,
+          "text": "고기."
+        },
+        {
+          "utterance_index": 192,
+          "text": "아, 괜찮아요."
+        },
+        {
+          "utterance_index": 193,
+          "text": "그리고 특징을 몇 가지 적어야 해요."
+        },
+        {
+          "utterance_index": 194,
+          "text": "어, 그게"
+        },
+        {
+          "utterance_index": 195,
+          "text": "텍스트 도구는 없네요, 없어요. 어."
+        },
+        {
+          "utterance_index": 196,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 197,
+          "text": "이건 전형적인 되돌리기 동작인 것 같아요."
+        },
+        {
+          "utterance_index": 198,
+          "text": "네."
+        },
+        {
+          "utterance_index": 199,
+          "text": "펜."
+        },
+        {
+          "utterance_index": 200,
+          "text": "좀 거꾸로 잡아야 할 수도 있어요."
+        },
+        {
+          "utterance_index": 201,
+          "text": "그런 것 같아요"
+        },
+        {
+          "utterance_index": 202,
+          "text": "이렇게 하려고 하면 줄무늬가 되거든요."
+        },
+        {
+          "utterance_index": 203,
+          "text": "그런데 잘 모르겠어요,"
+        },
+        {
+          "utterance_index": 204,
+          "text": "그냥 해 보는 거예요."
+        },
+        {
+          "utterance_index": 205,
+          "text": "이건 제 일이 아니에요,"
+        },
+        {
+          "utterance_index": 206,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 207,
+          "text": "흠."
+        },
+        {
+          "utterance_index": 208,
+          "text": "아마 써야 할 건"
+        },
+        {
+          "utterance_index": 209,
+          "text": "아."
+        },
+        {
+          "utterance_index": 210,
+          "text": "어. 제 생각엔 이게"
+        },
+        {
+          "utterance_index": 211,
+          "text": "다른 동물을 그리고 싶은가 봐요?"
+        },
+        {
+          "utterance_index": 212,
+          "text": "모르겠네요."
+        },
+        {
+          "utterance_index": 213,
+          "text": "재미로 살아요."
+        },
+        {
+          "utterance_index": 214,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 215,
+          "text": "이게 돌고래에 대한 제 어, 특징이에요. 재미로 산다."
+        },
+        {
+          "utterance_index": 216,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 217,
+          "text": "그럼"
+        },
+        {
+          "utterance_index": 218,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 219,
+          "text": "이제 새 빈 페이지에서 펜을 넘겨 드릴게요."
+        },
+        {
+          "utterance_index": 220,
+          "text": "하세요."
+        },
+        {
+          "utterance_index": 221,
+          "text": "고마워요."
+        },
+        {
+          "utterance_index": 222,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 223,
+          "text": "다른 선 굵기를 쓸게요."
+        },
+        {
+          "utterance_index": 224,
+          "text": "그리고 검은색으로 그릴게요."
+        },
+        {
+          "utterance_index": 225,
+          "text": "됐어요."
+        },
+        {
+          "utterance_index": 226,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 227,
+          "text": "제가 그림을 별로 못 그리지만,"
+        },
+        {
+          "utterance_index": 228,
+          "text": "해 볼게요."
+        },
+        {
+          "utterance_index": 229,
+          "text": "선 굵기가 가는 게 그리기 더 쉬운 것 같아요."
+        },
+        {
+          "utterance_index": 230,
+          "text": "흠."
+        },
+        {
+          "utterance_index": 231,
+          "text": "저보다 훨씬 잘 되고 있잖아요."
+        },
+        {
+          "utterance_index": 232,
+          "text": "양이네요."
+        },
+        {
+          "utterance_index": 233,
+          "text": "음."
+        },
+        {
+          "utterance_index": 234,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 235,
+          "text": "이게 제 음, 흠."
+        },
+        {
+          "utterance_index": 236,
+          "text": "양이에요."
+        },
+        {
+          "utterance_index": 237,
+          "text": "좋네요."
+        },
+        {
+          "utterance_index": 238,
+          "text": "물론"
+        },
+        {
+          "utterance_index": 239,
+          "text": "엉덩이에 늘 칠해 두는 작은 파란 점도 있어요."
+        },
+        {
+          "utterance_index": 240,
+          "text": "어."
+        },
+        {
+          "utterance_index": 241,
+          "text": "진짜 죽은 양이네요,"
+        },
+        {
+          "utterance_index": 242,
+          "text": "됐어요."
+        },
+        {
+          "utterance_index": 243,
+          "text": "네."
+        },
+        {
+          "utterance_index": 244,
+          "text": "네."
+        },
+        {
+          "utterance_index": 245,
+          "text": "구별하려고요,"
+        },
+        {
+          "utterance_index": 246,
+          "text": "네, 그렇군요."
+        },
+        {
+          "utterance_index": 247,
+          "text": "음, 어디에 이름도 좀 써 주시겠어요."
+        },
+        {
+          "utterance_index": 248,
+          "text": "네."
+        },
+        {
+          "utterance_index": 249,
+          "text": "그냥"
+        },
+        {
+          "utterance_index": 250,
+          "text": "양들은"
+        },
+        {
+          "utterance_index": 251,
+          "text": "어서."
+        },
+        {
+          "utterance_index": 252,
+          "text": "글씨 쓸 때는 정말 천천히 해야 해요."
+        },
+        {
+          "utterance_index": 253,
+          "text": "네."
+        },
+        {
+          "utterance_index": 254,
+          "text": "양은 훌륭한 동물이에요."
+        },
+        {
+          "utterance_index": 255,
+          "text": "그리고 이건 그냥 저를 나타내는 작은 거예요."
+        },
+        {
+          "utterance_index": 256,
+          "text": "그래서."
+        },
+        {
+          "utterance_index": 257,
+          "text": "UI 디자이너한테 펜을 넘길게요."
+        },
+        {
+          "utterance_index": 258,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 259,
+          "text": "좋네요."
+        },
+        {
+          "utterance_index": 260,
+          "text": "음, 저는 어, 머리만 그릴게요,"
+        },
+        {
+          "utterance_index": 261,
+          "text": "그런데 음"
+        },
+        {
+          "utterance_index": 262,
+          "text": "어디 보자."
+        },
+        {
+          "utterance_index": 263,
+          "text": "음. 어."
+        },
+        {
+          "utterance_index": 264,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 265,
+          "text": "흥미롭네요."
+        },
+        {
+          "utterance_index": 266,
+          "text": "귀엽네요."
+        },
+        {
+          "utterance_index": 267,
+          "text": "네."
+        },
+        {
+          "utterance_index": 268,
+          "text": "이게 뭔지 아세요?"
+        },
+        {
+          "utterance_index": 269,
+          "text": "아니면 누군지?"
+        },
+        {
+          "utterance_index": 270,
+          "text": "토끼요?"
+        },
+        {
+          "utterance_index": 271,
+          "text": "가필드요."
+        },
+        {
+          "utterance_index": 272,
+          "text": "아, 네, 맞아요."
+        },
+        {
+          "utterance_index": 273,
+          "text": "가필드. 네."
+        },
+        {
+          "utterance_index": 274,
+          "text": "그냥"
+        },
+        {
+          "utterance_index": 275,
+          "text": "음. 맞혀 보세요."
+        },
+        {
+          "utterance_index": 276,
+          "text": "그래서 어"
+        },
+        {
+          "utterance_index": 277,
+          "text": "네. 이 정도면 됐어요."
+        },
+        {
+          "utterance_index": 278,
+          "text": "음, 빈 페이지라고 하셨죠,"
+        },
+        {
+          "utterance_index": 279,
+          "text": "아니면"
+        },
+        {
+          "utterance_index": 280,
+          "text": "네, 그냥 빈 페이지요."
+        },
+        {
+          "utterance_index": 281,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 282,
+          "text": "음"
+        },
+        {
+          "utterance_index": 283,
+          "text": "저도 고양이를 그리려고 했는데,"
+        },
+        {
+          "utterance_index": 284,
+          "text": "그래서."
+        },
+        {
+          "utterance_index": 285,
+          "text": "다른 걸 해 볼게요."
+        },
+        {
+          "utterance_index": 286,
+          "text": "아니요."
+        },
+        {
+          "utterance_index": 287,
+          "text": "가필드와는 다른 걸로요."
+        },
+        {
+          "utterance_index": 288,
+          "text": "제 건 좀 더 말랐어요."
+        },
+        {
+          "utterance_index": 289,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 290,
+          "text": "꽤 마른 고양이네요."
+        },
+        {
+          "utterance_index": 291,
+          "text": "네."
+        },
+        {
+          "utterance_index": 292,
+          "text": "그런데 어"
+        },
+        {
+          "utterance_index": 293,
+          "text": "그리고 꼬리가 정말 독특하네요."
+        },
+        {
+          "utterance_index": 294,
+          "text": "당신 고양이예요,"
+        },
+        {
+          "utterance_index": 295,
+          "text": "아니면 길에서 데려왔어요?"
+        },
+        {
+          "utterance_index": 296,
+          "text": "음,"
+        },
+        {
+          "utterance_index": 297,
+          "text": "고양이라고 그린 거예요."
+        },
+        {
+          "utterance_index": 298,
+          "text": "저는 고양이를 좋아해요"
+        },
+        {
+          "utterance_index": 299,
+          "text": "어, 독립적이라서요."
+        },
+        {
+          "utterance_index": 300,
+          "text": "아."
+        },
+        {
+          "utterance_index": 301,
+          "text": "펜이요."
+        },
+        {
+          "utterance_index": 302,
+          "text": "그래서."
+        },
+        {
+          "utterance_index": 303,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 304,
+          "text": "꽤 분명하네요."
+        },
+        {
+          "utterance_index": 305,
+          "text": "그럼"
+        },
+        {
+          "utterance_index": 306,
+          "text": "이제 다들 화이트보드 쓰는 법 아시죠?"
+        },
+        {
+          "utterance_index": 307,
+          "text": "그러니까"
+        },
+        {
+          "utterance_index": 308,
+          "text": "네."
+        },
+        {
+          "utterance_index": 309,
+          "text": "아이디어가 있거나 화이트보드에 뭘 그리고 싶으면 말씀하시고"
+        },
+        {
+          "utterance_index": 310,
+          "text": "펜이요."
+        },
+        {
+          "utterance_index": 311,
+          "text": "하시면 돼요."
+        },
+        {
+          "utterance_index": 312,
+          "text": "꽤 어, 쉬워요."
+        },
+        {
+          "utterance_index": 313,
+          "text": "네."
+        },
+        {
+          "utterance_index": 314,
+          "text": "그"
+        },
+        {
+          "utterance_index": 315,
+          "text": "귀신이 들렸나 봐요."
+        },
+        {
+          "utterance_index": 316,
+          "text": "귀신 들린 화이트보드네요."
+        },
+        {
+          "utterance_index": 317,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 318,
+          "text": "도구 어, 소개는 끝났어요."
+        },
+        {
+          "utterance_index": 319,
+          "text": "우리는"
+        },
+        {
+          "utterance_index": 320,
+          "text": "프로젝트 재무로 넘어가죠."
+        },
+        {
+          "utterance_index": 321,
+          "text": "음, 보시다시피 우리 리모컨의 판매 가격은 어, 25유로예요. 판매 가격이요."
+        },
+        {
+          "utterance_index": 322,
+          "text": "어, 목표 수익은 5천만 유로예요."
+        },
+        {
+          "utterance_index": 323,
+          "text": "어, 그게 리모컨으로 최소한 벌어야 하는 금액이라서,"
+        },
+        {
+          "utterance_index": 324,
+          "text": "목표를 달성하려면 함께 일해야 해요."
+        },
+        {
+          "utterance_index": 325,
+          "text": "어, 국제적으로 할 수 있으니까,"
+        },
+        {
+          "utterance_index": 326,
+          "text": "다양한 사용자, 다양한 문화, 다양한 트렌드에도 초점을 맞춰야 해요."
+        },
+        {
+          "utterance_index": 327,
+          "text": "음, 그건 다 나중 단계의 일이에요."
+        },
+        {
+          "utterance_index": 328,
+          "text": "생산 비용은 음, 최대 12.5유로라서,"
+        },
+        {
+          "utterance_index": 329,
+          "text": "그것도 염두에 둬야 할 점이에요,"
+        },
+        {
+          "utterance_index": 330,
+          "text": "리모컨 안에 작은 TV 같은 걸 넣지는 않을 거라는 거죠."
+        },
+        {
+          "utterance_index": 331,
+          "text": "그건 안 돼요."
+        },
+        {
+          "utterance_index": 332,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 333,
+          "text": "이 점들을 기억해 주세요. 판매 가격 25, 목표 수익 5천만, 음, 하지만 더 중요한 건 우리가 노리는 국제 시장이고요. 그리고 생산 비용은 어, 최대 12.5유로."
+        },
+        {
+          "utterance_index": 334,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 335,
+          "text": "이제 간단한 논의로 넘어가죠."
+        },
+        {
+          "utterance_index": 336,
+          "text": "논의할 시간이 5분에서 10분 정도 남았어요."
+        },
+        {
+          "utterance_index": 337,
+          "text": "그러니까"
+        },
+        {
+          "utterance_index": 338,
+          "text": "저는 앉을게요."
+        }
+      ],
+      "overlap_start": 156,
+      "overlap_end": 358,
+      "overlap_before_chars": 184,
+      "overlap_after_chars": 197,
+      "overlap_before": [
+        {
+          "utterance_index": 156,
+          "text": "이렇게 잡으면 센서가 가려져서"
+        },
+        {
+          "utterance_index": 157,
+          "text": "그림이 제대로 안 그려지거든요."
+        },
+        {
+          "utterance_index": 158,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 159,
+          "text": "네."
+        },
+        {
+          "utterance_index": 160,
+          "text": "또 하나는 좀 천천히 해야 한다는 거예요."
+        },
+        {
+          "utterance_index": 161,
+          "text": "정말 빨리 그리면 음, 펜이 따라오질 못하거든요."
+        },
+        {
+          "utterance_index": 162,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 163,
+          "text": "현재 색 형식을 고르고"
+        },
+        {
+          "utterance_index": 164,
+          "text": "어, 회색이 적당할 것 같네요."
+        },
+        {
+          "utterance_index": 165,
+          "text": "그다음은 선 굵기."
+        },
+        {
+          "utterance_index": 166,
+          "text": "7이 좋을 것 같아요."
+        },
+        {
+          "utterance_index": 167,
+          "text": "이제 제 그림 실력을 보시겠네요."
+        },
+        {
+          "utterance_index": 168,
+          "text": "별로 대단하진 않지만,"
+        },
+        {
+          "utterance_index": 169,
+          "text": "그래도 어"
+        },
+        {
+          "utterance_index": 170,
+          "text": "어, 보세요"
+        }
+      ],
+      "overlap_after": [
+        {
+          "utterance_index": 339,
+          "text": "그게 더 편하네요."
+        },
+        {
+          "utterance_index": 340,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 341,
+          "text": "메시지가 왔네요."
+        },
+        {
+          "utterance_index": 342,
+          "text": "메시지가 왔어요."
+        },
+        {
+          "utterance_index": 343,
+          "text": "5분이요."
+        },
+        {
+          "utterance_index": 344,
+          "text": "5분이요, 좋아요."
+        },
+        {
+          "utterance_index": 345,
+          "text": "좋아요,"
+        },
+        {
+          "utterance_index": 346,
+          "text": "어, 타이밍이 좋네요."
+        },
+        {
+          "utterance_index": 347,
+          "text": "그런데"
+        },
+        {
+          "utterance_index": 348,
+          "text": "그냥 딴 얘기인데, 제 노트북이 왜 까만 화면만 나오죠?"
+        },
+        {
+          "utterance_index": 349,
+          "text": "음?"
+        },
+        {
+          "utterance_index": 350,
+          "text": "어, 마법의 주문을 말해야 할지도요."
+        },
+        {
+          "utterance_index": 351,
+          "text": "네. 그렇겠죠."
+        },
+        {
+          "utterance_index": 352,
+          "text": "뭐 반응이 있어요?"
+        },
+        {
+          "utterance_index": 353,
+          "text": "없어요."
+        },
+        {
+          "utterance_index": 354,
+          "text": "그냥 덮었다가? 음, 다시 열어 보세요."
+        },
+        {
+          "utterance_index": 355,
+          "text": "슬라이드 쇼가 없네요. 흠."
+        },
+        {
+          "utterance_index": 356,
+          "text": "이제 꺼졌어요."
+        },
+        {
+          "utterance_index": 357,
+          "text": "꺼졌네요."
+        },
+        {
+          "utterance_index": 358,
+          "text": "이제 다시 켜야"
+        }
+      ]
+    },
+    {
+      "segment_id": 5,
+      "utterance_start": 339,
+      "utterance_end": 407,
+      "num_utterances": 69,
+      "char_count": 771,
+      "utterances": [
+        {
+          "utterance_index": 339,
+          "text": "그게 더 편하네요."
+        },
+        {
+          "utterance_index": 340,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 341,
+          "text": "메시지가 왔네요."
+        },
+        {
+          "utterance_index": 342,
+          "text": "메시지가 왔어요."
+        },
+        {
+          "utterance_index": 343,
+          "text": "5분이요."
+        },
+        {
+          "utterance_index": 344,
+          "text": "5분이요, 좋아요."
+        },
+        {
+          "utterance_index": 345,
+          "text": "좋아요,"
+        },
+        {
+          "utterance_index": 346,
+          "text": "어, 타이밍이 좋네요."
+        },
+        {
+          "utterance_index": 347,
+          "text": "그런데"
+        },
+        {
+          "utterance_index": 348,
+          "text": "그냥 딴 얘기인데, 제 노트북이 왜 까만 화면만 나오죠?"
+        },
+        {
+          "utterance_index": 349,
+          "text": "음?"
+        },
+        {
+          "utterance_index": 350,
+          "text": "어, 마법의 주문을 말해야 할지도요."
+        },
+        {
+          "utterance_index": 351,
+          "text": "네. 그렇겠죠."
+        },
+        {
+          "utterance_index": 352,
+          "text": "뭐 반응이 있어요?"
+        },
+        {
+          "utterance_index": 353,
+          "text": "없어요."
+        },
+        {
+          "utterance_index": 354,
+          "text": "그냥 덮었다가? 음, 다시 열어 보세요."
+        },
+        {
+          "utterance_index": 355,
+          "text": "슬라이드 쇼가 없네요. 흠."
+        },
+        {
+          "utterance_index": 356,
+          "text": "이제 꺼졌어요."
+        },
+        {
+          "utterance_index": 357,
+          "text": "꺼졌네요."
+        },
+        {
+          "utterance_index": 358,
+          "text": "이제 다시 켜야"
+        },
+        {
+          "utterance_index": 359,
+          "text": "아, 네."
+        },
+        {
+          "utterance_index": 360,
+          "text": "괜찮을 것 같아요."
+        },
+        {
+          "utterance_index": 361,
+          "text": "음,"
+        },
+        {
+          "utterance_index": 362,
+          "text": "켜져 있었는데,"
+        },
+        {
+          "utterance_index": 363,
+          "text": "그런데"
+        },
+        {
+          "utterance_index": 364,
+          "text": "음"
+        },
+        {
+          "utterance_index": 365,
+          "text": "노트북이 다 그렇죠."
+        },
+        {
+          "utterance_index": 366,
+          "text": "아,"
+        },
+        {
+          "utterance_index": 367,
+          "text": "됐네요."
+        },
+        {
+          "utterance_index": 368,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 369,
+          "text": "좋아요. 그런데 음"
+        },
+        {
+          "utterance_index": 370,
+          "text": "다들 음, 리모컨 써 본 경험 있으시죠, 그러니까 일반 리모컨 말고 좀 다른 것, 다른 용도로 쓸 수 있는 것 같은 거요?"
+        },
+        {
+          "utterance_index": 371,
+          "text": "음."
+        },
+        {
+          "utterance_index": 372,
+          "text": "아, 그래요?"
+        },
+        {
+          "utterance_index": 373,
+          "text": "없어요?"
+        },
+        {
+          "utterance_index": 374,
+          "text": "흠."
+        },
+        {
+          "utterance_index": 375,
+          "text": "당신은요?"
+        },
+        {
+          "utterance_index": 376,
+          "text": "음,"
+        },
+        {
+          "utterance_index": 377,
+          "text": "저희 집에는"
+        },
+        {
+          "utterance_index": 378,
+          "text": "아니요, 저도 없어요."
+        },
+        {
+          "utterance_index": 379,
+          "text": "그게"
+        },
+        {
+          "utterance_index": 380,
+          "text": "집에 꽤 큰 TV랑 DVD 플레이어가 있어서,"
+        },
+        {
+          "utterance_index": 381,
+          "text": "리모컨이 엄청 많아요, TV용, 비디오용, DVD 플레이어용이요."
+        },
+        {
+          "utterance_index": 382,
+          "text": "아, 네."
+        },
+        {
+          "utterance_index": 383,
+          "text": "그래서 전부 조작할 수 있는 리모컨 하나를 만드는 게 제일 좋을 것 같아요."
+        },
+        {
+          "utterance_index": 384,
+          "text": "네. 네"
+        },
+        {
+          "utterance_index": 385,
+          "text": "그럼요. 네."
+        },
+        {
+          "utterance_index": 386,
+          "text": "저는 집에 하나 있어요."
+        },
+        {
+          "utterance_index": 387,
+          "text": "그리고 어, 기기를 여덟 개쯤 프로그래밍할 수 있어서,"
+        },
+        {
+          "utterance_index": 388,
+          "text": "TV든 뭐든 쓸 수 있어요."
+        },
+        {
+          "utterance_index": 389,
+          "text": "그렇군요, 네. 네."
+        },
+        {
+          "utterance_index": 390,
+          "text": "그리고 적외선으로도 작동해서,"
+        },
+        {
+          "utterance_index": 391,
+          "text": "방 안에 작은 장치를 둬야 하는데,"
+        },
+        {
+          "utterance_index": 392,
+          "text": "그러면 3층이나 2층에서도 조작할 수 있어요."
+        },
+        {
+          "utterance_index": 393,
+          "text": "그렇군요, 네."
+        },
+        {
+          "utterance_index": 394,
+          "text": "아"
+        },
+        {
+          "utterance_index": 395,
+          "text": "정말요."
+        },
+        {
+          "utterance_index": 396,
+          "text": "그러니까 비디오나 DVD 플레이어가 아래층에 있고 2층 TV에 연결돼 있으면 꽤 편리해요. 그러니까 꽤 편리한 음"
+        },
+        {
+          "utterance_index": 397,
+          "text": "흠."
+        },
+        {
+          "utterance_index": 398,
+          "text": "아."
+        },
+        {
+          "utterance_index": 399,
+          "text": "네."
+        },
+        {
+          "utterance_index": 400,
+          "text": "음."
+        },
+        {
+          "utterance_index": 401,
+          "text": "물건이에요."
+        },
+        {
+          "utterance_index": 402,
+          "text": "음, 그런데"
+        },
+        {
+          "utterance_index": 403,
+          "text": "여러 기기를 리모컨 하나에 넣을 수 있으면 훨씬 편해지는 것 같아요."
+        },
+        {
+          "utterance_index": 404,
+          "text": "그게 어"
+        },
+        {
+          "utterance_index": 405,
+          "text": "네."
+        },
+        {
+          "utterance_index": 406,
+          "text": "아."
+        },
+        {
+          "utterance_index": 407,
+          "text": "그건 기억해 둘 만하네요."
+        }
+      ],
+      "overlap_start": 330,
+      "overlap_end": 424,
+      "overlap_before_chars": 192,
+      "overlap_after_chars": 200,
+      "overlap_before": [
+        {
+          "utterance_index": 330,
+          "text": "리모컨 안에 작은 TV 같은 걸 넣지는 않을 거라는 거죠."
+        },
+        {
+          "utterance_index": 331,
+          "text": "그건 안 돼요."
+        },
+        {
+          "utterance_index": 332,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 333,
+          "text": "이 점들을 기억해 주세요. 판매 가격 25, 목표 수익 5천만, 음, 하지만 더 중요한 건 우리가 노리는 국제 시장이고요. 그리고 생산 비용은 어, 최대 12.5유로."
+        },
+        {
+          "utterance_index": 334,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 335,
+          "text": "이제 간단한 논의로 넘어가죠."
+        },
+        {
+          "utterance_index": 336,
+          "text": "논의할 시간이 5분에서 10분 정도 남았어요."
+        },
+        {
+          "utterance_index": 337,
+          "text": "그러니까"
+        },
+        {
+          "utterance_index": 338,
+          "text": "저는 앉을게요."
+        }
+      ],
+      "overlap_after": [
+        {
+          "utterance_index": 408,
+          "text": "그럼"
+        },
+        {
+          "utterance_index": 409,
+          "text": "다시 회의록을 적으셔도 될 것 같아요."
+        },
+        {
+          "utterance_index": 410,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 411,
+          "text": "그게 좋겠네요."
+        },
+        {
+          "utterance_index": 412,
+          "text": "그게 당신 일이니까요."
+        },
+        {
+          "utterance_index": 413,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 414,
+          "text": "여러 기능을 원하고"
+        },
+        {
+          "utterance_index": 415,
+          "text": "네."
+        },
+        {
+          "utterance_index": 416,
+          "text": "어, 적외선으로 뭔가 할 수 있는지 볼 수 있겠네요."
+        },
+        {
+          "utterance_index": 417,
+          "text": "그런데 그게 생산 비용을 넘을지는 모르겠어요."
+        },
+        {
+          "utterance_index": 418,
+          "text": "그러니까 어, 그건 우리가 알아봐야 할 것 같아요."
+        },
+        {
+          "utterance_index": 419,
+          "text": "음."
+        },
+        {
+          "utterance_index": 420,
+          "text": "네."
+        },
+        {
+          "utterance_index": 421,
+          "text": "그래도 그렇게 할 수 있으면 정말 좋겠네요."
+        },
+        {
+          "utterance_index": 422,
+          "text": "그리고 리모컨의 다른 기능은요?"
+        },
+        {
+          "utterance_index": 423,
+          "text": "아마 우리가 어, 어"
+        },
+        {
+          "utterance_index": 424,
+          "text": "음."
+        }
+      ]
+    },
+    {
+      "segment_id": 6,
+      "utterance_start": 408,
+      "utterance_end": 463,
+      "num_utterances": 56,
+      "char_count": 569,
+      "utterances": [
+        {
+          "utterance_index": 408,
+          "text": "그럼"
+        },
+        {
+          "utterance_index": 409,
+          "text": "다시 회의록을 적으셔도 될 것 같아요."
+        },
+        {
+          "utterance_index": 410,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 411,
+          "text": "그게 좋겠네요."
+        },
+        {
+          "utterance_index": 412,
+          "text": "그게 당신 일이니까요."
+        },
+        {
+          "utterance_index": 413,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 414,
+          "text": "여러 기능을 원하고"
+        },
+        {
+          "utterance_index": 415,
+          "text": "네."
+        },
+        {
+          "utterance_index": 416,
+          "text": "어, 적외선으로 뭔가 할 수 있는지 볼 수 있겠네요."
+        },
+        {
+          "utterance_index": 417,
+          "text": "그런데 그게 생산 비용을 넘을지는 모르겠어요."
+        },
+        {
+          "utterance_index": 418,
+          "text": "그러니까 어, 그건 우리가 알아봐야 할 것 같아요."
+        },
+        {
+          "utterance_index": 419,
+          "text": "음."
+        },
+        {
+          "utterance_index": 420,
+          "text": "네."
+        },
+        {
+          "utterance_index": 421,
+          "text": "그래도 그렇게 할 수 있으면 정말 좋겠네요."
+        },
+        {
+          "utterance_index": 422,
+          "text": "그리고 리모컨의 다른 기능은요?"
+        },
+        {
+          "utterance_index": 423,
+          "text": "아마 우리가 어, 어"
+        },
+        {
+          "utterance_index": 424,
+          "text": "음."
+        },
+        {
+          "utterance_index": 425,
+          "text": "음."
+        },
+        {
+          "utterance_index": 426,
+          "text": "충격에 강해야 할 것 같아요"
+        },
+        {
+          "utterance_index": 427,
+          "text": "그럼요, 네."
+        },
+        {
+          "utterance_index": 428,
+          "text": "왜냐하면"
+        },
+        {
+          "utterance_index": 429,
+          "text": "충격에 강하게."
+        },
+        {
+          "utterance_index": 430,
+          "text": "제 리모컨은 자주 떨어지거든요."
+        },
+        {
+          "utterance_index": 431,
+          "text": "방수,"
+        },
+        {
+          "utterance_index": 432,
+          "text": "아니면 어"
+        },
+        {
+          "utterance_index": 433,
+          "text": "그러니까"
+        },
+        {
+          "utterance_index": 434,
+          "text": "어, 어떻게 될지 모르잖아요, 어,"
+        },
+        {
+          "utterance_index": 435,
+          "text": "그럼요."
+        },
+        {
+          "utterance_index": 436,
+          "text": "그러니까 어"
+        },
+        {
+          "utterance_index": 437,
+          "text": "방수."
+        },
+        {
+          "utterance_index": 438,
+          "text": "좋아요. 그러니까"
+        },
+        {
+          "utterance_index": 439,
+          "text": "이게 우리가 생각할 수 있는 몇 가지네요."
+        },
+        {
+          "utterance_index": 440,
+          "text": "음, 이번 회의 회의록은 어, 프로젝트 폴더에 올려 둘게요."
+        },
+        {
+          "utterance_index": 441,
+          "text": "네."
+        },
+        {
+          "utterance_index": 442,
+          "text": "네,"
+        },
+        {
+          "utterance_index": 443,
+          "text": "작은 거 하나 더요."
+        },
+        {
+          "utterance_index": 444,
+          "text": "배터리 상태 표시를 넣으면 편할 것 같아요."
+        },
+        {
+          "utterance_index": 445,
+          "text": "그러면 볼 수 있잖아요"
+        },
+        {
+          "utterance_index": 446,
+          "text": "그건"
+        },
+        {
+          "utterance_index": 447,
+          "text": "배터리 상태."
+        },
+        {
+          "utterance_index": 448,
+          "text": "좋아요, 네."
+        },
+        {
+          "utterance_index": 449,
+          "text": "배터리가 얼마나 남았는지요."
+        },
+        {
+          "utterance_index": 450,
+          "text": "그런데 그것도 생산 비용을 많이 끌어올릴 테니까,"
+        },
+        {
+          "utterance_index": 451,
+          "text": "그것도 따져 봐야 할 것 같아요."
+        },
+        {
+          "utterance_index": 452,
+          "text": "네."
+        },
+        {
+          "utterance_index": 453,
+          "text": "음."
+        },
+        {
+          "utterance_index": 454,
+          "text": "어."
+        },
+        {
+          "utterance_index": 455,
+          "text": "그래도 작은 LED 정도면,"
+        },
+        {
+          "utterance_index": 456,
+          "text": "모르겠네요."
+        },
+        {
+          "utterance_index": 457,
+          "text": "그것도 아이디어네요."
+        },
+        {
+          "utterance_index": 458,
+          "text": "다른 아이디어 있어요? 빠르게요."
+        },
+        {
+          "utterance_index": 459,
+          "text": "없어요."
+        },
+        {
+          "utterance_index": 460,
+          "text": "다 나온 것 같아요,"
+        },
+        {
+          "utterance_index": 461,
+          "text": "음."
+        },
+        {
+          "utterance_index": 462,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 463,
+          "text": "좋아요."
+        }
+      ],
+      "overlap_start": 391,
+      "overlap_end": 482,
+      "overlap_before_chars": 200,
+      "overlap_after_chars": 199,
+      "overlap_before": [
+        {
+          "utterance_index": 391,
+          "text": "방 안에 작은 장치를 둬야 하는데,"
+        },
+        {
+          "utterance_index": 392,
+          "text": "그러면 3층이나 2층에서도 조작할 수 있어요."
+        },
+        {
+          "utterance_index": 393,
+          "text": "그렇군요, 네."
+        },
+        {
+          "utterance_index": 394,
+          "text": "아"
+        },
+        {
+          "utterance_index": 395,
+          "text": "정말요."
+        },
+        {
+          "utterance_index": 396,
+          "text": "그러니까 비디오나 DVD 플레이어가 아래층에 있고 2층 TV에 연결돼 있으면 꽤 편리해요. 그러니까 꽤 편리한 음"
+        },
+        {
+          "utterance_index": 397,
+          "text": "흠."
+        },
+        {
+          "utterance_index": 398,
+          "text": "아."
+        },
+        {
+          "utterance_index": 399,
+          "text": "네."
+        },
+        {
+          "utterance_index": 400,
+          "text": "음."
+        },
+        {
+          "utterance_index": 401,
+          "text": "물건이에요."
+        },
+        {
+          "utterance_index": 402,
+          "text": "음, 그런데"
+        },
+        {
+          "utterance_index": 403,
+          "text": "여러 기기를 리모컨 하나에 넣을 수 있으면 훨씬 편해지는 것 같아요."
+        },
+        {
+          "utterance_index": 404,
+          "text": "그게 어"
+        },
+        {
+          "utterance_index": 405,
+          "text": "네."
+        },
+        {
+          "utterance_index": 406,
+          "text": "아."
+        },
+        {
+          "utterance_index": 407,
+          "text": "그건 기억해 둘 만하네요."
+        }
+      ],
+      "overlap_after": [
+        {
+          "utterance_index": 464,
+          "text": "네."
+        },
+        {
+          "utterance_index": 465,
+          "text": "이 어, 발표에 대해 질문 있으세요? 킥오프 발표요."
+        },
+        {
+          "utterance_index": 466,
+          "text": "음. 아니요, 없는 것 같아요."
+        },
+        {
+          "utterance_index": 467,
+          "text": "없어요?"
+        },
+        {
+          "utterance_index": 468,
+          "text": "좋아요,"
+        },
+        {
+          "utterance_index": 469,
+          "text": "그럼 이번 회의 회의록은 프로젝트 폴더에 올려 두고,"
+        },
+        {
+          "utterance_index": 470,
+          "text": "그다음에 각자 작업하면 돼요."
+        },
+        {
+          "utterance_index": 471,
+          "text": "이제 회의를 마치세요."
+        },
+        {
+          "utterance_index": 472,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 473,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 474,
+          "text": "그리고 다들 어, 각자 맡은 작업을 하면 돼요."
+        },
+        {
+          "utterance_index": 475,
+          "text": "알겠습니다."
+        },
+        {
+          "utterance_index": 476,
+          "text": "좋아요"
+        },
+        {
+          "utterance_index": 477,
+          "text": "그럼 30분쯤 후에 봬요."
+        },
+        {
+          "utterance_index": 478,
+          "text": "30분이요."
+        },
+        {
+          "utterance_index": 479,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 480,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 481,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 482,
+          "text": "그럼 행운을 빌어요."
+        }
+      ]
+    },
+    {
+      "segment_id": 7,
+      "utterance_start": 464,
+      "utterance_end": 483,
+      "num_utterances": 20,
+      "char_count": 201,
+      "utterances": [
+        {
+          "utterance_index": 464,
+          "text": "네."
+        },
+        {
+          "utterance_index": 465,
+          "text": "이 어, 발표에 대해 질문 있으세요? 킥오프 발표요."
+        },
+        {
+          "utterance_index": 466,
+          "text": "음. 아니요, 없는 것 같아요."
+        },
+        {
+          "utterance_index": 467,
+          "text": "없어요?"
+        },
+        {
+          "utterance_index": 468,
+          "text": "좋아요,"
+        },
+        {
+          "utterance_index": 469,
+          "text": "그럼 이번 회의 회의록은 프로젝트 폴더에 올려 두고,"
+        },
+        {
+          "utterance_index": 470,
+          "text": "그다음에 각자 작업하면 돼요."
+        },
+        {
+          "utterance_index": 471,
+          "text": "이제 회의를 마치세요."
+        },
+        {
+          "utterance_index": 472,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 473,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 474,
+          "text": "그리고 다들 어, 각자 맡은 작업을 하면 돼요."
+        },
+        {
+          "utterance_index": 475,
+          "text": "알겠습니다."
+        },
+        {
+          "utterance_index": 476,
+          "text": "좋아요"
+        },
+        {
+          "utterance_index": 477,
+          "text": "그럼 30분쯤 후에 봬요."
+        },
+        {
+          "utterance_index": 478,
+          "text": "30분이요."
+        },
+        {
+          "utterance_index": 479,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 480,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 481,
+          "text": "좋아요."
+        },
+        {
+          "utterance_index": 482,
+          "text": "그럼 행운을 빌어요."
+        },
+        {
+          "utterance_index": 483,
+          "text": "네."
+        }
+      ],
+      "overlap_start": 444,
+      "overlap_end": 483,
+      "overlap_before_chars": 192,
+      "overlap_after_chars": 0,
+      "overlap_before": [
+        {
+          "utterance_index": 444,
+          "text": "배터리 상태 표시를 넣으면 편할 것 같아요."
+        },
+        {
+          "utterance_index": 445,
+          "text": "그러면 볼 수 있잖아요"
+        },
+        {
+          "utterance_index": 446,
+          "text": "그건"
+        },
+        {
+          "utterance_index": 447,
+          "text": "배터리 상태."
+        },
+        {
+          "utterance_index": 448,
+          "text": "좋아요, 네."
+        },
+        {
+          "utterance_index": 449,
+          "text": "배터리가 얼마나 남았는지요."
+        },
+        {
+          "utterance_index": 450,
+          "text": "그런데 그것도 생산 비용을 많이 끌어올릴 테니까,"
+        },
+        {
+          "utterance_index": 451,
+          "text": "그것도 따져 봐야 할 것 같아요."
+        },
+        {
+          "utterance_index": 452,
+          "text": "네."
+        },
+        {
+          "utterance_index": 453,
+          "text": "음."
+        },
+        {
+          "utterance_index": 454,
+          "text": "어."
+        },
+        {
+          "utterance_index": 455,
+          "text": "그래도 작은 LED 정도면,"
+        },
+        {
+          "utterance_index": 456,
+          "text": "모르겠네요."
+        },
+        {
+          "utterance_index": 457,
+          "text": "그것도 아이디어네요."
+        },
+        {
+          "utterance_index": 458,
+          "text": "다른 아이디어 있어요? 빠르게요."
+        },
+        {
+          "utterance_index": 459,
+          "text": "없어요."
+        },
+        {
+          "utterance_index": 460,
+          "text": "다 나온 것 같아요,"
+        },
+        {
+          "utterance_index": 461,
+          "text": "음."
+        },
+        {
+          "utterance_index": 462,
+          "text": "그래서"
+        },
+        {
+          "utterance_index": 463,
+          "text": "좋아요."
+        }
+      ],
+      "overlap_after": []
+    }
+  ]
+}
