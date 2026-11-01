@@ -1,0 +1,14 @@
+{
+  "chunk_id": 5,
+  "actions": [
+    {
+      "content": "리모컨 디자인의 형태를 논의한다",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        155
+      ]
+    }
+  ]
+}

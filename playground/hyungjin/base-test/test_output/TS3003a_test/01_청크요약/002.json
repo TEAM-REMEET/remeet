@@ -1,0 +1,70 @@
+{
+  "meeting_id": "TS3003a",
+  "chunk_id": 2,
+  "agendas": [
+    {
+      "agenda_id": "A002",
+      "new_key": "new_1",
+      "title": "프로젝트 목표와 역할",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "신제품 목표",
+          "tag": "정보",
+          "text": "프로젝트 목표는 독창적이고 트렌디하며 사용하기 쉬운 새 리모컨을 만드는 것이다.",
+          "evidence_utterance_ids": [
+            80,
+            81
+          ]
+        },
+        {
+          "subtopic": "프로젝트 진행 단계",
+          "tag": "정보",
+          "text": "프로젝트는 기능 설계, 콘셉트 설계, 상세 설계의 세 단계를 거치며, 기능 설계 단계에는 각자 작업과 회의가 포함된다고 안내했다.",
+          "evidence_utterance_ids": [
+            90,
+            91,
+            92
+          ]
+        },
+        {
+          "subtopic": "역할과 업무 범위",
+          "tag": "정보",
+          "text": "마케팅 전문가는 트렌디하고 사용하기 쉬운 외관을 위해 참여하며, 사용자 요구 사항 명세·트렌드 관찰·제품 평가도 맡는다. 산업 디자이너는 사용 편의성과 일부 독창성, 작동 설계·부품 설계·외관 및 느낌 디자인을 맡는다. UI 디자이너는 기술적 기능 설계와 사용자 인터페이스 콘셉트 및 디자인을 맡는다.",
+          "evidence_utterance_ids": [
+            83,
+            85,
+            86,
+            95,
+            96,
+            97
+          ]
+        },
+        {
+          "subtopic": "회사명 표기 오류",
+          "tag": "정보",
+          "text": "회사 정보에 Real Reaction 대신 Real Remote라고 표기된 것을 발견했으며, Real Remote는 해당 회사가 아니라고 언급했다. 이를 작은 실수로 표현했다.",
+          "evidence_utterance_ids": [
+            73,
+            75,
+            76
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "프로젝트 목표와 진행 단계, 참여자별 업무 범위를 안내했으며 별도의 결정은 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            80,
+            90,
+            93,
+            98
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

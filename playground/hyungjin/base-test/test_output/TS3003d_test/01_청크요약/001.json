@@ -1,0 +1,182 @@
+{
+  "meeting_id": "TS3003d",
+  "chunk_id": 1,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": "new_1",
+      "title": "리모컨 최종 디자인",
+      "background": [
+        {
+          "text": "이번 마지막 회의에서 최종 디자인을 논의하며, 외관과 느낌 및 사용성 인터페이스 디자인을 다루기로 했다.",
+          "evidence_utterance_ids": [
+            11,
+            15,
+            16,
+            22
+          ]
+        }
+      ],
+      "discussions": [
+        {
+          "subtopic": "프로토타입 구성",
+          "tag": "정보",
+          "text": "발표자는 본인과 Richard가 만든 프로토타입이라고 소개했다. 전원 버튼은 기본 위치에 두고, 그 아래에 음소거 버튼을 배치했으며, 볼륨과 채널 선택에는 단순한 플러스·마이너스 버튼을 사용했다. 도움말 버튼을 누른 채 다른 버튼을 누르면 해당 도움말이 LCD 화면에 표시되는 구상이다. 1부터 0까지의 숫자 버튼, 문자 방송 버튼, 자막 버튼, 회사 로고도 포함했다. 발표자는 프로토타입이 꽤 단순하다고 설명했다.",
+          "evidence_utterance_ids": [
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50
+          ]
+        },
+        {
+          "subtopic": "사용자 반응",
+          "tag": "정보",
+          "text": "사용자들이 프로토타입을 어떻게 받아들이는지는 테스트해야 알 수 있다고 했다.",
+          "evidence_utterance_ids": [
+            51
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "프로토타입 디자인을 발표하고 공유했으며, 이 청크에서는 최종 디자인에 대한 결정은 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            16,
+            25,
+            37,
+            42,
+            50
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "사용자들이 프로토타입을 어떻게 받아들일지는 테스트를 통해 확인해야 한다.",
+          "evidence_utterance_ids": [
+            51
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "A002",
+      "new_key": "new_2",
+      "title": "제품 평가 기준",
+      "background": [
+        {
+          "text": "제품 평가를 하고 평가 기준을 정하는 것이 이번 회의 안건으로 제시되었다.",
+          "evidence_utterance_ids": [
+            17,
+            23,
+            24,
+            26
+          ]
+        }
+      ],
+      "discussions": [],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "평가 기준을 정하고 제품 평가를 할 계획이 언급되었지만, 이 청크에서는 기준이나 평가 결과가 논의되지 않았다.",
+          "evidence_utterance_ids": [
+            23,
+            26
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "A003",
+      "new_key": "new_3",
+      "title": "제품 예산",
+      "background": [
+        {
+          "text": "제안된 기능을 예산 안에서 구현할 수 있는지 확인하기 위해 재무를 검토하기로 했다.",
+          "evidence_utterance_ids": [
+            27,
+            28,
+            29,
+            30
+          ]
+        }
+      ],
+      "discussions": [
+        {
+          "subtopic": "리모컨 단가 한도",
+          "tag": "정보",
+          "text": "리모컨 한 대당 12.5유로 안에 맞는지 검토할 예정이라고 했으며, 기능이 많을수록 비용이 늘어난다고 설명했다. 재무 검토는 나중에 하기로 했다.",
+          "evidence_utterance_ids": [
+            30,
+            31,
+            32
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "예산 및 단가를 검토할 계획만 공유되었고, 이 청크에서는 예산 적합성에 대한 결론이 나오지 않았다.",
+          "evidence_utterance_ids": [
+            27,
+            28,
+            31,
+            32
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "제안된 기능을 모두 리모컨 한 대당 12.5유로 이내로 구현할 수 있는지 확인해야 한다.",
+          "evidence_utterance_ids": [
+            28,
+            30,
+            31,
+            32
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "A004",
+      "new_key": "new_4",
+      "title": "프로젝트 평가",
+      "background": [
+        {
+          "text": "제품 평가와 별도로 프로젝트 평가를 진행하고 프로젝트를 마무리할 계획이라고 했다.",
+          "evidence_utterance_ids": [
+            17,
+            18,
+            33,
+            34
+          ]
+        }
+      ],
+      "discussions": [],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "프로젝트 평가와 마무리를 진행할 계획이 언급되었지만, 이 청크에서는 평가 내용이나 결과가 나오지 않았다.",
+          "evidence_utterance_ids": [
+            17,
+            18,
+            33,
+            34
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

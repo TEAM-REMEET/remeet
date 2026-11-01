@@ -1,0 +1,36 @@
+{
+  "meeting_id": "TS3003d",
+  "chunk_id": 2,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "리모컨 최종 디자인",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "문자 방송 페이지 조작",
+          "tag": "정보",
+          "text": "문자 방송에서는 버튼을 눌러 다음 페이지로 넘어가는 방식이 일반적이며, 100페이지에 들어간 뒤에는 리모컨의 숫자 버튼(1~0)을 사용할 수 있다는 내용이 언급되었다. 채널 변경 버튼도 문자 방송 페이지를 위아래로 넘기는 데 사용할 수 있다고 설명했다.",
+          "evidence_utterance_ids": [
+            58,
+            62,
+            65
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "문자 방송 페이지 조작에 숫자 버튼과 채널 변경 버튼을 사용하는 내용이 공유되었으며, 이 청크에서는 별도의 디자인 결정이 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            62,
+            65
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

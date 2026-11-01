@@ -1,0 +1,730 @@
+{
+  "chunk_summary": {
+    "type": "object",
+    "properties": {
+      "meeting_id": {
+        "type": "string"
+      },
+      "chunk_id": {
+        "type": "integer"
+      },
+      "agendas": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "agenda_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "new_key": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "background": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "evidence_utterance_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "required": [
+                  "text",
+                  "evidence_utterance_ids"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "discussions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "subtopic": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string",
+                    "enum": [
+                      "제안",
+                      "반대·우려",
+                      "질문",
+                      "정보"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "evidence_utterance_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "required": [
+                  "subtopic",
+                  "tag",
+                  "text",
+                  "evidence_utterance_ids"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "decision_states": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "enum": [
+                      "결정",
+                      "조건부 결정",
+                      "보류",
+                      "공유"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "evidence_utterance_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "required": [
+                  "tag",
+                  "text",
+                  "evidence_utterance_ids"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "unresolved_issues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "evidence_utterance_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "required": [
+                  "text",
+                  "evidence_utterance_ids"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "next_meeting_topics": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "evidence_utterance_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "required": [
+                  "text",
+                  "evidence_utterance_ids"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "agenda_id",
+            "new_key",
+            "title",
+            "background",
+            "discussions",
+            "decision_states",
+            "unresolved_issues",
+            "next_meeting_topics"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "meeting_id",
+      "chunk_id",
+      "agendas"
+    ],
+    "additionalProperties": false
+  },
+  "agenda_merge": {
+    "type": "object",
+    "properties": {
+      "meeting_id": {
+        "type": "string"
+      },
+      "agenda_id": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      },
+      "background": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "text",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "discussions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "subtopic": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string",
+              "enum": [
+                "제안",
+                "반대·우려",
+                "질문",
+                "정보"
+              ]
+            },
+            "text": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "subtopic",
+            "tag",
+            "text",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "decision_states": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "tag": {
+              "type": "string",
+              "enum": [
+                "결정",
+                "조건부 결정",
+                "보류",
+                "공유"
+              ]
+            },
+            "text": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "tag",
+            "text",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "unresolved_issues": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "text",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "next_meeting_topics": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "text",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "review_notes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "text",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "meeting_id",
+      "agenda_id",
+      "title",
+      "background",
+      "discussions",
+      "decision_states",
+      "unresolved_issues",
+      "next_meeting_topics",
+      "review_notes"
+    ],
+    "additionalProperties": false
+  },
+  "summary_review": {
+    "type": "object",
+    "properties": {
+      "meeting_id": {
+        "type": "string"
+      },
+      "agenda_id": {
+        "type": "string"
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "location": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "suggested_fix": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "location",
+            "description",
+            "evidence_utterance_ids",
+            "suggested_fix"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "review_needed": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "scope_limitations": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "meeting_id",
+      "agenda_id",
+      "issues",
+      "review_needed",
+      "scope_limitations"
+    ],
+    "additionalProperties": false
+  },
+  "action_result": {
+    "type": "object",
+    "properties": {
+      "meeting_id": {
+        "type": "string"
+      },
+      "actions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "action_id": {
+              "type": "string"
+            },
+            "content": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "업무 수행",
+                "조사·검토",
+                "수정·개선",
+                "확인·보고",
+                "의사결정 준비"
+              ]
+            },
+            "assignee": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "due_date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "agenda_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "criteria": {
+              "type": "object",
+              "properties": {
+                "actionable": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "future": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "intent": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "actionable",
+                "future",
+                "intent"
+              ],
+              "additionalProperties": false
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "action_id",
+            "content",
+            "type",
+            "assignee",
+            "due_date",
+            "agenda_id",
+            "criteria",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "review_needed": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "criteria": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "actionable": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "future": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "intent": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "actionable",
+                    "future",
+                    "intent"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "description",
+            "criteria",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "change_log": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "description",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "meeting_id",
+      "actions",
+      "review_needed",
+      "change_log"
+    ],
+    "additionalProperties": false
+  },
+  "action_review": {
+    "type": "object",
+    "properties": {
+      "meeting_id": {
+        "type": "string"
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "suggested_fix": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "description",
+            "evidence_utterance_ids",
+            "suggested_fix"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "review_needed": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "scope_limitations": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "meeting_id",
+      "issues",
+      "review_needed",
+      "scope_limitations"
+    ],
+    "additionalProperties": false
+  },
+  "legacy_action": {
+    "type": "object",
+    "properties": {
+      "actions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string"
+            },
+            "assignee": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "due_date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "agenda_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence_utterance_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "content",
+            "assignee",
+            "due_date",
+            "agenda_id",
+            "evidence_utterance_ids"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "actions"
+    ],
+    "additionalProperties": false
+  }
+}

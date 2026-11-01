@@ -1,0 +1,25 @@
+{
+  "chunk_id": 19,
+  "actions": [
+    {
+      "content": "최종 발표 자료를 만들고 최종 발표 및 프로젝트 요약을 보여 준다.",
+      "assignee": null,
+      "due_date": "약 10분 후",
+      "agenda_id": "A004",
+      "evidence_utterance_ids": [
+        1005,
+        1008
+      ]
+    },
+    {
+      "content": "설문지를 하나 더 작성한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A004",
+      "evidence_utterance_ids": [
+        1012,
+        1015
+      ]
+    }
+  ]
+}

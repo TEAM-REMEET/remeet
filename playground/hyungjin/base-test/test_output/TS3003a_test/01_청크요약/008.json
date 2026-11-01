@@ -1,0 +1,115 @@
+{
+  "meeting_id": "TS3003a",
+  "chunk_id": 8,
+  "agendas": [
+    {
+      "agenda_id": "A004",
+      "new_key": null,
+      "title": "다기능 리모컨 경험",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "적외선 기능과 생산 비용",
+          "tag": "제안",
+          "text": "적외선으로 구현할 수 있는 기능이 있는지 살펴보자는 의견이 나왔다. 구현이 생산 비용을 넘을지는 불확실하며, 실제 가능 여부와 비용을 알아봐야 한다고 했다. 가능하다면 좋겠다는 반응도 있었다.",
+          "evidence_utterance_ids": [
+            416,
+            417,
+            418,
+            421
+          ]
+        },
+        {
+          "subtopic": "충격 방지와 방수",
+          "tag": "제안",
+          "text": "리모컨이 충격에 강해야 한다는 의견이 나왔다. 개인적으로 리모컨을 자주 떨어뜨린다는 경험이 근거로 언급됐고, 방수 기능도 아이디어로 제시됐다.",
+          "evidence_utterance_ids": [
+            426,
+            429,
+            430,
+            431,
+            437
+          ]
+        },
+        {
+          "subtopic": "배터리 상태 표시",
+          "tag": "제안",
+          "text": "배터리가 얼마나 남았는지 확인할 수 있도록 배터리 상태 표시를 넣자는 의견이 나왔다. 작은 LED를 사용하는 방안도 언급됐지만, 생산 비용을 많이 올릴 수 있어 따져봐야 한다고 했다.",
+          "evidence_utterance_ids": [
+            444,
+            445,
+            449,
+            450,
+            451,
+            455,
+            457
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "적외선 기능, 충격 방지·방수, 배터리 상태 표시가 아이디어로 논의됐으나 이 청크에서 채택 여부가 결정되지는 않았다.",
+          "evidence_utterance_ids": [
+            416,
+            418,
+            426,
+            437,
+            444,
+            451,
+            457
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "적외선 기능의 구현 가능성과 생산 비용 영향을 확인해야 한다.",
+          "evidence_utterance_ids": [
+            416,
+            417,
+            418
+          ]
+        },
+        {
+          "text": "배터리 상태 표시, 특히 LED 방안이 생산 비용에 미치는 영향을 따져봐야 한다.",
+          "evidence_utterance_ids": [
+            444,
+            450,
+            451,
+            455
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "A003",
+      "new_key": null,
+      "title": "스마트보드·문서 사용",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "회의록 작성 및 공유",
+          "tag": "정보",
+          "text": "이번 회의의 회의록을 프로젝트 폴더에 올려두겠다고 했다. 앞서 회의록을 다시 적어도 좋겠다는 말과, 그것이 상대방의 일이라는 언급이 있었다.",
+          "evidence_utterance_ids": [
+            409,
+            412,
+            440
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "회의록을 프로젝트 폴더에 올려두겠다는 계획이 공유됐다.",
+          "evidence_utterance_ids": [
+            440
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

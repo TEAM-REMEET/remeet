@@ -1,0 +1,41 @@
+{
+  "meeting_id": "TS3003a",
+  "agenda_id": "A005",
+  "title": "회의 후 진행",
+  "background": [],
+  "discussions": [
+    {
+      "subtopic": "회의록 게시와 작업 진행",
+      "tag": "정보",
+      "text": "이번 회의록을 프로젝트 폴더에 올리고 각자 맡은 작업을 진행하도록 안내했다.",
+      "evidence_utterance_ids": [
+        469,
+        470,
+        474
+      ]
+    },
+    {
+      "subtopic": "재회 시점",
+      "tag": "정보",
+      "text": "약 30분 후에 다시 만나기로 언급했다.",
+      "evidence_utterance_ids": [
+        477,
+        478
+      ]
+    }
+  ],
+  "decision_states": [
+    {
+      "tag": "공유",
+      "text": "회의록 게시, 각자 작업 진행, 약 30분 후 재회에 관한 안내가 있었다. 별도의 논의나 합의 과정은 확인되지 않는다.",
+      "evidence_utterance_ids": [
+        469,
+        470,
+        477
+      ]
+    }
+  ],
+  "unresolved_issues": [],
+  "next_meeting_topics": [],
+  "review_notes": []
+}

@@ -1,0 +1,9 @@
+{
+  "meeting_id": "TS3003a",
+  "issues": [],
+  "review_needed": [],
+  "scope_limitations": [
+    "전사문에 화자 식별 정보가 없어 담당자 지정 여부를 독립적으로 검증할 수 없습니다.",
+    "안건 ID와 안건명 간 대응 정보가 제공되지 않아 agenda_id 연결의 정확성을 검증할 수 없습니다."
+  ]
+}

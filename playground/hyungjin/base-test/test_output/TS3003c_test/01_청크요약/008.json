@@ -1,0 +1,59 @@
+{
+  "meeting_id": "TS3003c",
+  "chunk_id": 8,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "콘셉트 설계",
+      "background": [
+        {
+          "text": "방 여기저기에 리모컨이 굴러다니는 것을 사용자가 원하지 않을 것이라는 의견이 나왔다.",
+          "evidence_utterance_ids": [
+            250
+          ]
+        }
+      ],
+      "discussions": [
+        {
+          "subtopic": "거치대의 역할",
+          "tag": "제안",
+          "text": "거치대가 있으면 리모컨에 정해진 자리를 마련하는 데 도움이 될 것이라는 의견이 제시됐다.",
+          "evidence_utterance_ids": [
+            252
+          ]
+        },
+        {
+          "subtopic": "음성 인식으로 리모컨 찾기",
+          "tag": "정보",
+          "text": "리모컨을 다시 찾는 기능으로 음성 인식을 넣는 방안이 언급됐다.",
+          "evidence_utterance_ids": [
+            254
+          ]
+        },
+        {
+          "subtopic": "거치대 버튼과 소리",
+          "tag": "제안",
+          "text": "음성 인식보다 거치대에 기능을 넣는 편이 더 효율적이고 저렴할 것이라는 의견이 제시됐다. 거치대의 버튼을 누르면 리모컨에서 삑삑 소리가 나도록 하는 방안이다.",
+          "evidence_utterance_ids": [
+            257,
+            258
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "거치대와 리모컨 찾기 기능에 관한 방안과 의견이 논의됐으나, 이 청크에서는 결정이 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            254,
+            257,
+            258
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

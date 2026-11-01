@@ -1,0 +1,26 @@
+{
+  "chunk_id": 11,
+  "actions": [
+    {
+      "content": "색상 적용에 따른 비용을 조사한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        363,
+        366
+      ]
+    },
+    {
+      "content": "나무 커버와 플라스틱 커버 모두에 잘 맞도록 디자인과 비용을 검토한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        402,
+        403,
+        404
+      ]
+    }
+  ]
+}

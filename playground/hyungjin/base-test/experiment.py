@@ -1,5 +1,6 @@
 """Single-meeting experiment; all generated material is stored under outputs/."""
 import json
+import hashlib
 import os
 import re
 import time
@@ -11,9 +12,8 @@ from dotenv import load_dotenv
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
-SOURCE = REPO / 'playground/hyungjin/test/input/TS3003c.txt'
-SEGMENTS = REPO / 'playground/chaewon/dataset/Text_Boundaries/TS3003c_boundary_candidates.json'
 PROMPTS = HERE / '요약_프롬프트.md'
+SCHEMAS = HERE / '출력_스키마.json'
 MODEL = 'gpt-6-luna'
 
 
@@ -30,9 +30,15 @@ def extract_prompt(text, heading):
     return blocks
 
 
-def prepare():
-    data = json.loads(SEGMENTS.read_text(encoding='utf-8'))
-    lines = SOURCE.read_text(encoding='utf-8-sig').splitlines()
+def prepare(meeting_id='TS3003c'):
+    if not re.fullmatch(r'TS3003[abcd]', meeting_id):
+        raise ValueError('지원하지 않는 회의 ID입니다.')
+    source = REPO / f'playground/hyungjin/test/input/{meeting_id}.txt'
+    segments = REPO / f'playground/chaewon/dataset/Text_Boundaries/{meeting_id}_boundary_candidates.json'
+    data = json.loads(segments.read_text(encoding='utf-8'))
+    if data['meeting_id'] != meeting_id:
+        raise ValueError('청킹 데이터의 회의 ID가 다릅니다.')
+    lines = source.read_text(encoding='utf-8-sig').splitlines()
     original = [line.strip() for line in lines[3:] if line.strip()]
     items = [u for s in data['segments'] for u in s['utterances']]
     if len(original) != len(items) or any(u['utterance_index'] != i or u['text'] != text for i, (u, text) in enumerate(zip(items, original))):
@@ -40,7 +46,7 @@ def prepare():
     detection = data['detection']
     if (detection['embedding_model'], detection['depth_std_k'], detection['merge_gap_chars'], detection['merge_max_span_chars']) != ('BAAI/bge-m3', 0.0, 400, 800):
         raise ValueError('청킹 결과의 설정이 선택한 조건과 다릅니다.')
-    # shortcut: PR segments are reused for this meeting; rerun the PR pipeline for another input.
+    # Reuse the selected precomputed PR segments after checking their settings and source.
     chunks = []
     for segment in data['segments']:
         current = []
@@ -56,36 +62,54 @@ def prepare():
 
 
 class Experiment:
-    def __init__(self):
+    def __init__(self, meeting_id='TS3003c', action_policy='three_with_review'):
+        if action_policy is not None:
+            from action_pipeline import POLICIES
+            if action_policy not in POLICIES:
+                raise ValueError('지원하지 않는 액션 판정 정책입니다.')
+        self.action_policy = action_policy
         load_dotenv(REPO / 'playground/hyungjin/.env', override=False)
         load_dotenv(REPO.parent / '.env', override=False)
         if not os.environ.get('OPENAI_API_KEY', '').strip():
             raise ValueError('OPENAI_API_KEY가 설정되어 있지 않습니다.')
-        self.data, self.chunks = prepare()
+        self.data, self.chunks = prepare(meeting_id)
         self.prompt_text = PROMPTS.read_text(encoding='utf-8')
-        self.output = HERE / 'outputs' / ('TS3003c_' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'))
+        self.schemas = json.loads(SCHEMAS.read_text(encoding='utf-8'))
+        self.schema_version = hashlib.sha256(json.dumps(self.schemas, ensure_ascii=False, sort_keys=True).encode('utf-8')).hexdigest()
+        self.output = HERE / 'outputs' / (meeting_id + '_' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'))
         self.output.mkdir(parents=True, exist_ok=False)
         self.calls = []
         self.agendas, self.results, self.actions = [], [], []
         save(self.output / '00_입력.json', {'meeting_id': self.data['meeting_id'], 'metadata': self.data['metadata'], 'detection': self.data['detection'], 'chunks': self.chunks})
-        (self.output / '사용_프롬프트.md').write_text(self.prompt_text, encoding='utf-8')
+        save(self.output / '사용_출력_스키마.json', self.schemas)
+        if self.action_policy:
+            from action_pipeline import PROMPT
+            self.action_prompt_text = PROMPT.read_text(encoding='utf-8')
         self.record('running')
 
     def record(self, status, error=None):
-        save(self.output / '실행정보.json', {'status': status, 'model': MODEL, 'reasoning_effort': 'low', 'calls': self.calls, 'error': error})
+        save(self.output / '실행정보.json', {'status': status, 'model': MODEL, 'reasoning_effort': 'low', 'response_format': 'json_schema_strict', 'schema_file': '사용_출력_스키마.json', 'schema_sha256': self.schema_version, 'action_policy': self.action_policy, 'calls': self.calls, 'error': error})
 
-    def call(self, stage, system, user):
-        body = {'model': MODEL, 'reasoning_effort': 'low', 'max_completion_tokens': 16384, 'response_format': {'type': 'json_object'}, 'messages': [{'role':'system', 'content': system}, {'role':'user', 'content': user}]}
+    def call(self, stage, system, user, schema_name):
+        response_format = {'type': 'json_schema', 'json_schema': {'name': schema_name, 'strict': True, 'schema': self.schemas[schema_name]}}
+        body = {'model': MODEL, 'reasoning_effort': 'low', 'max_completion_tokens': 16384, 'response_format': response_format, 'messages': [{'role':'system', 'content': system}, {'role':'user', 'content': user}]}
         req = Request('https://api.openai.com/v1/chat/completions', data=json.dumps(body, ensure_ascii=False).encode('utf-8'), headers={'Authorization': 'Bearer ' + os.environ['OPENAI_API_KEY'].strip(), 'Content-Type': 'application/json'})
         start = time.monotonic()
         try:
             with urlopen(req, timeout=180) as response:
                 data = json.load(response)
             choice = data['choices'][0]
-            self.calls.append({'stage': stage, 'seconds': round(time.monotonic()-start, 2), 'model': data.get('model'), 'usage': data.get('usage'), 'finish_reason': choice.get('finish_reason')})
+            self.calls.append({'stage': stage, 'schema': schema_name, 'system_prompt_sha256': hashlib.sha256(system.encode('utf-8')).hexdigest(), 'seconds': round(time.monotonic()-start, 2), 'model': data.get('model'), 'usage': data.get('usage'), 'finish_reason': choice.get('finish_reason')})
+            if choice.get('message', {}).get('refusal'):
+                raise ValueError('모델이 요청을 거절했습니다.')
             if choice.get('finish_reason') != 'stop':
                 raise ValueError('모델 출력이 완결되지 않았습니다.')
-            result = json.loads(choice['message']['content'])
+            content = choice.get('message', {}).get('content')
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError('모델의 출력 내용이 비어 있습니다.')
+            result = json.loads(content)
+            if not isinstance(result, dict):
+                raise ValueError('모델 출력이 JSON 객체가 아닙니다.')
             self.record('running')
             return result
         except Exception as exc:
@@ -104,7 +128,7 @@ class Experiment:
             replace = {'{meeting_metadata_json}': json.dumps({'회의ID': self.data['meeting_id'], 'metadata':self.data['metadata']}, ensure_ascii=False), '{agenda_list_json}': json.dumps(current_list, ensure_ascii=False), '{chunk_json}': json.dumps(chunk, ensure_ascii=False)}
             user = template
             for k, v in replace.items(): user = user.replace(k, v)
-            result = self.call(f"chunk_{chunk['청크ID']}_summary", system, user)
+            result = self.call(f"chunk_{chunk['청크ID']}_summary", system, user, 'chunk_summary')
             if result.get('meeting_id') != self.data['meeting_id'] or result.get('chunk_id') != chunk['청크ID'] or not isinstance(result.get('agendas'), list):
                 raise ValueError('청크 요약의 필수 구조가 올바르지 않습니다.')
             for agenda in result['agendas']:
@@ -117,9 +141,13 @@ class Experiment:
             save(self.output / f"01_청크요약/{chunk['청크ID']:03d}.json", result)
             save(self.output / '02_안건목록.json', self.agendas)
             action_input = {'회의ID':self.data['meeting_id'], '회의정보':self.data['metadata'], '안건목록':current_list, '청크':chunk, '출력형식':{'actions':[{'content':'업무', 'assignee':None, 'due_date':None, 'agenda_id':None, 'evidence_utterance_ids':[0]}]}}
-            action = self.call(f"chunk_{chunk['청크ID']}_actions", action_system, json.dumps(action_input, ensure_ascii=False))
+            if self.action_policy:
+                from action_pipeline import extract_actions
+                action = extract_actions(self, chunk, current_list, self.action_policy)
+            else:
+                action = self.call(f"chunk_{chunk['청크ID']}_actions", action_system, json.dumps(action_input, ensure_ascii=False), 'legacy_action')
             if not isinstance(action.get('actions'), list): raise ValueError('액션 목록 형식 오류')
-            self.actions.append({'chunk_id':chunk['청크ID'], 'actions':action['actions']})
+            self.actions.append({'chunk_id':chunk['청크ID'], **action})
             save(self.output / f"03_액션/{chunk['청크ID']:03d}.json", self.actions[-1])
             print(f"청크 {chunk['청크ID']}/{len(self.chunks)} 완료 · 누적 안건 {len(self.agendas)}개", flush=True)
         return self.agendas
@@ -138,27 +166,35 @@ class Experiment:
             def render(template, mapping):
                 for k,v in mapping.items(): template = template.replace(k,v)
                 return template
-            before = self.call(aid+'_merge', merge_system, render(merge_template,values))
+            before = self.call(aid+'_merge', merge_system, render(merge_template,values), 'agenda_merge')
             if before.get('agenda_id') != aid: raise ValueError('병합 안건 ID 불일치')
             save(self.output / f'04_병합전검증/{aid}.json', before)
             self.before.append(before)
             values['{merged_agenda_json}'] = json.dumps(before, ensure_ascii=False)
-            review = self.call(aid+'_verify', verify_system, render(verify_template,values))
+            review = self.call(aid+'_verify', verify_system, render(verify_template,values), 'summary_review')
             if not isinstance(review.get('issues'),list): raise ValueError('검증 결과 형식 오류')
             save(self.output / f'05_검증/{aid}.json', review)
             self.reviews.append(review)
             after = before
             if review['issues']:
                 values['{validation_issues_json}'] = json.dumps(review['issues'],ensure_ascii=False)
-                after = self.call(aid+'_repair', '회의록을 원문과 검증 결과에 따라 수정한다.', render(repair_template,values))
+                after = self.call(aid+'_repair', '회의록을 원문과 검증 결과에 따라 수정한다.', render(repair_template,values), 'agenda_merge')
                 if after.get('agenda_id') != aid: raise ValueError('수정 안건 ID 불일치')
                 values['{merged_agenda_json}'] = json.dumps(after,ensure_ascii=False)
-                rereview = self.call(aid+'_reverify', verify_system, render(verify_template,values))
+                rereview = self.call(aid+'_reverify', verify_system, render(verify_template,values), 'summary_review')
                 if not isinstance(rereview.get('issues'),list): raise ValueError('재검증 형식 오류')
                 save(self.output / f'07_재검증/{aid}.json', rereview)
             save(self.output / f'06_수정후/{aid}.json', after)
             self.after.append(after)
             print(f"{aid} 병합·검증 완료 · 발견 {len(review['issues'])}건", flush=True)
         save(self.output / '08_비교.json', {'before':self.before,'after':self.after,'reviews':self.reviews})
-        self.record('completed_review_required')
+        self.record('summary_completed_action_pending' if self.action_policy else 'completed_review_required')
         return self.before, self.after
+
+    def review_actions(self):
+        from action_pipeline import run_action_review
+        try:
+            return run_action_review(self, self.action_policy)
+        except Exception as exc:
+            self.record('failed', f'actions: {type(exc).__name__}')
+            raise

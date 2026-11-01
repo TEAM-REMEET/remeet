@@ -1,0 +1,77 @@
+{
+  "meeting_id": "TS3003b",
+  "chunk_id": 5,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "기능 설계",
+      "background": [
+        {
+          "text": "발표자가 리모컨의 기술적 기능과 사용자 인터페이스를 검토했다고 설명했다.",
+          "evidence_utterance_ids": [
+            140,
+            156
+          ]
+        }
+      ],
+      "discussions": [
+        {
+          "subtopic": "기존 인터페이스 조사",
+          "tag": "정보",
+          "text": "인터넷으로 조사했지만 인터페이스에 관한 정보는 별로 찾지 못했다고 공유했다.",
+          "evidence_utterance_ids": [
+            157,
+            158
+          ]
+        },
+        {
+          "subtopic": "리모컨 기능 구성",
+          "tag": "제안",
+          "text": "DVD, TV, 오디오 등 여러 기기에 대응하는 기능을 리모컨 하나에 넣는 방법을 생각해 봤으며, 리모컨의 일반적인 기능을 사용해야 한다고 말했다.",
+          "evidence_utterance_ids": [
+            156,
+            160,
+            161
+          ]
+        },
+        {
+          "subtopic": "기능 수와 사용 편의성",
+          "tag": "반대·우려",
+          "text": "리모컨은 사용하기 쉬워야 하며, 한 리모컨에 기능을 많이 넣는 데 한계가 있다고 말했다.",
+          "evidence_utterance_ids": [
+            163,
+            165,
+            166,
+            170
+          ]
+        },
+        {
+          "subtopic": "기능 요구 사항 질의",
+          "tag": "정보",
+          "text": "기능 요구 사항에 대해 질문이 있는지 물었고, 질문이 없다는 응답이 있었다.",
+          "evidence_utterance_ids": [
+            130,
+            131,
+            133,
+            134
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "리모컨 기능 구성에 대한 검토와 의견이 공유되었으나, 기능을 어떻게 확정할지에 대한 결정은 확인되지 않았다.",
+          "evidence_utterance_ids": [
+            156,
+            160,
+            163,
+            165
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

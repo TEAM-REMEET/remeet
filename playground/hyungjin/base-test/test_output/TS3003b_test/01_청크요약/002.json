@@ -1,0 +1,123 @@
+{
+  "meeting_id": "TS3003b",
+  "chunk_id": 2,
+  "agendas": [
+    {
+      "agenda_id": "A002",
+      "new_key": "new_1",
+      "title": "발표 및 회의 진행",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "발표 시간 배분",
+          "tag": "정보",
+          "text": "전체 발표 시간은 40분이며, 발표당 약 7분으로 진행하자는 제안이 나왔다.",
+          "evidence_utterance_ids": [
+            31,
+            32,
+            37
+          ]
+        },
+        {
+          "subtopic": "발표 진행 순서",
+          "tag": "정보",
+          "text": "첫 발표부터 시작하기로 하고 발표자를 물었으며, 한 참석자가 먼저 하겠다고 했다.",
+          "evidence_utterance_ids": [
+            39,
+            41,
+            42
+          ]
+        },
+        {
+          "subtopic": "발표 내용 안내",
+          "tag": "제안",
+          "text": "발표자는 자신의 역할과 발표할 내용을 함께 설명해 달라는 요청이 있었다.",
+          "evidence_utterance_ids": [
+            47,
+            48
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "발표 시간 배분과 진행 순서에 대한 제안 및 안내가 나왔으나, 전체 발표당 7분 배분이 명시적으로 확정되지는 않았다.",
+          "evidence_utterance_ids": [
+            31,
+            32,
+            39
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "기능 설계",
+      "background": [
+        {
+          "text": "회의에서 새 프로젝트 요구 사항을 잠깐 논의하고, 넣을 조작 기능과 넣지 않을 기능을 결정할 계획이라고 안내했다.",
+          "evidence_utterance_ids": [
+            33,
+            35
+          ]
+        }
+      ],
+      "discussions": [
+        {
+          "subtopic": "사용성 조사",
+          "tag": "정보",
+          "text": "마케팅 담당자는 사용성 연구실에서 사용자들이 리모컨을 조작하는 모습을 관찰하고 설문지를 작성하게 했다고 보고했다. 실험 대상자는 100명이었다.",
+          "evidence_utterance_ids": [
+            51,
+            54,
+            55,
+            56,
+            57
+          ]
+        },
+        {
+          "subtopic": "시장 조사",
+          "tag": "정보",
+          "text": "시장 구성과 연령대에 대한 시장 조사도 했다고 밝혔다.",
+          "evidence_utterance_ids": [
+            58
+          ]
+        },
+        {
+          "subtopic": "조사 결과 소개",
+          "tag": "정보",
+          "text": "발표자는 자신이 보기에 꽤 놀라운 결과 세 가지가 있다고 언급했으나, 이 청크에서는 결과 내용이 제시되지 않았다.",
+          "evidence_utterance_ids": [
+            60
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "조사 방법과 범위가 공유되었으며, 어떤 기능을 넣거나 제외할지에 대한 결론은 이 청크에서 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            35,
+            54,
+            55,
+            56,
+            57,
+            58
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "언급된 세 가지 조사 결과의 구체적인 내용은 아직 제시되지 않았다.",
+          "evidence_utterance_ids": [
+            60
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    }
+  ]
+}

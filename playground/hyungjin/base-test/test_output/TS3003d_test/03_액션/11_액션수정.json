@@ -1,0 +1,75 @@
+{
+  "meeting_id": "TS3003d",
+  "actions": [
+    {
+      "action_id": "ACT001",
+      "content": "재무 계산표에서 잘못된 항목이 보이면 수정한다.",
+      "type": "수정·개선",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A003",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        154,
+        155
+      ]
+    },
+    {
+      "action_id": "ACT002",
+      "content": "디자인이 대상 그룹에 적합한지 테스트한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A002",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        702,
+        710
+      ]
+    },
+    {
+      "action_id": "ACT003",
+      "content": "최종 발표 자료를 만들고, 약 10분 뒤 돌아와 최종 발표와 프로젝트 요약을 보여 준다.",
+      "type": "업무 수행",
+      "assignee": null,
+      "due_date": "약 10분 후",
+      "agenda_id": null,
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        1005,
+        1008
+      ]
+    },
+    {
+      "action_id": "ACT004",
+      "content": "각자 방에서 설문지를 하나 더 작성한다.",
+      "type": "업무 수행",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": null,
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        1012,
+        1015
+      ]
+    }
+  ],
+  "review_needed": [],
+  "change_log": []
+}

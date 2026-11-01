@@ -1,0 +1,20 @@
+{
+  "meeting_id": "TS3003a",
+  "agenda_id": "A001",
+  "issues": [
+    {
+      "type": "중요 내용 누락",
+      "location": "discussions[2]",
+      "description": "회의록 작성 요청에 참석자가 동의한 내용은 요약했지만, 가끔 작성하면 되고 일이 많지 않으며 적을 만한 내용이 있을 때만 기록해 달라는 부담·조건이 빠져 있습니다. 요청의 범위를 이해하는 데 필요한 맥락입니다.",
+      "evidence_utterance_ids": [
+        55,
+        56,
+        57,
+        58
+      ],
+      "suggested_fix": "가끔 작성하면 되고 부담이 크지 않으며, 기록할 만한 내용이 있을 때만 적어 달라는 조건을 함께 요약하세요."
+    }
+  ],
+  "review_needed": [],
+  "scope_limitations": []
+}

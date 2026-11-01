@@ -1,0 +1,17 @@
+{
+  "chunk_id": 7,
+  "actions": [
+    {
+      "content": "터치스크린의 내구성과 흠집·파손 가능성을 살펴본다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        239,
+        241,
+        242,
+        246
+      ]
+    }
+  ]
+}
