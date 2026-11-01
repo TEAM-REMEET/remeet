@@ -1,0 +1,15 @@
+{
+  "chunk_id": 5,
+  "actions": [
+    {
+      "content": "재무 계산표에서 잘못된 항목이 보이면 수정한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A003",
+      "evidence_utterance_ids": [
+        154,
+        155
+      ]
+    }
+  ]
+}

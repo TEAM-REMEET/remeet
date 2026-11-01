@@ -1,0 +1,82 @@
+{
+  "meeting_id": "TS3003a",
+  "chunk_id": 5,
+  "agendas": [
+    {
+      "agenda_id": "A003",
+      "new_key": null,
+      "title": "스마트보드·문서 사용",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "그리기 기능과 실행 취소",
+          "tag": "정보",
+          "text": "그림을 그려 보며 지우개와 되돌리기 기능으로 작업을 쉽게 할 수 있다고 설명했다. 되돌리기는 전형적인 동작이라는 의견도 나왔다.",
+          "evidence_utterance_ids": [
+            186,
+            187,
+            188,
+            189,
+            197
+          ]
+        },
+        {
+          "subtopic": "텍스트 도구 부재",
+          "tag": "정보",
+          "text": "사용 중 텍스트 도구가 없다고 언급했다.",
+          "evidence_utterance_ids": [
+            193,
+            195
+          ]
+        },
+        {
+          "subtopic": "펜 조작과 선 굵기",
+          "tag": "정보",
+          "text": "펜을 거꾸로 잡아야 할 수도 있고, 그렇게 하면 줄무늬가 생긴다는 관찰이 있었다. 다른 선 굵기를 선택해 그려 본 뒤, 가는 선이 그리기 더 쉽다는 의견이 나왔다.",
+          "evidence_utterance_ids": [
+            199,
+            200,
+            202,
+            203,
+            223,
+            224,
+            229
+          ]
+        },
+        {
+          "subtopic": "글씨 입력 속도",
+          "tag": "정보",
+          "text": "글씨를 쓸 때는 천천히 해야 한다고 언급했다.",
+          "evidence_utterance_ids": [
+            252
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "그리기, 펜 설정, 지우개 및 되돌리기 기능을 사용해 보는 과정에서 기능과 사용 경험을 공유했으며, 별도의 결정은 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            186,
+            187,
+            188,
+            189,
+            223,
+            224,
+            229
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "텍스트 도구가 없다고 언급됐으나, 이 기능의 필요성이나 후속 조치에 관한 논의는 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            193,
+            195
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "meeting_id": "TS3003d",
+  "chunk_id": 4,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "리모컨 최종 디자인",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "버튼 구성",
+          "tag": "반대·우려",
+          "text": "나이 든 사용자는 해당 옵션을 모를 수 있으므로 버튼 조작이 단순해야 한다는 우려가 나왔다. 숫자 버튼은 빼기 어려울 것 같다는 의견이 있었고, 문자 방송과 자막은 필요하다고 언급됐다.",
+          "evidence_utterance_ids": [
+            97,
+            98,
+            101,
+            105
+          ]
+        },
+        {
+          "subtopic": "리모컨의 기능 범위",
+          "tag": "반대·우려",
+          "text": "TV만 조작하는 리모컨을 만들면 얻을 것이 별로 없다는 의견이 나왔다.",
+          "evidence_utterance_ids": [
+            112,
+            113
+          ]
+        },
+        {
+          "subtopic": "버튼 모양과 식별",
+          "tag": "제안",
+          "text": "버튼은 평범한 형태로 하되 크기를 같게 하고 둥글게 만들며, 볼륨 버튼에는 삼각형 같은 작은 표시를 넣어 알아보기 쉽게 하자는 내용이 나왔다.",
+          "evidence_utterance_ids": [
+            120,
+            122,
+            124,
+            127,
+            129
+          ]
+        },
+        {
+          "subtopic": "LED 사용",
+          "tag": "제안",
+          "text": "LED는 필요하지 않으며, 작은 디스플레이를 사용하므로 LED를 쓸 필요가 없다는 의견이 나왔다. 일부 리모컨은 LED를 사용한다는 언급도 있었다.",
+          "evidence_utterance_ids": [
+            131,
+            134,
+            136,
+            137
+          ]
+        },
+        {
+          "subtopic": "버튼 소재와 색상",
+          "tag": "제안",
+          "text": "버튼은 케이스와 다른 색의 고무 소재로 선택했으며, 눈에 띄게 하려는 취지가 언급됐다.",
+          "evidence_utterance_ids": [
+            141,
+            144
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "결정",
+          "text": "버튼 소재는 케이스와 다른 색의 고무로 하기로 선택했다.",
+          "evidence_utterance_ids": [
+            141
+          ]
+        },
+        {
+          "tag": "공유",
+          "text": "LED는 필요하지 않다는 의견이 제시됐고, 작은 디스플레이를 사용하므로 LED를 쓰지 않아도 된다고 설명됐다.",
+          "evidence_utterance_ids": [
+            131,
+            135,
+            136,
+            137
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

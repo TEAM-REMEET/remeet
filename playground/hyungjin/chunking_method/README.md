@@ -9,6 +9,7 @@
 | `embedding_experiment/` | 임베딩·윈도우·후보 선택 비교. 계획, 실행 코드, 문장 분할 코드, 보고서, 집계 CSV, 데이터·실행 manifest, 선택된 BGE 후보 20개 |
 | `merge_experiment/` | 범위 보존·중앙 재배치 병합과 복수 정답 분석. 실행·분석 코드, 보고서, 집계 CSV, manifest |
 | `merge_experiment/uncapped_analysis/` | 길이 상한 없는 초기 병합 탐색 보고서와 CSV |
+| `bge_distance_experiment/` | BGE 기존 점수를 재사용한 후보 병합 및 정답 거리 비교 |
 | `llm_ts3003c/` | LLM 검증 계획, 현재 v3 실행 코드, handoff 도구, 버전 비교 보고서 |
 | `llm_ts3003c/v1_boundary_options/` | v1 보고서·평가·사용량·최종 예측 |
 | `llm_ts3003c/v2/` | v2 코드·계획·보고서·평가·사용량·최종 예측 |
@@ -21,6 +22,7 @@
 - [임베딩 후보 비교](embedding_experiment/report.md), [실험 계획](embedding_experiment/experiment_plan.md)
 - [초기 무제한 병합](merge_experiment/uncapped_analysis/merged_candidate_analysis.md)
 - [길이 제한 병합](merge_experiment/report.md), [묶음당 정답 분석](merge_experiment/gold_count_report.md)
+- [BGE 경계 거리 2차 실험](bge_distance_experiment/report.md)
 - LLM 검증: [v1](llm_ts3003c/v1_boundary_options/report.md), [v2](llm_ts3003c/v2/report.md), [v3](llm_ts3003c/v3/report.md)
 
 임베딩 선택 설정은 BGE-m3 / 목표 200자 / 오버랩 100자 / 문장 보존 / depth ≥ 0.10이다.

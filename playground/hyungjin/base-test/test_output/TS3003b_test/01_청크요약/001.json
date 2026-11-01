@@ -1,0 +1,42 @@
+{
+  "meeting_id": "TS3003b",
+  "chunk_id": 1,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": "new_1",
+      "title": "기능 설계",
+      "background": [
+        {
+          "text": "이번이 두 번째 회의이며, 기능 설계 단계에 들어간다고 안내했다.",
+          "evidence_utterance_ids": [
+            5,
+            9
+          ]
+        }
+      ],
+      "discussions": [
+        {
+          "subtopic": "단계 진행 목표",
+          "tag": "정보",
+          "text": "사용자 요구 사항, 기술적 기능 설계, 작동 설계에 대해 합의해야 두 번째 단계로 넘어갈 수 있다고 설명했다.",
+          "evidence_utterance_ids": [
+            10
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "기능 설계 단계의 진행과 목표를 공유했으며, 구체적인 설계 결론은 확인되지 않았다.",
+          "evidence_utterance_ids": [
+            9,
+            10
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

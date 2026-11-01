@@ -1,0 +1,147 @@
+{
+  "meeting_id": "TS3003b",
+  "actions": [
+    {
+      "action_id": "ACT001",
+      "content": "터치스크린의 내구성과 흠집·파손 가능성을 살펴본다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        239,
+        241,
+        242,
+        246
+      ]
+    },
+    {
+      "action_id": "ACT002",
+      "content": "노인층이 리모컨에서 필요로 하는 요구 사항과 부가 기능을 조사·검토한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        389,
+        397,
+        398,
+        399,
+        566
+      ]
+    },
+    {
+      "action_id": "ACT003",
+      "content": "대상 연령 범위(예: 60세 이상 또는 60~80세)를 더 알아보고 구체화한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        641,
+        642,
+        643,
+        657,
+        661,
+        662
+      ]
+    },
+    {
+      "action_id": "ACT004",
+      "content": "회의록을 프로젝트 문서 폴더에 올린다.",
+      "type": "업무 수행",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A002",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        699
+      ]
+    },
+    {
+      "action_id": "ACT005",
+      "content": "다음 회의까지 부품 콘셉트를 준비한다.",
+      "type": "업무 수행",
+      "assignee": "산업 디자이너",
+      "due_date": "다음 회의까지",
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        700
+      ]
+    },
+    {
+      "action_id": "ACT006",
+      "content": "다음 회의까지 사용자 인터페이스 콘셉트와 트렌드 관찰을 준비하고, 대상 그룹·요구 사항·현재 진행 중인 트렌드 논의를 고려한다.",
+      "type": "업무 수행",
+      "assignee": "UI 디자이너",
+      "due_date": "다음 회의까지",
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        701,
+        702,
+        704
+      ]
+    },
+    {
+      "action_id": "ACT007",
+      "content": "구체적인 지시 사항을 보낸다.",
+      "type": "업무 수행",
+      "assignee": "개인 코치",
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        705
+      ]
+    }
+  ],
+  "review_needed": [
+    {
+      "description": "40세 이상 시장을 위한 전형적인 리모컨 디자인을 시도하자는 제안에 반대 발언이 이어져, 해당 디자인 방향의 실행 합의가 성립했는지 불명확하다.",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": null
+      },
+      "evidence_utterance_ids": [
+        367,
+        369,
+        370
+      ]
+    }
+  ],
+  "change_log": []
+}

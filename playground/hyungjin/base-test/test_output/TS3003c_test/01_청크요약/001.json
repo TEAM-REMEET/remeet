@@ -1,0 +1,45 @@
+{
+  "meeting_id": "TS3003c",
+  "chunk_id": 1,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": "new_1",
+      "title": "콘셉트 설계",
+      "background": [
+        {
+          "text": "이번 회의는 프로젝트의 두 번째 단계인 콘셉트 설계를 다루는 회의로 소개되었다.",
+          "evidence_utterance_ids": [
+            9,
+            10
+          ]
+        }
+      ],
+      "discussions": [
+        {
+          "subtopic": "논의 예정 범위",
+          "tag": "정보",
+          "text": "회의에서 부품의 콘셉트 명세, 디자인의 콘셉트 명세, 트렌드 관찰을 다룰 예정이라고 안내했다. 참석자들이 발표에서 이 내용을 다룰 것이라고 언급했다.",
+          "evidence_utterance_ids": [
+            11,
+            12,
+            13
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "콘셉트 설계 회의의 단계와 관심 주제가 공유되었으며, 이 청크에서는 구체적인 결정이 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            9,
+            10,
+            11
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "chunk_id": 12,
+  "actions": [
+    {
+      "content": "노인층을 대상으로 한 리모컨에 필요한 요구 사항을 검토한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        398,
+        399
+      ]
+    }
+  ]
+}

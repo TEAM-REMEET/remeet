@@ -1,0 +1,54 @@
+{
+  "meeting_id": "TS3003c",
+  "chunk_id": 12,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "콘셉트 설계",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "리모컨 케이스 형태",
+          "tag": "정보",
+          "text": "일반적으로 예전 리모컨은 평평하고 반듯한 형태라고 공유됐다. 제조 부서에서는 단일 곡면 또는 이중 곡면 케이스를 공급할 수 있으며, 이는 형태에만 영향을 준다는 설명이 나왔다.",
+          "evidence_utterance_ids": [
+            434,
+            436,
+            438
+          ]
+        },
+        {
+          "subtopic": "곡면 형태의 의미와 선택",
+          "tag": "질문",
+          "text": "단일 곡면과 이중 곡면이 무엇을 뜻하는지 질문이 제기됐다. 어떤 형태를 사용할지는 디자인 부서에 달려 있다는 설명이 있었다.",
+          "evidence_utterance_ids": [
+            437,
+            438,
+            440
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "제조 가능한 케이스 형태와 형태 선택 권한에 관한 설명만 공유됐으며, 사용할 형태는 결정되지 않았다.",
+          "evidence_utterance_ids": [
+            436,
+            440
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "단일 곡면과 이중 곡면 중 어떤 형태를 사용할지는 정해지지 않았다.",
+          "evidence_utterance_ids": [
+            437,
+            440
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    }
+  ]
+}

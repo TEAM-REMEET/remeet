@@ -1,0 +1,14 @@
+{
+  "chunk_id": 9,
+  "actions": [
+    {
+      "content": "이번 회의 회의록을 프로젝트 폴더에 올린다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A003",
+      "evidence_utterance_ids": [
+        469
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "meeting_id": "TS3003d",
+  "chunk_id": 17,
+  "agendas": [
+    {
+      "agenda_id": "A004",
+      "new_key": null,
+      "title": "프로젝트 평가",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "점수 취합 방식",
+          "tag": "제안",
+          "text": "7점 척도 등으로 점수를 매길 때 대학에서처럼 컴퓨터를 이용하면 더 쉽고, 각자 점수를 입력하면 평균을 내 하나의 점수로 받을 수 있다는 방안이 제시되었다.",
+          "evidence_utterance_ids": [
+            893,
+            895,
+            899,
+            901,
+            904
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "컴퓨터를 이용한 점수 입력 및 평균 산출 방안이 제시되었으나, 명시적인 결정은 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            893,
+            895,
+            899,
+            901,
+            904
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

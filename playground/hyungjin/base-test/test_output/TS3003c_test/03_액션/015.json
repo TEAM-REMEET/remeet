@@ -1,0 +1,15 @@
+{
+  "chunk_id": 15,
+  "actions": [
+    {
+      "content": "케이스 형태를 그려 본다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        566,
+        568
+      ]
+    }
+  ]
+}
