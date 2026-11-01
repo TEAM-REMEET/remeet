@@ -1,44 +1,31 @@
-"""문자열·식별자 유틸."""
+"""문자열 도우미."""
+
 from __future__ import annotations
 
 import html
-import itertools
 import re
 
-_counter = itertools.count(1000)
+# 대화에서 날짜·시간 표현 찾기 (키워드·일정 탭)
+DATE_TOKEN = re.compile(r"(\d{1,2}/\d{1,2}|\d{1,2}시|오늘|내일|다음 주|금요일|월요일|영업일 \d+일|D\+\d)")
 
-
-def new_id(prefix: str) -> str:
-    return f"{prefix}{next(_counter)}"
+_MD_SPECIAL = re.compile(r"([\\`*_{}\[\]<>()#+\-.!|~:$])")
 
 
 def esc(value: object) -> str:
-    """HTML에 넣을 값을 이스케이프합니다."""
+    """HTML 안에 넣을 문자열 이스케이프."""
     return html.escape(str(value), quote=True)
 
 
-def sid(n: int) -> str:
-    """원문 문단 번호 표기 (#05)."""
-    return f"#{n:02d}"
+def md_escape(value: str) -> str:
+    """st.button 등 마크다운 라벨에 원문을 그대로 보이게 할 때 사용."""
+    return _MD_SPECIAL.sub(r"\\\1", value)
 
 
-def srange(a: int, b: int) -> str:
-    return sid(a) if a == b else f"{sid(a)}–{sid(b)}"
+def find_date_token(text: str) -> str | None:
+    m = DATE_TOKEN.search(text)
+    return m.group(0) if m else None
 
 
-def cut(value: str | None, size: int = 46) -> str:
-    if not value:
-        return ""
-    return value if len(value) <= size else value[:size] + "…"
-
-
-SPEAKER_RE = re.compile(r"^[^:：]{1,10}[:：]\s*")
-
-
-def strip_speaker(line: str) -> str:
-    return SPEAKER_RE.sub("", line)
-
-
-def speaker_of(line: str) -> str | None:
-    m = re.match(r"^([^:：]{1,10})[:：]", line)
-    return m.group(1).strip() if m else None
+def safe_key(value: str) -> str:
+    """위젯 key / CSS 클래스에 쓸 수 있도록 영문·숫자·_ 만 남김."""
+    return re.sub(r"[^0-9A-Za-z_]", "_", value)

@@ -1,69 +1,64 @@
-"""RE:MEET — 회의록 기반 후속 업무 관리 (Streamlit 프로토타입).
+"""회의노트 — Streamlit 진입점.
 
-실행: streamlit run app.py
+실행:  streamlit run app.py
+
+흐름: 상태 준비 → 전역 CSS → URL 라우팅(st.navigation) → (로그인 전) 로그인 화면
+                                                    → (로그인 후) 사이드바 · 상단바 · 알림 · 현재 페이지 · 열린 모달
 """
-from __future__ import annotations
 
-from pathlib import Path
+from __future__ import annotations
 
 import streamlit as st
 
-FAVICON = Path(__file__).parent / "assets" / "logo_header.svg"   
-st.set_page_config(page_title="RE:MEET", page_icon=str(FAVICON), layout="wide", initial_sidebar_state="collapsed")
+from components.dialogs import render_active_dialog
+from components.sidebar import render_sidebar
+from components.toast import render_toast
+from components.topbar import render_topbar
+from config import APP_ICON, APP_TITLE, LOGIN_COOKIE
+from state import delivery, router
+from state.store import get_state
+from ui.theme import inject_css
+from utils import browser
+from views import ROUTES, login
+
+st.set_page_config(page_title=f"{APP_TITLE} 프로토타입", page_icon=APP_ICON, layout="wide",
+                   initial_sidebar_state="expanded")
 
 
-from core import auth, router  
-from core.state import init_state, show_flash, tick_analysis 
-from ui.layout import app_header, footer, public_header  
-from ui.theme import inject_css  
-from views import dashboard, delivery, integrations, main, meetings as meetings_view, members, progress, register, review, search  # noqa: E402
-
-PAGES = {
-    "main": main.render,
-    "dashboard": dashboard.render,
-    "meetings": meetings_view.render,
-    "register": register.render,
-    "progress": progress.render,
-    "review": review.render,
-    "delivery": delivery.render,
-    "search": search.render,
-    "members": members.render,
-    "integrations": integrations.render,
-}
-TITLES = {"main": "RE:MEET", "dashboard": "대시보드", "meetings": "회의 목록", "register": "새 회의 등록", "progress": "분석 진행 현황",
-          "review": "결과 검토", "delivery": "결과 전달", "search": "검색 결과", "members": "구성원 관리", "integrations": "연동 설정"}
-
-
-def _page(name: str):
-    """URL 하나 = 화면 하나. main은 기본 주소(/)예요."""
-    return st.Page(lambda: _render(name), title=f"{TITLES[name]} · RE:MEET" if name != "main" else "RE:MEET",
-                   url_path=None if name == "main" else name, default=name == "main")
-
-
-def _render(name: str) -> None:
-    router.sync(name)
-    if name != "main" and not auth.user():  
-        router.go_now("main")
-    if name == "main":
-        public_header()
-    else:
-        app_header()
-    show_flash()
-    PAGES[name]()
-    footer()
-
-
-def main_app() -> None:
-    init_state()
+def main() -> None:
+    state = get_state()
+    delivery.sync(state)  # 진행 중이던 전달이 끝났으면 상태 확정
     inject_css()
-    tick_analysis()
-    pages = {name: _page(name) for name in PAGES}
+    js_host = st.container(key="js-host")  # 스크립트 전용 숨은 영역 (레이아웃에 영향 없음)
+    js_host.html("<span></span>")  # 항상 내용이 있어야 영역이 생겼다 사라지지 않음
+    browser.set_host(js_host)
+
+    # 새로고침하면 Streamlit 세션이 새로 시작되므로, 데모 로그인은 쿠키로 유지
+    if not state.logged_in and not state.logged_out and st.context.cookies.get(LOGIN_COOKIE) == "1":
+        state.logged_in = True
+
+    # URL 라우팅: 화면마다 st.Page 하나. 메뉴는 직접 만든 사이드바를 쓰므로 기본 메뉴는 숨김
+    pages = router.build_pages(ROUTES)
     current = st.navigation(list(pages.values()), position="hidden")
-    target = router.pending()
-    if target:  
-        name, args = target
-        st.switch_page(pages.get(name, pages["main"]), query_params=args or None)
-    current.run()
+
+    if not state.logged_in:
+        if state.logged_out:
+            browser.clear_cookie(LOGIN_COOKIE)
+        login.render()
+        return
+    if not state.cookie_written:  # 로그인 후 한 번만 쿠키 기록
+        browser.set_cookie(LOGIN_COOKIE, "1")
+        state.cookie_written = True
+
+    router.apply_pending(pages)  # 버튼으로 예약된 이동 → URL 변경 (브라우저 기록에 남음)
+    router.sync_from_url(current.url_path)  # URL → 상태 (뒤로가기 포함)
+
+    render_sidebar()
+    render_topbar()
+    with st.container(key="content", gap="medium"):
+        render_toast()
+        current.run()
+    render_active_dialog()
 
 
-main_app()
+main()
