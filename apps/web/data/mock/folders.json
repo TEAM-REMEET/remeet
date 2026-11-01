@@ -1,0 +1,101 @@
+{
+  "types": {
+    "weekly": {
+      "name": "주간 회의",
+      "meta": "매주 월요일 10:00 · 회의 날마다 회의록 1개",
+      "hidden_count": 2
+    },
+    "monthly": {
+      "name": "월간 회의",
+      "meta": "매월 마지막 금요일 15:00 · 회의 날마다 회의록 1개",
+      "hidden_count": 1
+    },
+    "normal": {
+      "name": "일반 회의",
+      "meta": "정기 회의가 아닌 평소 회의 · 열릴 때마다 회의록 1개",
+      "hidden_count": 3
+    }
+  },
+  "folders": {
+    "rel": {
+      "name": "11월 릴리즈 준비",
+      "type": "weekly",
+      "host": "yun",
+      "members": [
+        "yun",
+        "doy",
+        "har",
+        "jiw",
+        "min",
+        "tae"
+      ],
+      "notes": [
+        "m2",
+        "m1",
+        "m4",
+        "m5",
+        "m3"
+      ],
+      "brief": [
+        {
+          "label": "한 줄로",
+          "text": "11월 1차 배포에 들어갈 결제 개편·온보딩 개선을 준비하는 폴더예요."
+        },
+        {
+          "label": "지금 어디까지",
+          "text": "온보딩 3단계 확정, PG사 2곳 비교 중, 중복 결제 원인 분석 중"
+        },
+        {
+          "label": "누구에게 물어볼까",
+          "text": "결제 연동 박도윤 · 테스트 한지우 · 일정 이서윤"
+        },
+        {
+          "label": "먼저 읽을 회의록",
+          "text": "10/20 주간 → 10/27 주간 → 10/29 수수료 비교"
+        }
+      ]
+    },
+    "cs": {
+      "name": "고객 안내 개선",
+      "type": "weekly",
+      "host": "min",
+      "members": [
+        "min",
+        "yun",
+        "har"
+      ],
+      "notes": [
+        "m8"
+      ]
+    },
+    "q4": {
+      "name": "4분기 계획",
+      "type": "monthly",
+      "host": "min",
+      "members": [
+        "min",
+        "yun",
+        "doy",
+        "har",
+        "jiw",
+        "tae"
+      ],
+      "notes": [
+        "m7"
+      ]
+    },
+    "des": {
+      "name": "온보딩 디자인 리뷰",
+      "type": "normal",
+      "host": "har",
+      "members": [
+        "har",
+        "yun",
+        "min"
+      ],
+      "notes": [
+        "m11"
+      ]
+    }
+  }
+}
