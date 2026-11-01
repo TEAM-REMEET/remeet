@@ -1,0 +1,37 @@
+# RE:MEET 배포 구성
+#
+# 로컬:  deploy 폴더에서  docker compose up --build
+#        → http://localhost 접속
+# 서버:  WEB_IMAGE 에 GHCR 이미지 주소를 넣고
+#        docker compose pull && docker compose up -d --no-build
+
+services:
+  web:
+    image: ${WEB_IMAGE:-remeet-web:local}
+    build:
+      context: ../apps/web
+    restart: unless-stopped
+    expose:
+      - "8501"
+
+  # 백엔드(FastAPI)가 생기면 주석을 풀고 nginx 설정의 /api/ 블록도 함께 풀기
+  # backend:
+  #   image: ${BACKEND_IMAGE:-remeet-backend:local}
+  #   build:
+  #     context: ..
+  #     dockerfile: backend/Dockerfile
+  #   restart: unless-stopped
+  #   env_file: .env
+  #   expose:
+  #     - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      web:
+        condition: service_healthy
