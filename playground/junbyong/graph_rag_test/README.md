@@ -1,19 +1,19 @@
 # 구성원 그래프 · 담당자 추천
 
-CSV 5개로 구성원·팀·역할·스킬 정보를 Neo4j에 등록하고, 그 그래프를 바탕으로
+`csv/`의 CSV(구성원 · 프로젝트 · 회의 3개 레이어)를 Neo4j에 등록하고, 그 그래프를 바탕으로
 질의응답과 담당자 추천 점수 계산을 하는 스크립트 모음입니다.
 
 ```
-CSV 5개 ──1_import_csv.py──▶ Neo4j ──┬─ 2_ask_csv_graph.py ─▶ 구성원 질의응답 (콘솔)
+CSV(csv/) ──1_import_csv.py──▶ Neo4j ──┬─ 2_ask_csv_graph.py ─▶ 구성원 질의응답 (콘솔)
                                      └─ 3_recommend_assignee.py ─▶ 추천 결과 (콘솔 + recommend_result.json)
 ```
 
 | 파일 | 역할 | Neo4j | LLM |
 |---|---|---|---|
-| `1_import_csv.py` | CSV 검증 후 노드·관계 등록 | 쓰기 | 사용 안 함 |
+| `1_import_csv.py` | 레이어별 CSV 검증 후 노드·관계 등록 | 쓰기 | 사용 안 함 |
 | `2_ask_csv_graph.py` | 등록된 구성원 정보에 대한 한국어 질의응답 | 읽기 | 사용 |
 | `3_recommend_assignee.py` | 업무 문장 → 요구 조건 해석 → 점수 계산 → 추천 | 읽기 | 사용 (끌 수 있음) |
-| `users.csv` 외 4개 | 입력 데이터 | | |
+| `csv/01_user`, `02_project`, `03_meeting` | 입력 데이터 | | |
 | `recommend_result.json` | 3번 실행 결과 (실행할 때마다 덮어씀) | | |
 
 `src2/`는 이전 회의록 그래프 예제(`1_test_connection.py`, `2_build_graph.py`, `3_ask_graph.py`)이며
@@ -48,8 +48,10 @@ cd src
 # ① CSV 검사만 (DB 접속 없음)
 python 1_import_csv.py --dry-run
 
-# ② Neo4j 등록
+# ② Neo4j 등록 (전체 레이어를 한 트랜잭션으로: user → project → meeting)
 python 1_import_csv.py
+# 한 레이어만: 새 회의를 03_meeting CSV에 추가한 뒤
+python 1_import_csv.py --layer meeting
 
 # ③ 질의응답 (선택)
 python 2_ask_csv_graph.py -q "Bart의 팀과 스킬은?"
@@ -63,6 +65,19 @@ python 3_recommend_assignee.py --task "다음 회의 전까지 리모컨 시장 
 ## 3. CSV 파일
 
 모두 UTF-8(엑셀의 BOM 포함 UTF-8도 가능)이며, **헤더 이름과 순서가 정확히 일치**해야 합니다.
+여러 값은 `|`로 구분합니다 (`tools`, `decisions`, `next_topics`, `embedding`).
+
+| 레이어 | 폴더 | 다시 실행했을 때 |
+|---|---|---|
+| user | `csv/01_user` | 동기화: CSV가 기준. 이 임포터의 사용자 관계를 지우고 다시 씀 |
+| project | `csv/02_project` | MERGE: 누적만 하고 삭제 안 함. 토픽 `status·summary·embedding`은 `last_discussed_at`이 같거나 더 최신일 때만 갱신 |
+| meeting | `csv/03_meeting` | CREATE: DB에 이미 있는 `meeting_id`는 건너뜀. 단 그 회의 액션 아이템의 `status`와 `ASSIGNED_TO.work_status`는 앞으로만 갱신 (`open→in_progress→completed`, `in_work→work_completed`) |
+
+- 다른 레이어의 ID(예: 회의의 `user_id`, `skill_id`, `topic_id`, `follows_up_id`)는 DB에서 확인합니다. `--dry-run`에서는 그 레이어의 CSV로 확인합니다.
+- 이미 저장된 회의에 새 안건·액션 아이템을 추가하면 오류입니다. 새 회의 ID로 넣으세요.
+- ID 규칙 예: `meeting:TS3003:002`, `agenda:TS3003:002:1`, `action:TS3003:002:1:1`. 회의끼리 겹치면 안 됩니다.
+- 프로젝트·회의 CSV 컬럼은 각 파일 헤더 참고. 값 범위: 토픽 `status` open/resolved/parked, 액션 `status` open/in_progress/completed,
+  `work_status` in_work/work_completed, `assign_source` explicit/history/manual, `linked_by` auto/hitl, `confidence` 0~1.
 
 ### teams.csv
 | 컬럼 | 설명 |
@@ -80,9 +95,12 @@ python 3_recommend_assignee.py --task "다음 회의 전까지 리모컨 시장 
 ### skills.csv
 | 컬럼 | 설명 |
 |---|---|
-| `skill_id` | 스킬 ID (예: `skill:marketing_trend_research`) |
+| `skill_id` | 스킬 ID (예: `MD-01`) |
 | `name` | 스킬 이름 |
-| `aliases` | 다른 이름들, `\|`로 구분 (예: `트렌드 조사\|마케팅 조사`). LLM이 업무 문장과 스킬을 연결할 때 참고 |
+| `description` | 설명, 비워도 됨 |
+| `domain` | 분야 (PM, MD, PD, UX, CM), 비워도 됨 |
+| `tools` | 도구들, `\|`로 구분, 비워도 됨 |
+| `source` | 근거 (`meeting` / `assumed`), 비워도 됨 |
 
 ### users.csv
 | 컬럼 | 설명 |

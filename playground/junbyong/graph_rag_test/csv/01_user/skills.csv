@@ -1,0 +1,39 @@
+skill_id,name,description,domain,tools,source
+PM-01,일정·마일스톤 계획,프로젝트 단계와 일정을 계획하고 관리,PM,Microsoft Project|Jira,meeting
+PM-02,업무 분배·진척 관리,업무를 담당자에게 배정하고 진행 상황을 추적,PM,Jira|Notion,meeting
+PM-03,요구사항 정의·관리,제품 요구사항을 정의하고 문서로 관리,PM,Notion,meeting
+PM-04,회의 운영·퍼실리테이션,아젠다를 구성하고 회의·브레인스토밍을 진행,PM,Miro,meeting
+PM-05,의사결정 조율·합의 도출,선택지를 비교하고 팀의 합의를 이끌어냄,PM,Miro,meeting
+PM-06,예산·원가 관리,프로젝트 전체 예산과 목표 원가를 설정·관리. 개별 부품 원가 계산은 PD-10,PM,Excel,meeting
+PM-07,리스크·이슈 관리,일정·요구사항 리스크를 식별하고 대응,PM,Jira,meeting
+MD-01,시장·트렌드 조사,시장과 소비 트렌드를 조사,MD,Google Trends,meeting
+MD-02,경쟁 제품 분석,경쟁 제품의 특징·가격·동향을 비교 분석,MD,Google Trends|Excel,meeting
+MD-03,고객 조사 설계·수행,설문을 설계하고 고객 의견을 수집. 수집된 결과의 UI 관점 해석은 UX-01,MD,Google Forms,meeting
+MD-04,데이터 수집·가공,고객·판매 데이터를 조회·집계·정제. 정제된 데이터의 분석은 MD-05,MD,SQL|Python,assumed
+MD-05,데이터 분석·인사이트 도출,데이터를 분석해 의사결정에 쓸 인사이트 도출,MD,Python|Google Analytics,assumed
+MD-06,타깃 고객 정의·세분화,고객군을 나누고 주요 타깃을 정의,MD,Python,meeting
+MD-07,제품 포지셔닝·가격 전략,시장 내 위치와 판매가를 결정,MD,Excel,meeting
+MD-08,브랜드 아이덴티티 설계,로고·기업 컬러·슬로건 등 브랜드 요소를 제품에 반영하도록 설계,MD,Adobe Illustrator,meeting
+MD-09,제품 평가 기준 설계·평가,평가 기준을 만들고 결과물을 평가,MD,Excel,meeting
+PD-01,제품 외관·형상 설계,제품의 외형과 형상을 3D로 설계,PD,SolidWorks,meeting
+PD-02,인체공학 설계,사용자가 쥐고 쓰기 편한 형태로 설계,PD,SolidWorks,meeting
+PD-03,재료 선정·검증,용도에 맞는 재료를 비교·선정. 구조 강도·양산성 검토는 PD-04,PD,Ansys,meeting
+PD-04,구조 해석·양산성 검토,구조 강도와 양산 가능성을 검토,PD,Ansys,meeting
+PD-05,시제품 제작,설계를 실물 시제품으로 제작,PD,3D Printing,meeting
+PD-06,디자인 시각화·렌더링,디자인 시안을 실사처럼 시각화,PD,KeyShot,assumed
+PD-07,회로·PCB 설계,칩을 선정하고 회로 기판을 설계,PD,Altium Designer,meeting
+PD-08,전원 시스템 설계,배터리·태양광 등 전원 방식을 설계하고 검증,PD,LTspice,meeting
+PD-09,펌웨어 개발,하드웨어를 제어하는 펌웨어 개발,PD,Embedded C,meeting
+PD-10,부품 선정·BOM 원가 산정,부품을 고르고 부품표 기준으로 원가를 계산,PD,Excel,meeting
+UX-01,사용자 니즈 분석,사용자의 불편과 요구를 분석해 UI 요구로 정리,UX,Maze|Google Forms,meeting
+UX-02,정보 구조·인터랙션 설계,기능 그룹·메뉴 구조·조작 흐름을 설계,UX,Figma,meeting
+UX-03,와이어프레임·프로토타이핑,화면·버튼 배치 시안과 프로토타입 제작,UX,Figma,meeting
+UX-04,비주얼 UI 디자인,색상·아이콘·레이아웃 등 시각 디자인,UX,Figma,meeting
+UX-05,사용성 테스트,프로토타입으로 사용성을 검증,UX,Maze,meeting
+UX-06,웹 프론트엔드 구현,웹 화면 구조·디자인·동작을 구현,UX,HTML|CSS|JavaScript|React,assumed
+UX-07,임베디드 GUI 구현,기기 화면 UI를 구현,UX,Qt,meeting
+UX-08,음성 인터페이스 설계·구현,음성으로 조작하는 인터페이스 설계·구현,UX,Google Cloud Speech-to-Text,meeting
+CM-01,문서화·기록,조사·작업 결과를 문서로 정리·공유,CM,Notion|Word,meeting
+CM-02,발표·보고,결과를 자료로 만들어 발표·보고,CM,PowerPoint,meeting
+CM-03,정량 데이터 정리·계산,표 정리와 기본 계산. 원가·가격·평가 등 전문 용도는 해당 역량으로,CM,Excel,meeting
+CM-04,협업 커뮤니케이션,다른 직무와 의견을 조율,CM,,meeting
