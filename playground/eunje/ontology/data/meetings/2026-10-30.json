@@ -1,0 +1,19 @@
+{
+  "meeting_id": "m-1030",
+  "project_id": "p-shop",
+  "title": "10/30 정기회의",
+  "held_at": "2026-10-30T10:00:00",
+  "attendees": ["u1", "u2", "u3"],
+  "agendas": [
+    {
+      "title": "결제 오류 증가",
+      "background": "지난주부터 결제 실패 문의가 CS에 몰림",
+      "discussion": "B사 PG 타임아웃 의심, 로그 확인 필요",
+      "decisions": ["실패 로그 분석 착수"],
+      "next_topics": ["PG사 교체 검토"],
+      "actions": [
+        {"task": "실패 로그 분석", "owner": "", "due": "2026-11-05"}
+      ]
+    }
+  ]
+}
