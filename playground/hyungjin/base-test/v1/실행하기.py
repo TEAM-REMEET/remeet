@@ -7,6 +7,7 @@ from final_assembly import load_inputs, read, run as assemble
 
 
 MEETINGS = ('TS3003a', 'TS3003b', 'TS3003c', 'TS3003d')
+REAL_MEETING = 'REAL_MEETING_001'
 
 
 def saved_candidates(meeting_id, source):
@@ -29,23 +30,35 @@ def default_action(summary):
     return summary if (summary / '11_액션수정.json').exists() else summary / '03_액션'
 
 
-def validate_inputs(mode, meeting, summary=None, action=None):
+def validate_inputs(mode, meeting, summary=None, action=None, input_path=None):
     if mode == 'full':
-        prepare(meeting)
+        if input_path is not None:
+            from real_input import parse_transcript
+            parse_transcript(Path(input_path).read_text(encoding='utf-8-sig'))
+        else:
+            prepare(meeting)
     elif mode == 'actions':
         saved_candidates(meeting, summary)
     else:
         load_inputs(meeting, summary, action)
 
 
-def execute(mode, meeting, summary=None, action=None):
+def execute(mode, meeting, summary=None, action=None, input_path=None):
     if mode == 'final':
         return assemble(meeting, summary, action)
     if mode == 'actions':
         agendas, actions = saved_candidates(meeting, summary)
-    exp = Experiment(meeting)
+    prepared, candidates = None, None
+    if input_path is not None:
+        from real_input import prepare_real
+        data, chunks, candidates = prepare_real(input_path, meeting)
+        prepared = (data, chunks)
+    exp = Experiment(meeting, prepared=prepared) if prepared is not None else Experiment(meeting)
     try:
         if mode == 'full':
+            if candidates is not None:
+                save(exp.output / '00_경계후보.json', {'detection': prepared[0]['detection'], 'candidates': candidates})
+                print(f'저장 위치: {exp.output}', flush=True)
             exp.run_chunks()
             exp.merge_and_review()
             exp.review_actions()
@@ -69,7 +82,8 @@ def execute(mode, meeting, summary=None, action=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description='회의록 베이스 실험 실행')
     parser.add_argument('mode', choices=('full', 'actions', 'final'), help='전체 실행 / 기존 액션 검증 / 최종 회의록 조립')
-    parser.add_argument('--meetings', nargs='+', choices=(*MEETINGS, 'all'), required=True, help='회의 ID 또는 all')
+    parser.add_argument('--meetings', nargs='+', choices=(*MEETINGS, REAL_MEETING, 'all'), required=True, help='회의 ID 또는 all')
+    parser.add_argument('--input', type=Path, help='시각·참석자 표식이 있는 실제 회의 전사문 (full 전용)')
     parser.add_argument('--summary', type=Path, help='기존 요약 결과 폴더 (회의 한 개일 때)')
     parser.add_argument('--action', type=Path, help='기존 액션 검증 결과 폴더 (final, 회의 한 개일 때)')
     parser.add_argument('--check', action='store_true', help='입력만 확인하고 모델 호출은 하지 않음')
@@ -83,11 +97,18 @@ def main(argv=None):
         parser.error('full 실행은 기존 결과 폴더를 사용하지 않습니다.')
     if args.mode == 'actions' and args.action:
         parser.error('--action은 final 모드에서만 사용합니다.')
+    if args.input and (args.mode != 'full' or meetings != [REAL_MEETING]):
+        parser.error('--input은 full 모드의 REAL_MEETING_001 한 건에만 사용할 수 있습니다.')
+    if REAL_MEETING in meetings and not args.input:
+        parser.error('REAL_MEETING_001에는 --input 전사문 경로를 지정하세요.')
     inputs = []
     for meeting in meetings:
         summary = (args.summary or default_source(meeting)) if args.mode != 'full' else None
         action = (args.action or default_action(summary)) if args.mode == 'final' else None
-        validate_inputs(args.mode, meeting, summary, action)
+        if args.input:
+            validate_inputs(args.mode, meeting, summary, action, args.input)
+        else:
+            validate_inputs(args.mode, meeting, summary, action)
         inputs.append((meeting, summary, action))
         print(f'입력 확인: {meeting}', flush=True)
     if args.check:
@@ -95,7 +116,10 @@ def main(argv=None):
     failed = []
     for meeting, summary, action in inputs:
         try:
-            execute(args.mode, meeting, summary, action)
+            if args.input:
+                execute(args.mode, meeting, summary, action, args.input)
+            else:
+                execute(args.mode, meeting, summary, action)
         except Exception as exc:
             failed.append(meeting)
             print(f'실패: {meeting} / {type(exc).__name__}: {exc}', flush=True)

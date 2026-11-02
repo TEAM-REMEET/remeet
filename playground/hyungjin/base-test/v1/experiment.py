@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 from dotenv import load_dotenv
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[2]
+REPO = HERE.parents[3]
 PROMPTS = HERE / '요약_프롬프트.md'
 SCHEMAS = HERE / '출력_스키마.json'
 MODEL = 'gpt-6-luna'
@@ -62,7 +62,7 @@ def prepare(meeting_id='TS3003c'):
 
 
 class Experiment:
-    def __init__(self, meeting_id='TS3003c', action_policy='three_with_review'):
+    def __init__(self, meeting_id='TS3003c', action_policy='three_with_review', prepared=None):
         if action_policy is not None:
             from action_pipeline import POLICIES
             if action_policy not in POLICIES:
@@ -72,7 +72,9 @@ class Experiment:
         load_dotenv(REPO.parent / '.env', override=False)
         if not os.environ.get('OPENAI_API_KEY', '').strip():
             raise ValueError('OPENAI_API_KEY가 설정되어 있지 않습니다.')
-        self.data, self.chunks = prepare(meeting_id)
+        self.data, self.chunks = prepare(meeting_id) if prepared is None else prepared
+        if self.data['meeting_id'] != meeting_id:
+            raise ValueError('입력 회의 ID가 일치하지 않습니다.')
         self.prompt_text = PROMPTS.read_text(encoding='utf-8')
         self.schemas = json.loads(SCHEMAS.read_text(encoding='utf-8'))
         self.schema_version = hashlib.sha256(json.dumps(self.schemas, ensure_ascii=False, sort_keys=True).encode('utf-8')).hexdigest()
