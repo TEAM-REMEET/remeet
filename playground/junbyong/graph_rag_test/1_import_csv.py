@@ -64,9 +64,10 @@ NODES = {
     "action_items": ("action_item_id", "ActionItem", "description"),
 }
 KNOWN_TYPES = {kind for _, kind, _ in NODES.values()} | {"Metric", "System", "Unknown"}
+PROJECT_STATUS = {"active", "on_hold", "completed"}
 TOPIC_STATUS = {"open", "resolved", "parked"}
 # Ranks: a re-import may only move a status forward.
-ACTION_RANK = {"open": 0, "in_progress": 1, "completed": 2}
+ACTION_RANK = {"open": 0, "completed": 1}
 WORK_RANK = {"in_work": 0, "work_completed": 1}
 ASSIGN_SOURCES = {"explicit", "history", "manual"}
 LINKED_BY = {"auto", "hitl"}
@@ -269,7 +270,7 @@ def validate_user(data: dict, local: dict) -> list[tuple]:
 def validate_project(data: dict, local: dict) -> list[tuple]:
     refs = []
     for row in data["projects"]:
-        row["status"] = row["status"] or None
+        choice(row["status"], PROJECT_STATUS, f"projects.csv {row['id']}.status")
     unique(data["rel_owns"], ("team_id", "project_id"), "rel_owns")
     for row in data["rel_owns"]:
         refs += [(row["team_id"], "Team", "rel_owns.csv team_id"),
@@ -330,10 +331,14 @@ def validate_meeting(data: dict, local: dict) -> list[tuple]:
         local_ref(row["meeting_id"], "Meeting", local, "rel_attended.csv meeting_id")
         refs.append((row["user_id"], "Person", "rel_attended.csv user_id"))
     unique(data["rel_assigned_to"], ("user_id", "action_item_id"), "rel_assigned_to")
+    action_status = {row["id"]: row["status"] for row in data["action_items"]}
     for row in data["rel_assigned_to"]:
         local_ref(row["action_item_id"], "ActionItem", local, "rel_assigned_to.csv action_item_id")
         refs.append((row["user_id"], "Person", "rel_assigned_to.csv user_id"))
         choice(row["work_status"], WORK_RANK, "rel_assigned_to.csv work_status")
+        if (action_status[row["action_item_id"]] == "completed") != (row["work_status"] == "work_completed"):
+            raise ValueError(f"rel_assigned_to.csv {row['action_item_id']}: 액션 status=completed와 "
+                             "work_status=work_completed는 항상 같이 바뀌어야 합니다.")
         choice(row["assign_source"], ASSIGN_SOURCES, "rel_assigned_to.csv assign_source")
     unique(data["rel_requires_skill"], ("action_item_id", "skill_id"), "rel_requires_skill")
     for row in data["rel_requires_skill"]:

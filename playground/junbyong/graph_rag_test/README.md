@@ -71,13 +71,13 @@ python 3_recommend_assignee.py --task "다음 회의 전까지 리모컨 시장 
 |---|---|---|
 | user | `csv/01_user` | 동기화: CSV가 기준. 이 임포터의 사용자 관계를 지우고 다시 씀 |
 | project | `csv/02_project` | MERGE: 누적만 하고 삭제 안 함. 토픽 `status·summary·embedding`은 `last_discussed_at`이 같거나 더 최신일 때만 갱신 |
-| meeting | `csv/03_meeting` | CREATE: DB에 이미 있는 `meeting_id`는 건너뜀. 단 그 회의 액션 아이템의 `status`와 `ASSIGNED_TO.work_status`는 앞으로만 갱신 (`open→in_progress→completed`, `in_work→work_completed`) |
+| meeting | `csv/03_meeting` | CREATE: DB에 이미 있는 `meeting_id`는 건너뜀. 단 그 회의 액션 아이템의 `status`와 `ASSIGNED_TO.work_status`는 앞으로만 갱신 (`open→completed`, `in_work→work_completed`) |
 
 - 다른 레이어의 ID(예: 회의의 `user_id`, `skill_id`, `topic_id`, `follows_up_id`)는 DB에서 확인합니다. `--dry-run`에서는 그 레이어의 CSV로 확인합니다.
 - 이미 저장된 회의에 새 안건·액션 아이템을 추가하면 오류입니다. 새 회의 ID로 넣으세요.
 - ID 규칙 예: `meeting:TS3003:002`, `agenda:TS3003:002:1`, `action:TS3003:002:1:1`. 회의끼리 겹치면 안 됩니다.
-- 프로젝트·회의 CSV 컬럼은 각 파일 헤더 참고. 값 범위: 토픽 `status` open/resolved/parked, 액션 `status` open/in_progress/completed,
-  `work_status` in_work/work_completed, `assign_source` explicit/history/manual, `linked_by` auto/hitl, `confidence` 0~1.
+- 프로젝트·회의 CSV 컬럼은 각 파일 헤더 참고. 값 범위: 프로젝트 `status` active/on_hold/completed, 토픽 `status` open/resolved/parked, 액션 `status` open/completed,
+  `work_status` in_work/work_completed (액션 `completed` ⇔ `work_completed`는 항상 같이), `assign_source` explicit/history/manual, `linked_by` auto/hitl, `confidence` 0~1.
 
 ### teams.csv
 | 컬럼 | 설명 |
@@ -178,6 +178,7 @@ python 3_recommend_assignee.py --task "다음 회의 전까지 리모컨 시장 
 | `explicit` | 회의에서 담당자로 명시된 사람 — 기록만 하고 추천 대상에서 제외 |
 | `excluded` | 비활성 팀원 (`is_active=false`) |
 | `excluded` | 역할·팀이 **필수 조건**인 업무에서 조건에 맞지 않는 사람 |
+| `excluded` | 요구 스킬을 하나도 갖지 않은 사람 (스킬 점수 0) — 업무량 점수만으로 추천되는 것을 막음 |
 
 ### 점수 공식
 ```

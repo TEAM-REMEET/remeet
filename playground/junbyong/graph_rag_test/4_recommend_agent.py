@@ -107,7 +107,9 @@ def build_spec(item: dict, catalog: dict, llm) -> tuple[dict | None, list[str]]:
 
 
 def recommend_meeting(items: list[dict], candidates: list[dict], top: int) -> list[dict]:
-    """Rank each item, adding this meeting's earlier top picks to workload."""
+    """Rank each item, adding this meeting's earlier top picks to workload.
+    Balancing only applies to someone with an equal-skill alternative, so it never
+    pushes the only qualified person below less qualified ones."""
     picked = Counter()
     results = []
     for item in items:
@@ -120,12 +122,20 @@ def recommend_meeting(items: list[dict], candidates: list[dict], top: int) -> li
         elif item.get("spec") is None:
             result["status"] = "needs_manager_input"
         else:
+            base, _ = rec.rank_candidates(item["spec"], candidates)
+            skill = {r["user_id"]: r["skill_score"] for r in base}
+            peers = Counter(skill.values())
+            balanced = {uid for uid in skill if picked[uid] and peers[skill[uid]] > 1}
             # shortcut: assumes each top pick is accepted; re-run after review for exact balance.
-            adjusted = [{**c, "open_tasks": c["open_tasks"] + picked[c["user_id"]]} for c in candidates]
+            adjusted = [{**c, "open_tasks": c["open_tasks"] + picked[c["user_id"]]}
+                        if c["user_id"] in balanced else c for c in candidates]
             ranked, excluded = rec.rank_candidates(item["spec"], adjusted)
             result.update(recommendations=ranked[:top], excluded=excluded, status="pending_manager_review")
-            if picked:
-                result["warnings"].append("이 회의에서 먼저 추천된 업무를 업무량에 더해 계산했습니다.")
+            if balanced:
+                result["warnings"].append("이 회의에서 먼저 추천된 업무를 업무량에 더해 계산했습니다 "
+                                          "(스킬 점수가 같은 후보가 있는 경우만): " + ", ".join(sorted(balanced)))
+            if len(ranked) < top:
+                result["warnings"].append(f"요구 스킬을 가진 후보가 {len(ranked)}명뿐입니다.")
             if ranked:
                 picked[ranked[0]["user_id"]] += 1
         for user_id in item.get("previous_assignees", []):
@@ -164,7 +174,7 @@ def build_graph(tools: dict, llm, top: int, explain: bool, save: bool, review: b
         candidates, workload_present = tools["candidates"]()
         results = recommend_meeting(state["items"], candidates, top)
         for result in results:
-            if result["spec"]:
+            if result["status"] == "pending_manager_review":  # score caveats only where scores were shown
                 result["warnings"] += rec.data_warnings(result["spec"], candidates, workload_present)
             print_item(result)
         return {"candidates": candidates, "workload_present": workload_present, "results": results}
@@ -270,15 +280,18 @@ def neo4j_tools(session) -> dict:
 
 def self_check() -> None:
     people = [{"user_id": uid, "name": uid, "is_active": True, "teams": [], "roles": [], "open_tasks": 0,
-               "skills": [{"id": "MD-01", "level": level, "verification_status": None}]}
-              for uid, level in (("A", 4), ("B", 3))]
+               "skills": [{"id": sid, "level": level, "verification_status": None} for sid, level in skills]}
+              for uid, skills in (("A", [("MD-01", 4)]), ("B", [("MD-01", 4)]), ("C", []), ("D", [("MD-02", 3)]))]
     item = {"description": "트렌드 조사", "agenda": "시장", "ord": 1, "assignees": [], "previous_assignees": [],
             "skills": [{"skill_id": "MD-01", "importance": 0.5}]}
+    only_d = [{"skill_id": "MD-02", "importance": 0.5}]
     items = [{**item, "id": "x1"}, {**item, "id": "x2"}, {**item, "id": "x3", "assignees": ["A"]},
-             {**item, "id": "x4", "skills": []}]
+             {**item, "id": "x4", "skills": []}, {**item, "id": "x5", "skills": only_d},
+             {**item, "id": "x6", "skills": only_d}]
     saved, assigned = [], []
     tools = {
-        "catalog": lambda: {"skills": [{"id": "MD-01"}], "roles": [], "teams": [], "users": [{"id": "A"}, {"id": "B"}]},
+        "catalog": lambda: {"skills": [{"id": "MD-01"}, {"id": "MD-02"}], "roles": [], "teams": [],
+                            "users": [{"id": u["user_id"]} for u in people]},
         "items": lambda meeting_id: items if meeting_id == "m1" else [],
         "candidates": lambda: (people, True),
         "save": lambda rows, ids: saved.append((rows, ids)),
@@ -287,14 +300,19 @@ def self_check() -> None:
     graph = build_graph(tools, None, 3, explain=False, save=True, review=True)
     state = run(graph, "m1", lambda payload: {"x1": 1})
     status = {r["action_item_id"]: r for r in state["results"]}
-    assert status["x1"]["recommendations"][0]["user_id"] == "A"
-    assert status["x2"]["recommendations"][0]["user_id"] == "B", "workload balancing did not apply"
-    assert status["x3"]["status"] == "already_assigned" and status["x4"]["status"] == "needs_manager_input"
-    assert saved and saved[0][1] == ["x1", "x2"], "only pending items are saved"
+    top = {k: [c["user_id"] for c in r["recommendations"]] for k, r in status.items()}
+    assert top["x1"] == ["A", "B"] and top["x2"] == ["B", "A"], "equal-skill peers must be balanced"
+    assert top["x5"] == ["D"] and top["x6"] == ["D"], "the only qualified person must not be pushed out"
+    assert any(e["user_id"] == "C" and e["reason"] == "요구 스킬 보유 없음" for e in status["x1"]["excluded"])
+    assert any("1명뿐" in w for w in status["x6"]["warnings"])
+    assert status["x3"]["warnings"] == ["이미 담당자가 있어 추천하지 않습니다: A"], "no score caveats on skipped items"
+    assert status["x4"]["status"] == "needs_manager_input"
+    assert saved and saved[0][1] == ["x1", "x2", "x5", "x6"], "only pending items are saved"
     assert assigned == [("A", "x1", "manual")], "only the manager's pick is assigned, once"
     assert status["x1"]["status"] == "assigned" and status["x2"]["status"] == "pending_manager_review"
     assert run(graph, "empty", lambda p: {}).get("results") is None, "no items must end after load"
-    print("\nself-check 통과: 균형 조정, 건너뛰기, 저장 대상, interrupt 후 1건만 배정, 빈 회의 종료.")
+    print("\nself-check 통과: 동일 스킬끼리만 균형 조정, 유일 적임자 유지, 스킬 0점 제외, "
+          "건너뛴 업무 경고 정리, interrupt 후 1건만 배정, 빈 회의 종료.")
 
 
 def main(argv=None) -> int:
