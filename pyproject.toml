@@ -8,6 +8,7 @@ dependencies = [
     "google-genai>=2.32.0",
     "matplotlib>=3.11.2",
     "nbstripout>=0.9.1",
+    "neo4j>=6.4.1",
     "numpy>=2.5.4",
     "openai>=3.35.1",
     "pandas>=3.0.6",
