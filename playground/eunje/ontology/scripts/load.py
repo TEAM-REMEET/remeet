@@ -1,277 +1,440 @@
-"""회의 JSON → Neo4j 적재.
+"""회의 결과 JSON을 Neo4j ontology에 적재한다.
+
+입력 회의 파일은 ``data/meetings/*.json``의 최종 회의록 구조를 사용한다.
+회의록에는 프로젝트/참석자/날짜가 없으므로 다음 규칙으로 보완한다.
+
+* ``TS3003a``와 같은 회의 ID에서 프로젝트 ID ``TS3003``을 만든다.
+* 같은 프로젝트의 활성 사용자를 참석자로 연결한다.
+* 회의 파일의 정렬 순서를 ``meeting_order``로 저장하고, 시간 비교가 필요한
+  기존 로직을 위해 동일한 기준일의 초 단위 timestamp를 만든다.
 
 실행 (ontology 폴더에서):
     uv run python scripts/load.py
-
-현재 동작: 스키마 → 조직(users.json) → 회의(data/meetings/*.json, 파일 이름순)
-  1) Meeting + 참석자
-  2) Topic 매칭 (기존 연결 / 하위 안건 / 새 Topic)
-  3) AgendaItem + ABOUT
-  4) ActionItem + PRODUCED
-  5) 담당자 결정      ← 주석 처리 (②단계에서 사용)
-  6) Topic 요약 갱신  ← 주석 처리 (③단계에서 사용, LLM 필요)
 """
+
+from __future__ import annotations
+
 import json
 import os
+import re
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
+import numpy as np
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
-ROOT = Path(__file__).resolve().parent.parent  # = ontology/
+ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-driver = GraphDatabase.driver(NEO4J_URI, auth=("neo4j", os.environ["NEO4J_PASSWORD"]))
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+driver = None
 
-# Topic 매칭 임계값. 점수는 Neo4j cosine 점수(0~1)이고, 아래 값은 출발점일 뿐이에요.
-# 적재 로그에 찍히는 score를 기대 결과와 비교해서 조정하세요.
-SAME_TOPIC = 0.85     # 이상: 기존 Topic에 연결
-RELATED_TOPIC = 0.75  # 이상: 새 Topic을 만들고 가장 가까운 Topic의 하위 안건(SUBTOPIC_OF)으로
-                      # 미만: 새 Topic (최상위)
-
-# ─────────────────────────────── 임베딩 ───────────────────────────────
+NEXT_TOPIC_MATCH = 0.85
+MIN_AGENDAS_FOR_CENTER = 5
+SAME_CENTERED = 0.15
+GRAY_CENTERED = 0.0
+SAME_RAW = 0.80
+GRAY_RAW = 0.65
+REVIEW_QUEUE: list[dict[str, Any]] = []
+BASE_MEETING_TIME = datetime(2004, 10, 11)
 
 _model = None
 
 
+def get_driver():
+    global driver
+    if driver is None:
+        if not NEO4J_PASSWORD:
+            raise RuntimeError("NEO4J_PASSWORD가 설정되지 않았습니다.")
+        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+    return driver
+
+
 def embed(text: str) -> list[float]:
-    """BGE-M3로 1024차원 벡터를 만든다. 첫 호출 때 모델을 내려받는다(약 2GB)."""
+    """BGE-M3로 텍스트 임베딩을 만든다."""
     global _model
     if _model is None:
         from sentence_transformers import SentenceTransformer
+
         _model = SentenceTransformer("BAAI/bge-m3")
     return _model.encode(text, normalize_embeddings=True).tolist()
 
 
-# ─────────────────────────────── 스키마, 조직 ───────────────────────────────
+def _texts(items: list[dict[str, Any]] | None) -> list[str]:
+    """회의록의 ``[{text: ...}]`` 형태를 Neo4j 문자열 목록으로 바꾼다."""
+    return [item["text"] for item in items or [] if item.get("text")]
 
-def run_schema():
+
+def _evidence(items: list[dict[str, Any]] | None) -> list[int]:
+    ids: set[int] = set()
+    for item in items or []:
+        ids.update(item.get("evidence_utterance_ids", []))
+    return sorted(ids)
+
+
+def _discussion_texts(discussions: list[dict[str, Any]] | None) -> list[str]:
+    texts: list[str] = []
+    for discussion in discussions or []:
+        subtopic = discussion.get("subtopic", "").strip()
+        for item in discussion.get("items", []):
+            text = item.get("text")
+            if text:
+                texts.append(f"[{subtopic}] {text}" if subtopic else text)
+    return texts
+
+
+def normalize_meeting(
+    raw: dict[str, Any],
+    *,
+    meeting_order: int,
+    attendee_ids: list[str],
+) -> dict[str, Any]:
+    """최종 회의록 구조를 로더가 사용하는 내부 구조로 정규화한다."""
+    meeting_id = raw.get("meeting_id")
+    if not meeting_id:
+        raise ValueError("회의 JSON에 meeting_id가 없습니다.")
+
+    project_id = raw.get("project_id") or re.sub(r"[a-z]$", "", meeting_id)
+    if project_id == meeting_id:
+        project_id = f"project-{meeting_id}"
+
+    held_at = BASE_MEETING_TIME + timedelta(seconds=meeting_order)
+    agendas: list[dict[str, Any]] = []
+    for agenda in raw.get("agenda_details", []):
+        discussions = agenda.get("discussions", [])
+        decisions = agenda.get("decisions", [])
+        unresolved = agenda.get("unresolved_issues", [])
+        next_topics = agenda.get("next_meeting_topics", [])
+        background = _texts(agenda.get("background"))
+        discussion = _discussion_texts(discussions)
+        agendas.append(
+            {
+                "source_agenda_id": agenda.get("agenda_id"),
+                "title": agenda.get("title", "제목 없음"),
+                "background": background,
+                "discussion": discussion,
+                "decisions": _texts(decisions),
+                "unresolved_issues": _texts(unresolved),
+                "next_topics": _texts(next_topics),
+                "evidence_utterance_ids": sorted(
+                    set(
+                        _evidence(agenda.get("background"))
+                        + _evidence(decisions)
+                        + _evidence(unresolved)
+                        + _evidence(next_topics)
+                        + [
+                            evidence_id
+                            for discussion in discussions
+                            for item in discussion.get("items", [])
+                            for evidence_id in item.get("evidence_utterance_ids", [])
+                        ]
+                    )
+                ),
+                "actions": [],
+            }
+        )
+
+    return {
+        "meeting_id": meeting_id,
+        "project_id": project_id,
+        "title": raw.get("title") or f"{meeting_id} 회의",
+        "held_at": held_at.isoformat(),
+        "meeting_order": meeting_order,
+        "attendees": attendee_ids,
+        "agendas": agendas,
+    }
+
+
+def run_schema() -> None:
     text = (ROOT / "schema/schema.cypher").read_text(encoding="utf-8")
-    for stmt in text.split(";"):
-        body = "\n".join(l for l in stmt.splitlines() if not l.strip().startswith("//")).strip()
+    for statement in text.split(";"):
+        body = "\n".join(
+            line for line in statement.splitlines() if not line.strip().startswith("//")
+        ).strip()
         if body:
-            driver.execute_query(body)
+            get_driver().execute_query(body)
 
 
-def load_users(data: dict):
-    driver.execute_query("""
+def load_users(data: dict[str, Any]) -> list[str]:
+    get_driver().execute_query(
+        """
         UNWIND $rows AS r
         MERGE (n:Team {team_id: r.team_id})
         SET n.name = r.name, n.is_active = coalesce(r.is_active, true)
-    """, rows=data["teams"])
-    driver.execute_query("""
+        """,
+        rows=data["teams"],
+    )
+    get_driver().execute_query(
+        """
         UNWIND $rows AS r
         MERGE (n:Role {role_id: r.role_id}) SET n.name = r.name
-    """, rows=data["roles"])
-    driver.execute_query("""
+        """,
+        rows=data["roles"],
+    )
+    get_driver().execute_query(
+        """
         UNWIND $rows AS r
         MERGE (n:Skill {skill_id: r.skill_id}) SET n.name = r.name
-    """, rows=data["skills"])
-    driver.execute_query("""
+        """,
+        rows=data["skills"],
+    )
+    get_driver().execute_query(
+        """
         UNWIND $rows AS r
         MERGE (p:Person {user_id: r.user_id})
         SET p.name = r.name, p.is_active = r.is_active, p.position = r.position
         WITH p, r
         OPTIONAL MATCH (t:Team {team_id: r.team_id})
-        FOREACH (_ IN CASE WHEN t IS NULL THEN [] ELSE [1] END | MERGE (p)-[:MEMBER_OF]->(t))
+        FOREACH (_ IN CASE WHEN t IS NULL THEN [] ELSE [1] END |
+            MERGE (p)-[:MEMBER_OF]->(t))
         WITH p, r
         OPTIONAL MATCH (ro:Role {role_id: r.role_id})
-        FOREACH (_ IN CASE WHEN ro IS NULL THEN [] ELSE [1] END | MERGE (p)-[:HAS_ROLE]->(ro))
+        FOREACH (_ IN CASE WHEN ro IS NULL THEN [] ELSE [1] END |
+            MERGE (p)-[:HAS_ROLE]->(ro))
         WITH p, r
         UNWIND r.skills AS s
         MATCH (k:Skill {skill_id: s.skill_id})
         MERGE (p)-[h:HAS_SKILL]->(k)
         SET h.level = s.level, h.updated_at = datetime()
-    """, rows=data["people"])
+        """,
+        rows=data["people"],
+    )
+    return [person["user_id"] for person in data["people"] if person.get("is_active", True)]
 
 
-# ─────────────────────────────── 회의 적재 ───────────────────────────────
-
-def load_meeting(m: dict):
-    found = driver.execute_query(
-        "MATCH (mt:Meeting {meeting_id: $mid}) RETURN count(mt) AS c", mid=m["meeting_id"]
+def load_meeting(meeting: dict[str, Any]) -> None:
+    found = get_driver().execute_query(
+        "MATCH (mt:Meeting {meeting_id: $mid}) RETURN count(mt) AS c",
+        mid=meeting["meeting_id"],
     ).records[0]["c"]
     if found:
-        print(f"[건너뜀] {m['meeting_id']} 이미 적재됨")
+        print(f"[건너뜀] {meeting['meeting_id']} 이미 적재됨")
         return
-    print(f"\n=== {m['meeting_id']} {m['title']} ===")
-    with driver.session() as s:
-        # 회의 1건 = 트랜잭션 1개. 중간에 실패하면 그 회의 전체가 저장되지 않아요.
-        s.execute_write(_load_meeting_tx, m)
+    print(f"\n=== {meeting['meeting_id']} {meeting['title']} ===")
+    with get_driver().session() as session:
+        session.execute_write(_load_meeting_tx, meeting)
 
 
-def _load_meeting_tx(tx, m: dict):
-    # 1) Meeting + 참석자
-    tx.run("""
+def _load_meeting_tx(tx: Any, meeting: dict[str, Any]) -> None:
+    tx.run(
+        """
         MERGE (p:Project {project_id: $pid})
-        CREATE (mt:Meeting {meeting_id: $mid, title: $title, held_at: datetime($at)})-[:IN]->(p)
+        CREATE (mt:Meeting {
+            meeting_id: $mid, title: $title, held_at: datetime($at),
+            meeting_order: $meeting_order, source_format: 'final_meeting_record'
+        })-[:IN]->(p)
         WITH mt
         UNWIND $attendees AS uid
         MATCH (u:Person {user_id: uid})
-        CREATE (u)-[:ATTENDED]->(mt)
-    """, pid=m["project_id"], mid=m["meeting_id"], title=m["title"],
-         at=m["held_at"], attendees=m["attendees"])
+        MERGE (u)-[:ATTENDED]->(mt)
+        """,
+        pid=meeting["project_id"],
+        mid=meeting["meeting_id"],
+        title=meeting["title"],
+        at=meeting["held_at"],
+        meeting_order=meeting["meeting_order"],
+        attendees=meeting["attendees"],
+    )
 
-    for order, ag in enumerate(m["agendas"], 1):
-        agenda_id = f"{m['meeting_id']}-a{order}"
-        vec = embed(f"{ag['title']} {ag['background']}")
-
-        # 2) Topic 매칭
-        topic_id, score = link_topic(tx, m["project_id"], agenda_id, ag["title"], vec)
-
-        # 3) AgendaItem + HAS_AGENDA + ABOUT
-        tx.run("""
+    for order, agenda in enumerate(meeting["agendas"], 1):
+        agenda_id = f"{meeting['meeting_id']}-{agenda['source_agenda_id'] or order}"
+        context = " ".join(
+            agenda["background"] + agenda["discussion"] + agenda["decisions"]
+        )
+        vec = embed(f"{agenda['title']} {context}")
+        topic_id, score, linked_by = link_topic(
+            tx, meeting, agenda_id, agenda["title"], vec
+        )
+        tx.run(
+            """
             MATCH (mt:Meeting {meeting_id: $mid}), (t:Topic {topic_id: $tid})
             CREATE (mt)-[:HAS_AGENDA]->(ai:AgendaItem {
-                agenda_item_id: $aid, order: $order, title: $title,
-                background: $background, discussion: $discussion,
-                decisions: $decisions, next_topics: $next_topics, embedding: $vec
-            })-[:ABOUT {confidence: $score, linked_by: 'auto'}]->(t)
+                agenda_item_id: $aid, source_agenda_id: $source_aid,
+                order: $order, title: $title, background: $background,
+                discussion: $discussion, decisions: $decisions,
+                unresolved_issues: $unresolved, next_topics: $next_topics,
+                evidence_utterance_ids: $evidence, embedding: $vec
+            })-[:ABOUT {confidence: $score, linked_by: $linked_by}]->(t)
             SET t.last_discussed_at = mt.held_at
-        """, mid=m["meeting_id"], tid=topic_id, aid=agenda_id, order=order,
-             title=ag["title"], background=ag["background"], discussion=ag["discussion"],
-             decisions=ag["decisions"], next_topics=ag["next_topics"], vec=vec, score=score)
+            """,
+            mid=meeting["meeting_id"],
+            tid=topic_id,
+            aid=agenda_id,
+            source_aid=agenda["source_agenda_id"],
+            order=order,
+            title=agenda["title"],
+            background=agenda["background"],
+            discussion=agenda["discussion"],
+            decisions=agenda["decisions"],
+            unresolved=agenda["unresolved_issues"],
+            next_topics=agenda["next_topics"],
+            evidence=agenda["evidence_utterance_ids"],
+            vec=vec,
+            score=score,
+            linked_by=linked_by,
+        )
+        refresh_topic_embedding(tx, topic_id)
 
-        # 4) ActionItem + PRODUCED
         actions = [
-            {"id": f"{agenda_id}-t{j}", "task": a["task"], "due": a.get("due") or None}
-            for j, a in enumerate(ag.get("actions", []), 1)
+            {"id": f"{agenda_id}-t{index}", "task": action["task"], "due": action.get("due")}
+            for index, action in enumerate(agenda.get("actions", []), 1)
         ]
-        tx.run("""
+        tx.run(
+            """
             MATCH (ai:AgendaItem {agenda_item_id: $aid})
             UNWIND $actions AS a
             CREATE (ai)-[:PRODUCED]->(:ActionItem {
-                action_item_id: a.id, description: a.task, status: 'open', due: date(a.due)
+                action_item_id: a.id, description: a.task,
+                status: 'open', due: CASE WHEN a.due IS NULL THEN NULL ELSE date(a.due) END
             })
-        """, aid=agenda_id, actions=actions)
+            """,
+            aid=agenda_id,
+            actions=actions,
+        )
 
-        # 5) 담당자 결정 (②단계에서 주석 해제)
-        # for a, src in zip(actions, ag.get("actions", [])):
-        #     assign_owner(tx, a["id"], src.get("owner", ""), topic_id)
+def link_topic(
+    tx: Any, meeting: dict[str, Any], agenda_id: str, title: str, vec: list[float]
+) -> tuple[str, float, str]:
+    hit = match_by_next_topics(tx, meeting, title)
+    return hit or match_by_embedding(tx, meeting["project_id"], agenda_id, title, vec)
 
-        # 6) Topic 누적 요약 갱신 (③단계에서 주석 해제, LLM 필요)
-        # update_topic_summary(tx, topic_id, ag)
+
+def match_by_next_topics(tx: Any, meeting: dict[str, Any], title: str):
+    rows = tx.run(
+        """
+        MATCH (mt:Meeting)-[:IN]->(:Project {project_id: $pid}),
+              (mt)-[:HAS_AGENDA]->(ai:AgendaItem)-[:ABOUT]->(t:Topic)
+        WHERE mt.meeting_order < $meeting_order
+          AND size(coalesce(ai.next_topics, [])) > 0
+          AND t.status IN ['open', 'parked']
+        RETURN ai.next_topics AS nexts, t.topic_id AS topic_id,
+               t.title AS topic_title
+        """,
+        pid=meeting["project_id"],
+        meeting_order=meeting["meeting_order"],
+    ).data()
+    best_score, best = -1.0, None
+    title_vec = np.array(embed(title))
+    for row in rows:
+        for next_topic in row["nexts"]:
+            score = float(np.dot(title_vec, embed(next_topic)))
+            if score > best_score:
+                best_score, best = score, (row, next_topic)
+    if best is None or best_score < NEXT_TOPIC_MATCH:
+        return None
+    row, next_topic = best
+    print(
+        f"  [next_topics] {title} -> {row['topic_title']} "
+        f"(예고: '{next_topic}', score {best_score:.3f})"
+    )
+    return row["topic_id"], best_score, "next_topics"
 
 
-def link_topic(tx, project_id: str, agenda_id: str, title: str, vec: list[float]):
-    """가장 가까운 Topic을 찾아 연결할 topic_id와 점수를 돌려줘요. 없으면 새로 만들어요."""
-    # shortcut: 프로젝트의 Topic 전체와 직접 비교해요. Topic이 수천 개가 되면
-    # db.index.vector.queryNodes('topic_embedding', ...)로 바꾸세요.
-    hit = tx.run("""
+def match_by_embedding(tx: Any, project_id: str, agenda_id: str, title: str, vec: list[float]):
+    topics = tx.run(
+        """
         MATCH (t:Topic)-[:IN]->(:Project {project_id: $pid})
         WHERE t.status IN ['open', 'parked']
-        RETURN t.topic_id AS topic_id, t.title AS title,
-               vector.similarity.cosine(t.embedding, $vec) AS score
-        ORDER BY score DESC LIMIT 1
-    """, pid=project_id, vec=vec).single()
+        RETURN t.topic_id AS topic_id, t.title AS title, t.embedding AS embedding
+        """,
+        pid=project_id,
+    ).data()
+    agenda_vecs = tx.run(
+        """
+        MATCH (:Project {project_id: $pid})<-[:IN]-(:Meeting)-[:HAS_AGENDA]->(ai:AgendaItem)
+        RETURN ai.embedding AS e
+        """,
+        pid=project_id,
+    ).value("e")
+    if len(agenda_vecs) >= MIN_AGENDAS_FOR_CENTER:
+        center = np.mean(agenda_vecs, axis=0)
+        same, gray, mode = SAME_CENTERED, GRAY_CENTERED, "평균 뺌"
+    else:
+        center = np.zeros(len(vec))
+        same, gray, mode = SAME_RAW, GRAY_RAW, "원래 점수"
 
-    if hit and hit["score"] >= SAME_TOPIC:
-        print(f"  [기존 연결] {title}  →  {hit['title']}  (score {hit['score']:.3f})")
-        return hit["topic_id"], hit["score"]
+    def similarity(other: list[float], candidate: list[float]) -> float:
+        left, right = np.asarray(other) - center, np.asarray(candidate) - center
+        return float(np.dot(left, right) / (np.linalg.norm(left) * np.linalg.norm(right) + 1e-9))
 
-    # 새 Topic. 처음에는 summary가 없어서 이 AgendaItem의 벡터를 Topic 벡터로 써요.
+    scored = sorted(
+        ((similarity(vec, topic["embedding"]), topic) for topic in topics),
+        key=lambda item: item[0],
+        reverse=True,
+    )
+    best_score, best = scored[0] if scored else (None, None)
+    if best is not None and best_score >= same:
+        print(f"  [기존 연결] {title} -> {best['title']} ({mode} {best_score:.3f})")
+        return best["topic_id"], best_score, "embedding"
+
     topic_id = f"tp-{agenda_id}"
-    tx.run("""
+    tx.run(
+        """
         MATCH (p:Project {project_id: $pid})
         CREATE (:Topic {topic_id: $tid, title: $title, status: 'open', embedding: $vec})-[:IN]->(p)
-    """, pid=project_id, tid=topic_id, title=title, vec=vec)
-
-    if hit and hit["score"] >= RELATED_TOPIC:
-        tx.run("""
-            MATCH (c:Topic {topic_id: $child}), (p:Topic {topic_id: $parent})
-            CREATE (c)-[:SUBTOPIC_OF]->(p)
-        """, child=topic_id, parent=hit["topic_id"])
-        print(f"  [하위 안건] {title}  ⊂  {hit['title']}  (score {hit['score']:.3f})")
+        """,
+        pid=project_id,
+        tid=topic_id,
+        title=title,
+        vec=vec,
+    )
+    if best is not None and best_score >= gray:
+        REVIEW_QUEUE.append(
+            {
+                "topic_id": topic_id,
+                "title": title,
+                "candidates": [
+                    {"topic_id": topic["topic_id"], "title": topic["title"], "score": round(score, 3)}
+                    for score, topic in scored[:3]
+                ],
+            }
+        )
+        print(f"  [검토 필요] {title} ? {best['title']} ({mode} {best_score:.3f})")
     else:
-        best = f"가장 가까움: {hit['title']} {hit['score']:.3f}" if hit else "비교 대상 없음"
-        print(f"  [새 Topic]  {title}  ({best})")
-    return topic_id, 1.0  # 새 Topic은 자기 자신과 연결이라 1.0
+        print(f"  [새 Topic] {title}")
+    return topic_id, 1.0, "new"
 
 
-# ─────────────────────────── 5) 담당자 결정 (②단계) ───────────────────────────
-#
-# HITL_QUEUE = []  # 사람이 확인해야 할 건. 실제로는 RDB 대기열에 저장
-#
-# def assign_owner(tx, action_id: str, owner: str, topic_id: str):
-#     owner = owner.strip()
-#
-#     # (1) 회의에서 담당자가 언급됨 → 이름이 정확히 한 명과 맞으면 explicit
-#     if owner:
-#         uids = tx.run("""
-#             MATCH (p:Person {name: $name, is_active: true}) RETURN p.user_id AS uid
-#         """, name=owner).value("uid")
-#         if len(uids) == 1:
-#             _assign(tx, uids[0], action_id, "explicit")
-#             print(f"    [explicit] {action_id} → {owner}")
-#         else:
-#             # "결제 쪽", "김 매니저", "제가", 퇴사자 등 → 사람이 확인
-#             HITL_QUEUE.append({"action_item_id": action_id, "owner_raw": owner, "candidates": uids})
-#             print(f"    [HITL] {action_id} owner='{owner}' 후보 {len(uids)}명")
-#         return
-#
-#     # (2) 언급 없음 → 같은 Topic의 가장 최근 담당자(활성 사용자)
-#     prev = tx.run("""
-#         MATCH (:Topic {topic_id: $tid})<-[:ABOUT]-(ai:AgendaItem)<-[:HAS_AGENDA]-(mt:Meeting),
-#               (ai)-[:PRODUCED]->(past:ActionItem)<-[:ASSIGNED_TO]-(p:Person {is_active: true})
-#         WHERE past.action_item_id <> $aid
-#         RETURN p.user_id AS uid, p.name AS name
-#         ORDER BY mt.held_at DESC LIMIT 1
-#     """, tid=topic_id, aid=action_id).single()
-#     if prev:
-#         _assign(tx, prev["uid"], action_id, "history")
-#         print(f"    [history] {action_id} → {prev['name']}")
-#         return
-#
-#     # (3) 이력도 없음 → 추천 시스템
-#     # recommend(tx, action_id)  # 기존 추천 시스템(RECOMMENDED_FOR 생성)을 여기서 호출
-#     print(f"    [추천 필요] {action_id}")
-#
-#
-# def _assign(tx, user_id: str, action_id: str, source: str):
-#     tx.run("""
-#         MATCH (p:Person {user_id: $uid}), (a:ActionItem {action_item_id: $aid})
-#         CREATE (p)-[:ASSIGNED_TO {work_status: 'in_work', assign_source: $src}]->(a)
-#     """, uid=user_id, aid=action_id, src=source)
+def refresh_topic_embedding(tx: Any, topic_id: str) -> None:
+    vectors = tx.run(
+        """
+        MATCH (:Topic {topic_id: $tid})<-[:ABOUT]-(ai:AgendaItem)
+        RETURN ai.embedding AS e
+        """,
+        tid=topic_id,
+    ).value("e")
+    if not vectors:
+        return
+    vector = np.mean(vectors, axis=0)
+    vector = vector / np.linalg.norm(vector)
+    tx.run(
+        "MATCH (t:Topic {topic_id: $tid}) SET t.embedding = $vec",
+        tid=topic_id,
+        vec=vector.tolist(),
+    )
 
 
-# ─────────────────────── 6) Topic 누적 요약 갱신 (③단계) ───────────────────────
-#
-# def update_topic_summary(tx, topic_id: str, ag: dict):
-#     t = tx.run("""
-#         MATCH (t:Topic {topic_id: $tid}) RETURN t.title AS title, t.summary AS summary
-#     """, tid=topic_id).single()
-#     new_summary = summarize(t["summary"] or "", ag)
-#     tx.run("""
-#         MATCH (t:Topic {topic_id: $tid}) SET t.summary = $summary, t.embedding = $vec
-#     """, tid=topic_id, summary=new_summary, vec=embed(f"{t['title']} {new_summary}"))
-#
-#
-# def summarize(old_summary: str, ag: dict) -> str:
-#     prompt = f"""다음은 한 안건의 지금까지 누적 요약과 이번 회의 내용이에요.
-# 둘을 합쳐 현재 진행 상황을 3~5문장으로 다시 써 주세요. 기존 결정사항은 빠뜨리지 마세요.
-#
-# [기존 요약]
-# {old_summary or "(없음)"}
-#
-# [이번 회의]
-# 제목: {ag['title']}
-# 배경: {ag['background']}
-# 논의: {ag['discussion']}
-# 결정: {'; '.join(ag['decisions'])}
-# """
-#     raise NotImplementedError("팀에서 쓰는 LLM API로 prompt를 보내고 응답 텍스트를 돌려주세요")
-
-
-# 스키마 적용 (schema.cypher)
-# 조직 정보 적재 (users.json)
-# 회의 적재 (data/meetings/*.json)
-def main():
+def main() -> None:
     run_schema()
-    load_users(json.loads((ROOT / "data/users.json").read_text(encoding="utf-8")))
-    for f in sorted((ROOT / "data/meetings").glob("*.json")):
-        load_meeting(json.loads(f.read_text(encoding="utf-8")))
-    driver.close()
+    users = json.loads((ROOT / "data/users.json").read_text(encoding="utf-8"))
+    attendee_ids = load_users(users)
+    raw_meetings = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in (ROOT / "data/meetings").glob("*.json")
+    ]
+    raw_meetings.sort(key=lambda meeting: meeting["meeting_id"])
+    for order, raw in enumerate(raw_meetings, 1):
+        load_meeting(
+            normalize_meeting(raw, meeting_order=order, attendee_ids=attendee_ids)
+        )
+    if REVIEW_QUEUE:
+        print(f"\n검토 대기 Topic: {len(REVIEW_QUEUE)}건")
+    if driver is not None:
+        driver.close()
 
 
 if __name__ == "__main__":

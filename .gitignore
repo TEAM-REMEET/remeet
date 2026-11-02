@@ -1,5 +1,5 @@
 # 데이터
-data/
+# data/
 !apps/web/data/
 
 # .DS_store
