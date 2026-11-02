@@ -1,0 +1,20 @@
+{
+  "meeting_id": "m-1103",
+  "project_id": "p-shop",
+  "title": "PG사 교체 검토 회의",
+  "held_at": "2026-11-03T14:00:00",
+  "attendees": ["u1", "u4"],
+  "agendas": [
+    {
+      "title": "PG사 교체 검토",
+      "background": "로그 분석 결과 결제 실패의 원인이 B사 PG 타임아웃으로 보여 교체를 검토",
+      "discussion": "C사와 D사가 후보. C사는 수수료가 낮고 D사는 연동이 쉬움",
+      "decisions": ["C사와 D사 두 곳으로 후보를 좁힘"],
+      "next_topics": ["PG사 최종 선정"],
+      "actions": [
+        {"task": "PG사 수수료 비교", "owner": "김 매니저", "due": "2026-11-07"},
+        {"task": "C사 연동 일정 확인", "owner": "제가", "due": "2026-11-07"}
+      ]
+    }
+  ]
+}

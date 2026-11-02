@@ -1,0 +1,37 @@
+{
+  "meeting_id": "m-1106",
+  "project_id": "p-shop",
+  "title": "11/06 정기회의",
+  "held_at": "2026-11-06T10:00:00",
+  "attendees": ["u1", "u2", "u3", "u5"],
+  "agendas": [
+    {
+      "title": "PG 결제 실패 원인 확정",
+      "background": "로그 분석이 끝나 결제 실패 원인을 공유",
+      "discussion": "실패 건의 92%가 B사 타임아웃. 재현 테스트에서도 같은 현상 확인",
+      "decisions": ["B사 타임아웃을 원인으로 확정", "PG 교체는 별도 안건 회의에서 진행"],
+      "next_topics": [],
+      "actions": [
+        {"task": "B사에 장애 리포트 전달", "owner": "이로그", "due": "2026-11-08"}
+      ]
+    },
+    {
+      "title": "블프 프로모션 일정",
+      "background": "할인 예산이 아직 확정되지 않음",
+      "discussion": "예산 없이 일정만 잡기 어렵다는 의견. 재무 쪽 확정을 기다리기로 함",
+      "decisions": ["예산 확정 전까지 프로모션 진행을 보류"],
+      "next_topics": ["예산 확정 후 프로모션 재개 여부"],
+      "actions": []
+    },
+    {
+      "title": "결제 화면 시안 리뷰",
+      "background": "2단계 결제 화면 시안이 나와 리뷰",
+      "discussion": "버튼 위치는 좋지만 쿠폰 입력란이 눈에 안 띈다는 의견",
+      "decisions": ["쿠폰 입력란 위치 수정 후 확정"],
+      "next_topics": [],
+      "actions": [
+        {"task": "결제 화면 시안 수정", "owner": "", "due": "2026-11-12"}
+      ]
+    }
+  ]
+}
