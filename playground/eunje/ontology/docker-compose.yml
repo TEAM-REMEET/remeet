@@ -1,0 +1,13 @@
+services:
+  neo4j:
+    image: neo4j:5.26          # LTS 버전. 팀원 모두 같은 버전 고정
+    ports:
+      - "7474:7474"            # Browser
+      - "7687:7687"            # Bolt (코드 접속)
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+      NEO4J_PLUGINS: '["apoc"]'   # 자주 쓰는 확장 기능
+    volumes:
+      - neo4j_data:/data       # 컨테이너를 꺼도 데이터 유지
+volumes:
+  neo4j_data:

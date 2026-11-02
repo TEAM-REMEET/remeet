@@ -1,0 +1,39 @@
+# RE:MEET 배포 구성
+#
+# 로컬:  deploy 폴더에서  docker compose up --build
+#        → http://localhost 접속
+# 서버:  WEB_IMAGE 에 GHCR 이미지 주소를 넣고
+#        docker compose pull && docker compose up -d --no-build
+
+services:
+  web:
+    image: ${WEB_IMAGE:-remeet-web:local}
+    build:
+      context: ../apps/web
+    restart: unless-stopped
+    expose:
+      - "8501"
+
+  backend:
+    image: ${BACKEND_IMAGE:-remeet-backend:local}
+    build:
+      context: ../backend
+    restart: unless-stopped
+    env_file:
+      - path: .env # 비밀값(API 키, Neo4j 접속 정보). .env.example 참고
+        required: false
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      web:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
