@@ -88,10 +88,11 @@ def render(result, source):
     meta = source['metadata']
     detail = result['agenda_details']
     number = {a['agenda_id']: i for i, a in enumerate(detail, 1)}
+    source_document = meta.get('원본 문서') or f"playground/hyungjin/test/input/{source['meeting_id']}.txt"
     lines = [f"# {meta.get('회의 대주제') or source['meeting_id']}", '', '## 회의 정보', '',
              f"- 제목: {meta.get('회의 대주제') or '-'}", f"- 일시: {meta.get('일시') or '-'}",
              f"- 참석자: {meta.get('참여자') or '-'}",
-             f"- 원본 문서: playground/hyungjin/test/input/{source['meeting_id']}.txt", '', '## 안건 목차', '']
+             f"- 원본 문서: {source_document}", '', '## 안건 목차', '']
     for i, a in enumerate(detail, 1):
         lines.append(f"{i}. [{a['title']}](#agenda-{a['agenda_id'].lower()}) [결정 {len(a['decisions'])} · 미해결 {len(a['unresolved_issues'])}]")
     lines += ['', '## 회의 결과', '']
