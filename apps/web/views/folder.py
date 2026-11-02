@@ -1,10 +1,13 @@
-"""폴더 화면.
+"""폴더 화면: 멤버 · 멤버 관리/폴더 삭제/회의록 올리기 · 탭(회의록/위키) · 내 할 일별로 나눈 회의 목록.
 
-- 회의 종류(주간/월간/일반) 화면: 내가 멤버인 폴더 카드 목록
-- 폴더 화면: 멤버 · 탭(전체/참석/미참석/위키) · 회의 목록 또는 폴더 위키
+프로젝트 폴더(이 파일의 render)와 기간 폴더(views/archive.py 의 10월 4주차 같은 화면)가
+같은 모양을 쓰도록 render_folder_page(FolderPage) 하나로 그립니다.
 """
 
 from __future__ import annotations
+
+from collections.abc import Callable
+from dataclasses import dataclass, field
 
 import streamlit as st
 
@@ -15,7 +18,7 @@ from components.knowledge_graph import (
     entity_panel,
     knowledge_graph,
 )
-from components.meeting_table import meeting_table
+from components.meeting_table import meeting_sections
 from components.member_pills import member_pills
 from config import CURRENT_USER_ID as ME
 from config import FOLDER_WIKI_MIN_NOTES
@@ -26,81 +29,17 @@ from state.store import AppState, get_state
 from ui.buttons import button, button_group
 from ui.html import markup
 from ui.icons import icon
-from ui.layout import empty_state, page, page_header
+from ui.layout import empty_state, page
 from ui.tags import tag
 from utils.text import esc
 
-_OWNER_EMPTY = {
-    "mine": "내가 만든 폴더가 없어요. 회의록을 올릴 때 새 주제를 적으면 폴더가 만들어져요.",
-    "member": "멤버로 들어가 있는 폴더가 없어요.",
-    "all": "아직 속한 폴더가 없어요. 회의록을 올릴 때 큰 주제를 적으면 폴더가 만들어져요.",
-}
-
-
-# ================================================================ 회의 종류 화면
-def _topic_card(s: AppState, fid: str) -> None:
-    f = sel.folders(s)[fid]
-    notes = sel.by_date_desc(list(f.notes))
-    last = f"최근 {repo.meeting(notes[0]).date} · {repo.meeting(notes[0]).title}" if notes else "아직 회의록이 없어요"
-    mine = sum(sel.mine_count(i) for i in f.notes)
-    is_host = f.host == ME
-    with st.container(key=f"topic-{fid}"):
-        markup(
-            '<div class="topic-card">'
-            f'<div class="head"><span class="nm">{icon("folder", 18, "#F37321", 1.9)}{esc(f.name)}</span>'
-            f'{tag("내가 만든 폴더" if is_host else "멤버", "host" if is_host else "att")}</div>'
-            f'<span class="meta">회의록 {len(f.notes)}개 · 멤버 {len(sel.members_of(s, fid))}명</span>'
-            f'<span class="last">{esc(last)}</span>'
-            + (f'<span>{tag(f"내 할 일 {mine}", "mine")}</span>' if mine else "")
-            + "</div>"
-        )
-        button(f.name, key=f"open_topic_{fid}", variant="secondary", on_click=actions.open_folder, args=(fid,), width="stretch")
-
-
-def _type_screen(s: AppState) -> None:
-    mtype = repo.meeting_types()[s.folder_type]
-    mine_ids = sel.folder_ids_of_type(s, s.folder_type)
-    own = [k for k in mine_ids if sel.folders(s)[k].host == ME]
-    member = [k for k in mine_ids if sel.folders(s)[k].host != ME]
-    shown = {"mine": own, "member": member}.get(s.folder_owner_filter, mine_ids)
-
-    with st.container(horizontal=True, vertical_alignment="bottom"):
-        page_header(mtype.name, f"{mtype.meta} · 큰 주제별로 폴더에 쌓여요")
-        button("회의록 올리기", key="type_upload", variant="primary", on_click=actions.open_new_note)
-    button_group(
-        [("all", f"전체 {len(mine_ids)}"), ("mine", f"내가 만든 폴더 {len(own)}"), ("member", f"멤버 {len(member)}")],
-        s.folder_owner_filter,
-        lambda v: actions.update(folder_owner_filter=v),
-        key="owner",
-    )
-    if shown:
-        with st.container(key="topic-grid", gap="small"):  # 카드가 많아지면 이 영역만 스크롤
-            for start in range(0, len(shown), 3):
-                cols = st.columns(3, gap="small")
-                for col, fid in zip(cols, shown[start:start + 3]):
-                    with col:
-                        _topic_card(s, fid)
-    else:
-        empty_state(_OWNER_EMPTY.get(s.folder_owner_filter, _OWNER_EMPTY["all"]), pad=40)
-    markup(
-        f'<span class="lock-note">{icon("lock", 12, "#80858E", 2)}'
-        f"내가 멤버인 폴더만 보여요 · 멤버가 아닌 폴더 {mtype.hidden_count}개는 보이지 않아요</span>"
-    )
-
 
 # ================================================================ 폴더 화면
-def _empty_texts(tab: str, role: str) -> tuple[str, str]:
-    tab_name = {"att": "참석한 회의", "abs": "미참석 회의"}.get(tab, "이 폴더")
+def _empty_texts(role: str) -> tuple[str, str]:
     if role == "host":
-        return "내가 주관한 회의가 없어요", (
-            "미참석 회의는 내가 주관할 수 없어서 항상 비어 있어요." if tab == "abs"
-            else f"{tab_name} 중에 내가 주관한 회의는 아직 없어요.")
+        return "내가 주관한 회의가 없어요", "이 폴더에서 내가 주관한 회의는 아직 없어요."
     if role == "att":
-        return "참석으로 분류된 회의가 없어요", (
-            "미참석 회의는 참석 회의와 겹치지 않아서 항상 비어 있어요." if tab == "abs"
-            else f"{tab_name} 중에 다른 사람이 주관하고 내가 참석한 회의가 없어요.")
-    if tab == "abs":
-        return "빠진 회차가 없어요", "이 폴더의 모든 회의에 참석했어요."
+        return "참석으로 분류된 회의가 없어요", "이 폴더에서 다른 사람이 주관하고 내가 참석한 회의가 없어요."
     return "아직 회의록이 없어요", "이 주제로 회의를 하면 여기에 쌓여요."
 
 
@@ -164,59 +103,118 @@ def _folder_wiki(s: AppState, fid: str) -> None:
         )
 
 
-def _folder_screen(s: AppState, fid: str) -> None:
-    f = sel.folders(s)[fid]
-    members = sel.members_of(s, fid)
-    is_host = f.host == ME
-    notes = sel.by_date_desc(list(f.notes))
-    att = [i for i in notes if ME in repo.meeting(i).people]
-    abs_ = [i for i in notes if ME not in repo.meeting(i).people]
-    base = {"att": att, "abs": abs_}.get(s.folder_tab, notes)
-    host_ids = [i for i in base if sel.my_role(repo.meeting(i)) == "host"]
-    att_ids = [i for i in base if sel.my_role(repo.meeting(i)) == "att"]
-    shown = {"host": host_ids, "att": att_ids}.get(s.folder_role, base)
+_VISIBILITY_HELP = (
+    "내가 주관하거나 참석한 회의만 보여요.",
+    "빠진 회의(조퇴·불참)는 주관자가 공유해 주면",
+    "「미참석 · 공유받음」으로 떠요.",
+)
+
+
+def info_tip(lines: tuple[str, ...]) -> str:
+    """ⓘ 아이콘: 마우스를 올리거나(포커스) 누르면 아이콘 왼쪽에 말풍선으로 안내 (줄마다 끊어 보여 줌)."""
+    body = "<br>".join(esc(line) for line in lines)
+    return (f'<span class="info-tip" tabindex="0" role="button" aria-label="{esc(" ".join(lines))}">'
+            f'<span class="i">i</span><span class="bubble" role="tooltip">{body}</span></span>')
+
+
+@dataclass
+class FolderPage:
+    """폴더처럼 보이는 화면 한 장의 내용 (프로젝트 폴더 · 기간 폴더 공통)."""
+
+    key: str  # 위젯 key 접두어: folder | period
+    title: str
+    host: str  # 멤버 알약에서 '주관'으로 표시할 사람
+    is_host: bool  # 내가 만든 폴더인지 → 멤버 관리 / 폴더 삭제
+    members: list[str]
+    notes: list[str]  # 나에게 보이는 회의 (최근 순)
+    wiki_folders: list[str]  # 위키 탭에서 보여 줄 프로젝트 폴더
+    can_manage: bool | None = None  # 멤버 관리 가능 여부 (None 이면 is_host 와 같음)
+    on_members: tuple[Callable, tuple] = (actions.open_members, ())
+    on_delete: tuple[Callable, tuple] = (actions.open_delete, ())
+    extra_tags: list[str] = field(default_factory=list)
+
+
+def _wiki_tab(s: AppState, fp: FolderPage) -> None:
+    fs = sel.folders(s)
+    fids = [k for k in fp.wiki_folders if k in fs]
+    if not fids:
+        empty_state("아직 위키를 만들 회의록이 없어요.", pad=40)
+        return
+    fid = s.period_wiki_folder if s.period_wiki_folder in fids else fids[0]
+    if len(fids) > 1:  # 기간 폴더: 프로젝트마다 위키가 따로 있어요
+        with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+            markup('<span class="inline-label">프로젝트</span>')
+            button_group([(k, fs[k].name) for k in fids], fid, lambda v: actions.update(period_wiki_folder=v),
+                         key=f"{fp.key}_wiki_folder")
+    _folder_wiki(s, fid)
+
+
+def render_folder_page(s: AppState, fp: FolderPage) -> None:
+    host_ids = [i for i in fp.notes if sel.my_role(repo.meeting(i)) == "host"]
+    att_ids = [i for i in fp.notes if sel.my_role(repo.meeting(i)) == "att"]
+    shown = {"host": host_ids, "att": att_ids}.get(s.folder_role, fp.notes)
 
     with st.container(horizontal=True, vertical_alignment="top"):
         with st.container(gap="small"):
-            markup(f'<div style="display:flex;align-items:center;gap:10px"><h1 class="section-title" style="font-size:20px">{esc(f.name)}</h1>'
-                   f'{tag("내가 만든 폴더" if is_host else "멤버", "host" if is_host else "att")}</div>')
-            member_pills(f"멤버 {len(members)}명", f.host, members)
+            tags = "".join([tag("내가 만든 폴더" if fp.is_host else "멤버", "host" if fp.is_host else "att"), *fp.extra_tags])
+            markup(f'<div style="display:flex;align-items:center;gap:10px"><h1 class="section-title" style="font-size:20px">'
+                   f'{esc(fp.title)}</h1>{tags}</div>')
+            member_pills(f"멤버 {len(fp.members)}명", fp.host, fp.members)
         with st.container(horizontal=True, width="content", gap="small"):
-            button("멤버 관리" if is_host else "멤버 보기", key="open_members", variant="secondary",
-                   on_click=actions.open_modal, args=("members",))
-            if is_host:
-                button("폴더 삭제", key="open_delete", variant="dangerline", on_click=actions.open_modal, args=("delete_folder",))
+            fn, args = fp.on_members
+            manage = fp.is_host if fp.can_manage is None else fp.can_manage
+            button("멤버 관리" if manage else "멤버 보기", key="open_members", variant="secondary",
+                   on_click=fn, args=args)
+            if fp.is_host:
+                fn, args = fp.on_delete
+                button("폴더 삭제", key="open_delete", variant="dangerline", on_click=fn, args=args)
             button("회의록 올리기", key="folder_upload", variant="primary", on_click=actions.open_new_note)
 
     button_group(
-        [("all", f"전체 {len(notes)}"), ("att", f"참석 {len(att)}"), ("abs", f"미참석 {len(abs_)}"), ("wiki", "위키")],
-        s.folder_tab,
+        [("all", f"회의록 {len(fp.notes)}"), ("wiki", "위키")],
+        s.folder_tab if s.folder_tab in ("all", "wiki") else "all",
         lambda v: actions.update(folder_tab=v, folder_role="all"),
         key="ftab",
         style="tab",
     )
     if s.folder_tab == "wiki":
-        _folder_wiki(s, fid)
+        _wiki_tab(s, fp)
         return
 
-    button_group(
-        [("all", f"전체 {len(base)}"), ("host", f"내가 주관 {len(host_ids)}"), ("att", f"참석 {len(att_ids)}")],
-        s.folder_role,
-        lambda v: actions.update(folder_role=v),
-        key="frole",
-    )
+    with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+        button_group(
+            [("all", f"전체 {len(fp.notes)}"), ("host", f"내가 주관 {len(host_ids)}"), ("att", f"참석 {len(att_ids)}")],
+            s.folder_role,
+            lambda v: actions.update(folder_role=v),
+            key="frole",
+        )
+        markup(info_tip(_VISIBILITY_HELP))
     if shown:
-        meeting_table([sel.meeting_row(s, i) for i in shown], key="folder")
+        meeting_sections(s, shown, key=fp.key)
     else:
-        title, text = _empty_texts(s.folder_tab, s.folder_role)
+        title, text = _empty_texts(s.folder_role)
         empty_state(text, title=title)
+
+
+def _folder_screen(s: AppState, fid: str) -> None:
+    f = sel.folders(s)[fid]
+    render_folder_page(s, FolderPage(
+        key="folder",
+        title=f.name,
+        host=f.host,
+        is_host=f.host == ME,
+        members=sel.members_of(s, fid),
+        notes=sel.folder_note_ids(s, fid),  # 참석·주관한 회의 + 빠졌지만 주관자가 공유해 준 회의
+        wiki_folders=[fid],
+        on_members=(actions.open_members, (fid,)),
+        on_delete=(actions.open_delete, ("folder", fid)),
+    ))
 
 
 def render() -> None:
     s = get_state()
-    fid = s.folder_id if s.folder_id in sel.folder_ids_of_type(s, s.folder_type) else "all"
     with page("folder"):
-        if fid == "all":
-            _type_screen(s)
+        if s.folder_id in sel.folder_ids_of_type(s, s.folder_type):
+            _folder_screen(s, s.folder_id)
         else:
-            _folder_screen(s, fid)
+            empty_state("이 폴더를 볼 수 없어요. 삭제됐거나 멤버가 아닌 폴더예요.", title="폴더를 찾을 수 없어요", pad=48)

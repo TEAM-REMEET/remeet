@@ -200,7 +200,7 @@ def related(s: AppState, m: Meeting) -> list[RelatedView]:
     if m.topic not in folders:
         return []
     out = []
-    for mid in sel.by_date_desc([i for i in folders[m.topic].notes if i != m.id]):
+    for mid in [i for i in sel.folder_note_ids(s, m.topic) if i != m.id]:  # 나에게 보이는 회의만
         other = repo.meeting(mid)
         if m.id == "m1" and mid == "m9":
             rel = "이 회의 안건 2에서 분리됨"

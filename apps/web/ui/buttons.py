@@ -42,6 +42,11 @@ VARIANTS = {
     "navon",  # 사이드바 메뉴
     "navsub",
     "navsubon",  # 사이드바 하위 폴더
+    "tree",
+    "treeon",  # 사이드바 회의록 트리 (VS Code 탐색기)
+    "twisty",  # 트리 펼치기/접기 화살표
+    "field",
+    "fieldempty",  # 누르면 모달이 뜨는 입력칸 (값 있음 / 비어 있음)
     "kw",
     "kwon",  # 키워드 칩
     "noti",  # 알림: 안 읽음

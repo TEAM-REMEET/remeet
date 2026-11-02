@@ -1,0 +1,189 @@
+"""새 회의록 작성 화면의 선택 모달: 폴더 · 주관자 · 참석자.
+
+- 폴더: 지금 회의 종류의 내 폴더 중 하나 또는 「+ 새 폴더 만들기」(이름 입력)
+- 주관자: 팀을 고르면 그 팀 사람들이 나오고, 1명 선택
+- 참석자: 팀을 고르면 그 팀 사람들이 나오고, 여러 명 선택 (다른 팀으로 바꿔도 고른 사람은 유지)
+「선택」을 눌러야 작성 화면에 반영되고, 취소·X 로 닫으면 그대로입니다.
+"""
+
+from __future__ import annotations
+
+import streamlit as st
+
+from config import CURRENT_USER_ID as ME
+from data import repository as repo
+from state import actions
+from state import selectors as sel
+from state.store import get_state
+from ui.avatar import avatar
+from ui.buttons import button, button_group
+from ui.html import markup
+from utils.text import esc
+
+_NEW = "new"
+
+
+def _footer(kind: str, label: str, *, disabled: bool = False) -> None:
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key=f"{kind}_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        if button(label, key=f"{kind}_ok", variant="primary", disabled=disabled):
+            actions.confirm_pick(kind)
+            st.rerun()
+
+
+# ================================================================ 폴더
+@st.dialog("폴더 선택", width="medium", on_dismiss=actions.close_modal)
+def folder_picker_dialog() -> None:
+    s = get_state()
+    mtype = repo.meeting_types()[s.nn_type]
+    folders = sel.folders(s)
+    topics = sel.folder_ids_of_type(s, s.nn_type)
+    chosen = s.pick_folder if s.pick_folder in topics else _NEW
+
+    markup(f'<p class="hint" style="font-size:13px;color:#5F646D">{esc(mtype.name)} 안의 내 폴더예요 · '
+           "회의 종류를 바꾸려면 작성 화면의 「회의 종류」에서 바꿔 주세요.</p>")
+    with st.container(key="pick-folders", gap="small"):
+        for fid in topics + [_NEW]:
+            on = fid == chosen
+            if fid == _NEW:
+                label, meta = "+ 새 폴더 만들기", "이 회의의 큰 주제로 폴더를 새로 만들어요"
+            else:
+                f = folders[fid]
+                meta = f"회의록 {len(sel.folder_note_ids(s, fid))}개 · 멤버 {len(sel.members_of(s, fid))}명" + (
+                    " · 내가 만든 폴더" if f.host == ME else "")
+                label = f.name
+            button(f"**{label}**  \n:gray[{meta}]", key=f"pf_{fid}", variant="pickon" if on else "pick",
+                   on_click=actions.update, kwargs={"pick_folder": fid}, width="stretch",
+                   icon=":material/create_new_folder:" if fid == _NEW else ":material/folder:")
+    if chosen == _NEW:
+        st.text_input("새 폴더 이름", key=f"pick_name_{s.pick_nonce}", value=s.pick_name,
+                      placeholder="이번 회의의 큰 주제 (예: 정산 자동화)",
+                      on_change=lambda: actions.update(pick_name=st.session_state[f"pick_name_{s.pick_nonce}"]))
+    if st.session_state.get("_pick_name_err") == s.pick_nonce:
+        markup('<span role="alert" style="font-size:13px;color:#B3261E">새 폴더 이름을 적어 주세요.</span>')
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="cp_folder_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        if button("선택", key="cp_folder_ok", variant="primary"):
+            # 엔터 없이 바로 「선택」을 눌러도 적은 이름이 들어가도록 입력칸 값을 직접 읽음
+            s.pick_name = st.session_state.get(f"pick_name_{s.pick_nonce}", s.pick_name) or ""
+            if chosen == _NEW and not s.pick_name.strip():
+                st.session_state["_pick_name_err"] = s.pick_nonce  # 이번에 연 모달에서만 안내
+                st.rerun(scope="fragment")
+            s.pick_folder = chosen
+            actions.confirm_pick("cp_folder")
+            st.rerun()
+
+
+# ================================================================ 주관자 · 참석자
+def _person_option(pid: str) -> str:
+    p = sel.person(pid)
+    role = sel.person_role(pid)
+    return f"{p.name}" + (f" · {role}" if role else "") + (" (나)" if pid == ME else "")
+
+
+# 「선택한 참석자」 상자 스크롤 (한 번만 설치되는 브라우저 스크립트)
+# - 사람을 누를 때마다 상자가 새로 그려지는데, 그 즉시(화면에 그리기 전) 이전 스크롤 위치를 되돌려 놓아 삐끗거리지 않음
+# - 칩이 새 줄로 넘어갈 때(줄 수가 늘 때)만 맨 아래로 내려 방금 고른 사람을 보여 줌
+# - 모달을 새로 열면 맨 아래부터
+_CHOSEN_SCROLL_JS = """<script>
+(function () {
+  if (window.__pickChosenScroll) return;
+  window.__pickChosenScroll = true;
+  var mem = {top: null, rows: 0};
+  function rowsOf(box) {
+    var tops = {};
+    box.querySelectorAll('.pick-chip').forEach(function (c) { tops[c.offsetTop] = 1; });
+    return Object.keys(tops).length;
+  }
+  function apply(box) {
+    if (box.__sig === box.dataset.n) return;
+    box.__sig = box.dataset.n;
+    var rows = rowsOf(box);
+    if (mem.top === null || rows > mem.rows) box.scrollTop = box.scrollHeight;
+    else box.scrollTop = mem.top;
+    mem.rows = rows;
+    mem.top = box.scrollTop;
+    if (!box.__listen) {
+      box.__listen = true;
+      box.addEventListener('scroll', function () { mem.top = box.scrollTop; });
+    }
+  }
+  new MutationObserver(function () {
+    var boxes = document.querySelectorAll('.pick-chosen');
+    if (!boxes.length) { mem.top = null; mem.rows = 0; return; }
+    boxes.forEach(apply);
+  }).observe(document.body, {childList: true, subtree: true, characterData: true});
+  document.querySelectorAll('.pick-chosen').forEach(apply);
+})();
+</script>"""
+
+
+def _people_picker(kind: str, *, single: bool) -> None:
+    s = get_state()
+    groups = sel.team_groups()
+    team_names = [t for t, _ in groups]
+    team = s.pick_team if s.pick_team in team_names else team_names[0]
+    chosen = set(s.pick_draft)
+
+    # 지금 고른 사람: 제목은 상자 위에 고정, 사람 칩만 상자 안에서 스크롤
+    title = "주관자" if single else f"선택한 참석자 {len(s.pick_draft)}명"
+    if s.pick_draft:
+        chips = "".join(
+            f'<span class="pick-chip">{avatar(sel.person(pid).initial, size=22, host=single)}'
+            f'{esc(sel.person(pid).name)}<span class="t">{esc(sel.person(pid).team)}</span></span>'
+            for pid in s.pick_draft
+        )
+    else:
+        chips = '<span class="pick-empty">아직 고른 사람이 없어요</span>'
+    # 높이가 고정된 상자 · 넘치면 상자 안에서 스크롤. 스크롤 위치는 _CHOSEN_SCROLL_JS 가 관리
+    markup(f'<div class="pick-chosen-head">{esc(title)}</div>'
+           f'<div class="pick-chosen" data-n="{len(s.pick_draft)}"><div class="pick-chosen-in">{chips}</div></div>')
+    if not single:
+        with st.container(key="pick-js"):  # 화면에 자리를 차지하지 않는 숨은 칸
+            st.html(_CHOSEN_SCROLL_JS, unsafe_allow_javascript=True)
+
+    # 「팀」 글씨만 상자 밖 위에 두고, 팀 버튼 · 팀원은 한 상자 안에
+    markup('<div class="pick-section-head"><b>팀</b><span class="hint">팀을 고르면 그 팀 사람들이 아래에 나와요</span></div>')
+    ids = dict(groups)[team]
+    hint = "이름을 누르면 주관자로 골라져요" if single else "이름을 누르면 선택 · 다시 누르면 해제"
+    # key 를 매번 바꾸지 않아야 누를 때 칩이 새로 만들어지지 않고 그 자리에서 바로 바뀜
+    widget_key = f"{kind}_pick_{s.pick_nonce}_{team}"
+    default = next((pid for pid in ids if pid in chosen), None) if single else [pid for pid in ids if pid in chosen]
+    with st.container(key=f"pick-box-{kind}", gap="small"):
+        # 팀 이름이 한글이라 버튼 key 가 겹치지 않도록 값은 순번(t0, t1 …)으로
+        options = []
+        for i, (name, gids) in enumerate(groups):
+            n = sum(1 for pid in gids if pid in chosen)
+            options.append((f"t{i}", f"{name} {n}" if n and not single else name))
+        button_group(options, f"t{team_names.index(team)}",
+                     lambda v: actions.update(pick_team=team_names[int(v[1:])]), key=f"{kind}_team")
+        markup(f'<div class="pick-members-head"><b>{esc(team)} {len(ids)}명</b><span class="hint">{hint}</span></div>')
+        with st.container(key=f"pick-members-{kind}", gap=None):  # 팀원이 많으면 여기만 스크롤
+            st.pills(
+                f"{team} 사람",
+                options=ids,
+                format_func=_person_option,
+                selection_mode="single" if single else "multi",
+                default=default,
+                key=widget_key,
+                label_visibility="collapsed",
+                on_change=actions.pick_people,
+                args=(ids, widget_key, single),
+            )
+
+
+@st.dialog("주관자 선택", width="medium", on_dismiss=actions.close_modal)
+def host_picker_dialog() -> None:
+    _people_picker("cp_host", single=True)
+    _footer("cp_host", "선택", disabled=not get_state().pick_draft)
+
+
+@st.dialog("참석자 선택", width="medium", on_dismiss=actions.close_modal)
+def people_picker_dialog() -> None:
+    n = len(get_state().pick_draft)
+    _people_picker("cp_people", single=False)
+    _footer("cp_people", f"{n}명 선택" if n else "선택 안 함")

@@ -37,6 +37,8 @@ def _row(row: MeetingRow, key: str) -> None:
                 button(row.title, key=f"{key}_open_{row.id}", variant="link", on_click=actions.open_meeting, args=(row.id,))
                 if row.is_deep:
                     st.html(tag("심화", "deep"), width="content")
+                if row.absent_shared:
+                    st.html(tag("미참석 · 공유받음", "shared"), width="content")
             markup(f'<div class="cell"><span class="sub">{esc(row.sub)}</span></div>')
         with c_date:
             markup(f'<div class="cell"><span class="main">{esc(row.date_str)}</span><span class="sub">{esc(row.time)}</span></div>')
@@ -58,3 +60,45 @@ def meeting_table(rows: list[MeetingRow], *, key: str) -> None:
         with st.container(key=f"mtbody-{key}", gap=None):  # 표 본문만 스크롤
             for row in rows:
                 _row(row, key)
+
+
+_SECTION_DESC = {
+    "left": "아직 끝내지 않은 내 할 일이 있어요",
+    "done": "나에게 맡겨진 할 일을 모두 끝냈어요",
+    "none": "이 회의에서 나에게 맡겨진 할 일이 없어요",
+}
+_SECTION_EMPTY = {
+    "left": "내 할 일이 남은 회의가 없어요.",
+    "done": "내 할 일을 다 끝낸 회의가 없어요.",
+    "none": "나에게 할당된 할 일이 없는 회의가 없어요.",
+}
+
+
+def meeting_sections(state, ids: list[str], *, key: str) -> None:
+    """내 할 일 상태별 판넬 3개 + 고른 판넬의 회의 표.
+
+    판넬(내 할 일이 남은 회의 / 다 끝낸 회의 / 할당된 할 일이 없는 회의)을 누르면 그 회의들만 표로 보여 줍니다.
+    처음 들어오면 회의가 있는 첫 판넬을 엽니다.
+    """
+    from state import actions
+    from state import selectors as sel  # selectors 가 MeetingRow 를 정의해서 함수 안에서 불러옴
+
+    parts = {g: [i for i in ids if sel.my_todo_status(state, i) == g] for g, _ in sel.TODO_GROUPS}
+    # 직접 고른 판넬은 비어 있어도 그대로 (빈 안내 표시), 처음 들어오면 회의가 있는 첫 판넬
+    current = state.todo_group if state.todo_group in parts else next((g for g, _ in sel.TODO_GROUPS if parts[g]), "left")
+
+    with st.container(key=f"tgpanels-{key}", horizontal=True, gap="small"):
+        for gkey, title in sel.TODO_GROUPS:
+            on = gkey == current
+            with st.container(key=f"tgpanel-{'on' if on else 'off'}-{gkey}-{key}"):
+                markup(
+                    f'<div class="tgp tgp-{gkey}"><span class="tt"><span class="dot"></span>{esc(title)}</span>'
+                    f'<b class="n">{len(parts[gkey])}</b><span class="desc">{esc(_SECTION_DESC[gkey])}</span></div>'
+                )
+                button(title, key=f"tg_{key}_{gkey}", variant="secondary", on_click=actions.update,
+                       kwargs={"todo_group": gkey}, width="stretch")
+
+    if parts[current]:
+        meeting_table([sel.meeting_row(state, i) for i in parts[current]], key=f"{key}-{current}")
+    else:
+        markup(f'<div class="empty" style="padding:36px 24px"><span class="empty-text">{esc(_SECTION_EMPTY[current])}</span></div>')

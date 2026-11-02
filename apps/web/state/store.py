@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 
 import streamlit as st
 
+from config import CURRENT_USER_ID
 from data import repository as repo
 
 _KEY = "_app_state"
@@ -51,14 +52,14 @@ class AppState:
     login_error: bool = False
 
     # --- 라우팅
-    screen: str = "home"  # home | folder | note | deliver | sent | recv | mcp | wiki
+    screen: str = "compose"  # compose | archive | folder | note | deliver | sent | recv | mcp
     pending_route: str | None = None  # 콜백이 예약한 이동 (state/router.py)
     nav_by_action: bool = False
     last_route: str | None = None
     toast: str = ""
     read_notifications: set[str] = field(default_factory=set)
     bell_seen: set[str] = field(default_factory=set)  # 알림 아이콘을 눌러 확인한 알림 (빨간 점 끄기용)
-    modal: str | None = None  # new_note | members | delete_folder | people | assign | share
+    modal: str | None = None  # members | delete_folder | delete_meeting | people | assign | share
 
     # --- 홈
     home_role: str = "all"
@@ -67,7 +68,7 @@ class AppState:
     folder_type: str = "weekly"
     folder_id: str = "all"  # all 이면 회의 종류 화면
     folder_owner_filter: str = "all"  # all | mine | member
-    folder_tab: str = "all"  # all | att | abs | wiki
+    folder_tab: str = "all"  # all(회의록 목록) | wiki
     folder_role: str = "all"  # all | host | att
     show_brief: bool = False
     new_folders: list[NewFolder] = field(default_factory=list)
@@ -134,12 +135,40 @@ class AppState:
         default_factory=lambda: {t.key: t.default for t in repo.integrations()["ai_toggles"]}
     )
 
-    # --- 새 회의록 모달
+    # --- 새 회의록 작성 화면
     nn_type: str = "weekly"
     nn_topic: str = "rel"
     nn_name: str = ""
-    nn_file: str = ""  # 올린 파일 이름
-    nn_error: bool = False
+    nn_error: str = ""  # 작성 화면 오류 안내 (빈 값이면 없음)
+    nn_host: str = CURRENT_USER_ID  # 주관자 (기본: 나)
+    nn_people: list[str] = field(default_factory=list)  # 참석자
+    # 작성 화면의 선택 모달(폴더 · 주관자 · 참석자): 「선택」을 누르기 전까지는 여기 임시로 담아 둠
+    pick_team: str = ""  # 보고 있는 팀 이름
+    pick_draft: list[str] = field(default_factory=list)  # 고른 사람 (주관자는 1명)
+    pick_folder: str = ""  # 고른 폴더 id 또는 "new"
+    pick_name: str = ""  # 새 폴더 이름
+    pick_nonce: int = 0  # 모달을 열 때마다 바뀌어 위젯 선택값을 새로 맞춤
+    compose_nonce: int = 0  # 생성하기 후 입력칸을 비우기 위해 바뀜
+
+    # --- 회의록 보관함 (사이드바 트리 · 회의록 페이지)
+    archive_type: str = ""  # "" | weekly | monthly | normal
+    archive_group: str = ""  # "" | period | project
+    archive_period: str = ""  # 기간 키 (w1027 · m10 · d1023)
+    # --- 모달 대상
+    members_folder: str = ""  # 멤버 모달에서 다루는 폴더 (빈 값이면 folder_id)
+    members_scope: list[str] = field(default_factory=list)  # 기간 폴더에서 연 경우: 고를 수 있는 프로젝트 폴더들
+    delete_target: tuple[str, ...] = ()  # ("folder", fid) | ("period", 회의 종류, 기간 키) | ("meeting", mid)
+    deleted_meetings: set[str] = field(default_factory=set)  # 주관자가 삭제한 회의
+
+    # --- 미참석 공유: 회의 id → 주관자가 이 회의록을 보내 준 미참석(조퇴·불참) 멤버
+    #     미참석한 회의는 원래 보이지 않고, 여기 들어 있을 때만 '미참석 · 공유받음'으로 보여요.
+    #     (목업: 박도윤님이 10/22 회의를 빠진 나에게 공유해 둔 상태)
+    absent_shares: dict[str, list[str]] = field(default_factory=lambda: {"m5": ["yun"]})
+    archive_owner: str = "all"  # 기간별 목록의 전체 / 내가 만든 폴더 / 멤버 (기간 폴더 화면까지 이어짐)
+    period_wiki_folder: str = ""  # 기간 폴더 화면 · 위키 탭에서 보고 있는 프로젝트 폴더
+    todo_group: str = ""  # 회의 목록 판넬: left(할 일 남음) | done(다 끝냄) | none(할당 없음) · 빈 값이면 회의가 있는 첫 판넬
+    archive_role: str = "all"  # 기간별 목록의 전체 / 내가 주관 / 참석
+    tree_open: set[str] = field(default_factory=lambda: {"root"})  # 사이드바에서 펼친 노드
 
 
 def get_state() -> AppState:

@@ -30,6 +30,8 @@ def render_header(s: AppState, m: Meeting) -> None:
                    f'<h1 class="section-title" style="font-size:20px">{esc(m.title)}</h1>{tag(role_label, role_tone)}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
             if host and not editing:
+                button("회의 삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
+                       on_click=actions.open_delete, args=("meeting", m.id))
                 button("편집", key="md_edit", variant="secondary", icon=":material/edit:", on_click=actions.start_edit)
                 button("회의 공유하기", key="md_share", variant="primary", icon=":material/send:",
                        on_click=actions.open_share)

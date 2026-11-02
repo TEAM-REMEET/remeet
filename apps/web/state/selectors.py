@@ -35,6 +35,24 @@ def me() -> Person:
     return person(ME)
 
 
+def team_groups() -> list[tuple[str, list[str]]]:
+    """[(팀 이름, [사람 id])] — 전체 사람을 팀별로 묶음 (내 팀 먼저). 주관자·참석자 고르기용."""
+    groups: dict[str, list[str]] = {}
+    for pid, p in repo.people().items():
+        groups.setdefault(p.team, []).append(pid)
+    mine = me().team
+    return sorted(groups.items(), key=lambda kv: kv[0] != mine)
+
+
+def person_role(pid: str) -> str:
+    """조직도에 있는 직무 (없으면 빈 값)."""
+    for t in repo.teams().values():
+        for mb in t.members:
+            if mb.id == pid:
+                return mb.role
+    return ""
+
+
 # ---------------------------------------------------------------- 폴더
 def folders(state: AppState) -> dict[str, Folder]:
     """지금 존재하는 폴더 (새로 만든 폴더 포함, 삭제한 폴더 제외)."""
@@ -65,11 +83,40 @@ def all_my_folder_ids(state: AppState) -> list[str]:
     return [k for t in TYPE_ORDER for k in folder_ids_of_type(state, t)]
 
 
+def can_see(state: AppState, mid: str) -> bool:
+    """회의록이 나에게 보이는지: 주관했거나 참석했거나, 미참석했지만 주관자가 공유해 준 경우."""
+    if mid in state.deleted_meetings:
+        return False
+    m = repo.meeting(mid)
+    return m.host == ME or ME in m.people or ME in state.absent_shares.get(mid, [])
+
+
+def is_absent_shared(state: AppState, mid: str) -> bool:
+    """미참석(조퇴·불참)했는데 주관자가 공유해 줘서 보이는 회의."""
+    m = repo.meeting(mid)
+    return m.host != ME and ME not in m.people and ME in state.absent_shares.get(mid, [])
+
+
+def folder_note_ids(state: AppState, fid: str) -> list[str]:
+    """폴더 안에서 나에게 보이는 회의록 (최근 순)."""
+    return by_date_desc([i for i in folders(state)[fid].notes if can_see(state, i)])
+
+
+def folder_ids_by_owner(state: AppState, mtype: str, owner: str) -> list[str]:
+    """회의 종류의 내 폴더를 전체 / 내가 만든 폴더(mine) / 멤버(member)로 거르기."""
+    fids = folder_ids_of_type(state, mtype)
+    if owner == "mine":
+        return [k for k in fids if folders(state)[k].host == ME]
+    if owner == "member":
+        return [k for k in fids if folders(state)[k].host != ME]
+    return fids
+
+
 def visible_note_ids(state: AppState) -> list[str]:
     ids: list[str] = []
-    for k, f in folders(state).items():
+    for k in folders(state):
         if ME in members_of(state, k):
-            ids.extend(f.notes)
+            ids.extend(folder_note_ids(state, k))
     return ids
 
 
@@ -105,6 +152,44 @@ ROLE_TAGS = {
 
 def mine_count(mid: str) -> int:
     return sum(1 for t in repo.meeting(mid).todos if t.owner == ME)
+
+
+def my_todo_keys(state: AppState, mid: str) -> list[str]:
+    """이 회의에서 나에게 맡겨진 할 일 (담당자 지정으로 바뀐 것까지 반영)."""
+    my_name = me().name
+    keys = []
+    for i, t in enumerate(repo.meeting(mid).todos):
+        key = todo_key(mid, i)
+        owner_is_me = state.assigned[key] == my_name if key in state.assigned else t.owner == ME
+        if owner_is_me:
+            keys.append(key)
+    return keys
+
+
+def my_todo_status(state: AppState, mid: str) -> str:
+    """left(내 할 일 남음) | done(다 끝냄) | none(나에게 할당된 할 일 없음)"""
+    keys = my_todo_keys(state, mid)
+    if not keys:
+        return "none"
+    return "done" if all(state.done.get(k, False) for k in keys) else "left"
+
+
+# 회의 목록을 나눠 보여 줄 때의 묶음 (순서대로)
+TODO_GROUPS = (
+    ("left", "내 할 일이 남은 회의"),
+    ("done", "내 할 일을 다 끝낸 회의"),
+    ("none", "나에게 할당된 할 일이 없는 회의"),
+)
+
+
+def group_by_todo(state: AppState, ids: list[str]) -> list[tuple[str, str, list[str]]]:
+    """[(key, 제목, 회의 id 목록)] · 빈 묶음은 뺍니다."""
+    out = []
+    for key, title in TODO_GROUPS:
+        part = [i for i in ids if my_todo_status(state, i) == key]
+        if part:
+            out.append((key, title, part))
+    return out
 
 
 def todo_key(mid: str, index: int) -> str:
@@ -148,6 +233,7 @@ class MeetingRow:
     action_sub: str
     button: str
     button_kind: str  # view | review | deliver | retry | progress
+    absent_shared: bool = False  # 미참석했지만 주관자가 공유해 줌
 
 
 _STATUS_VIEW = {
@@ -180,7 +266,14 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
             "fail": ("재시도", "retry"),
             "sending": ("진행 보기", "progress"),
         }.get(st, (button, kind))
-    mine = mine_count(mid)
+    mine_keys = my_todo_keys(state, mid)
+    left = sum(1 for k in mine_keys if not state.done.get(k, False))
+    if not mine_keys:
+        mine_text = "내 할 일 없음"
+    elif left:
+        mine_text = f"내 할 일 {left} 남음"
+    else:
+        mine_text = "내 할 일 완료"
     label, tone = _STATUS_VIEW[st]
     return MeetingRow(
         id=mid,
@@ -196,33 +289,46 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
         status_tone=tone,
         status_sub=sub_by_status[st],
         actions=len(m.todos),
-        action_sub=(f"내 할 일 {mine} · " if mine else "") + f"담당자 미정 {unassigned_count(state, mid)}",
+        action_sub=mine_text + (f" · 담당 미정 {unassigned}" if (unassigned := unassigned_count(state, mid)) else ""),
         button=button,
         button_kind=kind,
+        absent_shared=is_absent_shared(state, mid),
     )
 
 
-# ---------------------------------------------------------------- 홈
+# ---------------------------------------------------------------- 최근 회의록 (작성 화면)
 def home_meeting_ids(state: AppState) -> list[str]:
-    """내가 주관하거나 참석한 회의 (최근 순)."""
-    return by_date_desc([i for i in visible_note_ids(state) if ME in repo.meeting(i).people])
+    """나에게 보이는 회의 (주관 · 참석 · 미참석 공유받음, 최근 순)."""
+    return by_date_desc(list(dict.fromkeys(visible_note_ids(state))))
 
 
 # ---------------------------------------------------------------- 상단 경로
 def breadcrumbs(state: AppState) -> list[str]:
+    from state import archive  # archive 가 이 모듈을 쓰므로 함수 안에서 불러옴
+
     s = state.screen
     types = repo.meeting_types()
     fs = folders(state)
-    if s == "wiki":
-        return ["내 위키"]
+    if s == "compose":
+        return ["새 회의록"]
     if s == "sent":
         return ["공유", "공유한 회의"]
     if s == "recv":
         return ["공유", "공유 받은 회의"]
     if s == "mcp":
         return ["설정", "외부 연동"]
+    if s == "archive":
+        crumbs = ["회의록"]
+        t, g, p = state.archive_type, state.archive_group, state.archive_period
+        if t:
+            crumbs.append(types[t].name)
+        if t and g:
+            crumbs.append(archive.group_label(t, g))
+        if t and g == "period" and p:
+            crumbs.append(archive.period_label(p))
+        return crumbs
     if s == "folder":
-        crumbs = ["회의", types[state.folder_type].name]
+        crumbs = ["회의록", types[state.folder_type].name, "프로젝트별"]
         if state.folder_id in fs:
             crumbs.append(fs[state.folder_id].name)
         return crumbs
@@ -230,11 +336,11 @@ def breadcrumbs(state: AppState) -> list[str]:
         m = repo.meeting(state.meeting_id)
         if m.topic in fs:
             f = fs[m.topic]
-            return ["회의", types[f.type].name, f.name, m.title]
+            return ["회의록", types[f.type].name, f.name, m.title]
         return ["공유 받은 회의", m.title]
     if s == "deliver":
-        return ["회의", repo.meeting(state.delivery.meeting_id).title, "결과 전달"]
-    return ["내 회의"]
+        return ["회의록", repo.meeting(state.delivery.meeting_id).title, "결과 전달"]
+    return ["새 회의록"]
 
 
 def has_integration_warning(state: AppState) -> bool:

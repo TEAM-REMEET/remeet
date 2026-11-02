@@ -1,0 +1,786 @@
+/* =========================================================
+   새 회의록 작성 화면 · 회의록 트리 · 회의록 페이지
+   (ui/theme.py 의 CSS_FILES 마지막에 등록)
+   ========================================================= */
+
+/* ---------- 사이드바 회의록 트리 (VS Code 탐색기 느낌) ---------- */
+.st-key-navgroup-meetings {
+  gap: 0 !important;
+}
+[class*="st-key-b-tree"] button {
+  width: 100%;
+  height: 28px !important;
+  min-height: 0 !important;
+  padding: 0 34px 0 6px !important;
+  border: none !important;
+  border-radius: 3px !important;
+  justify-content: flex-start;
+  background: transparent !important;
+  color: #454a52 !important;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+[class*="st-key-b-tree"] button:hover {
+  background: #f0f1f3 !important;
+}
+[class*="st-key-b-treeon-"] button {
+  background: var(--accent-soft) !important;
+  color: var(--ink) !important;
+  font-weight: 700 !important;
+  box-shadow: inset 2px 0 0 var(--accent) !important;
+}
+[class*="st-key-b-tree"] button > div,
+[class*="st-key-b-tree"] button > div > span {
+  justify-content: flex-start !important;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  gap: 4px;
+}
+[class*="st-key-b-tree"] button p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  width: auto !important;
+  min-width: 0;
+  text-align: left;
+}
+[class*="st-key-b-tree"] [data-testid="stIconMaterial"] {
+  font-size: 18px;
+  color: #80858e;
+  flex: none;
+}
+[class*="st-key-b-treeon-"] [data-testid="stIconMaterial"] {
+  color: var(--accent);
+}
+/* 단계별 들여쓰기 (단계마다 14px) + 세로 안내선 */
+[class*="st-key-navrow-tree1-"] button {
+  padding-left: 20px !important;
+}
+[class*="st-key-navrow-tree2-"] button {
+  padding-left: 34px !important;
+}
+[class*="st-key-navrow-tree3-"] button {
+  padding-left: 48px !important;
+}
+[class*="st-key-navrow-tree4-"] button {
+  padding-left: 62px !important;
+  font-size: 12.5px;
+}
+[class*="st-key-navrow-tree1-"]::before,
+[class*="st-key-navrow-tree2-"]::before,
+[class*="st-key-navrow-tree3-"]::before,
+[class*="st-key-navrow-tree4-"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e6e8eb;
+  z-index: 1;
+  pointer-events: none;
+}
+[class*="st-key-navrow-tree1-"]::before {
+  left: 15px;
+}
+[class*="st-key-navrow-tree2-"]::before {
+  left: 29px;
+}
+[class*="st-key-navrow-tree3-"]::before {
+  left: 43px;
+}
+[class*="st-key-navrow-tree4-"]::before {
+  left: 57px;
+}
+/* 트리 줄 오른쪽 숫자 · 새 폴더 점 */
+[class*="st-key-navrow-tree"] .nav-trail.count {
+  font-size: 11px;
+}
+[class*="st-key-navrow-tree"] .nav-trail.newdot.tree {
+  right: 30px;
+}
+
+/* 회의록 페이지 카드: 첫 번째 html 을 버튼 위에 겹치기 */
+[class*="st-key-acard-"] {
+  position: relative;
+  gap: 0 !important;
+}
+[class*="st-key-acard-"] > .stElementContainer:first-child {
+  position: absolute !important;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  height: 100% !important;
+  width: 100% !important;
+}
+[class*="st-key-acard-"] .stHtml {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+[class*="st-key-acard-"] button {
+  width: 100%;
+  min-height: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+}
+[class*="st-key-acard-"] button:hover {
+  background: var(--bg-soft) !important;
+  border-color: var(--accent-line) !important;
+}
+[class*="st-key-acard-"] button p {
+  opacity: 0;
+}
+/* ---------- 회의록 페이지 (회의 종류 · 보기 방식 · 기간 카드) ---------- */
+[class*="st-key-acard-"] button {
+  height: 128px !important;
+}
+.acard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+}
+.acard .ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.acard .tx {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.acard .tx b {
+  font-size: 17px;
+  font-weight: 700;
+}
+.acard .tx .meta {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.acard .tx .last {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-key-archive-grid {
+  flex: none !important;
+  max-height: max(260px, calc(100vh - 300px));
+  overflow-y: auto;
+}
+.st-key-page-archive [class*="st-key-mtbody-"] {
+  max-height: max(260px, calc(100vh - 470px));
+}
+
+/* 파일 줄은 오른쪽 숫자가 없으니 글자를 더 보여 줌 */
+[class*="st-key-navrow-tree4-"] button {
+  padding-right: 8px !important;
+}
+/* 트리 글자: 아이콘 옆 남은 폭 안에서 … 로 줄임 */
+[class*="st-key-b-tree"] button [data-testid="stMarkdownContainer"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ---------- 트리 화살표(twisty): 이름 버튼 왼쪽에 겹쳐 놓고, 누르면 바로 펼치기/접기 ---------- */
+[class*="st-key-b-twisty-"] {
+  position: absolute !important;
+  top: 2px;
+  left: 3px;
+  width: 24px !important;
+  z-index: 3;
+  flex: none !important;
+}
+[class*="st-key-b-twisty-"] button {
+  width: 24px !important;
+  height: 24px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+  color: #80858e !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[class*="st-key-b-twisty-"] button:hover {
+  background: #e3e6ea !important;
+  color: var(--ink) !important;
+}
+[class*="st-key-b-twisty-"] [data-testid="stIconMaterial"] {
+  font-size: 18px;
+}
+[class*="st-key-navrow-tree1-"] [class*="st-key-b-twisty-"] {
+  left: 17px;
+}
+[class*="st-key-navrow-tree2-"] [class*="st-key-b-twisty-"] {
+  left: 31px;
+}
+[class*="st-key-navrow-tree3-"] [class*="st-key-b-twisty-"] {
+  left: 45px;
+}
+/* 폴더 이름 버튼: 화살표 자리만큼 비우고 글자 시작 (파일 줄은 아이콘이 있어 그대로) */
+[class*="st-key-navrow-tree0-"] [class*="st-key-b-tree"] button {
+  padding-left: 28px !important;
+}
+[class*="st-key-navrow-tree1-"] [class*="st-key-b-tree"] button {
+  padding-left: 42px !important;
+}
+[class*="st-key-navrow-tree2-"] [class*="st-key-b-tree"] button {
+  padding-left: 56px !important;
+}
+[class*="st-key-navrow-tree3-"] [class*="st-key-b-tree"] button {
+  padding-left: 70px !important;
+}
+[class*="st-key-navrow-tree4-"] [class*="st-key-b-tree"] button {
+  padding-left: 62px !important;
+}
+/* 강조된 줄의 화살표도 주황 */
+[class*="st-key-navrow-tree"]:has([class*="st-key-b-treeon-"])
+  [class*="st-key-b-twisty-"]
+  button {
+  color: var(--accent) !important;
+}
+
+/* ---------- 사이드바: 맨 아래 폴더(10월 4주차 · 프로젝트 폴더)는 펼칠 게 없어 화살표 대신 폴더 아이콘 ---------- */
+[class*="st-key-navrow-tree3-leaf_"] [class*="st-key-b-tree"] button {
+  padding-left: 48px !important;
+}
+
+/* ---------- 내 할 일 판넬 (누르면 그 회의만 아래 표에) ---------- */
+[class*="st-key-tgpanels-"] {
+  flex: none !important;
+}
+[class*="st-key-tgpanel-"] {
+  position: relative;
+  flex: 1 1 0% !important;
+  gap: 0 !important;
+}
+[class*="st-key-tgpanel-"] > .stElementContainer:first-child {
+  position: absolute !important;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  height: 100% !important;
+  width: 100% !important;
+}
+[class*="st-key-tgpanel-"] .stHtml {
+  height: 100%;
+}
+[class*="st-key-tgpanel-"] button {
+  width: 100%;
+  height: 92px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+}
+[class*="st-key-tgpanel-"] button p {
+  opacity: 0;
+}
+[class*="st-key-tgpanel-off-"] button:hover {
+  border-color: #c9cdd3 !important;
+  background: var(--bg-soft) !important;
+}
+.tgp {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-content: center;
+  row-gap: 6px;
+  border-radius: 6px;
+}
+.tgp .tt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.tgp .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b9bdc4;
+}
+.tgp-left .dot {
+  background: var(--accent);
+}
+.tgp-done .dot {
+  background: #2e9e62;
+}
+.tgp .n {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  align-self: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.tgp .desc {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+/* 고른 판넬: 색 테두리 + 옅은 배경 */
+[class*="st-key-tgpanel-on-left-"] button {
+  border: 2px solid var(--accent) !important;
+  background: var(--accent-soft) !important;
+}
+[class*="st-key-tgpanel-on-done-"] button {
+  border: 2px solid #2e9e62 !important;
+  background: #eef8f2 !important;
+}
+[class*="st-key-tgpanel-on-none-"] button {
+  border: 2px solid #80858e !important;
+  background: #f4f5f7 !important;
+}
+[class*="st-key-tgpanel-on-left-"] .tgp .n {
+  color: var(--accent);
+}
+[class*="st-key-tgpanel-on-done-"] .tgp .n {
+  color: #2e9e62;
+}
+
+/* ---------- ⓘ 안내 말풍선 ---------- */
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  outline: none;
+}
+.info-tip .i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #9ca1a9;
+  color: #80858e;
+  font-size: 11px;
+  font-weight: 800;
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, serif;
+}
+.info-tip:hover .i,
+.info-tip:focus .i {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.info-tip .bubble {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  right: calc(100% + 12px); /* 아이콘 왼쪽 옆에 가로로 */
+  top: 50%;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 360px;
+  white-space: normal;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.6;
+  z-index: 50;
+  box-shadow: 0 6px 18px rgba(20, 24, 31, 0.12);
+  transition: opacity 0.12s;
+  pointer-events: none;
+}
+.info-tip .bubble::before {
+  content: "";
+  position: absolute;
+  right: -6px; /* 아이콘 쪽을 가리키는 꼬리 */
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-right: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+}
+/* ⓘ 는 버튼 줄의 오른쪽 끝에 (말풍선이 왼쪽으로 펼쳐질 자리 확보) */
+.stElementContainer:has(.info-tip) {
+  margin-left: auto;
+  width: auto !important;
+  flex: none !important;
+}
+.info-tip:hover .bubble,
+.info-tip:focus .bubble {
+  visibility: visible;
+  opacity: 1;
+}
+/* 말풍선이 잘리지 않도록 이 줄의 html 칸은 넘침 허용 */
+.stElementContainer:has(.info-tip),
+.stElementContainer:has(.info-tip) .stHtml {
+  overflow: visible !important;
+  z-index: 20;
+}
+
+/* ---------- 새 회의록 작성 ---------- */
+hr.cp-divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 4px 0;
+}
+.cp-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.cp-section {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+  padding: 0;
+}
+.cp-required {
+  font-size: 13px;
+  color: var(--muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+.st-key-page-compose .stElementContainer:has(.cp-required) {
+  margin-left: auto;
+  width: auto !important;
+  flex: none !important;
+}
+.st-key-page-compose textarea {
+  font-size: 15px !important;
+  line-height: 1.7 !important;
+  padding: 14px 18px !important;
+}
+/* 한 줄 입력칸 · 선택칸: 둥근 알약 모양 */
+.st-key-cp-grid [data-testid="stTextInputRootElement"],
+.st-key-cp-grid [data-testid="stDateInputField"],
+.st-key-cp-grid [data-testid="stSelectbox"] > div:last-child > div,
+.st-key-cp-grid [data-testid="stMultiSelect"] > div:last-child > div {
+  border-radius: 4px !important;
+  min-height: 46px;
+  background: #ffffff !important;
+  border: 1px solid #d5d8dd !important;
+  padding-left: 10px !important;
+  box-sizing: border-box;
+}
+.st-key-cp-grid [data-testid="stTextInputRootElement"]:focus-within,
+.st-key-cp-grid [data-testid="stDateInputField"]:focus-within,
+.st-key-cp-grid [data-testid="stSelectbox"] > div:last-child > div:focus-within,
+.st-key-cp-grid
+  [data-testid="stMultiSelect"]
+  > div:last-child
+  > div:focus-within {
+  border-color: var(--accent) !important;
+}
+.st-key-cp-grid input {
+  background: transparent !important;
+}
+.st-key-page-compose [data-testid="stTextArea"] textarea {
+  background: #ffffff !important;
+}
+.st-key-page-compose
+  [data-testid="stTextArea"]
+  [data-testid="stTextAreaRootElement"]:focus-within {
+  border-color: var(--accent) !important;
+}
+.st-key-page-compose [data-testid="stTextAreaRootElement"] {
+  border: 1px solid #d5d8dd !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+}
+.st-key-cp-grid label p {
+  font-size: 14px !important;
+  color: var(--ink-2);
+}
+/* 파일 첨부: 업로드 상자를 '📎 파일 첨부' 알약 버튼처럼 */
+.st-key-cp-attach-row {
+  align-items: center !important;
+}
+.st-key-cp-attach [data-testid="stFileUploaderDropzone"] {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  min-height: 0 !important;
+}
+.st-key-cp-attach [data-testid="stFileUploaderDropzoneInstructions"] {
+  display: none !important;
+}
+.st-key-cp-attach [data-testid="stFileUploaderDropzone"] > span > button,
+.st-key-cp-attach [data-testid="stFileChips"] > button {
+  height: 38px;
+  padding: 0 16px !important;
+  border: 1px solid #c9cdd3 !important;
+  border-radius: 19px !important;
+  background: #ffffff !important;
+  color: var(--ink) !important;
+}
+.st-key-cp-attach [data-testid="stFileUploaderDropzone"] > span > button > div,
+.st-key-cp-attach [data-testid="stFileChips"] > button > div {
+  display: none !important; /* 기본 글자(Upload) 숨기고 아래 ::before 로 바꿔 씀 */
+}
+.st-key-cp-attach
+  [data-testid="stFileUploaderDropzone"]
+  > span
+  > button::before,
+.st-key-cp-attach [data-testid="stFileChips"] > button::before {
+  content: "📎 파일 첨부";
+  font-size: 14px;
+  font-weight: 600;
+}
+.st-key-cp-attach [data-testid="stFileUploaderDropzone"] > span > button:hover,
+.st-key-cp-attach [data-testid="stFileChips"] > button:hover {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+.cp-types {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 38px;
+}
+.cp-either {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 38px;
+}
+.st-key-cp-attach-row .stElementContainer:has(.cp-either) {
+  margin-left: auto;
+  width: auto !important;
+  flex: none !important;
+}
+.st-key-cp-attach-row .stElementContainer:has(.cp-types) {
+  width: auto !important;
+  flex: none !important;
+}
+.cp-hint {
+  font-size: 12px;
+  color: var(--text-sub);
+}
+.cp-error {
+  font-size: 13px;
+  color: #b3261e;
+}
+
+/* 버튼 줄 앞의 짧은 이름표 (예: 기간 폴더 위키의 '프로젝트') */
+.inline-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.stElementContainer:has(.inline-label) {
+  flex: none !important;
+  width: auto !important;
+}
+/* 파일 첨부 버튼 바로 옆에 형식 안내가 붙도록 업로드 영역 폭을 버튼만큼만 */
+.st-key-cp-attach-row
+  > [data-testid="stLayoutWrapper"]:has(> .st-key-cp-attach),
+.st-key-cp-attach,
+.st-key-cp-attach .stElementContainer,
+.st-key-cp-attach [data-testid="stFileUploader"],
+.st-key-cp-attach section,
+.st-key-cp-attach section > span {
+  flex: none !important;
+  width: max-content !important;
+  min-width: 0 !important;
+}
+.st-key-cp-attach-row .stElementContainer:has(.cp-types) {
+  margin-left: 2px;
+}
+/* 판넬이 들어간 만큼 표 본문 높이를 줄여 화면 안에서 끝나게 (넘치면 표 안에서 스크롤) */
+.st-key-page-folder [class*="st-key-mtbody-"],
+.st-key-page-archive [class*="st-key-mtbody-"] {
+  max-height: max(240px, calc(100vh - 600px));
+}
+
+/* ---------- 작성 화면: 누르면 모달이 뜨는 입력칸 (주관자 · 참석자 · 폴더) ---------- */
+.cp-flabel {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+[class*="st-key-b-field-"] button,
+[class*="st-key-b-fieldempty-"] button {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px !important;
+  border: 1px solid #d5d8dd !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  justify-content: flex-start;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink) !important;
+}
+[class*="st-key-b-fieldempty-"] button {
+  color: #9ca1a9 !important;
+}
+[class*="st-key-b-field-"] button:hover,
+[class*="st-key-b-fieldempty-"] button:hover {
+  border-color: var(--accent) !important;
+}
+[class*="st-key-b-field-"] button > div,
+[class*="st-key-b-field-"] button > div > span,
+[class*="st-key-b-fieldempty-"] button > div,
+[class*="st-key-b-fieldempty-"] button > div > span {
+  justify-content: flex-start !important;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+[class*="st-key-b-field-"] button [data-testid="stMarkdownContainer"],
+[class*="st-key-b-fieldempty-"] button [data-testid="stMarkdownContainer"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+[class*="st-key-b-field-"] button p,
+[class*="st-key-b-fieldempty-"] button p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+[class*="st-key-b-field-"] [data-testid="stIconMaterial"],
+[class*="st-key-b-fieldempty-"] [data-testid="stIconMaterial"] {
+  color: #80858e;
+  font-size: 18px;
+}
+/* 칸 오른쪽 끝 ▾ 표시 */
+[class*="st-key-b-field-"] button::after,
+[class*="st-key-b-fieldempty-"] button::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 1.6px solid #5f646d;
+  border-bottom: 1.6px solid #5f646d;
+  transform: rotate(45deg) translateY(-3px);
+  margin-left: auto;
+  flex: none;
+}
+
+/* ---------- 선택 모달 (폴더 · 주관자 · 참석자) ---------- */
+.st-key-pick-folders {
+  max-height: 340px;
+  overflow-y: auto;
+  gap: 6px !important;
+}
+.st-key-pick-folders [class*="st-key-b-pick"] button {
+  min-height: 56px;
+  padding: 8px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+}
+.st-key-pick-folders [class*="st-key-b-pickon-"] button {
+  border: 1.5px solid var(--accent) !important;
+}
+.pick-chosen {
+  height: 104px; /* 높이 고정 · 3줄 정도 넘으면 이 안에서만 스크롤 */
+  padding: 10px 12px;
+  border: 1px dashed #d5d8dd;
+  border-radius: 4px;
+  overflow-y: auto;
+  overflow-anchor: none;
+  box-sizing: border-box;
+}
+/* 스크롤 스크립트만 담는 숨은 칸 */
+.st-key-pick-js {
+  display: none !important;
+}
+.pick-chosen-in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pick-chosen-head {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.pick-empty {
+  font-size: 13px;
+  color: var(--muted);
+}
+.pick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px 0 3px;
+  border: 1px solid var(--accent-line);
+  border-radius: 3px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.pick-chip .t {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+[class*="st-key-pick-box-"] {
+  flex: none !important;
+  background: #f8f9fa;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+}
+.pick-members-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.pick-members-head .hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+[class*="st-key-pick-members-"] {
+  flex: none !important;
+  max-height: 132px; /* 팀원이 많으면 이 부분만 스크롤 (팀 버튼은 그대로) */
+  overflow-y: auto;
+}
+.pick-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-top: 4px;
+}
+.pick-section-head .hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+/* 이름표와 칸 사이를 Streamlit 기본 입력칸(회의 종류 등)과 같은 높이로 맞춤 */
+.stElementContainer:has(.cp-flabel) {
+  margin-bottom: -10px;
+}

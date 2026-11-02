@@ -11,7 +11,7 @@ from pathlib import Path
 import streamlit as st
 
 STYLES_DIR = Path(__file__).resolve().parent.parent / "assets" / "styles"
-CSS_FILES = ("base.css", "components.css", "pages.css", "landing.css")
+CSS_FILES = ("base.css", "components.css", "pages.css", "landing.css", "workspace.css")
 
 COLORS = {
     "accent": "#F37321",
