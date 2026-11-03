@@ -197,9 +197,9 @@ def _write(path: Path, text: str) -> None:
 
 
 def save_final_summary(final: FinalSummary, minutes: str | None = None, out_dir: Path | None = None,
-                       save_json: bool = True) -> list[Path]:
-    # out_dir(기본 config.OUTPUT_DIR) 아래 회의 ID 폴더에 저장 — JSON (save_json) / 회의록 txt (minutes가 있을 때)
-    out_dir = Path(out_dir or cfg.OUTPUT_DIR) / final.meeting_id
+                       save_json: bool = True, variant: str | None = None) -> list[Path]:
+    # out_dir를 주면 그 아래 회의 ID 폴더, 아니면 config.output_dir(회의 ID, 변형)에 저장 — JSON (save_json) / 회의록 txt
+    out_dir = Path(out_dir) / final.meeting_id if out_dir else cfg.output_dir(final.meeting_id, variant)
     out_dir.mkdir(parents=True, exist_ok=True)
     paths = []
     if save_json:
@@ -221,6 +221,7 @@ def render_node(state: SummaryState) -> dict:
     print(f"[렌더링] 안건 {len(final.agenda_index)}개 / 회의 결과 {len(final.meeting_results)}개 / 검토 필요 항목 {review}개")
     minutes = render_minutes(final)
     if cfg.SAVE_FINAL_JSON or cfg.SAVE_MINUTES_TEXT:
-        for path in save_final_summary(final, minutes if cfg.SAVE_MINUTES_TEXT else None, save_json=cfg.SAVE_FINAL_JSON):
+        for path in save_final_summary(final, minutes if cfg.SAVE_MINUTES_TEXT else None, save_json=cfg.SAVE_FINAL_JSON,
+                                       variant=state.get("variant")):
             print(f"[렌더링] 저장: {path}")
     return {"final_summary": final, "final_markdown": minutes}
