@@ -1,6 +1,6 @@
 """회의 결과 JSON을 Neo4j ontology에 적재한다.
 
-입력 회의 파일은 ``data/meetings/*.json``의 최종 회의록 구조를 사용한다.
+입력 회의 파일은 ``data/summary_action/<회의ID>/<회의ID>_llm_output.json``을 사용한다.
 회의록에는 프로젝트/참석자/날짜가 없으므로 다음 규칙으로 보완한다.
 
 * ``TS3003a``와 같은 회의 ID에서 프로젝트 ID ``TS3003``을 만든다.
@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -73,69 +74,53 @@ def _texts(items: list[dict[str, Any]] | None) -> list[str]:
 def _evidence(items: list[dict[str, Any]] | None) -> list[int]:
     ids: set[int] = set()
     for item in items or []:
-        ids.update(item.get("evidence_utterance_ids", []))
+        ids.update(item.get("evidence_utterance_indices", []))
     return sorted(ids)
-
-
-def _discussion_texts(discussions: list[dict[str, Any]] | None) -> list[str]:
-    texts: list[str] = []
-    for discussion in discussions or []:
-        subtopic = discussion.get("subtopic", "").strip()
-        for item in discussion.get("items", []):
-            text = item.get("text")
-            if text:
-                texts.append(f"[{subtopic}] {text}" if subtopic else text)
-    return texts
 
 
 def normalize_meeting(
     raw: dict[str, Any],
     *,
+    meeting_id: str,
     meeting_order: int,
     attendee_ids: list[str],
 ) -> dict[str, Any]:
-    """최종 회의록 구조를 로더가 사용하는 내부 구조로 정규화한다."""
-    meeting_id = raw.get("meeting_id")
-    if not meeting_id:
-        raise ValueError("회의 JSON에 meeting_id가 없습니다.")
+    """``*_llm_output.json`` 구조를 로더가 사용하는 내부 구조로 정규화한다.
 
-    project_id = raw.get("project_id") or re.sub(r"[a-z]$", "", meeting_id)
+    major_discussions는 길어서 통째로 넣지 않고, 태그로 두 가지만 꺼낸다.
+      discussion_tag == "액션"   → ActionItem (assignee, due 포함)
+      decision_tag  == "결정"   → AgendaItem.decisions (액션도 대부분 "결정"이라 여기에도 들어간다)
+    unresolved_issues → AgendaItem.unresolved_issues, next_meeting_topics → AgendaItem.next_topics
+    """
+    project_id = re.sub(r"[a-z]$", "", meeting_id)  # TS3003a → TS3003
     if project_id == meeting_id:
         project_id = f"project-{meeting_id}"
 
     held_at = BASE_MEETING_TIME + timedelta(seconds=meeting_order)
     agendas: list[dict[str, Any]] = []
-    for agenda in raw.get("agenda_details", []):
-        discussions = agenda.get("discussions", [])
-        decisions = agenda.get("decisions", [])
+    for order, agenda in enumerate(raw.get("agendas", []), 1):
+        items = agenda.get("major_discussions", [])
+        decisions = [i for i in items if i.get("decision_tag") == "결정"]
+        actions = [i for i in items if i.get("discussion_tag") == "액션" and i.get("text")]
+        background = agenda.get("discussion_background", [])
         unresolved = agenda.get("unresolved_issues", [])
         next_topics = agenda.get("next_meeting_topics", [])
-        background = _texts(agenda.get("background"))
-        discussion = _discussion_texts(discussions)
         agendas.append(
             {
-                "source_agenda_id": agenda.get("agenda_id"),
-                "title": agenda.get("title", "제목 없음"),
-                "background": background,
-                "discussion": discussion,
+                "source_agenda_id": f"a{order}",  # llm_output에는 안건 ID가 없어서 순번으로 만든다
+                "title": agenda.get("agenda_title", "제목 없음"),
+                "background": _texts(background),
                 "decisions": _texts(decisions),
                 "unresolved_issues": _texts(unresolved),
                 "next_topics": _texts(next_topics),
                 "evidence_utterance_ids": sorted(
-                    set(
-                        _evidence(agenda.get("background"))
-                        + _evidence(decisions)
-                        + _evidence(unresolved)
-                        + _evidence(next_topics)
-                        + [
-                            evidence_id
-                            for discussion in discussions
-                            for item in discussion.get("items", [])
-                            for evidence_id in item.get("evidence_utterance_ids", [])
-                        ]
-                    )
+                    set(_evidence(background) + _evidence(decisions) + _evidence(actions)
+                        + _evidence(unresolved) + _evidence(next_topics))
                 ),
-                "actions": [],
+                "actions": [
+                    {"task": i["text"], "owner": i.get("assignee"), "due": i.get("due")}
+                    for i in actions
+                ],
             }
         )
 
@@ -179,7 +164,7 @@ def load_users(data: dict[str, Any]) -> list[str]:
     get_driver().execute_query(
         """
         UNWIND $rows AS r
-        MERGE (n:Skill {skill_id: r.skill_id}) SET n.name = r.name
+        MERGE (n:Skill {skill_id: r.skill_id}) SET n += r
         """,
         rows=data["skills"],
     )
@@ -204,7 +189,7 @@ def load_users(data: dict[str, Any]) -> list[str]:
         """,
         rows=data["people"],
     )
-    return [person["user_id"] for person in data["people"] if person.get("is_active", True)]
+    return data["meeting_attendees"]  # 회의 참석자는 A~D뿐이고, 나머지는 추천 테스트용 가상 인물
 
 
 def load_meeting(meeting: dict[str, Any]) -> None:
@@ -244,7 +229,7 @@ def _load_meeting_tx(tx: Any, meeting: dict[str, Any]) -> None:
     for order, agenda in enumerate(meeting["agendas"], 1):
         agenda_id = f"{meeting['meeting_id']}-{agenda['source_agenda_id'] or order}"
         context = " ".join(
-            agenda["background"] + agenda["discussion"] + agenda["decisions"]
+            agenda["background"] + agenda["decisions"] + agenda["unresolved_issues"]
         )
         vec = embed(f"{agenda['title']} {context}")
         topic_id, score, linked_by, reason = link_topic(tx, meeting, agenda_id, agenda, vec)
@@ -254,7 +239,7 @@ def _load_meeting_tx(tx: Any, meeting: dict[str, Any]) -> None:
             CREATE (mt)-[:HAS_AGENDA]->(ai:AgendaItem {
                 agenda_item_id: $aid, source_agenda_id: $source_aid,
                 order: $order, title: $title, background: $background,
-                discussion: $discussion, decisions: $decisions,
+                decisions: $decisions,
                 unresolved_issues: $unresolved, next_topics: $next_topics,
                 evidence_utterance_ids: $evidence, embedding: $vec
             })-[:ABOUT {confidence: $score, linked_by: $linked_by, reason: $reason}]->(t)
@@ -267,7 +252,6 @@ def _load_meeting_tx(tx: Any, meeting: dict[str, Any]) -> None:
             order=order,
             title=agenda["title"],
             background=agenda["background"],
-            discussion=agenda["discussion"],
             decisions=agenda["decisions"],
             unresolved=agenda["unresolved_issues"],
             next_topics=agenda["next_topics"],
@@ -279,8 +263,16 @@ def _load_meeting_tx(tx: Any, meeting: dict[str, Any]) -> None:
         )
         refresh_topic_embedding(tx, topic_id)
 
+        # due는 "다음 회의를 위해"처럼 날짜가 아닌 말이 많아서, 원문은 due_raw에 두고
+        # YYYY-MM-DD 꼴일 때만 date로 바꿔 due에 넣는다.
         actions = [
-            {"id": f"{agenda_id}-t{index}", "task": action["task"], "due": action.get("due")}
+            {
+                "id": f"{agenda_id}-t{index}",
+                "task": action["task"],
+                "owner_raw": action.get("owner"),  # recommend_agent.py가 읽는다
+                "due_raw": action.get("due"),
+                "due": action["due"] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", action.get("due") or "") else None,
+            }
             for index, action in enumerate(agenda.get("actions", []), 1)
         ]
         tx.run(
@@ -288,8 +280,9 @@ def _load_meeting_tx(tx: Any, meeting: dict[str, Any]) -> None:
             MATCH (ai:AgendaItem {agenda_item_id: $aid})
             UNWIND $actions AS a
             CREATE (ai)-[:PRODUCED]->(:ActionItem {
-                action_item_id: a.id, description: a.task,
-                status: 'open', due: CASE WHEN a.due IS NULL THEN NULL ELSE date(a.due) END
+                action_item_id: a.id, description: a.task, owner_raw: a.owner_raw,
+                status: 'open', due_raw: a.due_raw,
+                due: CASE WHEN a.due IS NULL THEN NULL ELSE date(a.due) END
             })
             """,
             aid=agenda_id,
@@ -353,10 +346,14 @@ TOPIC_JUDGE_SYSTEM = """너는 회의 안건을 프로젝트의 Topic(여러 회
 {"decision": "existing" 또는 "new", "topic_id": "기존이면 후보의 topic_id, 새 Topic이면 null", "reason": "한 문장"}"""
 
 
+LLM_MODEL = "gpt-6-luna"   # main()에서 --model로 바꾼다
+LLM_EFFORT = "low"          # main()에서 --effort로 바꾼다
+
+
 def get_llm() -> OpenAIClient:
     global _llm
     if _llm is None:
-        _llm = OpenAIClient()
+        _llm = OpenAIClient(model=LLM_MODEL, reasoning_effort=LLM_EFFORT)
     return _llm
 
 
@@ -420,7 +417,6 @@ def _ask_llm(agenda: dict[str, Any], topics: list[dict[str, Any]]) -> dict[str, 
             {
                 "title": agenda["title"],
                 "background": agenda["background"],
-                "discussion": agenda["discussion"][:8],  # 논의는 길어서 앞부분만
                 "decisions": agenda["decisions"],
                 "unresolved_issues": agenda["unresolved_issues"],
             },
@@ -458,17 +454,39 @@ def refresh_topic_embedding(tx: Any, topic_id: str) -> None:
 
 
 def main() -> None:
+    global LLM_MODEL, LLM_EFFORT
+    parser = argparse.ArgumentParser(description="회의 데이터를 LLM Topic 판단으로 적재한다.")
+    parser.add_argument("--model", default=LLM_MODEL)
+    parser.add_argument("--effort", default=LLM_EFFORT, help="reasoning_effort: low / medium / high")
+    parser.add_argument("--reset", action="store_true",
+                        help="적재 전에 회의 데이터(Meeting, AgendaItem, ActionItem, Topic)를 지운다. "
+                             "사람·팀·스킬은 남는다. 되돌릴 수 없다.")
+    args = parser.parse_args()
+    LLM_MODEL, LLM_EFFORT = args.model, args.effort
+    print(f"LLM: {LLM_MODEL} (reasoning_effort={LLM_EFFORT})")
+
+    if args.reset:
+        # 이미 적재된 회의는 건너뛰기 때문에, 모델을 바꿔 비교하려면 먼저 지워야 한다
+        get_driver().execute_query("""
+            MATCH (n) WHERE n:Meeting OR n:AgendaItem OR n:ActionItem OR n:Topic
+            DETACH DELETE n
+        """)
+        print(f"[초기화] 회의 데이터 삭제: {NEO4J_URI}")
+
     run_schema()
     users = json.loads((ROOT / "data/users.json").read_text(encoding="utf-8"))
+    users["skills"] = json.loads((ROOT / "data/skills.json").read_text(encoding="utf-8"))
     attendee_ids = load_users(users)
-    raw_meetings = [
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in (ROOT / "data/meetings").glob("*.json")
-    ]
-    raw_meetings.sort(key=lambda meeting: meeting["meeting_id"])
-    for order, raw in enumerate(raw_meetings, 1):
+    # data/summary_action/<회의ID>/<회의ID>_llm_output.json. 폴더 이름이 회의 ID다.
+    paths = sorted((ROOT / "data/summary_action").glob("*/*_llm_output.json"))
+    if not paths:
+        raise FileNotFoundError("data/summary_action/*/*_llm_output.json 파일이 없습니다.")
+    for order, path in enumerate(paths, 1):
+        raw = json.loads(path.read_text(encoding="utf-8"))
         load_meeting(
-            normalize_meeting(raw, meeting_order=order, attendee_ids=attendee_ids)
+            normalize_meeting(
+                raw, meeting_id=path.parent.name, meeting_order=order, attendee_ids=attendee_ids
+            )
         )
     if driver is not None:
         driver.close()

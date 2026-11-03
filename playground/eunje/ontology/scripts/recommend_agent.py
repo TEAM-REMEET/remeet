@@ -34,7 +34,7 @@ ROOT = SCRIPT_DIR.parent  # = ontology/
 
 INTERPRET_PROMPT = (SCRIPT_DIR / "prompts/interpret.md").read_text(encoding="utf-8")
 EXPLAIN_PROMPT = (SCRIPT_DIR / "prompts/explain.md").read_text(encoding="utf-8")
-RESULTS_DIR = SCRIPT_DIR / "recommend_results"
+RESULTS_DIR = ROOT / "data" / "recommend_results"
 
 POSITIONS = ("senior", "mid", "junior")
 PER_POSITION = 2
@@ -60,10 +60,10 @@ CONTEXT_QUERY = """
     OPTIONAL MATCH (ag)-[:ABOUT]->(tp:Topic)
     OPTIONAL MATCH (tp)-[:SUBTOPIC_OF]->(parent:Topic)
     OPTIONAL MATCH (p:Person)-[:ATTENDED]->(mt)
-    RETURN ai.action_item_id AS action_item_id, ai.description AS title, toString(ai.due) AS due,
+    RETURN ai.action_item_id AS action_item_id, ai.description AS title, coalesce(toString(ai.due), ai.due_raw) AS due,
         ai.owner_raw AS owner_raw, mt.meeting_id AS meeting_id, mt.title AS meeting_title,
         toString(mt.held_at) AS held_at, pr.project_id AS project_id, ag.title AS agenda_title,
-        ag.background AS background, ag.discussion AS discussion, ag.decisions AS decisions,
+        ag.background AS background, ag.decisions AS decisions,
         tp.title AS topic_title, tp.summary AS topic_summary, parent.title AS parent_topic_title,
         [x IN collect(DISTINCT p {.user_id, .name}) WHERE x IS NOT NULL] AS attendees"""
 # rank_candidates가 기대하는 모양(teams/roles/skills의 id)으로 맞춰 돌려준다.
@@ -715,7 +715,7 @@ def main(argv=None) -> int:
     llm = ChatOpenAI(model=args.model or os.getenv("OPENAI_MODEL") or os.getenv("LLM_MODEL") or "gpt-5.5",
                      timeout=60, max_retries=1)
     with GraphDatabase.driver(os.getenv("NEO4J_URI", "bolt://localhost:7687"),
-                              auth=("neo4j", os.environ["NEO4J_PASSWORD"]),
+                              auth=(os.getenv("NEO4J_USERNAME", "neo4j"), os.environ["NEO4J_PASSWORD"]),
                               notifications_disabled_classifications=["UNRECOGNIZED"]) as driver:
         driver.verify_connectivity()
         RESULTS_DIR.mkdir(exist_ok=True)
