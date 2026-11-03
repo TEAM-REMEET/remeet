@@ -10,11 +10,22 @@
     - 노드 이름 · 섹션 라벨 · 정규식 등 코드 구조에 해당하는 값은 각 노드 파일에 둠
 
 구성
-    1. 경로   2. 모델 · LLM 호출   3. 단계별 설정   4. 그래프 실행   5. 저장   6. 렌더링   7. 검증 · 기록
+    0. 파이프라인 변형   1. 경로   2. 모델 · LLM 호출   3. 단계별 설정   4. 그래프 실행   5. 저장   6. 렌더링   7. 검증 · 기록
 """
 
 import os
 from pathlib import Path
+
+# ══════════════════════════════════════════════════════════════════════
+# 0. 파이프라인 변형 — 같은 노드를 공유하고, 변형별로 [2] 병합과 [3] 내용 검증 사이에 단계를 추가
+#    결과 저장: base → {OUTPUT_DIR}/{meeting_id}/ / 그 외 → {OUTPUT_DIR}/{meeting_id}/{변형 이름}/
+#    1차 요약 캐시는 변형끼리 공유 (같은 입력 · 프롬프트), 이후 단계는 입력이 달라 캐시가 따로 생김
+# ══════════════════════════════════════════════════════════════════════
+VARIANT_STEPS: dict[str, tuple[str, ...]] = {
+    "base": (),                                                     # 기존 프로세스
+    "agenda_split": ("agenda_restructure", "item_consolidation"),   # 1안: 병합 후 안건 재구성 + 항목 정돈
+}
+PIPELINE_VARIANT = "base"            # 기본 실행 변형 (명령줄 --variant · run_summary(variant=...)로 바꿀 수 있음)
 
 # ══════════════════════════════════════════════════════════════════════
 # 1. 경로
@@ -25,7 +36,7 @@ ENV_PATH = next((p / ".env" for p in SUMMARY_DIR.parents if (p / ".env").is_file
 
 BOUNDARY_DIR = PROJECT_DIR / "dataset" / "Text_Boundaries"      # 주제 경계 탐지 결과 JSON 폴더
 BOUNDARY_SUFFIX = "_boundary_candidates.json"                   # 회의 ID → {BOUNDARY_DIR}/{회의 ID}{BOUNDARY_SUFFIX}
-OUTPUT_DIR = PROJECT_DIR / "outputs" / "summary"                # 최종 결과 → {OUTPUT_DIR}/{meeting_id}/
+OUTPUT_DIR = PROJECT_DIR / "outputs" / "summary"                # 최종 결과 → output_dir(meeting_id, variant)
 LLM_CACHE_DIR = PROJECT_DIR / "outputs" / "llm_cache"           # LLM 응답 캐시
 
 # ══════════════════════════════════════════════════════════════════════
@@ -42,6 +53,8 @@ USE_LLM_CACHE = True                 # 같은 입력(모델 · 추론 강도 · 
 # 단계별 추론 강도 (None이면 LLM_REASONING_EFFORT)
 STEP_EFFORT: dict[str, str | None] = {
     "segment_summary": None,         # [1] 1차 요약
+    "agenda_restructure": None,      # [2-1] 안건 재구성 (agenda_split)
+    "item_consolidation": None,      # [2-2] 항목 정돈 (agenda_split)
     "content_validation": None,      # [3][5] 내용 검증 · 재검증
     "content_revise": None,          # [4] 재수정
     "readability_validation": None,  # [6][8] 가독성 검증 · 재검증
@@ -60,6 +73,18 @@ REQUIRE_CORE_EVIDENCE = True         # 근거에 Core 발화가 하나도 없는
 
 # [2] 안건 병합
 REMOVE_EXACT_DUPLICATES = True       # 같은 섹션 · 태그 · 근거 발화 집합인 항목 중복 제거 (False면 그룹화만)
+
+# [2-1] 안건 재구성 (agenda_split) — 큰 범주 안건을 '안건 목록으로 흐름 · 핵심 안건을 파악할 수 있는' 단위로 나눔
+RESTRUCTURE_MAX_TOTAL_AGENDAS = 3    # 병합 결과 안건이 이 개수 이하일 때만 재구성
+RESTRUCTURE_MIN_SUBTOPICS = 4        # 소주제가 이 개수 이상이거나
+RESTRUCTURE_MIN_ITEMS = 12           # 표시 항목이 이 개수 이상인 안건만 재구성
+RESTRUCTURE_TARGET_AGENDAS = (4, 8)  # 회의 전체 목표 안건 수 (재구성 대상 안건에 항목 수 비율로 나눠 LLM에 안내)
+RESTRUCTURE_MAX_AGENDAS = 10         # 안건 하나를 나눌 수 있는 최대 개수 (넘으면 재구성하지 않음)
+SORT_AGENDAS_BY_FLOW = True          # 재구성 후 전체 안건을 처음 논의된 순서(첫 근거 발화)로 정렬
+
+# [2-2] 항목 정돈 (agenda_split) — 같은 섹션의 비슷한 항목 병합, 배경 성격 [정보] → 논의 배경, 소주제 정리
+CONSOLIDATE_MIN_ITEMS = 3            # 표시 항목이 이 개수 이상인 안건만 정돈
+CONSOLIDATE_ALLOW_REMOVE = True      # 사소한 항목 제거 허용 (결정사항 · 미해결 이슈 · 다음 회의 후보 안건은 제거 안 함)
 
 # [3]~[5] 내용 검증 · 재수정
 CONTENT_MAX_LOOPS = 3                # 내용 검증 최대 횟수 (첫 검증 포함) — 이 횟수에서도 이슈가 남으면 REVIEW_REQUIRED
@@ -122,7 +147,14 @@ def effort_for(step: str) -> str | None:
 
 def required_recursion_limit() -> int:
     # 정상 흐름의 최대 노드 실행 수: 입력 · 1차 요약 · 병합 + 내용 루프(검증 N · 수정 N-1) + 가독성 루프 + 구조 검증 · 렌더링
-    return 3 + (2 * CONTENT_MAX_LOOPS - 1) + (2 * READABILITY_MAX_LOOPS - 1) + 2
+    longest = max(len(steps) for steps in VARIANT_STEPS.values())
+    return 3 + longest + (2 * CONTENT_MAX_LOOPS - 1) + (2 * READABILITY_MAX_LOOPS - 1) + 2
+
+
+def output_dir(meeting_id: str, variant: str | None = None) -> Path:
+    # base는 기존 위치 그대로, 다른 변형은 회의 폴더 아래 변형 이름 폴더
+    variant = variant or PIPELINE_VARIANT
+    return OUTPUT_DIR / meeting_id if variant == "base" else OUTPUT_DIR / meeting_id / variant
 
 
 def check_model(model: str | None = None) -> str:
@@ -160,6 +192,14 @@ def validate() -> None:
     unknown = [b for b in BLOCK_ORDER if b not in RENDER_BLOCKS]
     if unknown:
         errors.append(f"BLOCK_ORDER에 없는 블록 {unknown} — {list(RENDER_BLOCKS)} 중에서 선택")
+    if PIPELINE_VARIANT not in VARIANT_STEPS:
+        errors.append(f"PIPELINE_VARIANT={PIPELINE_VARIANT!r} — {list(VARIANT_STEPS)} 중에서 선택")
+    known_steps = {"agenda_restructure", "item_consolidation"}
+    for name, steps in VARIANT_STEPS.items():
+        if set(steps) - known_steps:
+            errors.append(f"VARIANT_STEPS[{name!r}]에 없는 단계 {sorted(set(steps) - known_steps)} — {sorted(known_steps)}")
+    if not 1 <= RESTRUCTURE_TARGET_AGENDAS[0] <= RESTRUCTURE_TARGET_AGENDAS[1] <= RESTRUCTURE_MAX_AGENDAS:
+        errors.append(f"RESTRUCTURE_TARGET_AGENDAS={RESTRUCTURE_TARGET_AGENDAS} — 1 ≤ 최소 ≤ 최대 ≤ RESTRUCTURE_MAX_AGENDAS")
     if errors:
         raise ValueError("설정 오류 (config.py)\n  - " + "\n  - ".join(errors))
 

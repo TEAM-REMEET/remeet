@@ -4,7 +4,8 @@
     0. 태그 · 섹션 · ID 규칙
     1. 입력: 주제 경계 탐지 결과 (03_text_boundary_final_code의 segments)
     2. 안건 Registry (시스템 내부 저장 / LLM에는 관련 후보만 전달)
-    3. LLM 출력 스키마 (ID 없음) — [1] 1차 요약, [3][5] 내용 검증, [4] 재수정, [6] 가독성 검증, [7] 가독성 수정
+    3. LLM 출력 스키마 (ID 없음) — [1] 1차 요약, [2-1] 안건 재구성 · [2-2] 항목 정돈 (agenda_split 변형),
+       [3][5] 내용 검증, [4] 재수정, [6] 가독성 검증, [7] 가독성 수정
     4. 내부 저장 스키마 (코드가 ID 부여) — 요약 항목, 안건, Segment별 요약
     5. 구조 검증 결과 — [8]
     6. 최종 회의록 — [9] (최소 단위 JSON → 렌더링 시 문자열로 조합)
@@ -187,6 +188,36 @@ class LLMSegmentSummary(_LLMModel):
     agendas: list[LLMAgenda]
 
 
+# ── [2-1] 안건 재구성 (agenda_split 변형) ──────────────────────────
+class LLMAgendaGroup(_LLMModel):
+    agenda_title: str = Field(description="안건 목차에 표시할 20자 이내 명사구 (그 안건에서 다룬 핵심 대상이 드러나게)")
+    item_ids: list[str] = Field(description="이 안건에 속하는 입력 항목 ID (입력 ID 그대로, 각 항목은 한 안건에만)")
+
+
+class LLMAgendaPlan(_LLMModel):
+    agendas: list[LLMAgendaGroup] = Field(description="처음 논의된 순서대로 나열")
+
+
+# ── [2-2] 항목 정돈 (agenda_split 변형) ────────────────────────────
+class LLMConsolidatedItem(_LLMModel):
+    source_item_ids: list[str] = Field(description="이 결과 항목으로 합치는 입력 항목 ID (하나면 다듬기 · 이동)")
+    section: SectionName = Field(description="결과 항목의 섹션 (주요 논의의 [정보] → 논의 배경 이동만 허용)")
+    tag: ItemTag | None = Field(description="섹션에 맞는 태그 (논의 배경 · 해당 태그 없는 미해결 이슈는 null)")
+    subtopic: str = Field(description="주요 논의만 소주제, 그 외 섹션은 빈 문자열")
+    text: str
+    evidence_utterance_indices: list[int]
+
+
+class LLMRemovedItem(_LLMModel):
+    item_id: str
+    reason: str
+
+
+class LLMConsolidation(_LLMModel):
+    items: list[LLMConsolidatedItem]
+    removed: list[LLMRemovedItem] = Field(description="안건 이해에 필요 없어 제거할 항목 (없으면 빈 배열)")
+
+
 # ── [3][5] 내용 검증 ────────────────────────────────────────────
 ContentCriterion = Literal["가짜 근거", "원문에 없는 내용", "과장 및 왜곡", "결정 상태 오류", "근거 연결 오류",
                            "중요 항목 누락", "중복 요약", "깊이 부족", "요약 범위"]
@@ -257,7 +288,7 @@ class LLMReadabilityRevision(_LLMModel):
 # ══════════════════════════════════════════════════════════════════════
 class ItemRevision(BaseModel):
     """항목 수정 이력 — 수정 전 값을 남김"""
-    stage: Literal["merge", "content_revise", "readability_revise", "structure_fix"]
+    stage: Literal["merge", "restructure", "consolidate", "content_revise", "readability_revise", "structure_fix"]
     loop: int = 0
     before_text: str
     before_evidence: list[int]
@@ -273,6 +304,7 @@ class SummaryItem(BaseModel):
     source_segment_ids: list[int] = []      # 이 항목을 만든 / 근거를 보탠 Segment
     status: ItemStatus = "ACTIVE"
     history: list[ItemRevision] = []
+    origin_item_ids: list[str] = []         # 안건 재구성 · 항목 정돈 전의 항목 ID (재구성: 이전 ID / 정돈: 합쳐진 항목 ID)
 
     @field_validator("evidence_utterance_indices")
     @classmethod
@@ -492,6 +524,7 @@ class FinalSummary(BaseModel):
 class SummaryState(TypedDict, total=False):
     # ── 입력 ──
     input_path: str                         # 주제 경계 탐지 결과 JSON 경로 (그래프 시작 시 전달)
+    variant: str                            # 파이프라인 변형 (config.VARIANT_STEPS의 키, ex. base · agenda_split)
     meeting_id: str
     metadata: dict[str, str]
     segments: list[Segment]
