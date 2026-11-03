@@ -9,6 +9,7 @@ from views import (
     delivery,
     folder,
     integrations,
+    search,
     shared_received,
     shared_sent,
 )
@@ -17,6 +18,7 @@ from views.meeting import render as render_meeting
 ROUTES = {
     "compose": compose.render,
     "archive": archive.render,
+    "search": search.render,
     "folder": folder.render,
     "note": render_meeting,
     "deliver": delivery.render,

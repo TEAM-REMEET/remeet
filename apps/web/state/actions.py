@@ -70,7 +70,29 @@ def open_archive(mtype: str = "", group: str = "", period: str = "") -> None:
         extra["archive_owner"] = "all"  # 기간 목록에 새로 들어올 때만 필터를 처음으로
     if period:
         extra.update(folder_role="all", folder_tab="all", period_wiki_folder="", todo_group="")
-    go("archive", archive_type=mtype, archive_group=group, archive_period=period, **extra)
+    go("archive", archive_type=mtype, archive_group=group, archive_period=period,
+       archive_query="", archive_qnonce=s.archive_qnonce + 1, **extra)
+
+
+def start_search(widget_key: str) -> None:
+    """회의록 첫 화면 검색칸: 치는 즉시 검색 결과 페이지로."""
+    s = get_state()
+    q = (st.session_state.get(widget_key) or "").strip()
+    if not q:
+        return
+    go("search", search_query=q, search_tab="", search_nonce=s.search_nonce + 1,
+       archive_qnonce=s.archive_qnonce + 1)  # 돌아가면 회의록 화면 검색칸은 비어 있게
+
+
+def set_search_query(widget_key: str) -> None:
+    """검색 결과 페이지에서 검색어를 고칠 때 (페이지는 그대로)."""
+    _set(search_query=(st.session_state.get(widget_key) or "").strip(), search_tab="")
+
+
+def open_meeting_search(mid: str, q: str) -> None:
+    """회의 내용 검색 결과 → 회의를 열고 원문에서 그 글자를 찾아 둠."""
+    open_meeting(mid)
+    _set(raw_query=q, left_tab="raw")
 
 
 def open_folder_type(mtype: str) -> None:
@@ -144,10 +166,12 @@ def open_new_note() -> None:
             from state import archive  # archive 가 selectors 를 써서 함수 안에서 불러옴
 
             p = archive.period(s, mtype, s.archive_period)
-            if p:
-                topic = archive.period_folder_ids(s, p)[0]
-    go("compose", nn_type=mtype, nn_topic=topic, nn_name="", nn_host=ME, nn_people=[],
-       compose_nonce=s.compose_nonce + 1)
+            if p:  # 기간 폴더에서 왔으면 그 기간 폴더를 미리 골라 둠
+                go("compose", nn_type=mtype, nn_group="period", nn_period=p.key, nn_topic=topic, nn_name="",
+                   nn_host=ME, nn_people=[], compose_nonce=s.compose_nonce + 1)
+                return
+    go("compose", nn_type=mtype, nn_group="project", nn_period="", nn_topic=topic, nn_name="", nn_host=ME,
+       nn_people=[], compose_nonce=s.compose_nonce + 1)
 
 
 def set_new_note_type(mtype: str) -> None:
@@ -166,16 +190,32 @@ def submit_compose(nonce: int) -> None:
     host = s.nn_host
     missing = [name for name, ok in (("회의 내용(글 또는 파일)", text or files), ("회의 제목", title),
                                      ("회의 날짜", day), ("주관자", host)) if not ok]
-    # 고른 값은 위젯에서 바로 읽음 (on_change 보다 버튼이 먼저 눌려도 맞도록)
-    s.nn_type = ss.get(f"cp_type_{nonce}") or s.nn_type
     topics = sel.folder_ids_of_type(s, s.nn_type)
     topic = s.nn_topic if s.nn_topic in topics else "new"
-    if topic == "new" and not s.nn_name.strip():
+    if s.nn_group == "period":
+        if not s.nn_period:
+            missing.append("폴더")
+    elif topic == "new" and not s.nn_name.strip():
         missing.append("새 폴더 이름")
     if missing:
         s.nn_error = " · ".join(missing) + "을(를) 입력해 주세요."
         return
     what = f"「{title}」"
+    reset = dict(nn_name="", nn_error="", nn_host=ME, nn_people=[], compose_nonce=nonce + 1)  # 입력칸 비우기
+    if s.nn_group == "period":
+        from state import archive
+
+        label = archive.period_label(s.nn_period)
+        exists = archive.period(s, s.nn_type, s.nn_period) is not None
+        if exists:
+            open_archive(s.nn_type, "period", s.nn_period)
+            toast = f"「{label}」 폴더에 {what} 회의록을 올렸어요. 정리가 끝나면 알려드릴게요."
+        else:
+            open_archive(s.nn_type, "period")
+            toast = f"「{label}」 폴더를 만들고 {what} 회의록을 올렸어요. 정리가 끝나면 알려드릴게요."
+        _set(toast=toast, **reset)
+        s.tree_open |= {"root", f"t:{s.nn_type}", f"g:{s.nn_type}:period"}
+        return
     if topic == "new":
         fid = f"n{len(s.new_folders) + 1}"
         name = s.nn_name.strip()
@@ -185,7 +225,7 @@ def submit_compose(nonce: int) -> None:
         fid = topic
         toast = f"「{sel.folders(s)[fid].name}」에 {what} 회의록을 올렸어요. 정리가 끝나면 알려드릴게요."
     go("folder", folder_type=s.nn_type, folder_id=fid, folder_tab="all", folder_role="all", todo_group="")
-    _set(nn_name="", nn_error="", nn_host=ME, nn_people=[], toast=toast, compose_nonce=nonce + 1)  # 입력칸 비우기
+    _set(toast=toast, **reset)
     s.tree_open |= {"root", f"t:{s.nn_type}", f"g:{s.nn_type}:project"}
 
 
@@ -196,7 +236,23 @@ def open_picker(kind: str) -> None:
     draft = [s.nn_host] if kind == "cp_host" else list(s.nn_people)
     first = draft[0] if draft else ME
     open_modal(kind, pick_draft=draft, pick_team=sel.person(first).team, pick_folder=s.nn_topic,
-               pick_name=s.nn_name, pick_nonce=s.pick_nonce + 1)
+               pick_name=s.nn_name, pick_type=s.nn_type, pick_group=s.nn_group, pick_period=s.nn_period,
+               pick_query="", pick_nonce=s.pick_nonce + 1)
+
+
+def set_pick_type(mtype: str) -> None:
+    """폴더 모달: 회의 종류를 바꾸면 그 종류의 폴더를 새로 고름."""
+    _set(pick_type=mtype, pick_folder="", pick_period="", pick_query="")
+
+
+def pick_folder_result(mtype: str, group: str, opt: str) -> None:
+    """폴더 모달에서 폴더 한 줄을 누름 (검색 결과면 회의 종류 · 보기도 그 폴더 것으로 바뀜)."""
+    _set(pick_type=mtype, pick_group=group,
+         pick_folder=opt if group == "project" else "", pick_period=opt if group == "period" else "")
+
+
+def set_pick_group(group: str) -> None:
+    _set(pick_group=group, pick_folder="", pick_period="", pick_query="")
 
 
 def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
@@ -216,7 +272,11 @@ def confirm_pick(kind: str) -> None:
     elif kind == "cp_people":
         s.nn_people = list(s.pick_draft)
     elif kind == "cp_folder":
-        s.nn_topic, s.nn_name = s.pick_folder, s.pick_name.strip()
+        s.nn_type, s.nn_group = s.pick_type, s.pick_group
+        if s.pick_group == "period":
+            s.nn_period = s.pick_period
+        else:
+            s.nn_topic, s.nn_name, s.nn_period = s.pick_folder, s.pick_name.strip(), ""
     s.nn_error = ""
     close_modal()
 
@@ -310,6 +370,18 @@ def search_keyword(keyword: str) -> None:
         _set(raw_query=keyword, left_tab="raw", highlight=[], highlight_key="")
 
 
+def set_speaker(mid: str, label: str, widget_key: str) -> None:
+    """미지정 화자(예: 화자 3)에 사람 이름 지정 → 이 회의의 그 화자 발언 전체에 적용."""
+    s = get_state()
+    pid = st.session_state.get(widget_key)
+    if pid:
+        s.speaker_map[f"{mid}:{label}"] = pid  # 원문·발언 비율에 바로 반영 (위쪽 알림은 띄우지 않음: 화면이 밀리지 않도록)
+
+
+def clear_speaker(mid: str, label: str) -> None:
+    get_state().speaker_map.pop(f"{mid}:{label}", None)
+
+
 def toggle_todo(key: str) -> None:
     s = get_state()
     s.done[key] = not s.done.get(key, False)
@@ -320,11 +392,40 @@ def mark_copied(key: str) -> None:
 
 
 def start_edit() -> None:
+    s = get_state()
+    s.agenda_backup = list(s.added_agendas.get(s.meeting_id, []))  # 취소하면 이 상태로 되돌림
     _set(editing=True, just_shared=False)
 
 
 def stop_edit() -> None:
+    """편집 취소: 이번 편집에서 추가·수정한 안건도 편집 전으로 되돌림 (확정하면 남음)."""
+    s = get_state()
+    if s.editing:
+        s.added_agendas[s.meeting_id] = list(s.agenda_backup)
     _set(editing=False)
+
+
+def add_agenda(mid: str) -> None:
+    """편집 중 「+ 안건 추가」: 빈 안건 한 줄을 넣고 바로 제목을 적을 수 있게."""
+    s = get_state()
+    s.added_agendas.setdefault(mid, []).append("")
+
+
+def set_agenda_title(mid: str, index: int, widget_key: str) -> None:
+    get_state().added_agendas[mid][index] = (st.session_state.get(widget_key) or "").strip()
+
+
+def remove_agenda(mid: str, index: int) -> None:
+    s = get_state()
+    s.added_agendas[mid].pop(index)
+
+
+def request_branch(mid: str) -> None:
+    """주관자가 아닐 때 「주관자에게 요청」: 안건 분리 요청을 보내고 알림."""
+    s = get_state()
+    s.branch_requests.add(mid)
+    host = sel.person(repo.meeting(mid).host).name
+    s.toast = f"{host} 님에게 안건 분리를 요청했어요. 주관자가 분리하면 알려드릴게요."
 
 
 def branch_agenda() -> None:
@@ -387,7 +488,6 @@ def open_assign(key: str, text: str) -> None:
         assign_searching=False,
         assign_pending="",
         assign_query="",
-        assign_reason="",
         assign_team="",
     )
 
@@ -434,8 +534,8 @@ def set_integration(tool_id: str) -> None:
         s.integrations[tool_id] = "off"
         s.toast = f"{tool.name} 연결을 해제했어요."
     elif cur == "expired":
+        # 갱신 안내는 전체 알림으로 띄우지 않고, 전송에 실패했던 회의록 안에서 보여 줌 (views/meeting/header.py)
         s.integrations[tool_id] = "on"
-        s.toast = f"{tool.name} 인증을 갱신했어요. 다시 전송할 수 있어요."
     elif tool.phase2:
         s.toast = f"{tool.name} 연동은 2단계(Phase 2)에서 제공될 예정이에요."
     else:
@@ -443,14 +543,9 @@ def set_integration(tool_id: str) -> None:
         s.toast = f"{tool.name}을(를) 연결했어요."
 
 
-def toggle_ai_folder(fid: str) -> None:
-    s = get_state()
-    s.ai_folders[fid] = not s.ai_folders.get(fid, False)
-
-
-def toggle_ai_option(key: str) -> None:
-    s = get_state()
-    s.ai_toggles[key] = not s.ai_toggles.get(key, False)
+def resend_export(tool_id: str, mid: str) -> None:
+    """인증을 갱신한 뒤 회의록 안에서 「다시 보내기」."""
+    get_state().export_resent.add(f"{tool_id}:{mid}")
 
 
 
@@ -466,6 +561,8 @@ def open_notification(nid: str) -> None:
     n = next(x for x in repo.notifications() if x.id == nid)
     if n.meeting:
         open_meeting(n.meeting)
+    elif n.folder and n.folder in sel.folders(s):  # 멤버로 추가됨 → 그 폴더로
+        open_folder(n.folder)
     elif n.kind == "integration":
         go("mcp")
 

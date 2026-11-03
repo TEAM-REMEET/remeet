@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -13,6 +14,7 @@ from state.store import AppState, Delivery, get_state
 # 고정 경로 화면: screen → (url_path, 탭 제목)
 STATIC = {
     "compose": ("", "새 회의록"),
+    "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),
     "recv": ("shared-received", "공유 받은 회의"),
     "mcp": ("integrations", "외부 연동"),

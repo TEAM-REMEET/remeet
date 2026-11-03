@@ -123,13 +123,41 @@ def _agenda_tab(s: AppState, m: Meeting) -> None:
                             markup('<span class="branch-box">같은 폴더에 이 안건만 다루는 회의록을 새로 만들어 이어서 논의할 수 있어요.</span>')
                             if host:
                                 button("새 회의록으로 분리", key="do_branch", variant="primary", on_click=actions.branch_agenda)
+                            elif m.id in s.branch_requests:
+                                button("요청을 보냈어요 · 주관자가 분리하면 알려드려요", key="ask_branch_done",
+                                       variant="secondary", icon=":material/check:", disabled=True)
                             else:
-                                button("주관자에게 요청", key="ask_branch", variant="secondary")
+                                button("주관자에게 요청", key="ask_branch", variant="secondary",
+                                       icon=":material/send:", on_click=actions.request_branch, args=(m.id,))
                 if branched:
                     button("↳ 같은 폴더에 「결제 오류 대응」 회의록으로 분리됨 · 열기", key="openbranch", variant="ghost",
                            on_click=actions.open_meeting, args=("m9",), width="stretch")
+        _added_agendas(s, m, editing=s.editing and host)
         if s.editing and host:
-            button("\\+ 안건 추가", key="add_agenda", variant="dashed", width="stretch")
+            button("\\+ 안건 추가", key="add_agenda", variant="dashed", width="stretch",
+                   on_click=actions.add_agenda, args=(m.id,))
+
+
+def _added_agendas(s: AppState, m: Meeting, *, editing: bool) -> None:
+    """「+ 안건 추가」로 넣은 안건: 편집 중에는 제목 입력칸 + 빼기, 아니면 제목만."""
+    added = s.added_agendas.get(m.id, [])
+    base = len(m.agendas)
+    for k, title in enumerate(added):
+        no = base + k + 1
+        if editing:
+            # key 에 개수를 붙여, 하나를 빼면 칸을 새로 만들어 남은 제목이 제자리에 오도록
+            widget_key = f"agadd_{m.id}_{k}_{len(added)}"
+            with st.container(key=f"agadd-{k}", horizontal=True, vertical_alignment="center", gap="small"):
+                st.html(f'<span class="agadd-no">안건 {no}</span>', width="content")
+                st.text_input(f"안건 {no} 제목", value=title, key=widget_key, label_visibility="collapsed",
+                              placeholder="새 안건 제목을 적어 주세요",
+                              on_change=actions.set_agenda_title, args=(m.id, k, widget_key))
+                button("", key=f"agadd_rm_{k}", variant="ghost", icon=":material/close:", help="이 안건 빼기",
+                       on_click=actions.remove_agenda, args=(m.id, k))
+        elif title:
+            with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+                markup(f'<span class="agadd-view"><code>안건 {no}</code> <b>{esc(title)}</b></span>')
+                st.html(tag("추가함", "host"), width="content")
 
 
 # ---------------------------------------------------------------- 액션 아이템
@@ -193,7 +221,7 @@ _TABS = {"sum": _summary_tab, "ag": _agenda_tab, "todo": _todo_tab, "kw": _keywo
 def render_insights(s: AppState, m: Meeting) -> None:
     with st.container(key="md-tabs"):
         button_group(
-            [("sum", "요약"), ("ag", f"안건 {len(m.agendas)}"), ("todo", f"액션 아이템 {len(m.todos)}"),
+            [("sum", "요약"), ("ag", f"안건 {len(m.agendas) + sum(1 for t in s.added_agendas.get(m.id, []) if t)}"), ("todo", f"액션 아이템 {len(m.todos)}"),
              ("kw", "키워드·일정"), ("rel", f"연관 회의 {len(model.related(s, m))}")],
             s.insight_tab, actions.set_insight_tab, key="insight", style="tab",
         )

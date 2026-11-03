@@ -217,11 +217,12 @@ class AiToggle:
 @dataclass(frozen=True)
 class Notification:
     id: str
-    kind: str  # review | shared | integration
+    kind: str  # review | shared | integration | member
     text: str
     when: str
     meeting: str | None
     unread: bool
+    folder: str | None = None  # member: 나를 멤버로 추가한 폴더
 
 
 @dataclass(frozen=True)

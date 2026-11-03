@@ -30,6 +30,20 @@ def speaker_name(short: str) -> str:
     return sel.name_of(pid) if pid else short
 
 
+def speaker_pid(s: AppState, m: Meeting, label: str) -> str | None:
+    """원문 화자 → 사람 id. 인식된 사람이 아니면 주관자가 지정한 이름, 그것도 없으면 None(미지정)."""
+    return sel.speaker_id(label) or s.speaker_map.get(f"{m.id}:{label}")
+
+
+def speakers(s: AppState, m: Meeting) -> list[tuple[str, str | None, int]]:
+    """이 회의 원문의 화자: [(원문 화자 이름, 사람 id 또는 None, 발언 수)] · 나온 순서대로."""
+    counts: dict[str, int] = {}
+    for p in m.paragraphs:
+        if not p.is_heading:
+            counts[p.speaker] = counts.get(p.speaker, 0) + 1
+    return [(label, speaker_pid(s, m, label), n) for label, n in counts.items()]
+
+
 def speaker_initial(short: str) -> str:
     pid = sel.speaker_id(short)
     return sel.person(pid).initial if pid else (short or " ")[:1]

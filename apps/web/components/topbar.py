@@ -12,7 +12,12 @@ from ui.buttons import button
 from ui.html import markup
 from utils.text import esc, md_escape
 
-_KIND_ICON = {"review": ":material/rate_review:", "shared": ":material/inbox:", "integration": ":material/power:"}
+_KIND_ICON = {
+    "review": ":material/rate_review:",
+    "shared": ":material/inbox:",
+    "integration": ":material/power:",
+    "member": ":material/group_add:",  # 폴더 멤버로 추가됨
+}
 
 
 def _crumbs() -> None:

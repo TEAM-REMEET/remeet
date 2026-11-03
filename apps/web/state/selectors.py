@@ -35,6 +35,10 @@ def me() -> Person:
     return person(ME)
 
 
+def all_people_ids() -> list[str]:
+    return list(repo.people())
+
+
 def team_groups() -> list[tuple[str, list[str]]]:
     """[(팀 이름, [사람 id])] — 전체 사람을 팀별로 묶음 (내 팀 먼저). 주관자·참석자 고르기용."""
     groups: dict[str, list[str]] = {}
@@ -178,8 +182,7 @@ def my_todo_status(state: AppState, mid: str) -> str:
 TODO_GROUPS = (
     ("left", "내 할 일이 남은 회의"),
     ("done", "내 할 일을 다 끝낸 회의"),
-    ("none", "나에게 할당된 할 일이 없는 회의"),
-)
+)  # 나에게 할당된 할 일이 없는 회의는 판넬에 넣지 않아요
 
 
 def group_by_todo(state: AppState, ids: list[str]) -> list[tuple[str, str, list[str]]]:
@@ -311,6 +314,8 @@ def breadcrumbs(state: AppState) -> list[str]:
     fs = folders(state)
     if s == "compose":
         return ["새 회의록"]
+    if s == "search":
+        return ["회의록", "검색 결과"]
     if s == "sent":
         return ["공유", "공유한 회의"]
     if s == "recv":
