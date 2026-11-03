@@ -23,6 +23,7 @@ from ui.html import markup
 from ui.icons import icon
 from ui.layout import empty_state, page, page_header
 from ui.tags import tag
+from utils.browser import ime_live
 from utils.text import esc
 from views.folder import FolderPage, render_folder_page
 
@@ -47,10 +48,6 @@ def _option_card(key: str, *, icon_name: str, title: str, meta: str, last: str, 
             + f'</span>{icon("chevron-right", 18, "#9CA1A9", 2)}</div>'
         )
         button(title, key=f"open_{key}", variant="secondary", on_click=on_click, args=args, width="stretch")
-
-
-def _back(label: str, on_click, args=()) -> None:
-    button(f"← {label}", key="archive_back", variant="back", on_click=on_click, args=args)
 
 
 def _latest(ids: list[str] | tuple[str, ...]) -> str:
@@ -87,7 +84,6 @@ def _root(s: AppState) -> None:
 # ---------------------------------------------------------------- 2. 회의 종류
 def _type(s: AppState, t: str) -> None:
     mtype = repo.meeting_types()[t]
-    _back("회의록", actions.open_archive)
     page_header(mtype.name, f"{mtype.meta} · 보는 방식을 골라 주세요")
     ps = arc.periods(s, t)
     fids = sel.folder_ids_of_type(s, t)
@@ -146,7 +142,6 @@ def _period_card(s: AppState, t: str, p: arc.Period) -> None:
 def _periods(s: AppState, t: str) -> None:
     mtype = repo.meeting_types()[t]
     label = arc.PERIOD_LABEL[t]
-    _back(mtype.name, actions.open_archive, (t,))
     page_header(f"{mtype.name} · {label}", f"{mtype.meta} · 회의 날짜 기준으로 {arc.PERIOD_UNIT[t]}마다 묶었어요")
     all_ps = arc.periods(s, t)
     # 카드의 태그와 같은 기준: 안에 든 프로젝트 폴더를 모두 내가 만들었으면 '내가 만든 폴더', 아니면 '멤버'
@@ -219,7 +214,6 @@ def _projects(s: AppState, t: str) -> None:
     member = [k for k in mine_ids if sel.folders(s)[k].host != ME]
     shown = {"mine": own, "member": member}.get(s.folder_owner_filter, mine_ids)
 
-    _back(mtype.name, actions.open_archive, (t,))
     with st.container(horizontal=True, vertical_alignment="bottom"):
         page_header(f"{mtype.name} · 프로젝트별", f"{mtype.meta} · 큰 주제별로 폴더에 쌓여요")
         button("회의록 올리기", key="type_upload", variant="primary", on_click=actions.open_new_note)
@@ -244,12 +238,23 @@ def _projects(s: AppState, t: str) -> None:
     )
 
 
+# ---------------------------------------------------------------- 검색 (회의록 첫 화면에만)
+def _search_bar(s: AppState) -> None:
+    """치는 즉시(한글 포함) 검색 결과 페이지로 이동. 결과는 views/search.py"""
+    key = f"archive_q_{s.archive_qnonce}"
+    st.text_input("회의록 검색", key=key, placeholder="회의명 · 폴더명 · 구성원 · 회의 내용으로 찾기",
+                  label_visibility="collapsed", icon=":material/search:", live=True,
+                  on_change=actions.start_search, args=(key,))
+    ime_live("회의록 검색")
+
+
 # ---------------------------------------------------------------- 진입점
 def render() -> None:
     s = get_state()
     t, g, p = s.archive_type, s.archive_group, s.archive_period
     with page("archive"):
         if t not in repo.meeting_types():
+            _search_bar(s)
             _root(s)
         elif g == "project":
             _projects(s, t)

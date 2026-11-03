@@ -52,7 +52,7 @@ class AppState:
     login_error: bool = False
 
     # --- 라우팅
-    screen: str = "compose"  # compose | archive | folder | note | deliver | sent | recv | mcp
+    screen: str = "compose"  # compose | archive | search | folder | note | deliver | sent | recv | mcp
     pending_route: str | None = None  # 콜백이 예약한 이동 (state/router.py)
     nav_by_action: bool = False
     last_route: str | None = None
@@ -81,12 +81,16 @@ class AppState:
     insight_tab: str = "sum"  # sum | ag | todo | kw | rel
     left_tab: str = "raw"  # raw | ratio
     raw_query: str = ""
+    speaker_map: dict[str, str] = field(default_factory=dict)  # "회의id:화자 3" → 사람 id (미지정 화자에 이름 지정)
     highlight: list[str] = field(default_factory=list)
     highlight_key: str = ""
     todo_scope: str = "mine"
     editing: bool = False
     just_shared: bool = False
     branched: bool = False
+    added_agendas: dict[str, list[str]] = field(default_factory=dict)  # 편집 중 「+ 안건 추가」로 넣은 안건 (회의 id → 제목들)
+    agenda_backup: list[str] = field(default_factory=list)  # 편집 시작 때의 추가 안건 (취소하면 되돌림)
+    branch_requests: set[str] = field(default_factory=set)  # 주관자에게 안건 분리를 요청한 회의
     done: dict[str, bool] = field(default_factory=dict)  # "mid:index"
     assigned: dict[str, str] = field(default_factory=dict)  # "mid:index" → 이름
     status_override: dict[str, str] = field(default_factory=dict)
@@ -111,7 +115,6 @@ class AppState:
     assign_scope_all: bool = False
     assign_sort: str = "score"
     assign_pending: str = ""
-    assign_reason: str = ""
     assign_team: str = ""  # 담당자 지정 · 팀에서 직접 고르기 (빈 값이면 추천 1순위의 팀)
 
     # --- 폴더 멤버 추가 (팀 → 팀원)
@@ -130,15 +133,14 @@ class AppState:
 
     # --- 외부 연동
     integrations: dict[str, str] = field(default_factory=lambda: dict(repo.integrations()["initial_status"]))
-    ai_folders: dict[str, bool] = field(default_factory=lambda: dict(repo.integrations()["ai_default_folders"]))
-    ai_toggles: dict[str, bool] = field(
-        default_factory=lambda: {t.key: t.default for t in repo.integrations()["ai_toggles"]}
-    )
+    export_resent: set[str] = field(default_factory=set)  # 인증 갱신 후 다시 보낸 회의 ("jira:m3")
 
     # --- 새 회의록 작성 화면
     nn_type: str = "weekly"
     nn_topic: str = "rel"
     nn_name: str = ""
+    nn_group: str = "project"  # 폴더를 고른 보기: project(프로젝트별) | period(주차별·월별·일별)
+    nn_period: str = ""  # 기간 폴더 키 (w1026 · m10 · d1023) · 아직 없는 기간이면 새로 만들어질 폴더
     nn_error: str = ""  # 작성 화면 오류 안내 (빈 값이면 없음)
     nn_host: str = CURRENT_USER_ID  # 주관자 (기본: 나)
     nn_people: list[str] = field(default_factory=list)  # 참석자
@@ -147,6 +149,10 @@ class AppState:
     pick_draft: list[str] = field(default_factory=list)  # 고른 사람 (주관자는 1명)
     pick_folder: str = ""  # 고른 폴더 id 또는 "new"
     pick_name: str = ""  # 새 폴더 이름
+    pick_type: str = "weekly"  # 폴더 모달에서 고른 회의 종류
+    pick_group: str = "project"  # 폴더 모달에서 고른 보기
+    pick_period: str = ""  # 폴더 모달에서 고른 기간 폴더 키 또는 "new"
+    pick_query: str = ""  # 폴더 모달 검색어
     pick_nonce: int = 0  # 모달을 열 때마다 바뀌어 위젯 선택값을 새로 맞춤
     compose_nonce: int = 0  # 생성하기 후 입력칸을 비우기 위해 바뀜
 
@@ -164,6 +170,11 @@ class AppState:
     #     미참석한 회의는 원래 보이지 않고, 여기 들어 있을 때만 '미참석 · 공유받음'으로 보여요.
     #     (목업: 박도윤님이 10/22 회의를 빠진 나에게 공유해 둔 상태)
     absent_shares: dict[str, list[str]] = field(default_factory=lambda: {"m5": ["yun"]})
+    archive_query: str = ""  # (예전) 보관함 검색어
+    search_query: str = ""  # 검색 결과 페이지의 검색어
+    search_tab: str = ""  # 회의명 | 폴더명 | 구성원 | 회의 내용 (빈 값이면 결과가 있는 첫 버튼)
+    search_nonce: int = 0  # 검색 페이지로 새로 들어올 때마다 바뀜 (입력칸 새로 · 커서 맞추기)
+    archive_qnonce: int = 0  # 화면을 옮길 때마다 바뀌어 검색칸을 비움
     archive_owner: str = "all"  # 기간별 목록의 전체 / 내가 만든 폴더 / 멤버 (기간 폴더 화면까지 이어짐)
     period_wiki_folder: str = ""  # 기간 폴더 화면 · 위키 탭에서 보고 있는 프로젝트 폴더
     todo_group: str = ""  # 회의 목록 판넬: left(할 일 남음) | done(다 끝냄) | none(할당 없음) · 빈 값이면 회의가 있는 첫 판넬

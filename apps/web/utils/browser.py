@@ -72,3 +72,37 @@ def scroll_to_bottom(selector: str, nonce: str = "") -> None:
         " }"
         " }, 150);"
     )
+
+def ime_live(label: str) -> None:
+    """한글처럼 조합해서 쓰는 글자도 「치는 대로」 검색되게.
+
+    Streamlit 의 live 입력칸은 한글 조합 중(마지막 글자가 아직 확정 전)에는 값을 보내지 않아서 엔터를 쳐야 검색돼요.
+    조합 중 입력이 0.4초 멈추면 입력칸을 잠깐 벗어났다(blur) 바로 돌아와(focus) 조합을 확정시켜 값이 바로 반영되게 합니다.
+    label: st.text_input 의 label (화면에서는 숨겨도 aria-label 로 남아요)
+    """
+    _run(
+        "window.__imeLabels = window.__imeLabels || [];"
+        f" if (window.__imeLabels.indexOf({json.dumps(label)}) < 0) window.__imeLabels.push({json.dumps(label)});"
+        " if (!window.__imeLive) { window.__imeLive = true; var timers = new WeakMap();"
+        "  document.addEventListener('input', function (e) {"
+        "   var el = e.target; if (!el || el.tagName !== 'INPUT' || !e.isComposing) return;"
+        "   if (window.__imeLabels.indexOf(el.getAttribute('aria-label') || '') < 0) return;"
+        "   clearTimeout(timers.get(el));"
+        "   timers.set(el, setTimeout(function () {"
+        "    if (document.activeElement !== el) return;"
+        "    var pos = el.value.length; el.blur();"
+        "    setTimeout(function () { el.focus(); try { el.setSelectionRange(pos, pos); } catch (_) {} }, 0);"
+        "   }, 400));"
+        "  }, true); }"
+    )
+
+
+def focus_input(label: str, nonce: str = "") -> None:
+    """label 이 같은 입력칸에 커서를 두고 글자 끝으로 (검색 결과 페이지로 넘어와도 이어서 칠 수 있게)."""
+    target = json.dumps(label)
+    _run(
+        f"/* {nonce} */ setTimeout(function () {{"
+        f" var el = document.querySelector('input[aria-label=' + JSON.stringify({target}) + ']'); if (!el) return;"
+        " el.focus(); var n = el.value.length; try { el.setSelectionRange(n, n); } catch (_) {}"
+        " }, 120);"
+    )

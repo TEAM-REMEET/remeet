@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-from config import WORKSPACE_NAME, WORKSPACE_PLAN
 from data import repository as repo
 from state import actions
 from state import archive as arc
@@ -24,7 +23,7 @@ from state.store import get_state
 from ui.avatar import avatar
 from ui.buttons import button
 from ui.html import markup
-from ui.icons import brand_logo, icon
+from ui.icons import brand_logo
 from utils.text import esc, safe_key
 
 _TREE_ORDER = ("monthly", "weekly", "normal")  # 회의록 페이지와 같은 순서
@@ -109,12 +108,9 @@ def render_sidebar() -> None:
     s = get_state()
     me = sel.me()
     with st.sidebar, st.container(key="sidebar"):
-        markup(f'<div class="sb-logo">{brand_logo(20)}</div>')  
-        markup(
-            '<div class="ws"><span class="mark">데</span>'
-            f'<span class="name"><b>{esc(WORKSPACE_NAME)}</b><span>{esc(WORKSPACE_PLAN)}</span></span>'
-            f'{icon("chevrons-updown", 14, "#80858E", 2)}</div>'
-        )
+        with st.container(key="sb-logo-link", gap=None):  
+            markup(f'<div class="sb-logo">{brand_logo(20)}</div>')
+            button("새 회의록으로", key="logo_home", variant="ghost", on_click=actions.open_new_note)
 
         with st.container(key="sidebar-groups", gap=None):
             with st.container(key="navgroup-main"):

@@ -1,4 +1,4 @@
-"""외부 연동: 외부 도구 연결 + AI(MCP)가 읽을 수 있는 범위."""
+"""외부 연동: 회의 결과를 보낼 외부 도구 연결."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import streamlit as st
 
 from data import repository as repo
 from state import actions
-from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button
 from ui.html import markup
@@ -40,42 +39,22 @@ def _tool_rows(s: AppState, cfg: dict) -> None:
                 + ('<span class="pill-label">Phase 2</span>' if t.phase2 else "")
                 + f'{tag(label, tone)}</span><span class="d">{esc(desc)}</span>'
                 + ('<span class="warn">인증이 만료되어 전송이 실패할 수 있어요. 다시 연결해 주세요.</span>' if st_ == "expired" else "")
+                + _resend_hint(s, cfg, t.id, st_)
                 + "</span></div>"
             )
             button(btn, key=f"integ_{t.id}", variant=variant, on_click=actions.set_integration, args=(t.id,))
 
 
-def _ai_scope() -> None:
-    s = get_state()
-    cfg = repo.integrations()
-    folders = sel.folders(s)
-    types = repo.meeting_types()
-    with st.container(key="ai-scope"):
-        markup('<div style="display:flex;align-items:center;gap:8px"><h2 class="sec-h">AI가 볼 수 있는 범위</h2>'
-               '<span class="pill-label">MCP</span></div>'
-               '<p class="hint" style="font-size:13px;color:#5F646D">Claude·Cursor 같은 AI 도구는 내 계정과 같은 권한으로만 읽어요. '
-               "내가 멤버인 폴더 중에서 고를 수 있고, 공유 받은 회의는 연동되지 않아요.</p>")
-        ids = sel.all_my_folder_ids(s)
-        for start in range(0, len(ids), 4):
-            cols = st.columns(4, gap="small")
-            for col, fid in zip(cols, ids[start:start + 4]):
-                f = folders[fid]
-                on = s.ai_folders.get(fid, False)
-                with col, st.container(key=f"aif-{fid}{'-on' if on else ''}"):
-                    st.checkbox(f.name, value=on, key=f"aif_cb_{fid}", on_change=actions.toggle_ai_folder, args=(fid,),
-                                help=None)
-                    markup(f'<span class="hint" style="margin-left:28px">{esc(types[f.type].name)} · 회의록 {len(f.notes)}개</span>')
-        with st.container(gap=None):
-            for t in cfg["ai_toggles"]:
-                with st.container(key=f"aitg-{t.key}", horizontal=True, vertical_alignment="center"):
-                    markup(f'<span style="display:flex;flex-direction:column;line-height:1.4"><b style="font-weight:600">{esc(t.label)}</b>'
-                           f'<span style="font-size:12px;color:#80858E">{esc(t.desc)}</span></span>')
-                    st.toggle(t.label, value=s.ai_toggles.get(t.key, False), key=f"aitg_{t.key}", label_visibility="collapsed",
-                              on_change=actions.toggle_ai_option, args=(t.key,), width="content")
+def _resend_hint(s: AppState, cfg: dict, tool_id: str, state: str) -> str:
+    """갱신한 뒤: 아직 다시 보내지 않은 회의록이 있으면 그 회의록 안에서 보낼 수 있다고 알려 줌."""
+    pending = [mid for mid in cfg["failed_exports"].get(tool_id, []) if f"{tool_id}:{mid}" not in s.export_resent]
+    if state != "on" or not pending:
+        return ""
+    titles = ", ".join(f"「{repo.meeting(mid).title}」" for mid in pending)
+    return f'<span class="d" style="color:#1D6B43">전송에 실패했던 회의록 {esc(titles)}에서 다시 보낼 수 있어요.</span>'
 
 
 def render() -> None:
     with page("mcp"):
-        page_header("외부 연동", "회의 결과를 팀이 쓰는 도구로 보내고, AI 도구가 읽을 수 있는 범위를 정해요.")
+        page_header("외부 연동", "확정한 회의 결과를 팀이 쓰는 도구로 보내요.")
         _tools()
-        _ai_scope()

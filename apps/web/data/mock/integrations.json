@@ -92,5 +92,8 @@
     "cs": true,
     "q4": true,
     "des": false
+  },
+  "failed_exports": {
+    "jira": ["m3"]
   }
 }

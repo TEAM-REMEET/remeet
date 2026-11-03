@@ -186,6 +186,8 @@ def integrations() -> dict:
         "initial_status": raw["initial_status"],
         "ai_toggles": [AiToggle(**t) for t in raw["ai_toggles"]],
         "ai_default_folders": raw["ai_default_folders"],
+        # 도구 id → 인증 만료로 보내지 못한 회의 id (예: Jira 이슈 생성 실패)
+        "failed_exports": raw.get("failed_exports", {}),
     }
 
 
