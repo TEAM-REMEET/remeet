@@ -19,7 +19,7 @@ from state import delivery, router
 from state.store import get_state
 from ui.theme import inject_css
 from utils import browser
-from views import ROUTES, login
+from views import ROUTES, login, not_found
 
 st.set_page_config(page_title=f"{APP_TITLE} 프로토타입", page_icon=APP_ICON, layout="wide",
                    initial_sidebar_state="expanded")
@@ -40,6 +40,7 @@ def main() -> None:
     # URL 라우팅: 화면마다 st.Page 하나. 메뉴는 직접 만든 사이드바를 쓰므로 기본 메뉴는 숨김
     pages = router.build_pages(ROUTES)
     current = st.navigation(list(pages.values()), position="hidden")
+    router.check_not_found(pages)  # 처음 들어온 주소가 없는 주소면 404 화면으로
 
     if not state.logged_in:
         if state.logged_out:
@@ -57,7 +58,10 @@ def main() -> None:
     render_topbar()
     with st.container(key="content", gap="medium"):
         render_toast()
-        current.run()
+        if state.not_found:
+            not_found.render()  # 없는 주소 → 404
+        else:
+            current.run()
     render_active_dialog()
 
 

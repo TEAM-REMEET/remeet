@@ -1,16 +1,3 @@
-"""왼쪽 사이드바: 워크스페이스, 새 회의록, 회의록 트리(VS Code 탐색기처럼), 공유, 연동, 사용자.
-
-회의록 트리
-  ▾ 회의록
-    ▾ 주간 회의
-      ▸ 주차별      → 📁 10월 4주차
-      ▸ 프로젝트별   → 📁 폴더
-    (회의 파일은 트리에 펼치지 않고, 폴더를 누르면 폴더 화면에서 목록을 봐요)
-    ▸ 월간 회의 (월별 / 프로젝트별)
-    ▸ 일반 회의 (일별 / 프로젝트별)
-폴더 줄의 화살표는 바로 펼치기/접기, 이름은 그 화면으로 이동(+ 펼치기)합니다.
-"""
-
 from __future__ import annotations
 
 import streamlit as st
@@ -108,13 +95,12 @@ def render_sidebar() -> None:
     s = get_state()
     me = sel.me()
     with st.sidebar, st.container(key="sidebar"):
-        with st.container(key="sb-logo-link", gap=None):  
+        with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 새 회의록으로
             markup(f'<div class="sb-logo">{brand_logo(20)}</div>')
             button("새 회의록으로", key="logo_home", variant="ghost", on_click=actions.open_new_note)
-
         with st.container(key="sidebar-groups", gap=None):
             with st.container(key="navgroup-main"):
-                _nav_item("새 회의록", "compose", on=s.screen == "compose", on_click=actions.open_new_note,
+                _nav_item("새 회의록", "compose", on=s.screen == "compose" and not s.not_found, on_click=actions.open_new_note,
                           icon_name=":material/edit_square:")
 
             with st.container(key="navgroup-meetings", gap=None):
