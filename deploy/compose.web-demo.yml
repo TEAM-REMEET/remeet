@@ -1,0 +1,9 @@
+services:
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+    image: remeet-web:demo
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
