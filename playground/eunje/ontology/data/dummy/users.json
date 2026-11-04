@@ -1,0 +1,41 @@
+{
+  "teams": [
+    {"team_id": "t-pay", "name": "결제팀", "is_active": true},
+    {"team_id": "t-design", "name": "디자인팀", "is_active": true},
+    {"team_id": "t-fin", "name": "재무팀", "is_active": true},
+    {"team_id": "t-mkt", "name": "마케팅팀", "is_active": true}
+  ],
+  "roles": [
+    {"role_id": "r-be", "name": "백엔드"},
+    {"role_id": "r-de", "name": "디자이너"},
+    {"role_id": "r-fa", "name": "재무 담당"},
+    {"role_id": "r-mk", "name": "마케터"}
+  ],
+  "skills": [
+    {"skill_id": "s-pg", "name": "결제 연동"},
+    {"skill_id": "s-log", "name": "로그 분석"},
+    {"skill_id": "s-figma", "name": "Figma"},
+    {"skill_id": "s-budget", "name": "예산 산정"},
+    {"skill_id": "s-promo", "name": "프로모션 기획"}
+  ],
+  "people": [
+    {"user_id": "u1", "name": "김결제", "is_active": true, "position": "senior",
+     "team_id": "t-pay", "role_id": "r-be",
+     "skills": [{"skill_id": "s-pg", "level": 4}, {"skill_id": "s-log", "level": 3}]},
+    {"user_id": "u2", "name": "이로그", "is_active": true, "position": "junior",
+     "team_id": "t-pay", "role_id": "r-be",
+     "skills": [{"skill_id": "s-log", "level": 2}]},
+    {"user_id": "u3", "name": "박디자", "is_active": true, "position": "mid",
+     "team_id": "t-design", "role_id": "r-de",
+     "skills": [{"skill_id": "s-figma", "level": 4}]},
+    {"user_id": "u4", "name": "최재무", "is_active": true, "position": "mid",
+     "team_id": "t-fin", "role_id": "r-fa",
+     "skills": [{"skill_id": "s-budget", "level": 3}]},
+    {"user_id": "u5", "name": "김마케", "is_active": true, "position": "mid",
+     "team_id": "t-mkt", "role_id": "r-mk",
+     "skills": [{"skill_id": "s-promo", "level": 3}]},
+    {"user_id": "u6", "name": "한퇴사", "is_active": false, "position": "mid",
+     "team_id": "t-design", "role_id": "r-de",
+     "skills": [{"skill_id": "s-figma", "level": 3}]}
+  ]
+}

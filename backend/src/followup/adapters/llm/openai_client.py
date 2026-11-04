@@ -5,8 +5,9 @@ from urllib.request import Request, urlopen
 
 
 class OpenAIClient:
-    def __init__(self, model="gpt-6-luna"):
+    def __init__(self, model="gpt-6-luna", reasoning_effort="low"):
         self.model = model
+        self.reasoning_effort = reasoning_effort
         self.calls = []
 
     def __call__(self, system, user):
@@ -15,7 +16,7 @@ class OpenAIClient:
             raise ValueError("OPENAI_API_KEY is required")
         payload = {
             "model": self.model,
-            "reasoning_effort": "low",
+            "reasoning_effort": self.reasoning_effort,
             "max_completion_tokens": 16384,
             "service_tier": "default",
             "messages": [{"role": "system", "content": system},

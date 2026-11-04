@@ -1,16 +1,16 @@
-# recommend_graph.py — 담당자 추천 에이전트 코드 설명
+# recommend_agent.py — 담당자 추천 에이전트 코드 설명
 
 담당자가 정해지지 않은 액션아이템마다 회의 맥락을 읽고, 직급(senior / mid / junior)별 담당자 후보를 추천한다. 결과는 관리자가 HITL 화면에서 검토한다. 에이전트는 추천만 남기고 배정(`ASSIGNED_TO`)은 하지 않는다.
 
 ## 실행
 
-`ontology` 폴더에서 실행한다. `load.py`로 데이터를 적재한 뒤, Neo4j가 켜져 있어야 한다.
+`ontology` 폴더에서 실행한다. `load.py`로 데이터를 적재한 뒤(`uv run python scripts/load.py --reset --effort low`), Neo4j가 켜져 있어야 한다.
 
 ```bash
-uv run python scripts/recommend_graph.py              # 담당자 미결정 + 아직 추천 안 된 액션아이템
-uv run python scripts/recommend_graph.py --force      # 이미 추천된 건도 다시 (pending 추천만 교체)
-uv run python scripts/recommend_graph.py --self-check # 가짜 DB·LLM으로 그래프 전체 검사 (Neo4j, API 키 불필요)
-uv run python scripts/recommend_graph.py --model gpt-5.5
+uv run python scripts/recommend_agent.py              # 담당자 미결정 + 아직 추천 안 된 액션아이템
+uv run python scripts/recommend_agent.py --force      # 이미 추천된 건도 다시 (pending 추천만 교체)
+uv run python scripts/recommend_agent.py --self-check # 가짜 DB·LLM으로 그래프 전체 검사 (Neo4j, API 키 불필요)
+uv run python scripts/recommend_agent.py --model gpt-5.5
 ```
 
 필요한 환경 변수 (`ontology/.env` 또는 저장소 루트 `.env`):
@@ -18,7 +18,8 @@ uv run python scripts/recommend_graph.py --model gpt-5.5
 | 변수 | 용도 |
 | --- | --- |
 | `OPENAI_API_KEY` | interpret / explain 노드의 LLM 호출 |
-| `NEO4J_PASSWORD` | Neo4j 접속 (사용자 이름은 `neo4j` 고정, `load.py`와 같음) |
+| `NEO4J_PASSWORD` | Neo4j 접속 (`load.py`와 같은 값) |
+| `NEO4J_USERNAME` | 기본값 `neo4j` |
 | `NEO4J_URI` | 기본값 `bolt://localhost:7687` |
 | `OPENAI_MODEL` / `LLM_MODEL` | 모델 이름. 둘 다 없고 `--model`도 없으면 `gpt-5.5` |
 
@@ -26,16 +27,17 @@ uv run python scripts/recommend_graph.py --model gpt-5.5
 
 ```
 scripts/
-├─ recommend_graph.py        에이전트 전체 (Neo4j 쿼리, 점수 계산, LangGraph 그래프, 출력 JSON 생성, self-check)
+├─ recommend_agent.py        에이전트 전체 (Neo4j 쿼리, 점수 계산, LangGraph 그래프, 출력 JSON 생성, self-check)
 ├─ prompts/
 │  ├─ interpret.md           요구 조건 해석 노드의 system 프롬프트
 │  └─ explain.md             추천 설명 노드의 system 프롬프트
-└─ recommend_results/        결과 JSON (실행 시 생성)
+
+../data/recommend_results/    결과 JSON (실행 시 생성)
 ```
 
 ### 점수 계산 섹션
 
-`recommend_graph.py`의 "점수 계산" 섹션은 `junbyong/graph_rag_test/3_recommend_assignee.py`에서 필요한 함수만 그대로 옮긴 것이다 (AST 비교로 동일함을 확인).
+`recommend_agent.py`의 "점수 계산" 섹션은 `junbyong/graph_rag_test/3_recommend_assignee.py`에서 필요한 함수만 그대로 옮긴 것이다 (AST 비교로 동일함을 확인).
 - `normalize_spec`: LLM 해석 결과에서 catalog에 없는 ID를 걸러낸다. 스킬이 하나도 남지 않으면 `ValueError`를 낸다.
 - `rank_candidates`: 점수를 계산해 순위를 매기고, 제외 대상을 이유와 함께 따로 돌려준다.
 - 그 밖에 `skill_weights`, `skill_score`, `role_team_score`, `meets_requirement`, `workload_score`, `total_score`, `data_warnings`, `response_text`
@@ -75,7 +77,7 @@ fetch_context ─┬─▶ interpret(LLM) ─▶ validate ─┬─▶ score ─
 | 노드 | LLM | 하는 일 | 다음 노드 |
 | --- | --- | --- | --- |
 | `load_items` |  | catalog(스킬·역할·팀·사용자)와 미결정 액션아이템 ID 목록 조회 | ID마다 `Send` / 없으면 END |
-| `fetch_context` |  | 액션아이템, 안건, Topic, 회의, 참석자 맥락과 후보 전원 조회 | 실패 시 `save`(error), 성공 시 `interpret` |
+| `fetch_context` |  | 액션아이템, 소주제(Discussion), 안건, Topic, 회의, 참석자 맥락과 후보 전원 조회 | 실패 시 `save`(error), 성공 시 `interpret` |
 | `interpret` | ✔ | 맥락과 catalog로 spec(required_skills, 목표 팀·역할 등) 생성. 재시도 때는 직전 해석과 실패 이유를 `previous_attempt`로 넘김 | `validate` |
 | `validate` |  | `normalize_spec`으로 검증 | 성공 시 `score` / 실패 + 시도 2회 미만이면 `interpret` / 아니면 `give_up` |
 | `give_up` |  | LLM 호출 실패였으면 `error`, 스킬을 못 찾았으면 `skill_unclear` | `save` |
@@ -126,8 +128,8 @@ LLM은 Cypher를 쓰지 않는다. 모든 쿼리는 코드에 고정돼 있고, 
 | --- | --- |
 | `CATALOG_QUERIES` | Skill / Role / Team / Person의 id·name |
 | `ITEMS_QUERY` | `status='open'`이고 `ASSIGNED_TO`가 없는 ActionItem. `--force`가 없으면 `RECOMMENDED_FOR`가 있는 건 제외 |
-| `CONTEXT_QUERY` | ActionItem → AgendaItem → Meeting → Project, Topic(상위 Topic 포함), 참석자 |
-| `CANDIDATE_QUERY` | Person 전원의 팀, 역할, 스킬(level), 미완료 담당 업무 수와 그 업무의 회의 ID. `rank_candidates`가 기대하는 모양(`teams[].id`, `skills[].id`)으로 맞춰 돌려준다 |
+| `CONTEXT_QUERY` | ActionItem → Discussion(소주제 이름·논의 문장) → Agenda → Meeting → Project(이름 포함), Topic, 참석자 |
+| `CANDIDATE_QUERY` | Person 전원의 팀, 역할, 스킬(level), 미완료 담당 업무 수와 그 업무의 회의 ID (Meeting → Agenda → Discussion → ActionItem 경로). `rank_candidates`가 기대하는 모양(`teams[].id`, `skills[].id`)으로 맞춰 돌려준다 |
 | `CLEAR_PENDING` | 해당 액션아이템의 `pending` 추천만 삭제 (accepted / rejected는 유지) |
 | `SAVE_RECOMMENDATIONS` | ActionItem에 `recommend_status`, `recommend_run_id`, `recommended_at`, `recommend_warnings`를 기록하고 `RECOMMENDED_FOR(status='pending')` 생성 |
 
@@ -135,8 +137,8 @@ LLM은 Cypher를 쓰지 않는다. 모든 쿼리는 코드에 고정돼 있고, 
 
 ## 출력
 
-- `recommend_results/{action_item_id}.json`: 담당자 지정 모달용. 화면은 점수를 계산하지 않고 이 값을 그대로 표시한다.
-- `recommend_results/run_{run_id}.json`: 이번 실행의 전체 결과
+- `data/recommend_results/{action_item_id}.json`: 담당자 지정 모달용. 화면은 점수를 계산하지 않고 이 값을 그대로 표시한다.
+- `data/recommend_results/run_{run_id}.json`: 이번 실행의 전체 결과
 - 미결정 액션아이템이 없으면 아무 파일도 만들지 않는다.
 
 출력 JSON의 주요 키:
@@ -161,7 +163,8 @@ LLM은 Cypher를 쓰지 않는다. 모든 쿼리는 코드에 고정돼 있고, 
   - 직급별 상위 2명 선발, 부족한 직급을 다른 직급으로 채우지 않음, 직급 없는 사람 제외 경고
   - 비활성 제외, 참석 여부, 이번 회의 업무 수, 후보 풀 밖 reason 제거, 팀 구성원 정렬
   - `RECOMMENDED_FOR` 행 수, 결과 파일 목록, 미결정 건이 없으면 아무것도 쓰지 않음
-- **실제 DB 테스트** (2026-11-03, 로컬 Neo4j + 실제 LLM)
+- **현재 구조 확인** (2026-11-04, 로컬 Neo4j, LLM 호출 없음): `load.py`로 적재한 뒤 open 액션아이템 14건 모두 `CONTEXT_QUERY`로 맥락 조회 성공, 후보 48명 조회 성공
+- **실제 DB 테스트** (2026-11-03, 로컬 Neo4j + 실제 LLM, 예전 구조·더미 데이터 기준)
   - 첫 실행: 액션아이템 8건 모두 `pending_manager_review`, `RECOMMENDED_FOR` 13개 생성
   - 옵션 없이 다시 실행: 이미 추천된 건을 모두 건너뜀
   - 점수 함수를 옮긴 뒤 `--force` 실행: 8건 모두 `pending_manager_review`. 이전 pending 추천은 지워지고 새 run의 13개로 교체됨
@@ -169,9 +172,10 @@ LLM은 Cypher를 쓰지 않는다. 모든 쿼리는 코드에 고정돼 있고, 
 
 ## 알아둘 점
 
-- 지금 더미 데이터는 사람이 6명뿐이라 직급별 2명을 채우지 못하고, 메인 추천이 1\~2명에 그친다.
-- `load.py`의 `assign_owner`가 주석 처리돼 있어 `ASSIGNED_TO`가 없다. 그래서 모든 open 액션아이템이 추천 대상이 되고, 업무량 점수가 전원 100점이다.
-- `load.py`가 `owner_raw`를 저장하지 않아 맥락의 `owner_raw`는 항상 `null`이다.
+- 사람은 48명이다. 회의 참석자 4명(users.json의 `meeting_attendees`)과 추천 테스트용 가상 인물이다.
+- `load.py`는 `ASSIGNED_TO`를 만들지 않는다. 그래서 모든 open 액션아이템이 추천 대상이 되고, 업무량 점수가 전원 100점이다.
+- `owner_raw`는 회의록 `assignee` 원문이다 (예: "UI 디자이너", 담당자가 없으면 속성 없음). 회의 참석자의 `Person.name`은 A~D라서 이름으로는 맞지 않고, LLM이 역할(`HAS_ROLE`)로 짝지어야 explicit 담당자가 된다.
+- 액션만 들어 있는 소주제에서 나온 액션아이템은 맥락의 `discussion`이 빈 배열이다 (`load.py`가 액션 문장을 `Discussion.discussions[]`에 넣지 않는다). 이때는 안건의 배경·결정사항이 주된 맥락이다.
 - LLM 해석은 실행마다 조금씩 달라질 수 있다. `--force` 재실행 때 8건 중 3건이 달라졌다 (예: m-1110-a1-t1에서 s-promo 중요도가 major → minor). 점수 계산은 같은 spec이면 항상 같은 결과를 낸다.
 - 메인 카드는 slot 순서라서, 총점이 더 높은 mid 후보가 senior 후보보다 뒤에 나올 수 있다 (`overall_rank`로 확인 가능).
 - 관리자 확정(`ASSIGNED_TO` 생성, `RECOMMENDED_FOR.status`를 accepted / rejected로 변경)은 HITL 백엔드에서 구현할 부분이고, 이 코드에는 없다.
