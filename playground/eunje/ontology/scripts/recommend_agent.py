@@ -1,9 +1,9 @@
 """담당자 추천 에이전트 (LangGraph). 설계: 담당자 추천 에이전트 설계 md.
 
 실행 (ontology 폴더에서, load.py 적재 후):
-    uv run python scripts/recommend_graph.py            # 담당자 미결정 + 추천 없는 액션아이템
-    uv run python scripts/recommend_graph.py --force    # 이미 추천된 건도 다시 (pending만 교체)
-    uv run python scripts/recommend_graph.py --self-check   # 가짜 DB·LLM으로 그래프 전체 검사
+    uv run python scripts/recommend_agent.py            # 담당자 미결정 + 추천 없는 액션아이템
+    uv run python scripts/recommend_agent.py --force    # 이미 추천된 건도 다시 (pending만 교체)
+    uv run python scripts/recommend_agent.py --self-check   # 가짜 DB·LLM으로 그래프 전체 검사
 
 [run 그래프]  load_items ──Send(액션아이템별 병렬)──▶ process_item ──▶ END
 [item 그래프] fetch_context → interpret(LLM) → validate → score → explain(LLM) → save
@@ -54,17 +54,19 @@ ITEMS_QUERY = """
     MATCH (ai:ActionItem {status: 'open'})
     WHERE NOT ()-[:ASSIGNED_TO]->(ai) AND ($force OR NOT ()-[:RECOMMENDED_FOR]->(ai))
     RETURN ai.action_item_id AS id ORDER BY id"""
+# 액션아이템은 소주제(Discussion)에서 나온다: Meeting → Agenda → Discussion → ActionItem
+# discussion은 그 소주제의 논의 문장들이라, 이 할 일이 어떤 논의 끝에 나왔는지 LLM이 볼 수 있다.
 CONTEXT_QUERY = """
-    MATCH (pr:Project)<-[:IN]-(mt:Meeting)-[:HAS_AGENDA]->(ag:AgendaItem)
-          -[:PRODUCED]->(ai:ActionItem {action_item_id: $id})
+    MATCH (pr:Project)<-[:IN]-(mt:Meeting)-[:HAS_AGENDA]->(ag:Agenda)
+          -[:HAS_DISCUSSION]->(dn:Discussion)-[:PRODUCED]->(ai:ActionItem {action_item_id: $id})
     OPTIONAL MATCH (ag)-[:ABOUT]->(tp:Topic)
-    OPTIONAL MATCH (tp)-[:SUBTOPIC_OF]->(parent:Topic)
     OPTIONAL MATCH (p:Person)-[:ATTENDED]->(mt)
-    RETURN ai.action_item_id AS action_item_id, ai.description AS title, coalesce(toString(ai.due), ai.due_raw) AS due,
+    RETURN ai.action_item_id AS action_item_id, ai.description AS title, ai.due AS due,
         ai.owner_raw AS owner_raw, mt.meeting_id AS meeting_id, mt.title AS meeting_title,
-        toString(mt.held_at) AS held_at, pr.project_id AS project_id, ag.title AS agenda_title,
-        ag.background AS background, ag.decisions AS decisions,
-        tp.title AS topic_title, tp.summary AS topic_summary, parent.title AS parent_topic_title,
+        toString(mt.held_at) AS held_at, pr.project_id AS project_id, pr.name AS project_name,
+        ag.title AS agenda_title, ag.background AS background, ag.decisions AS decisions,
+        dn.title AS discussion_title, dn.discussions AS discussion,
+        tp.title AS topic_title,
         [x IN collect(DISTINCT p {.user_id, .name}) WHERE x IS NOT NULL] AS attendees"""
 # rank_candidates가 기대하는 모양(teams/roles/skills의 id)으로 맞춰 돌려준다.
 CANDIDATE_QUERY = """
@@ -79,7 +81,7 @@ CANDIDATE_QUERY = """
                            WHERE x.id IS NOT NULL] AS skills
     OPTIONAL MATCH (p)-[a:ASSIGNED_TO]->(ai:ActionItem)
     WHERE coalesce(a.work_status, 'in_work') <> 'work_completed' AND coalesce(ai.status, 'open') <> 'completed'
-    OPTIONAL MATCH (mt:Meeting)-[:HAS_AGENDA]->(:AgendaItem)-[:PRODUCED]->(ai)
+    OPTIONAL MATCH (mt:Meeting)-[:HAS_AGENDA]->(:Agenda)-[:HAS_DISCUSSION]->(:Discussion)-[:PRODUCED]->(ai)
     RETURN p.user_id AS user_id, p.name AS name, p.is_active AS is_active, p.position AS position,
         teams, roles, skills, count(DISTINCT ai) AS open_tasks, collect(mt.meeting_id) AS open_task_meetings
     ORDER BY user_id"""
