@@ -1,0 +1,6312 @@
+{
+  "meeting_id": "TS3003b",
+  "created_at": "2026-11-04T10:45:20",
+  "config": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "xhigh",
+    "temperature": null,
+    "use_llm_cache": true,
+    "run": "v2_luna-xhigh",
+    "prompt": "Extract_v2_target",
+    "prompt_sha256": "c07d71206082452cce4bc173a569c176b25fcac49ae9f3ac6c0fe27aaf6dc5a1"
+  },
+  "source_document": {
+    "input_path": "C:\\Users\\hyung\\Desktop\\2차 프로젝트\\remeet\\playground\\chaewon\\dataset\\Meeting_Input\\TS3003b.txt",
+    "utterance_count": 714,
+    "first_utterance_index": 1,
+    "last_utterance_index": 714
+  },
+  "meeting_info": {
+    "title": "Real Reaction 신제품 TV 리모컨 개발 프로젝트 2차 회의 - 기능 설계",
+    "date": "2004-10-11",
+    "duration": "회의 길이 약 37분",
+    "datetime_raw": "2004-10-11 (회의 길이 약 37분)",
+    "participants": [
+      "프로젝트 매니저",
+      "산업 디자이너",
+      "UI 디자이너",
+      "마케팅 담당자"
+    ],
+    "participant_count": 4,
+    "participants_raw": "프로젝트 매니저, 산업 디자이너, UI 디자이너, 마케팅 담당자 (4명)",
+    "speakers": {
+      "A": "프로젝트 매니저",
+      "C": "산업 디자이너",
+      "B": "UI 디자이너",
+      "D": "마케팅 담당자"
+    },
+    "speakers_raw": "A=프로젝트 매니저, C=산업 디자이너, B=UI 디자이너, D=마케팅 담당자",
+    "extra": {}
+  },
+  "transcript": [
+    {
+      "utterance_index": 1,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 6
+    },
+    {
+      "utterance_index": 2,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "다들 다시 자리 찾으셨죠? 네?",
+      "line_number": 8
+    },
+    {
+      "utterance_index": 3,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 10
+    },
+    {
+      "utterance_index": 4,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋네요.",
+      "line_number": 12
+    },
+    {
+      "utterance_index": 5,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요, 그럼",
+      "line_number": 14
+    },
+    {
+      "utterance_index": 6,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "이번이 두 번째 회의예요.",
+      "line_number": 16
+    },
+    {
+      "utterance_index": 7,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 어",
+      "line_number": 18
+    },
+    {
+      "utterance_index": 8,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아직도 안 돼요?",
+      "line_number": 20
+    },
+    {
+      "utterance_index": 9,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 22
+    },
+    {
+      "utterance_index": 10,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 이제 음, 기능 설계로 들어가요.",
+      "line_number": 24
+    },
+    {
+      "utterance_index": 11,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 이 단계에서 중요한 건 사용자 요구 사항, 기술적 기능 설계, 작동 설계에 대해 어, 합의를 보는 거예요. 그래야 두 번째 어, 단계로 넘어갈 수 있으니까요.",
+      "line_number": 26
+    },
+    {
+      "utterance_index": 12,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "하지만 먼저 이 단계부터요.",
+      "line_number": 28
+    },
+    {
+      "utterance_index": 13,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 먼저 공지 사항이 있어요.",
+      "line_number": 30
+    },
+    {
+      "utterance_index": 14,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "냉난방 시스템에 약간의 조정이 있어요.",
+      "line_number": 32
+    },
+    {
+      "utterance_index": 15,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그래서",
+      "line_number": 34
+    },
+    {
+      "utterance_index": 16,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "또 유령 마우스가 나타났네요.",
+      "line_number": 36
+    },
+    {
+      "utterance_index": 17,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까 냉난방에 약간, 약간 문제가 있을 수 있다는 거고,",
+      "line_number": 38
+    },
+    {
+      "utterance_index": 18,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그건 이 어",
+      "line_number": 40
+    },
+    {
+      "utterance_index": 19,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 42
+    },
+    {
+      "utterance_index": 20,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 44
+    },
+    {
+      "utterance_index": 21,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "C동이랑 E동이에요.",
+      "line_number": 46
+    },
+    {
+      "utterance_index": 22,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그래서",
+      "line_number": 48
+    },
+    {
+      "utterance_index": 23,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좀 지나면, 며칠이면 끝날 거예요.",
+      "line_number": 50
+    },
+    {
+      "utterance_index": 24,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어차피 추울 거라서",
+      "line_number": 52
+    },
+    {
+      "utterance_index": 25,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "필요하진 않을 것 같아요.",
+      "line_number": 54
+    },
+    {
+      "utterance_index": 26,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그렇죠.",
+      "line_number": 56
+    },
+    {
+      "utterance_index": 27,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그다음은 안건이에요.",
+      "line_number": 58
+    },
+    {
+      "utterance_index": 28,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "자",
+      "line_number": 60
+    },
+    {
+      "utterance_index": 29,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "먼저 시작.",
+      "line_number": 62
+    },
+    {
+      "utterance_index": 30,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 이번엔 제가 회의록을 적을게요.",
+      "line_number": 64
+    },
+    {
+      "utterance_index": 31,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 다들 발표를 하실 거예요. 모두요.",
+      "line_number": 66
+    },
+    {
+      "utterance_index": 32,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 전체 어, 발표에 40분이 있어요.",
+      "line_number": 68
+    },
+    {
+      "utterance_index": 33,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그래서 어, 발표당 7분 정도로 하는 걸 제안해요,",
+      "line_number": 70
+    },
+    {
+      "utterance_index": 34,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그다음에 새 프로젝트 요구 사항에 대해 잠깐 논의하고",
+      "line_number": 72
+    },
+    {
+      "utterance_index": 35,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 저한테 온 거요.",
+      "line_number": 74
+    },
+    {
+      "utterance_index": 36,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 어, 넣을 조작 기능과 넣지 않을 기능을 결정하는 거예요.",
+      "line_number": 76
+    },
+    {
+      "utterance_index": 37,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그래서",
+      "line_number": 78
+    },
+    {
+      "utterance_index": 38,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "전부 해서 40분이 있어요.",
+      "line_number": 80
+    },
+    {
+      "utterance_index": 39,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 82
+    },
+    {
+      "utterance_index": 40,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 첫 발표부터 시작하죠.",
+      "line_number": 84
+    },
+    {
+      "utterance_index": 41,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 86
+    },
+    {
+      "utterance_index": 42,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 누가 먼저 할래요?",
+      "line_number": 88
+    },
+    {
+      "utterance_index": 43,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "제가 먼저 할게요.",
+      "line_number": 90
+    },
+    {
+      "utterance_index": 44,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 92
+    },
+    {
+      "utterance_index": 45,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그럼",
+      "line_number": 94
+    },
+    {
+      "utterance_index": 46,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아마 이렇게 하면 더 쉬울 것 같은데 음",
+      "line_number": 96
+    },
+    {
+      "utterance_index": 47,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네",
+      "line_number": 98
+    },
+    {
+      "utterance_index": 48,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "발표할 때 어떤 역할인지랑",
+      "line_number": 100
+    },
+    {
+      "utterance_index": 49,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "무엇에 대해 이야기할지도 말씀해 주세요.",
+      "line_number": 102
+    },
+    {
+      "utterance_index": 50,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 104
+    },
+    {
+      "utterance_index": 51,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "제 이름은 Freek Van Ponnen이에요.",
+      "line_number": 106
+    },
+    {
+      "utterance_index": 52,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "마케팅 전문가예요.",
+      "line_number": 108
+    },
+    {
+      "utterance_index": 53,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이미 아시겠지만요.",
+      "line_number": 110
+    },
+    {
+      "utterance_index": 54,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 조사를 좀 했어요.",
+      "line_number": 112
+    },
+    {
+      "utterance_index": 55,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "사용성 연구실에서 조사를 했는데",
+      "line_number": 114
+    },
+    {
+      "utterance_index": 56,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "거기서 음, 사용자들이 리모컨을 조작하는 걸 관찰했어요.",
+      "line_number": 116
+    },
+    {
+      "utterance_index": 57,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 설문지도 작성하게 했고요.",
+      "line_number": 118
+    },
+    {
+      "utterance_index": 58,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 실험 대상자는 100명이었어요.",
+      "line_number": 120
+    },
+    {
+      "utterance_index": 59,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 그리고 시장 조사도 좀 했어요. 어, 시장이 어떻게 구성돼 있는지, 어떤 연령대가 있는지요.",
+      "line_number": 122
+    },
+    {
+      "utterance_index": 60,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음",
+      "line_number": 124
+    },
+    {
+      "utterance_index": 61,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이게 제가 보기에 꽤 놀라운 결과 세 가지예요.",
+      "line_number": 126
+    },
+    {
+      "utterance_index": 62,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 리모컨은 못생겼다고 여겨져요.",
+      "line_number": 128
+    },
+    {
+      "utterance_index": 63,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그",
+      "line_number": 130
+    },
+    {
+      "utterance_index": 64,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 설문 응답자의 75퍼센트가 음, 자기 리모컨이 못생겼다고 답했어요.",
+      "line_number": 132
+    },
+    {
+      "utterance_index": 65,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 그리고 80퍼센트는 멋져 보이는 리모컨에 돈을 더 쓰겠다고 했어요.",
+      "line_number": 134
+    },
+    {
+      "utterance_index": 66,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래서",
+      "line_number": 136
+    },
+    {
+      "utterance_index": 67,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 게다가 리모컨은 그다지 기능적이지 않았어요.",
+      "line_number": 138
+    },
+    {
+      "utterance_index": 68,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "50퍼센트가 리모컨 버튼의 10퍼센트 정도만 쓴다고 했어요.",
+      "line_number": 140
+    },
+    {
+      "utterance_index": 69,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 50퍼센트는 리모컨을 방 안에서 자주 잃어버린다고 했고요.",
+      "line_number": 142
+    },
+    {
+      "utterance_index": 70,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까",
+      "line_number": 144
+    },
+    {
+      "utterance_index": 71,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 146
+    },
+    {
+      "utterance_index": 72,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이런 것들이 있어요.",
+      "line_number": 148
+    },
+    {
+      "utterance_index": 73,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그다음엔 가장 중요한 기능을 조사했어요.",
+      "line_number": 150
+    },
+    {
+      "utterance_index": 74,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "채널 선택과 볼륨 선택은 음, 1부터 10까지 중요도에서 둘 다 10점을 받았어요.",
+      "line_number": 152
+    },
+    {
+      "utterance_index": 75,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "전원 버튼은 9점이었고요.",
+      "line_number": 154
+    },
+    {
+      "utterance_index": 76,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "문자 방송은 6.5점이었어요.",
+      "line_number": 156
+    },
+    {
+      "utterance_index": 77,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까 이게 리모컨에서 가장 어, 중요한 기능이에요.",
+      "line_number": 158
+    },
+    {
+      "utterance_index": 78,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 일회성 기능이 있어요.",
+      "line_number": 160
+    },
+    {
+      "utterance_index": 79,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "제가 그렇게 부르는 건데요.",
+      "line_number": 162
+    },
+    {
+      "utterance_index": 80,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 음향 설정, 화면 설정, 채널 설정 버튼이요.",
+      "line_number": 164
+    },
+    {
+      "utterance_index": 81,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아주 자주 쓰이지는 않지만,",
+      "line_number": 166
+    },
+    {
+      "utterance_index": 82,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래도 어느 정도 중요하다고 여겨져요.",
+      "line_number": 168
+    },
+    {
+      "utterance_index": 83,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 채널 선택은 아주 자주 쓰인다고도 나왔어요. 시간당 168번이요.",
+      "line_number": 170
+    },
+    {
+      "utterance_index": 84,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 이건",
+      "line_number": 172
+    },
+    {
+      "utterance_index": 85,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이게 시장이에요.",
+      "line_number": 174
+    },
+    {
+      "utterance_index": 86,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 시장의 60퍼센트는 16세에서 46세 사이 사용자예요.",
+      "line_number": 176
+    },
+    {
+      "utterance_index": 87,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 이 그룹의 주된 특징은 리모컨에 아주 까다롭다는 거예요.",
+      "line_number": 178
+    },
+    {
+      "utterance_index": 88,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 새로운 기능을 쓰는 걸 좋아하지만,",
+      "line_number": 180
+    },
+    {
+      "utterance_index": 89,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아주 까다롭기도 해요.",
+      "line_number": 182
+    },
+    {
+      "utterance_index": 90,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "돈을 쉽게 쓰지 않아요.",
+      "line_number": 184
+    },
+    {
+      "utterance_index": 91,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래서 음",
+      "line_number": 186
+    },
+    {
+      "utterance_index": 92,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "46세에서 65세 사용자는 시장의 40퍼센트를 차지해요.",
+      "line_number": 188
+    },
+    {
+      "utterance_index": 93,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이들은 기능에 별로 관심이 없어요.",
+      "line_number": 190
+    },
+    {
+      "utterance_index": 94,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "하지만 돈은 훨씬 쉽게 쓰는 경향이 있어요.",
+      "line_number": 192
+    },
+    {
+      "utterance_index": 95,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이게 우리 음, 디자인에 시사하는 바는, 미래를 위한 리모컨을 만들어야 한다는 거라고 생각해요.",
+      "line_number": 194
+    },
+    {
+      "utterance_index": 96,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까 음, 16세에서 45세에 초점을 맞춰야 한다는 뜻이에요.",
+      "line_number": 196
+    },
+    {
+      "utterance_index": 97,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 이 층이 시장에서 가장 큰 부분이기도 해서,",
+      "line_number": 198
+    },
+    {
+      "utterance_index": 98,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "주된 수익도 거기서 얻을 수 있을 거예요.",
+      "line_number": 200
+    },
+    {
+      "utterance_index": 99,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 그러려면 멋진 디자인을 만들어야 해요.",
+      "line_number": 202
+    },
+    {
+      "utterance_index": 100,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 그리고 응답자의 약 4분의 1이 리모컨 때문에 RSI가 생긴다고 생각했어요.",
+      "line_number": 204
+    },
+    {
+      "utterance_index": 101,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 이건 확실히 고려해야 할 부분이에요.",
+      "line_number": 206
+    },
+    {
+      "utterance_index": 102,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 34퍼센트는 새 리모컨 조작법을 익히기 어렵다고 생각했어요.",
+      "line_number": 208
+    },
+    {
+      "utterance_index": 103,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까 이 두 가지 요소를 디자인에 반영해야 한다고 생각해요.",
+      "line_number": 210
+    },
+    {
+      "utterance_index": 104,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "물론 리모컨이 아주 보기 좋아야 한다는 것 외에도요.",
+      "line_number": 212
+    },
+    {
+      "utterance_index": 105,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 기능성은, 많은 사람들이 버튼의 10퍼센트 정도만 쓴다고 했으니까,",
+      "line_number": 214
+    },
+    {
+      "utterance_index": 106,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "버튼을 아주 적게 만들어야 한다고 생각해요.",
+      "line_number": 216
+    },
+    {
+      "utterance_index": 107,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 그게 리모컨 디자인에도 도움이 될 거예요.",
+      "line_number": 218
+    },
+    {
+      "utterance_index": 108,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어, 가장 자주 쓰는 버튼을 강조해야 한다고 생각해요. 특히 채널 선택과 음향 어, 선택 버튼이요.",
+      "line_number": 220
+    },
+    {
+      "utterance_index": 109,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "가장 많이 쓰이니까",
+      "line_number": 222
+    },
+    {
+      "utterance_index": 110,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "튼튼해야 해요.",
+      "line_number": 224
+    },
+    {
+      "utterance_index": 111,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "쉽게 고장 나면 안 돼요.",
+      "line_number": 226
+    },
+    {
+      "utterance_index": 112,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 그리고 많은 사람들이 음, 리모컨을 방 안에서 잃어버린다고 했으니까,",
+      "line_number": 228
+    },
+    {
+      "utterance_index": 113,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아마",
+      "line_number": 230
+    },
+    {
+      "utterance_index": 114,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아마라고 하는 건",
+      "line_number": 232
+    },
+    {
+      "utterance_index": 115,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그게 음, 생산 비용을 확실히 많이 끌어올릴 테니까요.",
+      "line_number": 234
+    },
+    {
+      "utterance_index": 116,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래도 거치대를 만드는 게 좋은 아이디어일 수도 있어요.",
+      "line_number": 236
+    },
+    {
+      "utterance_index": 117,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 거치대에 버튼을 달 수 있는데",
+      "line_number": 238
+    },
+    {
+      "utterance_index": 118,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그걸 누르면 리모컨에 신호가 가서",
+      "line_number": 240
+    },
+    {
+      "utterance_index": 119,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "리모컨이 삑 소리를 내는 거예요.",
+      "line_number": 242
+    },
+    {
+      "utterance_index": 120,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러면 방 안 어디에 있는지 알 수 있죠.",
+      "line_number": 244
+    },
+    {
+      "utterance_index": 121,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 거기에 더해 음, 리모컨을 꽂으면 배터리를 충전할 수도 있고요.",
+      "line_number": 246
+    },
+    {
+      "utterance_index": 122,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 음, 놀랍게도 아주 많은 사람들이 음, 리모컨에 LCD 화면이 있으면 좋겠다고 했어요.",
+      "line_number": 248
+    },
+    {
+      "utterance_index": 123,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이건 음, 주로 16세에서 25세 사람들이었어요.",
+      "line_number": 250
+    },
+    {
+      "utterance_index": 124,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래도 45세까지는 여전히 가능성이 있어요.",
+      "line_number": 252
+    },
+    {
+      "utterance_index": 125,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이것도 생산 비용을 크게 늘리겠지만",
+      "line_number": 254
+    },
+    {
+      "utterance_index": 126,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그냥 고려해 볼 수 있는 작은 요소들이라고 생각해요.",
+      "line_number": 256
+    },
+    {
+      "utterance_index": 127,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 258
+    },
+    {
+      "utterance_index": 128,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "이상이에요.",
+      "line_number": 260
+    },
+    {
+      "utterance_index": 129,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "고마워요.",
+      "line_number": 262
+    },
+    {
+      "utterance_index": 130,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그럼",
+      "line_number": 264
+    },
+    {
+      "utterance_index": 131,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "지금까지 음, 질문 있는 분?",
+      "line_number": 266
+    },
+    {
+      "utterance_index": 132,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "질문 있으세요?",
+      "line_number": 268
+    },
+    {
+      "utterance_index": 133,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 270
+    },
+    {
+      "utterance_index": 134,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "기능 요구 사항에 대해서요?",
+      "line_number": 272
+    },
+    {
+      "utterance_index": 135,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "없어요.",
+      "line_number": 274
+    },
+    {
+      "utterance_index": 136,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요",
+      "line_number": 276
+    },
+    {
+      "utterance_index": 137,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "분명하네요.",
+      "line_number": 278
+    },
+    {
+      "utterance_index": 138,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 280
+    },
+    {
+      "utterance_index": 139,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "이제 두 번째로요.",
+      "line_number": 282
+    },
+    {
+      "utterance_index": 140,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 좋아요. 음",
+      "line_number": 284
+    },
+    {
+      "utterance_index": 141,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "저는 어, 사용자 인터페이스를 살펴봤어요. 음, 그 어, 기술적 기능에 대해서요. 음",
+      "line_number": 286
+    },
+    {
+      "utterance_index": 142,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 288
+    },
+    {
+      "utterance_index": 143,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네",
+      "line_number": 290
+    },
+    {
+      "utterance_index": 144,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "천천히 하셔도 돼요.",
+      "line_number": 292
+    },
+    {
+      "utterance_index": 145,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "좋아요.",
+      "line_number": 294
+    },
+    {
+      "utterance_index": 146,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 시간은 충분해요,",
+      "line_number": 296
+    },
+    {
+      "utterance_index": 147,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음?",
+      "line_number": 298
+    },
+    {
+      "utterance_index": 148,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네",
+      "line_number": 300
+    },
+    {
+      "utterance_index": 149,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "위쪽에 있는 거로 가세요. 슬라이드 쇼요.",
+      "line_number": 302
+    },
+    {
+      "utterance_index": 150,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 304
+    },
+    {
+      "utterance_index": 151,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "아.",
+      "line_number": 306
+    },
+    {
+      "utterance_index": 152,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어.",
+      "line_number": 308
+    },
+    {
+      "utterance_index": 153,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아, 네.",
+      "line_number": 310
+    },
+    {
+      "utterance_index": 154,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네. 거기 있네요. 네.",
+      "line_number": 312
+    },
+    {
+      "utterance_index": 155,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "좋아요.",
+      "line_number": 314
+    },
+    {
+      "utterance_index": 156,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 네.",
+      "line_number": 316
+    },
+    {
+      "utterance_index": 157,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 리모컨의 어, 일반적인 기능을 써야 한다고 생각해요.",
+      "line_number": 318
+    },
+    {
+      "utterance_index": 158,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 인터넷에서 어, 조사를 좀 했는데",
+      "line_number": 320
+    },
+    {
+      "utterance_index": 159,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 어, 인터페이스에 대한 정보는 별로 없었어요",
+      "line_number": 322
+    },
+    {
+      "utterance_index": 160,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래도 어, 어, 네",
+      "line_number": 324
+    },
+    {
+      "utterance_index": 161,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "많은 기능을 어, 리모컨 하나에 어, 넣는 간단한 방법을 생각해 봤어요.",
+      "line_number": 326
+    },
+    {
+      "utterance_index": 162,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 그러니까 어, DVD, 어, TV, 어, 오디오 같은 기기가 많잖아요.",
+      "line_number": 328
+    },
+    {
+      "utterance_index": 163,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 음",
+      "line_number": 330
+    },
+    {
+      "utterance_index": 164,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "하지만 어, 사용하기 쉬워야 해요.",
+      "line_number": 332
+    },
+    {
+      "utterance_index": 165,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 음, 어",
+      "line_number": 334
+    },
+    {
+      "utterance_index": 166,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "리모컨 하나에 어, 기능을 많이 넣을 수는 없어요. 어, 네. 어, 어, 네. 리모컨 하나에요.",
+      "line_number": 336
+    },
+    {
+      "utterance_index": 167,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "리모컨 하나에.",
+      "line_number": 338
+    },
+    {
+      "utterance_index": 168,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "하지만 음",
+      "line_number": 340
+    },
+    {
+      "utterance_index": 169,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 342
+    },
+    {
+      "utterance_index": 170,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 네.",
+      "line_number": 344
+    },
+    {
+      "utterance_index": 171,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "리모컨 하나에 어, 기능이 많이 있어도,",
+      "line_number": 346
+    },
+    {
+      "utterance_index": 172,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 그런데 음, 네",
+      "line_number": 348
+    },
+    {
+      "utterance_index": 173,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "보시다시피 이건 어, 꽤 단순한 리모컨이에요.",
+      "line_number": 350
+    },
+    {
+      "utterance_index": 174,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 어, 버튼이 적고요",
+      "line_number": 352
+    },
+    {
+      "utterance_index": 175,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그런데 어, 이 리모컨은 어, 버튼이 많아요.",
+      "line_number": 354
+    },
+    {
+      "utterance_index": 176,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 어, 사람들은 그걸 싫어해요,",
+      "line_number": 356
+    },
+    {
+      "utterance_index": 177,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 그래서 음",
+      "line_number": 358
+    },
+    {
+      "utterance_index": 178,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음",
+      "line_number": 360
+    },
+    {
+      "utterance_index": 179,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "제가 생각한 건 음, 어, 일반 기능은 어, 그대로 두자는 거예요.",
+      "line_number": 362
+    },
+    {
+      "utterance_index": 180,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그러니까 어",
+      "line_number": 364
+    },
+    {
+      "utterance_index": 181,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 전원 버튼 같은 거요. 어, 그냥 빨간 버튼으로 두는 거죠.",
+      "line_number": 366
+    },
+    {
+      "utterance_index": 182,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 다들 알고 있으니까",
+      "line_number": 368
+    },
+    {
+      "utterance_index": 183,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 어, 그건 바꿀 필요가 없어요. 음",
+      "line_number": 370
+    },
+    {
+      "utterance_index": 184,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "제 개인적인 어, 선호는 음.",
+      "line_number": 372
+    },
+    {
+      "utterance_index": 185,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "기기마다 다른 특정 기능은 디스플레이로 하자는 거예요.",
+      "line_number": 374
+    },
+    {
+      "utterance_index": 186,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 음",
+      "line_number": 376
+    },
+    {
+      "utterance_index": 187,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "제가 생각한 건 음, 어, 리모컨이 있고 어",
+      "line_number": 378
+    },
+    {
+      "utterance_index": 188,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그리고 여기에 어, 전원 버튼, 소리 같은 일반 기능이 있고, 어, 모르겠네요, 음",
+      "line_number": 380
+    },
+    {
+      "utterance_index": 189,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그리고 음, 여기에 일종의 디스플레이가 있어요.",
+      "line_number": 382
+    },
+    {
+      "utterance_index": 190,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "터치스크린이에요.",
+      "line_number": 384
+    },
+    {
+      "utterance_index": 191,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 음, 네",
+      "line_number": 386
+    },
+    {
+      "utterance_index": 192,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "DVD 플레이어 같은 기기의 어, 일반 기능, 그러니까 음, 재생, 어, 되감기 같은 게 나오고요.",
+      "line_number": 388
+    },
+    {
+      "utterance_index": 193,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그리고 음, 여기엔 어, 기기를 선택하는 실제 버튼이 있어요.",
+      "line_number": 390
+    },
+    {
+      "utterance_index": 194,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 음",
+      "line_number": 392
+    },
+    {
+      "utterance_index": 195,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "이 버튼은 DVD용이고",
+      "line_number": 394
+    },
+    {
+      "utterance_index": 196,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "아니면",
+      "line_number": 396
+    },
+    {
+      "utterance_index": 197,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 음",
+      "line_number": 398
+    },
+    {
+      "utterance_index": 198,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "기기마다 음, 어, 디스플레이에 일부 버튼이 나오는 거예요.",
+      "line_number": 400
+    },
+    {
+      "utterance_index": 199,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그러니까 어",
+      "line_number": 402
+    },
+    {
+      "utterance_index": 200,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "한 기기에 대해 어, 모든 버튼이 다 나오는 일은 없어요.",
+      "line_number": 404
+    },
+    {
+      "utterance_index": 201,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 어",
+      "line_number": 406
+    },
+    {
+      "utterance_index": 202,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "흠.",
+      "line_number": 408
+    },
+    {
+      "utterance_index": 203,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그게 어, 제 어, 아이디어예요.",
+      "line_number": 410
+    },
+    {
+      "utterance_index": 204,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 412
+    },
+    {
+      "utterance_index": 205,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 네, 그리고",
+      "line_number": 414
+    },
+    {
+      "utterance_index": 206,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 어디 보자. 어, 네. 그러니까",
+      "line_number": 416
+    },
+    {
+      "utterance_index": 207,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "터치스크린이요.",
+      "line_number": 418
+    },
+    {
+      "utterance_index": 208,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 그리고 음, 그 버튼, 어, 실제 버튼은 음, 써야 하는데요.",
+      "line_number": 420
+    },
+    {
+      "utterance_index": 209,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 꽤 어, 큰 버튼을 쓰는 게 좋겠어요",
+      "line_number": 422
+    },
+    {
+      "utterance_index": 210,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "왜냐하면",
+      "line_number": 424
+    },
+    {
+      "utterance_index": 211,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음, 네.",
+      "line_number": 426
+    },
+    {
+      "utterance_index": 212,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "다들 어, 써야 하니까요, 어, 나이 드신 분이든 음, 젊은 사람이든요.",
+      "line_number": 428
+    },
+    {
+      "utterance_index": 213,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서 어",
+      "line_number": 430
+    },
+    {
+      "utterance_index": 214,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "버튼은 어, 꽤 단순하고 꽤 크게 해야 해요.",
+      "line_number": 432
+    },
+    {
+      "utterance_index": 215,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그러니까 어, 음",
+      "line_number": 434
+    },
+    {
+      "utterance_index": 216,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 436
+    },
+    {
+      "utterance_index": 217,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네. 어, 네.",
+      "line_number": 438
+    },
+    {
+      "utterance_index": 218,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그게 어, 제 어, 부분이었어요.",
+      "line_number": 440
+    },
+    {
+      "utterance_index": 219,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 442
+    },
+    {
+      "utterance_index": 220,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그래서",
+      "line_number": 444
+    },
+    {
+      "utterance_index": 221,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "기술적 기능에 대해 질문 있는 분?",
+      "line_number": 446
+    },
+    {
+      "utterance_index": 222,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "음",
+      "line_number": 448
+    },
+    {
+      "utterance_index": 223,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "터치스크린을 쓰면 어, 12.5유로를 훨씬 넘을 것 같아요.",
+      "line_number": 450
+    },
+    {
+      "utterance_index": 224,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "저는 그렇게 생각 안 해요.",
+      "line_number": 452
+    },
+    {
+      "utterance_index": 225,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 454
+    },
+    {
+      "utterance_index": 226,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 꽤 싼 어, 터치스크린도 있어요. 음, 컬러 같은 게 아니에요.",
+      "line_number": 456
+    },
+    {
+      "utterance_index": 227,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "터치스크린.",
+      "line_number": 458
+    },
+    {
+      "utterance_index": 228,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 그냥 어, 음, 단색이에요. 어",
+      "line_number": 460
+    },
+    {
+      "utterance_index": 229,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 462
+    },
+    {
+      "utterance_index": 230,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 인터넷에서 봤는데, 어, 오늘은 아니고 어, 몇 주 전에요.",
+      "line_number": 464
+    },
+    {
+      "utterance_index": 231,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 네, 꽤 어, 일종의 어, 터치스크린인데 음, 어, 20유로나 어, 그 이하예요 어.",
+      "line_number": 466
+    },
+    {
+      "utterance_index": 232,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "흠.",
+      "line_number": 468
+    },
+    {
+      "utterance_index": 233,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그러니까 가능해요.",
+      "line_number": 470
+    },
+    {
+      "utterance_index": 234,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "흠.",
+      "line_number": 472
+    },
+    {
+      "utterance_index": 235,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네. 좋네요. 어",
+      "line_number": 474
+    },
+    {
+      "utterance_index": 236,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음",
+      "line_number": 476
+    },
+    {
+      "utterance_index": 237,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "확실히 멋진 디자인이 되겠네요.",
+      "line_number": 478
+    },
+    {
+      "utterance_index": 238,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 480
+    },
+    {
+      "utterance_index": 239,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 482
+    },
+    {
+      "utterance_index": 240,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "하지만 그건 그렇게 튼튼하지 않을 거예요.",
+      "line_number": 484
+    },
+    {
+      "utterance_index": 241,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까",
+      "line_number": 486
+    },
+    {
+      "utterance_index": 242,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "아주 깨지기 쉽고",
+      "line_number": 488
+    },
+    {
+      "utterance_index": 243,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "흠집도 날 수 있어요.",
+      "line_number": 490
+    },
+    {
+      "utterance_index": 244,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그건 맞아요.",
+      "line_number": 492
+    },
+    {
+      "utterance_index": 245,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "맞아요.",
+      "line_number": 494
+    },
+    {
+      "utterance_index": 246,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네, 맞아요.",
+      "line_number": 496
+    },
+    {
+      "utterance_index": 247,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그건 살펴봐야겠네요.",
+      "line_number": 498
+    },
+    {
+      "utterance_index": 248,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 일단 음, 당신 발표를 먼저 들을까요?",
+      "line_number": 500
+    },
+    {
+      "utterance_index": 249,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 그다음에 요구 사항이랑 어, 디자인에 대해 잠깐 논의하죠.",
+      "line_number": 502
+    },
+    {
+      "utterance_index": 250,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어.",
+      "line_number": 504
+    },
+    {
+      "utterance_index": 251,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 506
+    },
+    {
+      "utterance_index": 252,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그래요. 좋아요.",
+      "line_number": 508
+    },
+    {
+      "utterance_index": 253,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아마 그게",
+      "line_number": 510
+    },
+    {
+      "utterance_index": 254,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 그렇게 길지 않아요.",
+      "line_number": 512
+    },
+    {
+      "utterance_index": 255,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 514
+    },
+    {
+      "utterance_index": 256,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "좋아요",
+      "line_number": 516
+    },
+    {
+      "utterance_index": 257,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "작동 설계에 대한 발표를 준비했어요.",
+      "line_number": 518
+    },
+    {
+      "utterance_index": 258,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "음, 먼저 작동 방식부터요.",
+      "line_number": 520
+    },
+    {
+      "utterance_index": 259,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "당연히 정말 간단해요.",
+      "line_number": 522
+    },
+    {
+      "utterance_index": 260,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "리모컨이 어떻게 작동하는지는 다들 알잖아요.",
+      "line_number": 524
+    },
+    {
+      "utterance_index": 261,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "사용자가 버튼을 누르면,",
+      "line_number": 526
+    },
+    {
+      "utterance_index": 262,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "리모컨이 어떤 버튼인지 판단해서",
+      "line_number": 528
+    },
+    {
+      "utterance_index": 263,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "적외선으로 TV에 신호를 보내요.",
+      "line_number": 530
+    },
+    {
+      "utterance_index": 264,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "TV는 그 주파수, 그러니까 해당 기능으로 바뀌고요.",
+      "line_number": 532
+    },
+    {
+      "utterance_index": 265,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그래서",
+      "line_number": 534
+    },
+    {
+      "utterance_index": 266,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "음, 판이 있는데",
+      "line_number": 536
+    },
+    {
+      "utterance_index": 267,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "버튼마다 전도성 원판이 있어요.",
+      "line_number": 538
+    },
+    {
+      "utterance_index": 268,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "사용자가 버튼을 누르면 신호가 보내지고,",
+      "line_number": 540
+    },
+    {
+      "utterance_index": 269,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "LED로 가서",
+      "line_number": 542
+    },
+    {
+      "utterance_index": 270,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "TV로 전송돼요.",
+      "line_number": 544
+    },
+    {
+      "utterance_index": 271,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "기술적으로 보면 아주 단순한 장치예요.",
+      "line_number": 546
+    },
+    {
+      "utterance_index": 272,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그래서",
+      "line_number": 548
+    },
+    {
+      "utterance_index": 273,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "이게 개략도예요.",
+      "line_number": 550
+    },
+    {
+      "utterance_index": 274,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "버튼이 있고요.",
+      "line_number": 552
+    },
+    {
+      "utterance_index": 275,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "전원이 있고요.",
+      "line_number": 554
+    },
+    {
+      "utterance_index": 276,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그리고 어, 버튼이 눌리면 칩으로 가요.",
+      "line_number": 556
+    },
+    {
+      "utterance_index": 277,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "칩은 어, 적외선 전구와 아마 일반 전구도 조종해요.",
+      "line_number": 558
+    },
+    {
+      "utterance_index": 278,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "버튼을 누르면 누른 버튼을 실제로 볼 수 있게요.",
+      "line_number": 560
+    },
+    {
+      "utterance_index": 279,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "음",
+      "line_number": 562
+    },
+    {
+      "utterance_index": 280,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "저는 기본 소재, 단순한 플라스틱을 써야 한다고 생각해요.",
+      "line_number": 564
+    },
+    {
+      "utterance_index": 281,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "내부 구조는 단순하게 해서",
+      "line_number": 566
+    },
+    {
+      "utterance_index": 282,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "튼튼하게 하고요.",
+      "line_number": 568
+    },
+    {
+      "utterance_index": 283,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "어, 미적인 부분, 디자인과 사용자 인터페이스에 집중해야 한다고 생각해요,",
+      "line_number": 570
+    },
+    {
+      "utterance_index": 284,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "첨단 소재를 쓰면 가격이 하늘로 치솟을 테니까요.",
+      "line_number": 572
+    },
+    {
+      "utterance_index": 285,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그리고 어, 리모컨 디자인은 한 번만 하면 되지만,",
+      "line_number": 574
+    },
+    {
+      "utterance_index": 286,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "첨단 소재를 쓰면 제품 하나하나마다 비용이 다시 들어요.",
+      "line_number": 576
+    },
+    {
+      "utterance_index": 287,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그러니까",
+      "line_number": 578
+    },
+    {
+      "utterance_index": 288,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "제 생각엔 제품 자체가 아니라 디자인에 투자하는 게 현명할 거예요.",
+      "line_number": 580
+    },
+    {
+      "utterance_index": 289,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "이상이에요.",
+      "line_number": 582
+    },
+    {
+      "utterance_index": 290,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 584
+    },
+    {
+      "utterance_index": 291,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "고마워요.",
+      "line_number": 586
+    },
+    {
+      "utterance_index": 292,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 588
+    },
+    {
+      "utterance_index": 293,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 좋아요",
+      "line_number": 590
+    },
+    {
+      "utterance_index": 294,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "이제 다들 우리 각자의 역할과",
+      "line_number": 592
+    },
+    {
+      "utterance_index": 295,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "지금 우리가 뭘 하고 있는지 조금 더 이해하셨길 바라요.",
+      "line_number": 594
+    },
+    {
+      "utterance_index": 296,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 저는 프로젝트 매니저라서",
+      "line_number": 596
+    },
+    {
+      "utterance_index": 297,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "일을 엉망으로 만들려고 여기 있고요",
+      "line_number": 598
+    },
+    {
+      "utterance_index": 298,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 어, 새로운 어, 요구 사항을 말씀드리려고요.",
+      "line_number": 600
+    },
+    {
+      "utterance_index": 299,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 그건,",
+      "line_number": 602
+    },
+    {
+      "utterance_index": 300,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, TV 전용 음, 리모컨을 디자인해야 해요.",
+      "line_number": 604
+    },
+    {
+      "utterance_index": 301,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 어, 기능을 더 넣으려고 하면 너무 복잡해지고",
+      "line_number": 606
+    },
+    {
+      "utterance_index": 302,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "좋아요.",
+      "line_number": 608
+    },
+    {
+      "utterance_index": 303,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "출시까지 시간이 너무 오래 걸리니까요.",
+      "line_number": 610
+    },
+    {
+      "utterance_index": 304,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 612
+    },
+    {
+      "utterance_index": 305,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까 단순해야 해요.",
+      "line_number": 614
+    },
+    {
+      "utterance_index": 306,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 또 하나는 문자 방송을 빼야 한다는 거예요,",
+      "line_number": 616
+    },
+    {
+      "utterance_index": 307,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 인터넷이 떠오르는 세상에서 어, 문자 방송은 어, 과거의 것이 될 거라고 보거든요.",
+      "line_number": 618
+    },
+    {
+      "utterance_index": 308,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 어, 그건 우리 리모컨에 필요 없는 기능이에요.",
+      "line_number": 620
+    },
+    {
+      "utterance_index": 309,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 인터넷도 쓸 수 있는 기능으로 언급됐어요.",
+      "line_number": 622
+    },
+    {
+      "utterance_index": 310,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 아마 TV에서도 쓸 수 있게 될 거예요.",
+      "line_number": 624
+    },
+    {
+      "utterance_index": 311,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "또 하나는 어, 고객이 40세 이상이라는 거예요. 어, 그게 우리가 겨냥해야 하는 시장이에요,",
+      "line_number": 626
+    },
+    {
+      "utterance_index": 312,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "젊은 고객을 위해 특별히 설계한 신제품을 따로 개발할 거라서요.",
+      "line_number": 628
+    },
+    {
+      "utterance_index": 313,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 이건 어, 마케팅 어, 전문가한테는 좀 아쉬운 일이네요.",
+      "line_number": 630
+    },
+    {
+      "utterance_index": 314,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "젊은 사람들을 겨냥하고 있었으니까요.",
+      "line_number": 632
+    },
+    {
+      "utterance_index": 315,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까 40세 이상이면서",
+      "line_number": 634
+    },
+    {
+      "utterance_index": 316,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 우리",
+      "line_number": 636
+    },
+    {
+      "utterance_index": 317,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 리모컨에 맞는 시장을 찾아야 하고,",
+      "line_number": 638
+    },
+    {
+      "utterance_index": 318,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그 반대로도요.",
+      "line_number": 640
+    },
+    {
+      "utterance_index": 319,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 어, 제품에 회사 이미지를 넣는 데 아주 어, 신경 써야 해요.",
+      "line_number": 642
+    },
+    {
+      "utterance_index": 320,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까 디자인과 기기가 작동하는 방식에서 드러나야 해요.",
+      "line_number": 644
+    },
+    {
+      "utterance_index": 321,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 어, 이 점도 아주 분명히 해야 하고요.",
+      "line_number": 646
+    },
+    {
+      "utterance_index": 322,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그래서",
+      "line_number": 648
+    },
+    {
+      "utterance_index": 323,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "조작 기능에 대해 논의해 보죠.",
+      "line_number": 650
+    },
+    {
+      "utterance_index": 324,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 652
+    },
+    {
+      "utterance_index": 325,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데",
+      "line_number": 654
+    },
+    {
+      "utterance_index": 326,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "새 제품 요구 사항에 대해 논의할 여지가 있나요?",
+      "line_number": 656
+    },
+    {
+      "utterance_index": 327,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 우리가 쓰고 싶은 기능과 제품으로 닿고 싶은 시장 사이에서 방법을 찾아볼 수는 있어요. 음",
+      "line_number": 658
+    },
+    {
+      "utterance_index": 328,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 660
+    },
+    {
+      "utterance_index": 329,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네",
+      "line_number": 662
+    },
+    {
+      "utterance_index": 330,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "문자 방송은 낡은 기능이 될 거고",
+      "line_number": 664
+    },
+    {
+      "utterance_index": 331,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어차피 곧 안 쓰이게 될 거라고 하셨잖아요.",
+      "line_number": 666
+    },
+    {
+      "utterance_index": 332,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 새 TV에는 인터넷이 될 거라고요.",
+      "line_number": 668
+    },
+    {
+      "utterance_index": 333,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데 40세 이상을 겨냥한다면, 그 사람들이 인터넷 되는 TV를",
+      "line_number": 670
+    },
+    {
+      "utterance_index": 334,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "앞으로 20년 안에 가질 가능성은 아주 낮다고 생각해요.",
+      "line_number": 672
+    },
+    {
+      "utterance_index": 335,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "게다가 사람들은 문자 방송이 리모컨의 중요한 기능이라고 답했어요.",
+      "line_number": 674
+    },
+    {
+      "utterance_index": 336,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 676
+    },
+    {
+      "utterance_index": 337,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까 문자 방송 기능을 안 넣는 건 꽤 어리석다고 생각해요.",
+      "line_number": 678
+    },
+    {
+      "utterance_index": 338,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "저는 꽤 반대예요.",
+      "line_number": 680
+    },
+    {
+      "utterance_index": 339,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "문자 방송을 빼는 거에 반대한다는 거죠?",
+      "line_number": 682
+    },
+    {
+      "utterance_index": 340,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 684
+    },
+    {
+      "utterance_index": 341,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 686
+    },
+    {
+      "utterance_index": 342,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음",
+      "line_number": 688
+    },
+    {
+      "utterance_index": 343,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그 외에도, 40세 이상 시장은 꽤 작다고 생각해요.",
+      "line_number": 690
+    },
+    {
+      "utterance_index": 344,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 이걸 보면 그냥 또 하나의",
+      "line_number": 692
+    },
+    {
+      "utterance_index": 345,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네",
+      "line_number": 694
+    },
+    {
+      "utterance_index": 346,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그게",
+      "line_number": 696
+    },
+    {
+      "utterance_index": 347,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "40",
+      "line_number": 698
+    },
+    {
+      "utterance_index": 348,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "표준 리모컨이요.",
+      "line_number": 700
+    },
+    {
+      "utterance_index": 349,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "꽤",
+      "line_number": 702
+    },
+    {
+      "utterance_index": 350,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니요",
+      "line_number": 704
+    },
+    {
+      "utterance_index": 351,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "저는 우리가",
+      "line_number": 706
+    },
+    {
+      "utterance_index": 352,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "혁신적이지 않은",
+      "line_number": 708
+    },
+    {
+      "utterance_index": 353,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "디자인이랑 단순한 버튼으로 많은 걸 할 수 있다고 생각해요",
+      "line_number": 710
+    },
+    {
+      "utterance_index": 354,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "리모컨이요.",
+      "line_number": 712
+    },
+    {
+      "utterance_index": 355,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그것도 언급됐었고요.",
+      "line_number": 714
+    },
+    {
+      "utterance_index": 356,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 거기에 노력을 많이 기울이면 버튼이 두세 개뿐인 리모컨을 만들 수도 있어요. 아니면 우리가 닿고 싶은 시장에 맞는 리모컨이요",
+      "line_number": 716
+    },
+    {
+      "utterance_index": 357,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그게 시장의 40퍼센트니까요.",
+      "line_number": 718
+    },
+    {
+      "utterance_index": 358,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 720
+    },
+    {
+      "utterance_index": 359,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 음",
+      "line_number": 722
+    },
+    {
+      "utterance_index": 360,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네덜란드에서 40세 이상, 50세 이상 세대 전체를 보면, 지금 전체 인구에서 가장 큰 비중이에요.",
+      "line_number": 724
+    },
+    {
+      "utterance_index": 361,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네",
+      "line_number": 726
+    },
+    {
+      "utterance_index": 362,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데 시장에서 가장 큰 부분은 아니에요.",
+      "line_number": 728
+    },
+    {
+      "utterance_index": 363,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니죠.",
+      "line_number": 730
+    },
+    {
+      "utterance_index": 364,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 그 외에도 그 사람들은 별로 까다롭지 않아서",
+      "line_number": 732
+    },
+    {
+      "utterance_index": 365,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까",
+      "line_number": 734
+    },
+    {
+      "utterance_index": 366,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "리모컨이 어떤지 별로 신경 안 써요.",
+      "line_number": 736
+    },
+    {
+      "utterance_index": 367,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그냥 처음 보이고 그럭저럭 괜찮아 보이는 걸 사요.",
+      "line_number": 738
+    },
+    {
+      "utterance_index": 368,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "하지만 이 시장을 위해 전형적으로 만든 리모컨을 내놓으면, 사람들이 '이게 내가 미처 몰랐지만 찾던 기기야' 하고 생각할 거라고 보지 않아요?",
+      "line_number": 740
+    },
+    {
+      "utterance_index": 369,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 742
+    },
+    {
+      "utterance_index": 370,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "한번 해 보죠.",
+      "line_number": 744
+    },
+    {
+      "utterance_index": 371,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아니요.",
+      "line_number": 746
+    },
+    {
+      "utterance_index": 372,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그건 16세에서 45세 연령층에서나 그럴 거라고 생각해요.",
+      "line_number": 748
+    },
+    {
+      "utterance_index": 373,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그 사람들은 까다롭고",
+      "line_number": 750
+    },
+    {
+      "utterance_index": 374,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "멋진 리모컨을 원하니까요.",
+      "line_number": 752
+    },
+    {
+      "utterance_index": 375,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 754
+    },
+    {
+      "utterance_index": 376,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "40세 이상은, 그러니까 작동하기만 하면 되고,",
+      "line_number": 756
+    },
+    {
+      "utterance_index": 377,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "작동하기만 하면 바로 만족해요.",
+      "line_number": 758
+    },
+    {
+      "utterance_index": 378,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 760
+    },
+    {
+      "utterance_index": 379,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 762
+    },
+    {
+      "utterance_index": 380,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "마케팅만 제대로 하면 음, 이것도 팔 수 있을 것 같아요, 음, 뉴스에서 들으셨는지 모르겠는데, 노인용 휴대폰처럼요?",
+      "line_number": 764
+    },
+    {
+      "utterance_index": 381,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까",
+      "line_number": 766
+    },
+    {
+      "utterance_index": 382,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 768
+    },
+    {
+      "utterance_index": 383,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그거 크게 성공했죠.",
+      "line_number": 770
+    },
+    {
+      "utterance_index": 384,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네",
+      "line_number": 772
+    },
+    {
+      "utterance_index": 385,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그런 아이디어를 염두에 두고 리모컨을 만들면 돈을 엄청 벌 수 있을 것 같아요.",
+      "line_number": 774
+    },
+    {
+      "utterance_index": 386,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "저는 못 들어 봤어요.",
+      "line_number": 776
+    },
+    {
+      "utterance_index": 387,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아주 크게 성공했어요.",
+      "line_number": 778
+    },
+    {
+      "utterance_index": 388,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 780
+    },
+    {
+      "utterance_index": 389,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "흠.",
+      "line_number": 782
+    },
+    {
+      "utterance_index": 390,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어. 저도 그렇게 생각해요.",
+      "line_number": 784
+    },
+    {
+      "utterance_index": 391,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 786
+    },
+    {
+      "utterance_index": 392,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그러면 디자인이 아니라 기능성에 집중하면 되겠네요.",
+      "line_number": 788
+    },
+    {
+      "utterance_index": 393,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그냥",
+      "line_number": 790
+    },
+    {
+      "utterance_index": 394,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "프로젝트의 초점을 바꾸는 거죠,",
+      "line_number": 792
+    },
+    {
+      "utterance_index": 395,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그러면 어, 팔 수 있을 것 같아요.",
+      "line_number": 794
+    },
+    {
+      "utterance_index": 396,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 제 생각은 그냥 음",
+      "line_number": 796
+    },
+    {
+      "utterance_index": 397,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 우리가 만들 새 제품들, 어, 특별히 디자인한 건 어, 젊은 사람들을 위한 거라서,",
+      "line_number": 798
+    },
+    {
+      "utterance_index": 398,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 그러니까 우리는 노인층에 집중할 수 있을 것 같아요.",
+      "line_number": 800
+    },
+    {
+      "utterance_index": 399,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 음, 그런 음, 리모컨에 어떤 요구 사항이 필요한지 봐야 할 것 같아요.",
+      "line_number": 802
+    },
+    {
+      "utterance_index": 400,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "말씀하신 바로는 채널 선택이 중요하고, 볼륨 선택, 전원, 문자 방송이 중요하니까요.",
+      "line_number": 804
+    },
+    {
+      "utterance_index": 401,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 806
+    },
+    {
+      "utterance_index": 402,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 808
+    },
+    {
+      "utterance_index": 403,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 810
+    },
+    {
+      "utterance_index": 404,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요. 음",
+      "line_number": 812
+    },
+    {
+      "utterance_index": 405,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 814
+    },
+    {
+      "utterance_index": 406,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데 위에서는 분명히 생각이 다른 것 같네요.",
+      "line_number": 816
+    },
+    {
+      "utterance_index": 407,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니요",
+      "line_number": 818
+    },
+    {
+      "utterance_index": 408,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아직 투표는 안 했잖아요,",
+      "line_number": 820
+    },
+    {
+      "utterance_index": 409,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 822
+    },
+    {
+      "utterance_index": 410,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 문자 방송도 어",
+      "line_number": 824
+    },
+    {
+      "utterance_index": 411,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 기능으로 넣을 수 있을 것 같아요. 다만 어, 비용을 올리지 않는다면요,",
+      "line_number": 826
+    },
+    {
+      "utterance_index": 412,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "문자 방송까지 구현하는 데 돈이 훨씬 더 드는지는 모르겠지만,",
+      "line_number": 828
+    },
+    {
+      "utterance_index": 413,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "문제가 될 것 같지는 않아요.",
+      "line_number": 830
+    },
+    {
+      "utterance_index": 414,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니면 문자 방송이",
+      "line_number": 832
+    },
+    {
+      "utterance_index": 415,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그런데 음, 청각 장애인은 어, 자막 때문에 문자 방송이 필요해요.",
+      "line_number": 834
+    },
+    {
+      "utterance_index": 416,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 836
+    },
+    {
+      "utterance_index": 417,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네, 그것도 있죠.",
+      "line_number": 838
+    },
+    {
+      "utterance_index": 418,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그러니까 그건",
+      "line_number": 840
+    },
+    {
+      "utterance_index": 419,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 842
+    },
+    {
+      "utterance_index": 420,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 844
+    },
+    {
+      "utterance_index": 421,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 846
+    },
+    {
+      "utterance_index": 422,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "제안하자면 어",
+      "line_number": 848
+    },
+    {
+      "utterance_index": 423,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "문자 방송을 안 넣는 건 확실히 나쁜 생각이라고 봐요.",
+      "line_number": 850
+    },
+    {
+      "utterance_index": 424,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그건",
+      "line_number": 852
+    },
+    {
+      "utterance_index": 425,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 854
+    },
+    {
+      "utterance_index": 426,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 856
+    },
+    {
+      "utterance_index": 427,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 문자 방송에 정말 반대하는 분 있어요?",
+      "line_number": 858
+    },
+    {
+      "utterance_index": 428,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "없어요.",
+      "line_number": 860
+    },
+    {
+      "utterance_index": 429,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "없어요?",
+      "line_number": 862
+    },
+    {
+      "utterance_index": 430,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그럼 그냥 문자 방송은 유지하죠.",
+      "line_number": 864
+    },
+    {
+      "utterance_index": 431,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "저도 그게 좋은 생각이라고 봐요, 특히 자막 때문에요.",
+      "line_number": 866
+    },
+    {
+      "utterance_index": 432,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그걸 우리 리모컨의 또 다른 장점으로 만들 수도 있겠네요, 예를 들어 큰 자막용 버튼을",
+      "line_number": 868
+    },
+    {
+      "utterance_index": 433,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "리모컨에 바로 넣는다면요.",
+      "line_number": 870
+    },
+    {
+      "utterance_index": 434,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네, 네.",
+      "line_number": 872
+    },
+    {
+      "utterance_index": 435,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "나이 드신 분들은 '아, 자막을 보고 싶다' 하고",
+      "line_number": 874
+    },
+    {
+      "utterance_index": 436,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "버튼을 누르면",
+      "line_number": 876
+    },
+    {
+      "utterance_index": 437,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "큰 자막이 나오는 거죠.",
+      "line_number": 878
+    },
+    {
+      "utterance_index": 438,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "어, 좋은 아이디어네요.",
+      "line_number": 880
+    },
+    {
+      "utterance_index": 439,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네. 네.",
+      "line_number": 882
+    },
+    {
+      "utterance_index": 440,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 그러니까",
+      "line_number": 884
+    },
+    {
+      "utterance_index": 441,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "문자 방송은 우리에게 아주 유리하게 쓰일 수 있을 것 같아요. 음",
+      "line_number": 886
+    },
+    {
+      "utterance_index": 442,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "기능성은 버튼이 적어야 한다고 하셨죠.",
+      "line_number": 888
+    },
+    {
+      "utterance_index": 443,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 890
+    },
+    {
+      "utterance_index": 444,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "버튼이 적은 게 어, 아주 중요하다고 생각해요.",
+      "line_number": 892
+    },
+    {
+      "utterance_index": 445,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 894
+    },
+    {
+      "utterance_index": 446,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음.",
+      "line_number": 896
+    },
+    {
+      "utterance_index": 447,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까 단순하게 유지하는 거죠.",
+      "line_number": 898
+    },
+    {
+      "utterance_index": 448,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데 이제 그건 별로 문제가 아닌 것 같아요",
+      "line_number": 900
+    },
+    {
+      "utterance_index": 449,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "왜냐하면",
+      "line_number": 902
+    },
+    {
+      "utterance_index": 450,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음",
+      "line_number": 904
+    },
+    {
+      "utterance_index": 451,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그럴 수도 있지만요.",
+      "line_number": 906
+    },
+    {
+      "utterance_index": 452,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "TV 전용이라면",
+      "line_number": 908
+    },
+    {
+      "utterance_index": 453,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까 TV 전용이면 어차피 버튼이 많이 필요하지 않잖아요.",
+      "line_number": 910
+    },
+    {
+      "utterance_index": 454,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 912
+    },
+    {
+      "utterance_index": 455,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 914
+    },
+    {
+      "utterance_index": 456,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "1부터 0까지 버튼, 다음 채널, 이전 채널,",
+      "line_number": 916
+    },
+    {
+      "utterance_index": 457,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니요.",
+      "line_number": 918
+    },
+    {
+      "utterance_index": 458,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 920
+    },
+    {
+      "utterance_index": 459,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "볼륨 올리기, 볼륨 내리기, 문자 방송 버튼 몇 개 정도 있으면 되고",
+      "line_number": 922
+    },
+    {
+      "utterance_index": 460,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "하지만",
+      "line_number": 924
+    },
+    {
+      "utterance_index": 461,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 926
+    },
+    {
+      "utterance_index": 462,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그런데 필요할까요",
+      "line_number": 928
+    },
+    {
+      "utterance_index": 463,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "만약 그냥",
+      "line_number": 930
+    },
+    {
+      "utterance_index": 464,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그럼 디스플레이는 빼도 되겠네요,",
+      "line_number": 932
+    },
+    {
+      "utterance_index": 465,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어, 필요 없으니까요.",
+      "line_number": 934
+    },
+    {
+      "utterance_index": 466,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그런데 1부터 0까지 버튼이 필요할까요.",
+      "line_number": 936
+    },
+    {
+      "utterance_index": 467,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아니요.",
+      "line_number": 938
+    },
+    {
+      "utterance_index": 468,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아마 우리가",
+      "line_number": 940
+    },
+    {
+      "utterance_index": 469,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "어",
+      "line_number": 942
+    },
+    {
+      "utterance_index": 470,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "문자 방송을 넣는다면 필요하다고 봐요.",
+      "line_number": 944
+    },
+    {
+      "utterance_index": 471,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "많은 사람들이 그걸 쓰는 걸 좋아하는 것 같아요.",
+      "line_number": 946
+    },
+    {
+      "utterance_index": 472,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아마 어, 쓸 수 있는 건",
+      "line_number": 948
+    },
+    {
+      "utterance_index": 473,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "1번 채널에서 35번 채널로 바꾸고 싶은데 다음 채널 버튼을 35번 누르고 싶지는 않잖아요.",
+      "line_number": 950
+    },
+    {
+      "utterance_index": 474,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 952
+    },
+    {
+      "utterance_index": 475,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 954
+    },
+    {
+      "utterance_index": 476,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니요,",
+      "line_number": 956
+    },
+    {
+      "utterance_index": 477,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "스크롤 버튼을 넣을 수도 있지 않을까요?",
+      "line_number": 958
+    },
+    {
+      "utterance_index": 478,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니면 조이스틱 같은 거요?",
+      "line_number": 960
+    },
+    {
+      "utterance_index": 479,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 962
+    },
+    {
+      "utterance_index": 480,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "다른 방법도 있어요.",
+      "line_number": 964
+    },
+    {
+      "utterance_index": 481,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "전화기를 보면요. 소니 전화기에는 스크롤 버튼이 있는데, 이름 같은 걸 찾을 때 아주 유용해요",
+      "line_number": 966
+    },
+    {
+      "utterance_index": 482,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 968
+    },
+    {
+      "utterance_index": 483,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 970
+    },
+    {
+      "utterance_index": 484,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 972
+    },
+    {
+      "utterance_index": 485,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그건 맞아요",
+      "line_number": 974
+    },
+    {
+      "utterance_index": 486,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데 음, 채널을 그렇게 빨리 바꿀 수 있는 TV는 많지 않은 것 같아요.",
+      "line_number": 976
+    },
+    {
+      "utterance_index": 487,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까 TV에 모든 채널을 실제로 보면서 넘길 수 있는 기능이 있어야 할 거예요.",
+      "line_number": 978
+    },
+    {
+      "utterance_index": 488,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 그런 기능이 있는 TV가 많을지는 모르겠어요.",
+      "line_number": 980
+    },
+    {
+      "utterance_index": 489,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네.",
+      "line_number": 982
+    },
+    {
+      "utterance_index": 490,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 984
+    },
+    {
+      "utterance_index": 491,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그리고 그 외에도 음",
+      "line_number": 986
+    },
+    {
+      "utterance_index": 492,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "노인층에 집중한다면 그분들이 적응해야 하잖아요.",
+      "line_number": 988
+    },
+    {
+      "utterance_index": 493,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "스크롤 버튼은 익숙하지 않으실 거예요.",
+      "line_number": 990
+    },
+    {
+      "utterance_index": 494,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "맞아요.",
+      "line_number": 992
+    },
+    {
+      "utterance_index": 495,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그러니까 기본 배치를 유지하는 게 좋겠어요.",
+      "line_number": 994
+    },
+    {
+      "utterance_index": 496,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음.",
+      "line_number": 996
+    },
+    {
+      "utterance_index": 497,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 998
+    },
+    {
+      "utterance_index": 498,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "숫자요, 네.",
+      "line_number": 1000
+    },
+    {
+      "utterance_index": 499,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네",
+      "line_number": 1002
+    },
+    {
+      "utterance_index": 500,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "디스플레이에 버튼이 몇 개나 들어갈지 볼 수 있고,",
+      "line_number": 1004
+    },
+    {
+      "utterance_index": 501,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "너무 많으면 어, 다시 생각해 볼 수 있어요.",
+      "line_number": 1006
+    },
+    {
+      "utterance_index": 502,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그래도 버튼이 아주 많지는 않을 것 같아요.",
+      "line_number": 1008
+    },
+    {
+      "utterance_index": 503,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 1010
+    },
+    {
+      "utterance_index": 504,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니면 많을 필요가 없거나요.",
+      "line_number": 1012
+    },
+    {
+      "utterance_index": 505,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데 TV만 조작하는 리모컨을 만든다면, 음, 버튼을 최대한 줄이는 걸로 얻을 수 있는 게 많지 않은 것 같아요.",
+      "line_number": 1014
+    },
+    {
+      "utterance_index": 506,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "TV만 조작하는 리모컨이 꽤 많은데,",
+      "line_number": 1016
+    },
+    {
+      "utterance_index": 507,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그것들은 이미 버튼이 최소한이거든요.",
+      "line_number": 1018
+    },
+    {
+      "utterance_index": 508,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그 부분에서 얻을 게 많지 않다고 봐요.",
+      "line_number": 1020
+    },
+    {
+      "utterance_index": 509,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "버튼 수요?",
+      "line_number": 1022
+    },
+    {
+      "utterance_index": 510,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "흠.",
+      "line_number": 1024
+    },
+    {
+      "utterance_index": 511,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 1026
+    },
+    {
+      "utterance_index": 512,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "저는 디자인에서 그게 아주 중요하다고 봐요.",
+      "line_number": 1028
+    },
+    {
+      "utterance_index": 513,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "버튼을 알맞은 자리에 두면 아주 멋진 디자인을 만들 수 있어요.",
+      "line_number": 1030
+    },
+    {
+      "utterance_index": 514,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 버튼이 적으면 훨씬 더 많은 걸 할 수 있고요",
+      "line_number": 1032
+    },
+    {
+      "utterance_index": 515,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그건 맞아요",
+      "line_number": 1034
+    },
+    {
+      "utterance_index": 516,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래도 TV만 조작하는 리모컨을 만들 때는 경쟁사보다 앞설 게 별로 없다고 생각해요.",
+      "line_number": 1036
+    },
+    {
+      "utterance_index": 517,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "TV만 조작하는 거요, 네.",
+      "line_number": 1038
+    },
+    {
+      "utterance_index": 518,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "TV만 조작하는 리모컨에는 그냥 버튼이 많이 필요하지 않으니까요.",
+      "line_number": 1040
+    },
+    {
+      "utterance_index": 519,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "필요한 기능도 많지 않아서",
+      "line_number": 1042
+    },
+    {
+      "utterance_index": 520,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "기존 리모컨 대부분도 버튼이 많지 않아요.",
+      "line_number": 1044
+    },
+    {
+      "utterance_index": 521,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그렇죠.",
+      "line_number": 1046
+    },
+    {
+      "utterance_index": 522,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그렇죠.",
+      "line_number": 1048
+    },
+    {
+      "utterance_index": 523,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까.",
+      "line_number": 1050
+    },
+    {
+      "utterance_index": 524,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래서",
+      "line_number": 1052
+    },
+    {
+      "utterance_index": 525,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "여기서 실제로 경쟁사보다 앞서기는 아주 어려울 것 같아요.",
+      "line_number": 1054
+    },
+    {
+      "utterance_index": 526,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1056
+    },
+    {
+      "utterance_index": 527,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 1058
+    },
+    {
+      "utterance_index": 528,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "우리가",
+      "line_number": 1060
+    },
+    {
+      "utterance_index": 529,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러려면 마케팅에 큰 공을 들여야 할 텐데",
+      "line_number": 1062
+    },
+    {
+      "utterance_index": 530,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네. 맞아요.",
+      "line_number": 1064
+    },
+    {
+      "utterance_index": 531,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그게 TV 전용으로 하자는 이유 중 하나였잖아요",
+      "line_number": 1066
+    },
+    {
+      "utterance_index": 532,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "마케팅에 시간을 많이 쓸 수 없어서요.",
+      "line_number": 1068
+    },
+    {
+      "utterance_index": 533,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1070
+    },
+    {
+      "utterance_index": 534,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 1072
+    },
+    {
+      "utterance_index": 535,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "버튼을 줄이는 것보다는 예를 들어 거치대에 음, 집중하는 게 낫다는 거네요.",
+      "line_number": 1074
+    },
+    {
+      "utterance_index": 536,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 어, 다른 기능 같은 거요. 버튼 줄이기 대신에요.",
+      "line_number": 1076
+    },
+    {
+      "utterance_index": 537,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아마도요.",
+      "line_number": 1078
+    },
+    {
+      "utterance_index": 538,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음, 네",
+      "line_number": 1080
+    },
+    {
+      "utterance_index": 539,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러니까 당연히 버튼을 잘 배치할 방법은 필요하고",
+      "line_number": 1082
+    },
+    {
+      "utterance_index": 540,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고",
+      "line_number": 1084
+    },
+    {
+      "utterance_index": 541,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래도 거기에 시간을 많이 쓰면 안 된다고 생각해요.",
+      "line_number": 1086
+    },
+    {
+      "utterance_index": 542,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음. 그렇죠.",
+      "line_number": 1088
+    },
+    {
+      "utterance_index": 543,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "거치대가 우리 예산 안에서 될 것 같아요?",
+      "line_number": 1090
+    },
+    {
+      "utterance_index": 544,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "가능할 거예요, 네. 너무 화려하지만 않으면요.",
+      "line_number": 1092
+    },
+    {
+      "utterance_index": 545,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그게",
+      "line_number": 1094
+    },
+    {
+      "utterance_index": 546,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "아니요.",
+      "line_number": 1096
+    },
+    {
+      "utterance_index": 547,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그리고 리모컨이 꽤 작게 유지되면 가능할 거예요",
+      "line_number": 1098
+    },
+    {
+      "utterance_index": 548,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니요.",
+      "line_number": 1100
+    },
+    {
+      "utterance_index": 549,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네.",
+      "line_number": 1102
+    },
+    {
+      "utterance_index": 550,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1104
+    },
+    {
+      "utterance_index": 551,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "아니요.",
+      "line_number": 1106
+    },
+    {
+      "utterance_index": 552,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "왜냐하면 그게 어",
+      "line_number": 1108
+    },
+    {
+      "utterance_index": 553,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그것도 좋은 장점이 될 것 같아요. 멋져 보이는 거치대가 있으면요",
+      "line_number": 1110
+    },
+    {
+      "utterance_index": 554,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네.",
+      "line_number": 1112
+    },
+    {
+      "utterance_index": 555,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니면 아주",
+      "line_number": 1114
+    },
+    {
+      "utterance_index": 556,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "흠.",
+      "line_number": 1116
+    },
+    {
+      "utterance_index": 557,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋은 요구 사항이네요.",
+      "line_number": 1118
+    },
+    {
+      "utterance_index": 558,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "거치대.",
+      "line_number": 1120
+    },
+    {
+      "utterance_index": 559,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그럼",
+      "line_number": 1122
+    },
+    {
+      "utterance_index": 560,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "부가 기능에 집중하는 거죠?",
+      "line_number": 1124
+    },
+    {
+      "utterance_index": 561,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그런 것 같아요.",
+      "line_number": 1126
+    },
+    {
+      "utterance_index": 562,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네.",
+      "line_number": 1128
+    },
+    {
+      "utterance_index": 563,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 1130
+    },
+    {
+      "utterance_index": 564,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네",
+      "line_number": 1132
+    },
+    {
+      "utterance_index": 565,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "나이 드신 분들이 새 리모컨에",
+      "line_number": 1134
+    },
+    {
+      "utterance_index": 566,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1136
+    },
+    {
+      "utterance_index": 567,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "어떤 부가 기능을 원하는지 조사를 좀 해야 할 것 같아요.",
+      "line_number": 1138
+    },
+    {
+      "utterance_index": 568,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋은 지적이에요. 음",
+      "line_number": 1140
+    },
+    {
+      "utterance_index": 569,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "쉽게 잃어버린다고도 하셨죠.",
+      "line_number": 1142
+    },
+    {
+      "utterance_index": 570,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네",
+      "line_number": 1144
+    },
+    {
+      "utterance_index": 571,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "음",
+      "line_number": 1146
+    },
+    {
+      "utterance_index": 572,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "50퍼센트가 리모컨을 자주 잃어버린다고 답했어요.",
+      "line_number": 1148
+    },
+    {
+      "utterance_index": 573,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1150
+    },
+    {
+      "utterance_index": 574,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그럼 소리 신호 같은 걸 넣어야겠네요.",
+      "line_number": 1152
+    },
+    {
+      "utterance_index": 575,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네",
+      "line_number": 1154
+    },
+    {
+      "utterance_index": 576,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그게 제가 제안한 거예요.",
+      "line_number": 1156
+    },
+    {
+      "utterance_index": 577,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1158
+    },
+    {
+      "utterance_index": 578,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "열쇠고리처럼 휘파람을 불면 어, 소리가 나는 거요.",
+      "line_number": 1160
+    },
+    {
+      "utterance_index": 579,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런 게 있죠",
+      "line_number": 1162
+    },
+    {
+      "utterance_index": 580,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1164
+    },
+    {
+      "utterance_index": 581,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네",
+      "line_number": 1166
+    },
+    {
+      "utterance_index": 582,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "흠.",
+      "line_number": 1168
+    },
+    {
+      "utterance_index": 583,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "일부 전화기에도 있어요,",
+      "line_number": 1170
+    },
+    {
+      "utterance_index": 584,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "거치대가 있는 거요.",
+      "line_number": 1172
+    },
+    {
+      "utterance_index": 585,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네.",
+      "line_number": 1174
+    },
+    {
+      "utterance_index": 586,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "버튼만 누르면",
+      "line_number": 1176
+    },
+    {
+      "utterance_index": 587,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "전화기가 울리는 거죠.",
+      "line_number": 1178
+    },
+    {
+      "utterance_index": 588,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네. 그러니까",
+      "line_number": 1180
+    },
+    {
+      "utterance_index": 589,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그러면 어디 있는지 알 수 있죠.",
+      "line_number": 1182
+    },
+    {
+      "utterance_index": 590,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "소리 신호도 가능할 거예요.",
+      "line_number": 1184
+    },
+    {
+      "utterance_index": 591,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그렇게 비싸지 않을 것 같아요.",
+      "line_number": 1186
+    },
+    {
+      "utterance_index": 592,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 1188
+    },
+    {
+      "utterance_index": 593,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 또 다른",
+      "line_number": 1190
+    },
+    {
+      "utterance_index": 594,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "건 LCD 화면이에요.",
+      "line_number": 1192
+    },
+    {
+      "utterance_index": 595,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 그게 비용을 너무 많이 올릴지는 모르겠어요,",
+      "line_number": 1194
+    },
+    {
+      "utterance_index": 596,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "음",
+      "line_number": 1196
+    },
+    {
+      "utterance_index": 597,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "왜냐하면",
+      "line_number": 1198
+    },
+    {
+      "utterance_index": 598,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "음, 거치대랑 화면 중에 골라야 할 것 같아요,",
+      "line_number": 1200
+    },
+    {
+      "utterance_index": 599,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "왜냐하면",
+      "line_number": 1202
+    },
+    {
+      "utterance_index": 600,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1204
+    },
+    {
+      "utterance_index": 601,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "그게 어",
+      "line_number": 1206
+    },
+    {
+      "utterance_index": 602,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 1208
+    },
+    {
+      "utterance_index": 603,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그것도 너무 많을 거예요.",
+      "line_number": 1210
+    },
+    {
+      "utterance_index": 604,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "새 리모컨은 익히기 어렵다고 답한 사람이 많았고,",
+      "line_number": 1212
+    },
+    {
+      "utterance_index": 605,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "우리는 여기서 나이 드신 분들에 집중하고 있는데",
+      "line_number": 1214
+    },
+    {
+      "utterance_index": 606,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그분들은 새 기기를 이해하는 걸 어려워하는 편이니까,",
+      "line_number": 1216
+    },
+    {
+      "utterance_index": 607,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "작은 화면을 하나 넣으면 좋을 것 같아요,",
+      "line_number": 1218
+    },
+    {
+      "utterance_index": 608,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "버튼을 누르면 그 버튼을 설명해 주는 거요.",
+      "line_number": 1220
+    },
+    {
+      "utterance_index": 609,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그게 무슨 기능인지 알려 주는 거죠.",
+      "line_number": 1222
+    },
+    {
+      "utterance_index": 610,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1224
+    },
+    {
+      "utterance_index": 611,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "터치스크린이나 아주 비싼 화면일 필요는 없고,",
+      "line_number": 1226
+    },
+    {
+      "utterance_index": 612,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "기반으로.",
+      "line_number": 1228
+    },
+    {
+      "utterance_index": 613,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "좋아요. 네.",
+      "line_number": 1230
+    },
+    {
+      "utterance_index": 614,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데",
+      "line_number": 1232
+    },
+    {
+      "utterance_index": 615,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그냥 LCD요.",
+      "line_number": 1234
+    },
+    {
+      "utterance_index": 616,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아, 그냥 일반 화면이요.",
+      "line_number": 1236
+    },
+    {
+      "utterance_index": 617,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그냥 작은 화면이요",
+      "line_number": 1238
+    },
+    {
+      "utterance_index": 618,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋은 아이디어네요.",
+      "line_number": 1240
+    },
+    {
+      "utterance_index": 619,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "두 개",
+      "line_number": 1242
+    },
+    {
+      "utterance_index": 620,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 1244
+    },
+    {
+      "utterance_index": 621,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "추가 정보요. 피드백이요.",
+      "line_number": 1246
+    },
+    {
+      "utterance_index": 622,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 1248
+    },
+    {
+      "utterance_index": 623,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네. 저도 좋은 아이디어라고 생각해요.",
+      "line_number": 1250
+    },
+    {
+      "utterance_index": 624,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 1252
+    },
+    {
+      "utterance_index": 625,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런데 그게 될지는",
+      "line_number": 1254
+    },
+    {
+      "utterance_index": 626,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "작은 화면으로요.",
+      "line_number": 1256
+    },
+    {
+      "utterance_index": 627,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "비용에 맞을지는 모르겠어요.",
+      "line_number": 1258
+    },
+    {
+      "utterance_index": 628,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "버튼 추가 정보.",
+      "line_number": 1260
+    },
+    {
+      "utterance_index": 629,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그것도 가능할 것 같아요.",
+      "line_number": 1262
+    },
+    {
+      "utterance_index": 630,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 뭐라고 했는지 보죠. 음. 더.",
+      "line_number": 1264
+    },
+    {
+      "utterance_index": 631,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "멋져야 하고, 멋진 디자인, 익히기 쉬움.",
+      "line_number": 1266
+    },
+    {
+      "utterance_index": 632,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "버튼은 적게, 그건 얘기했고요. 거치대, LCD. 음, 일반 기능",
+      "line_number": 1268
+    },
+    {
+      "utterance_index": 633,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네. 네.",
+      "line_number": 1270
+    },
+    {
+      "utterance_index": 634,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 기본 소재. 그것도 좋은 생각이라고 봐요,",
+      "line_number": 1272
+    },
+    {
+      "utterance_index": 635,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 나이 드신 분들은 티타늄 커버든 그냥 플라스틱이든 상관하지 않으니까요.",
+      "line_number": 1274
+    },
+    {
+      "utterance_index": 636,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까 그건 별로 중요하지 않아요.",
+      "line_number": 1276
+    },
+    {
+      "utterance_index": 637,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그렇죠.",
+      "line_number": 1278
+    },
+    {
+      "utterance_index": 638,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 1280
+    },
+    {
+      "utterance_index": 639,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그래서",
+      "line_number": 1282
+    },
+    {
+      "utterance_index": 640,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "제 생각엔 우리가",
+      "line_number": 1284
+    },
+    {
+      "utterance_index": 641,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "아마 나이 드신 분들이 젊은 사람들보다 리모컨을 좀 더 조심해서 다룰 거예요.",
+      "line_number": 1286
+    },
+    {
+      "utterance_index": 642,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 대상 그룹을 음, 구체적으로 정하죠.",
+      "line_number": 1288
+    },
+    {
+      "utterance_index": 643,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "정말 노인을 말하는 건지, 아니면 40세부터 80세까지를 말하는 건지요.",
+      "line_number": 1290
+    },
+    {
+      "utterance_index": 644,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "지금 우리가 디자인하려는 건 아마 60세 이상을 위한 것 같거든요.",
+      "line_number": 1292
+    },
+    {
+      "utterance_index": 645,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음. 네.",
+      "line_number": 1294
+    },
+    {
+      "utterance_index": 646,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 1296
+    },
+    {
+      "utterance_index": 647,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 우리는 뭘 원하죠?",
+      "line_number": 1298
+    },
+    {
+      "utterance_index": 648,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "제 생각엔",
+      "line_number": 1300
+    },
+    {
+      "utterance_index": 649,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "예를 들어 노인용 전화기처럼 하려면,",
+      "line_number": 1302
+    },
+    {
+      "utterance_index": 650,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "진짜 노인층을 겨냥할 수 있어요.",
+      "line_number": 1304
+    },
+    {
+      "utterance_index": 651,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "제 생각엔 그게",
+      "line_number": 1306
+    },
+    {
+      "utterance_index": 652,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그런 걸 한다면 어, 회사 이미지에 정말 좋을 것 같아요.",
+      "line_number": 1308
+    },
+    {
+      "utterance_index": 653,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1310
+    },
+    {
+      "utterance_index": 654,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 시장도 괜찮을 것 같아요.",
+      "line_number": 1312
+    },
+    {
+      "utterance_index": 655,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 1314
+    },
+    {
+      "utterance_index": 656,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그게",
+      "line_number": 1316
+    },
+    {
+      "utterance_index": 657,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "정말 혁신적인 제품을 내놓을 수 있다면요.",
+      "line_number": 1318
+    },
+    {
+      "utterance_index": 658,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까 예를 들어 60세에서 80세를 말하는 거네요.",
+      "line_number": 1320
+    },
+    {
+      "utterance_index": 659,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네, 정말",
+      "line_number": 1322
+    },
+    {
+      "utterance_index": 660,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1324
+    },
+    {
+      "utterance_index": 661,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 1326
+    },
+    {
+      "utterance_index": 662,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그래도 그건 좀 더 알아봐야겠어요.",
+      "line_number": 1328
+    },
+    {
+      "utterance_index": 663,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "60세.",
+      "line_number": 1330
+    },
+    {
+      "utterance_index": 664,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 1332
+    },
+    {
+      "utterance_index": 665,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 다양한 문화요. 우리가",
+      "line_number": 1334
+    },
+    {
+      "utterance_index": 666,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "음",
+      "line_number": 1336
+    },
+    {
+      "utterance_index": 667,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "나라마다 TV가 다르진 않을 것 같아요 어",
+      "line_number": 1338
+    },
+    {
+      "utterance_index": 668,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "음.",
+      "line_number": 1340
+    },
+    {
+      "utterance_index": 669,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요.",
+      "line_number": 1342
+    },
+    {
+      "utterance_index": 670,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "어, 나라마다요.",
+      "line_number": 1344
+    },
+    {
+      "utterance_index": 671,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그렇죠.",
+      "line_number": 1346
+    },
+    {
+      "utterance_index": 672,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그렇죠.",
+      "line_number": 1348
+    },
+    {
+      "utterance_index": 673,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "왜냐하면",
+      "line_number": 1350
+    },
+    {
+      "utterance_index": 674,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "이제 5분 남았어요.",
+      "line_number": 1352
+    },
+    {
+      "utterance_index": 675,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그럼",
+      "line_number": 1354
+    },
+    {
+      "utterance_index": 676,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 1356
+    },
+    {
+      "utterance_index": 677,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 1358
+    },
+    {
+      "utterance_index": 678,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "작은 경고예요.",
+      "line_number": 1360
+    },
+    {
+      "utterance_index": 679,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "그리고 어, 버튼을 설명해 주는 작은 화면이 있으면, 훨씬 쉽게",
+      "line_number": 1362
+    },
+    {
+      "utterance_index": 680,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "해야",
+      "line_number": 1364
+    },
+    {
+      "utterance_index": 681,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "다양한 문화에 맞출 수 있을 것 같아요.",
+      "line_number": 1366
+    },
+    {
+      "utterance_index": 682,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1368
+    },
+    {
+      "utterance_index": 683,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "여러 언어로요.",
+      "line_number": 1370
+    },
+    {
+      "utterance_index": 684,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 1372
+    },
+    {
+      "utterance_index": 685,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네.",
+      "line_number": 1374
+    },
+    {
+      "utterance_index": 686,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "네.",
+      "line_number": 1376
+    },
+    {
+      "utterance_index": 687,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 1378
+    },
+    {
+      "utterance_index": 688,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "아니면 언어 버튼을 넣어야 하는데,",
+      "line_number": 1380
+    },
+    {
+      "utterance_index": 689,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그렇죠.",
+      "line_number": 1382
+    },
+    {
+      "utterance_index": 690,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그건 좀 불필요할 것 같아요.",
+      "line_number": 1384
+    },
+    {
+      "utterance_index": 691,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "그렇죠. 네.",
+      "line_number": 1386
+    },
+    {
+      "utterance_index": 692,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 1388
+    },
+    {
+      "utterance_index": 693,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "시장마다 맞춰서 내놓는 게 낫겠어요.",
+      "line_number": 1390
+    },
+    {
+      "utterance_index": 694,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 1392
+    },
+    {
+      "utterance_index": 695,
+      "speaker": "C",
+      "speaker_role": "산업 디자이너",
+      "text": "네.",
+      "line_number": 1394
+    },
+    {
+      "utterance_index": 696,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "좋아요. 그러니까",
+      "line_number": 1396
+    },
+    {
+      "utterance_index": 697,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그게 대상이에요.",
+      "line_number": 1398
+    },
+    {
+      "utterance_index": 698,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 그다음에 작은 것 몇 가지요.",
+      "line_number": 1400
+    },
+    {
+      "utterance_index": 699,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "어, 좋아요.",
+      "line_number": 1402
+    },
+    {
+      "utterance_index": 700,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "회의록은 프로젝트 어, 프로젝트 문서 폴더에 올려 둘게요.",
+      "line_number": 1404
+    },
+    {
+      "utterance_index": 701,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "음, 다음 회의를 위해 할 일은, 산업 디자이너는 부품 콘셉트를 맡고,",
+      "line_number": 1406
+    },
+    {
+      "utterance_index": 702,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "UI 디자이너는 사용자 인터페이스 콘셉트,",
+      "line_number": 1408
+    },
+    {
+      "utterance_index": 703,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 트렌드 관찰을 맡아요.",
+      "line_number": 1410
+    },
+    {
+      "utterance_index": 704,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 1412
+    },
+    {
+      "utterance_index": 705,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "대상 그룹, 어, 요구 사항, 그리고 지금 어, 진행 중인 트렌드에 대해 우리가 한 얘기를 염두에 두세요.",
+      "line_number": 1414
+    },
+    {
+      "utterance_index": 706,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 어, 구체적인 지시 사항은 어, 개인 코치가 보내 줄 거예요.",
+      "line_number": 1416
+    },
+    {
+      "utterance_index": 707,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "네.",
+      "line_number": 1418
+    },
+    {
+      "utterance_index": 708,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그럼 음",
+      "line_number": 1420
+    },
+    {
+      "utterance_index": 709,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "이번 회의 고마웠어요.",
+      "line_number": 1422
+    },
+    {
+      "utterance_index": 710,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그리고 이제 점심시간인 것 같아요.",
+      "line_number": 1424
+    },
+    {
+      "utterance_index": 711,
+      "speaker": "D",
+      "speaker_role": "마케팅 담당자",
+      "text": "좋네요.",
+      "line_number": 1426
+    },
+    {
+      "utterance_index": 712,
+      "speaker": "B",
+      "speaker_role": "UI 디자이너",
+      "text": "네.",
+      "line_number": 1428
+    },
+    {
+      "utterance_index": 713,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그러니까",
+      "line_number": 1430
+    },
+    {
+      "utterance_index": 714,
+      "speaker": "A",
+      "speaker_role": "프로젝트 매니저",
+      "text": "그건 좋은 일이죠.",
+      "line_number": 1432
+    }
+  ],
+  "agenda_index": [
+    {
+      "agenda_id": "TS3003b_a1",
+      "agenda_number": 1,
+      "agenda_title": "목표 연령층",
+      "decision_count": 1,
+      "unresolved_count": 1,
+      "action_count": 0
+    },
+    {
+      "agenda_id": "TS3003b_a2",
+      "agenda_number": 2,
+      "agenda_title": "TV 전용 조작 범위",
+      "decision_count": 1,
+      "unresolved_count": 0,
+      "action_count": 0
+    },
+    {
+      "agenda_id": "TS3003b_a3",
+      "agenda_number": 3,
+      "agenda_title": "내부 구조·소재",
+      "decision_count": 0,
+      "unresolved_count": 0,
+      "action_count": 0
+    },
+    {
+      "agenda_id": "TS3003b_a4",
+      "agenda_number": 4,
+      "agenda_title": "문자 방송·자막",
+      "decision_count": 1,
+      "unresolved_count": 1,
+      "action_count": 0
+    },
+    {
+      "agenda_id": "TS3003b_a5",
+      "agenda_number": 5,
+      "agenda_title": "버튼 구성·배열",
+      "decision_count": 1,
+      "unresolved_count": 0,
+      "action_count": 0
+    },
+    {
+      "agenda_id": "TS3003b_a6",
+      "agenda_number": 6,
+      "agenda_title": "분실 방지 거치대",
+      "decision_count": 1,
+      "unresolved_count": 1,
+      "action_count": 0
+    },
+    {
+      "agenda_id": "TS3003b_a7",
+      "agenda_number": 7,
+      "agenda_title": "버튼 안내 LCD",
+      "decision_count": 1,
+      "unresolved_count": 1,
+      "action_count": 0
+    },
+    {
+      "agenda_id": "TS3003b_a8",
+      "agenda_number": 8,
+      "agenda_title": "회의 운영과 후속 업무",
+      "decision_count": 0,
+      "unresolved_count": 0,
+      "action_count": 5
+    }
+  ],
+  "meeting_results": {
+    "decision_item_ids": [
+      "TS3003b_a1_d2",
+      "TS3003b_a2_d3",
+      "TS3003b_a4_d1",
+      "TS3003b_a5_d2",
+      "TS3003b_a6_d2",
+      "TS3003b_a7_d2"
+    ],
+    "action_item_ids": [
+      "TS3003b_a8_d1",
+      "TS3003b_a8_d2",
+      "TS3003b_a8_d3",
+      "TS3003b_a8_d4",
+      "TS3003b_a8_d5"
+    ],
+    "unresolved_item_ids": [
+      "TS3003b_a1_un1",
+      "TS3003b_a4_un1",
+      "TS3003b_a6_un1",
+      "TS3003b_a7_un1"
+    ],
+    "next_topic_item_ids": []
+  },
+  "agendas": [
+    {
+      "agenda_id": "TS3003b_a1",
+      "agenda_number": 1,
+      "agenda_title": "목표 연령층",
+      "evidence_range": [
+        54,
+        662
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a1_st1",
+          "agenda_id": "TS3003b_a1",
+          "order": 1,
+          "title": "젊은층 제안",
+          "item_ids": [
+            "TS3003b_a1_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a1_st2",
+          "agenda_id": "TS3003b_a1",
+          "order": 2,
+          "title": "40세 이상",
+          "item_ids": [
+            "TS3003b_a1_d2"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a1_st3",
+          "agenda_id": "TS3003b_a1",
+          "order": 3,
+          "title": "시장 의견",
+          "item_ids": [
+            "TS3003b_a1_d3"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a1_st4",
+          "agenda_id": "TS3003b_a1",
+          "order": 4,
+          "title": "세부 연령",
+          "item_ids": [
+            "TS3003b_a1_d4"
+          ]
+        }
+      ],
+      "discussion_background": [
+        {
+          "item_id": "TS3003b_a1_bg1",
+          "agenda_id": "TS3003b_a1",
+          "section": "discussion_background",
+          "order": 1,
+          "text": "마케팅 조사는 100명을 대상으로 진행됐으며, 시장의 60%는 16~46세, 40%는 46~65세로 조사됨. 젊은층은 새 기능을 좋아하지만 까다롭고, 46~65세는 기능에는 덜 관심을 보이나 지출은 더 쉽게 하는 경향이 있다고 공유됨.",
+          "evidence_utterance_indices": [
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            86,
+            87,
+            88,
+            89,
+            90,
+            92,
+            93,
+            94
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a1_d1",
+          "agenda_id": "TS3003b_a1",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "마케팅 담당자는 시장 규모와 수익 가능성을 고려해 16~45세에 초점을 맞추고 멋진 디자인을 만들자고 제안함.",
+          "evidence_utterance_indices": [
+            95,
+            96,
+            97,
+            98,
+            99
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a1_st1",
+          "subtopic": "젊은층 제안",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a1_d2",
+          "agenda_id": "TS3003b_a1",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "젊은층용 신제품은 별도로 개발할 예정이므로 이번 리모컨은 40세 이상 고객을 대상으로 하기로 요구사항이 제시됨.",
+          "evidence_utterance_indices": [
+            300,
+            301,
+            302,
+            303,
+            305,
+            311,
+            312,
+            315,
+            317,
+            319,
+            320
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a1_st2",
+          "subtopic": "40세 이상",
+          "discussion_tag": "정보",
+          "decision_tag": "결정",
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a1_d3",
+          "agenda_id": "TS3003b_a1",
+          "section": "major_discussions",
+          "order": 3,
+          "text": "마케팅 담당자는 40세 이상 시장이 상대적으로 작고 디자인에 덜 민감하다고 우려했으며, 프로젝트 매니저와 산업 디자이너는 고령층에 특화된 제품도 성공 가능성이 있다고 봄.",
+          "evidence_utterance_indices": [
+            343,
+            344,
+            352,
+            362,
+            364,
+            366,
+            367,
+            368,
+            372,
+            373,
+            374,
+            376,
+            377,
+            380,
+            383,
+            385,
+            392,
+            394,
+            395,
+            398,
+            399
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a1_st3",
+          "subtopic": "시장 의견",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a1_d4",
+          "agenda_id": "TS3003b_a1",
+          "section": "major_discussions",
+          "order": 4,
+          "text": "실제 노년층을 겨냥하는 방안과 함께 60~80세가 예시로 제시됐으나, 구체적인 연령 범위는 더 알아보기로 함.",
+          "evidence_utterance_indices": [
+            642,
+            643,
+            644,
+            649,
+            650,
+            658,
+            659,
+            662
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a1_st4",
+          "subtopic": "세부 연령",
+          "discussion_tag": "제안",
+          "decision_tag": "보류",
+          "assignee": null,
+          "due": null
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "item_id": "TS3003b_a1_un1",
+          "agenda_id": "TS3003b_a1",
+          "section": "unresolved_issues",
+          "order": 1,
+          "text": "40세 이상이라는 범위 안에서 실제 목표 연령층을 어디까지로 정할지 추가 확인이 필요함.",
+          "evidence_utterance_indices": [
+            642,
+            643,
+            644,
+            658,
+            659,
+            662
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "tag": "확인 필요"
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "TS3003b_a2",
+      "agenda_number": 2,
+      "agenda_title": "TV 전용 조작 범위",
+      "evidence_range": [
+        157,
+        310
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a2_st1",
+          "agenda_id": "TS3003b_a2",
+          "order": 1,
+          "title": "터치 UI",
+          "item_ids": [
+            "TS3003b_a2_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a2_st2",
+          "agenda_id": "TS3003b_a2",
+          "order": 2,
+          "title": "화면 비용",
+          "item_ids": [
+            "TS3003b_a2_d2"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a2_st3",
+          "agenda_id": "TS3003b_a2",
+          "order": 3,
+          "title": "TV 전용",
+          "item_ids": [
+            "TS3003b_a2_d3"
+          ]
+        }
+      ],
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a2_d1",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "UI 디자이너는 전원·음량 같은 일반 버튼과 기기 선택 버튼을 두고, 선택한 기기의 기능을 터치스크린에 표시하는 다기기 리모컨을 제안함.",
+          "evidence_utterance_indices": [
+            157,
+            161,
+            162,
+            171,
+            179,
+            181,
+            185,
+            189,
+            192,
+            193,
+            198,
+            203
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a2_st1",
+          "subtopic": "터치 UI",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d2",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "산업 디자이너는 터치스크린이 12.5유로를 넘을 수 있고 깨지거나 흠집 날 우려가 있다고 했으며, UI 디자이너는 단색 터치스크린이 20유로 이하일 수 있다고 설명함.",
+          "evidence_utterance_indices": [
+            223,
+            224,
+            226,
+            228,
+            230,
+            231,
+            233,
+            240,
+            242,
+            243,
+            246,
+            247
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a2_st2",
+          "subtopic": "화면 비용",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d3",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 3,
+          "text": "기능을 더하면 복잡해지고 출시가 늦어질 수 있으므로 이번 제품은 TV 전용으로 제한하기로 함.",
+          "evidence_utterance_indices": [
+            298,
+            300,
+            301,
+            303,
+            305,
+            309,
+            310
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a2_st3",
+          "subtopic": "TV 전용",
+          "discussion_tag": "정보",
+          "decision_tag": "결정",
+          "assignee": null,
+          "due": null
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "TS3003b_a3",
+      "agenda_number": 3,
+      "agenda_title": "내부 구조·소재",
+      "evidence_range": [
+        62,
+        637
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a3_st1",
+          "agenda_id": "TS3003b_a3",
+          "order": 1,
+          "title": "작동 구조",
+          "item_ids": [
+            "TS3003b_a3_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a3_st2",
+          "agenda_id": "TS3003b_a3",
+          "order": 2,
+          "title": "소재·비용",
+          "item_ids": [
+            "TS3003b_a3_d2"
+          ]
+        }
+      ],
+      "discussion_background": [
+        {
+          "item_id": "TS3003b_a3_bg1",
+          "agenda_id": "TS3003b_a3",
+          "section": "discussion_background",
+          "order": 1,
+          "text": "설문 응답자의 75%는 리모컨이 못생겼다고 답했고, 80%는 멋져 보이는 리모컨에 더 지출할 의향이 있다고 답함.",
+          "evidence_utterance_indices": [
+            62,
+            64,
+            65
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a3_d1",
+          "agenda_id": "TS3003b_a3",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "버튼을 누르면 칩이 입력을 처리해 적외선 LED를 통해 TV로 신호를 보내는 단순한 구조로 설명됨.",
+          "evidence_utterance_indices": [
+            257,
+            261,
+            262,
+            263,
+            264,
+            267,
+            268,
+            269,
+            270,
+            276,
+            277
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a3_st1",
+          "subtopic": "작동 구조",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a3_d2",
+          "agenda_id": "TS3003b_a3",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "산업 디자이너는 기본 플라스틱과 단순한 내부 구조로 내구성을 확보하고, 제품마다 비용이 드는 첨단 소재보다 디자인과 UI에 투자하자고 제안함. 프로젝트 매니저도 고령층에는 소재 차이가 중요하지 않을 수 있다고 봄.",
+          "evidence_utterance_indices": [
+            280,
+            281,
+            282,
+            283,
+            284,
+            285,
+            286,
+            288,
+            634,
+            635,
+            636,
+            637
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a3_st2",
+          "subtopic": "소재·비용",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "TS3003b_a4",
+      "agenda_number": 4,
+      "agenda_title": "문자 방송·자막",
+      "evidence_range": [
+        73,
+        441
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a4_st1",
+          "agenda_id": "TS3003b_a4",
+          "order": 1,
+          "title": "문자 방송",
+          "item_ids": [
+            "TS3003b_a4_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a4_st2",
+          "agenda_id": "TS3003b_a4",
+          "order": 2,
+          "title": "자막 버튼",
+          "item_ids": [
+            "TS3003b_a4_d2"
+          ]
+        }
+      ],
+      "discussion_background": [
+        {
+          "item_id": "TS3003b_a4_bg1",
+          "agenda_id": "TS3003b_a4",
+          "section": "discussion_background",
+          "order": 1,
+          "text": "설문에서 문자 방송의 중요도는 10점 만점에 6.5점으로 조사됨.",
+          "evidence_utterance_indices": [
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            80,
+            82
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a4_d1",
+          "agenda_id": "TS3003b_a4",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "인터넷 확산을 이유로 문자 방송을 빼자는 초기 제안이 있었으나, 고령층이 인터넷 TV를 갖기 어려울 수 있고 청각 장애인의 자막에도 필요하다는 의견에 따라 문자 방송을 유지하기로 함.",
+          "evidence_utterance_indices": [
+            306,
+            307,
+            308,
+            330,
+            331,
+            332,
+            333,
+            334,
+            335,
+            337,
+            338,
+            415,
+            417,
+            423,
+            427,
+            428,
+            430,
+            431
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a4_st1",
+          "subtopic": "문자 방송",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a4_d2",
+          "agenda_id": "TS3003b_a4",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "자막을 쉽게 켤 수 있도록 큰 자막 버튼을 리모컨에 바로 두는 방안이 제안됨.",
+          "evidence_utterance_indices": [
+            432,
+            433,
+            435,
+            436,
+            437,
+            438,
+            441
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a4_st2",
+          "subtopic": "자막 버튼",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "item_id": "TS3003b_a4_un1",
+          "agenda_id": "TS3003b_a4",
+          "section": "unresolved_issues",
+          "order": 1,
+          "text": "문자 방송 유지 외에 큰 자막 전용 버튼을 둘지는 확정되지 않음.",
+          "evidence_utterance_indices": [
+            432,
+            433,
+            435,
+            436,
+            437,
+            441
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "tag": "세부 미정"
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "TS3003b_a5",
+      "agenda_number": 5,
+      "agenda_title": "버튼 구성·배열",
+      "evidence_range": [
+        67,
+        541
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a5_st1",
+          "agenda_id": "TS3003b_a5",
+          "order": 1,
+          "title": "버튼 최소화",
+          "item_ids": [
+            "TS3003b_a5_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a5_st2",
+          "agenda_id": "TS3003b_a5",
+          "order": 2,
+          "title": "버튼 배열",
+          "item_ids": [
+            "TS3003b_a5_d2"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a5_st3",
+          "agenda_id": "TS3003b_a5",
+          "order": 3,
+          "title": "경쟁력 우려",
+          "item_ids": [
+            "TS3003b_a5_d3"
+          ]
+        }
+      ],
+      "discussion_background": [
+        {
+          "item_id": "TS3003b_a5_bg1",
+          "agenda_id": "TS3003b_a5",
+          "section": "discussion_background",
+          "order": 1,
+          "text": "응답자의 절반은 리모컨 버튼의 약 10%만 사용한다고 답했고, 채널·음량 선택은 중요도 10점, 전원은 9점으로 평가됨. 채널 선택은 시간당 168회 사용된다고 보고됐으며, 약 4분의 1은 리모컨이 RSI를 유발한다고 생각함.",
+          "evidence_utterance_indices": [
+            67,
+            68,
+            73,
+            74,
+            75,
+            83,
+            100,
+            101
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a5_d1",
+          "agenda_id": "TS3003b_a5",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "마케팅 담당자는 버튼을 줄이고 자주 쓰는 채널·음량 버튼을 강조하며 쉽게 고장 나지 않게 해야 한다고 제안함.",
+          "evidence_utterance_indices": [
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a5_st1",
+          "subtopic": "버튼 최소화",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a5_d2",
+          "agenda_id": "TS3003b_a5",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "스크롤 버튼이나 조이스틱 대신 고령층에 익숙한 기본 버튼 배열을 유지하는 방향으로 의견이 모임.",
+          "evidence_utterance_indices": [
+            466,
+            470,
+            473,
+            477,
+            478,
+            486,
+            487,
+            488,
+            492,
+            493,
+            494,
+            495,
+            498
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a5_st2",
+          "subtopic": "버튼 배열",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a5_d3",
+          "agenda_id": "TS3003b_a5",
+          "section": "major_discussions",
+          "order": 3,
+          "text": "마케팅 담당자는 TV 전용 리모컨은 원래 버튼 수가 적어 버튼을 더 줄여도 경쟁 우위가 크지 않으므로 이 부분에 과도한 시간을 쓰지 말자고 우려함.",
+          "evidence_utterance_indices": [
+            505,
+            506,
+            507,
+            508,
+            516,
+            518,
+            519,
+            520,
+            525,
+            529,
+            531,
+            532,
+            535,
+            536,
+            537,
+            539,
+            541
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a5_st3",
+          "subtopic": "경쟁력 우려",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "TS3003b_a6",
+      "agenda_number": 6,
+      "agenda_title": "분실 방지 거치대",
+      "evidence_range": [
+        69,
+        599
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a6_st1",
+          "agenda_id": "TS3003b_a6",
+          "order": 1,
+          "title": "거치대 기능",
+          "item_ids": [
+            "TS3003b_a6_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a6_st2",
+          "agenda_id": "TS3003b_a6",
+          "order": 2,
+          "title": "분실 알림",
+          "item_ids": [
+            "TS3003b_a6_d2"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a6_st3",
+          "agenda_id": "TS3003b_a6",
+          "order": 3,
+          "title": "예산 조건",
+          "item_ids": [
+            "TS3003b_a6_d3"
+          ]
+        }
+      ],
+      "discussion_background": [
+        {
+          "item_id": "TS3003b_a6_bg1",
+          "agenda_id": "TS3003b_a6",
+          "section": "discussion_background",
+          "order": 1,
+          "text": "응답자의 절반이 리모컨을 방 안에서 자주 잃어버린다고 답함.",
+          "evidence_utterance_indices": [
+            69,
+            112,
+            572
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a6_d1",
+          "agenda_id": "TS3003b_a6",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "거치대에 호출 버튼을 달아 리모컨에서 소리가 나게 하고, 리모컨을 꽂아 배터리를 충전하는 방안이 제안됨.",
+          "evidence_utterance_indices": [
+            116,
+            117,
+            118,
+            119,
+            120,
+            121
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a6_st1",
+          "subtopic": "거치대 기능",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a6_d2",
+          "agenda_id": "TS3003b_a6",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "방 안에서 리모컨을 찾을 수 있도록 소리 신호를 내는 기능을 넣는 방향에 의견이 모임.",
+          "evidence_utterance_indices": [
+            569,
+            570,
+            572,
+            574,
+            575,
+            576,
+            590,
+            591
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a6_st2",
+          "subtopic": "분실 알림",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a6_d3",
+          "agenda_id": "TS3003b_a6",
+          "section": "major_discussions",
+          "order": 3,
+          "text": "산업 디자이너는 거치대가 지나치게 화려하지 않고 리모컨을 작게 유지하면 예산에 맞을 수 있다고 봄.",
+          "evidence_utterance_indices": [
+            543,
+            544,
+            547,
+            553,
+            557,
+            558
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a6_st3",
+          "subtopic": "예산 조건",
+          "discussion_tag": "정보",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "item_id": "TS3003b_a6_un1",
+          "agenda_id": "TS3003b_a6",
+          "section": "unresolved_issues",
+          "order": 1,
+          "text": "거치대와 충전 기능을 어느 범위로 구현할지, 예산에 맞는지 확인이 필요함.",
+          "evidence_utterance_indices": [
+            543,
+            544,
+            547,
+            598,
+            599
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "tag": "확인 필요"
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "TS3003b_a7",
+      "agenda_number": 7,
+      "agenda_title": "버튼 안내 LCD",
+      "evidence_range": [
+        102,
+        695
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a7_st1",
+          "agenda_id": "TS3003b_a7",
+          "order": 1,
+          "title": "기능 안내",
+          "item_ids": [
+            "TS3003b_a7_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a7_st2",
+          "agenda_id": "TS3003b_a7",
+          "order": 2,
+          "title": "시장별 언어",
+          "item_ids": [
+            "TS3003b_a7_d2"
+          ]
+        }
+      ],
+      "discussion_background": [
+        {
+          "item_id": "TS3003b_a7_bg1",
+          "agenda_id": "TS3003b_a7",
+          "section": "discussion_background",
+          "order": 1,
+          "text": "설문 응답자의 34%는 새 리모컨 조작법을 익히기 어렵다고 답함.",
+          "evidence_utterance_indices": [
+            102
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a7_d1",
+          "agenda_id": "TS3003b_a7",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "버튼을 누르면 해당 기능을 설명해 주는 작고 단순한 LCD를 두자는 제안이 나왔으며, 터치스크린이나 비싼 화면일 필요는 없다고 설명됨.",
+          "evidence_utterance_indices": [
+            604,
+            605,
+            606,
+            607,
+            608,
+            609,
+            611,
+            615,
+            617,
+            618,
+            623
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a7_st1",
+          "subtopic": "기능 안내",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignee": null,
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a7_d2",
+          "agenda_id": "TS3003b_a7",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "화면의 언어를 고려할 때 별도 언어 버튼을 두기보다 시장별로 제품을 맞춰 출시하는 방향이 낫다고 정리됨.",
+          "evidence_utterance_indices": [
+            679,
+            681,
+            683,
+            688,
+            690,
+            693,
+            694,
+            695
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a7_st2",
+          "subtopic": "시장별 언어",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "assignee": null,
+          "due": null
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "item_id": "TS3003b_a7_un1",
+          "agenda_id": "TS3003b_a7",
+          "section": "unresolved_issues",
+          "order": 1,
+          "text": "버튼 안내용 LCD가 비용 조건에 맞는지 확인이 필요함.",
+          "evidence_utterance_indices": [
+            625,
+            626,
+            627,
+            628,
+            629
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "tag": "확인 필요"
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "TS3003b_a8",
+      "agenda_number": 8,
+      "agenda_title": "회의 운영과 후속 업무",
+      "evidence_range": [
+        30,
+        706
+      ],
+      "subtopics": [
+        {
+          "subtopic_id": "TS3003b_a8_st1",
+          "agenda_id": "TS3003b_a8",
+          "order": 1,
+          "title": "회의록 업로드",
+          "item_ids": [
+            "TS3003b_a8_d1"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a8_st2",
+          "agenda_id": "TS3003b_a8",
+          "order": 2,
+          "title": "부품 콘셉트",
+          "item_ids": [
+            "TS3003b_a8_d2"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a8_st3",
+          "agenda_id": "TS3003b_a8",
+          "order": 3,
+          "title": "UI 콘셉트",
+          "item_ids": [
+            "TS3003b_a8_d3"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a8_st4",
+          "agenda_id": "TS3003b_a8",
+          "order": 4,
+          "title": "트렌드 관찰",
+          "item_ids": [
+            "TS3003b_a8_d4"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a8_st5",
+          "agenda_id": "TS3003b_a8",
+          "order": 5,
+          "title": "과제 지침",
+          "item_ids": [
+            "TS3003b_a8_d5"
+          ]
+        }
+      ],
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "item_id": "TS3003b_a8_d1",
+          "agenda_id": "TS3003b_a8",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "회의록을 작성해 프로젝트 문서 폴더에 올리기로 함.",
+          "evidence_utterance_indices": [
+            30,
+            700
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a8_st1",
+          "subtopic": "회의록 업로드",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "assignee": "프로젝트 매니저",
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a8_d2",
+          "agenda_id": "TS3003b_a8",
+          "section": "major_discussions",
+          "order": 2,
+          "text": "논의한 대상 그룹·요구 사항·트렌드를 반영해 부품 콘셉트를 준비하기로 함.",
+          "evidence_utterance_indices": [
+            701,
+            705
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a8_st2",
+          "subtopic": "부품 콘셉트",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "assignee": "산업 디자이너",
+          "due": "다음 회의"
+        },
+        {
+          "item_id": "TS3003b_a8_d3",
+          "agenda_id": "TS3003b_a8",
+          "section": "major_discussions",
+          "order": 3,
+          "text": "논의한 대상 그룹·요구 사항·트렌드를 반영해 사용자 인터페이스 콘셉트를 준비하기로 함.",
+          "evidence_utterance_indices": [
+            702,
+            705
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a8_st3",
+          "subtopic": "UI 콘셉트",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "assignee": "UI 디자이너",
+          "due": "다음 회의"
+        },
+        {
+          "item_id": "TS3003b_a8_d4",
+          "agenda_id": "TS3003b_a8",
+          "section": "major_discussions",
+          "order": 4,
+          "text": "논의한 대상 그룹과 요구 사항에 관련된 트렌드를 관찰하기로 함.",
+          "evidence_utterance_indices": [
+            703,
+            705
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a8_st4",
+          "subtopic": "트렌드 관찰",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "assignee": "UI 디자이너",
+          "due": "다음 회의"
+        },
+        {
+          "item_id": "TS3003b_a8_d5",
+          "agenda_id": "TS3003b_a8",
+          "section": "major_discussions",
+          "order": 5,
+          "text": "개인 코치가 과제별 구체적인 지침을 보내기로 함.",
+          "evidence_utterance_indices": [
+            706
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a8_st5",
+          "subtopic": "과제 지침",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "assignee": "개인 코치",
+          "due": null
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ],
+  "postprocess_log": []
+}
