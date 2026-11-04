@@ -336,7 +336,7 @@ TOPIC_JUDGE_SYSTEM = """너는 회의 안건을 프로젝트의 Topic(여러 회
 
 
 LLM_MODEL = "gpt-6-luna"   # 모델은 고정하고 effort만 바꿔 가며 비교한다
-LLM_EFFORT = "low"          # main()에서 --effort로 바꾼다
+LLM_EFFORT = "high"          # main()에서 --effort로 바꾼다
 
 
 def get_llm() -> OpenAIClient:
