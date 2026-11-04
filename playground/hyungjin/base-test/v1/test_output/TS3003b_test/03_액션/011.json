@@ -1,0 +1,15 @@
+{
+  "chunk_id": 11,
+  "actions": [
+    {
+      "content": "40세 이상 시장에 맞춘 리모컨 디자인을 시도한다",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        367,
+        369
+      ]
+    }
+  ]
+}

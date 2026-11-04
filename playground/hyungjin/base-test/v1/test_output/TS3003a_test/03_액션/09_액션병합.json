@@ -1,0 +1,60 @@
+{
+  "meeting_id": "TS3003a",
+  "actions": [
+    {
+      "action_id": "ACT001",
+      "content": "이번 회의 회의록을 프로젝트 폴더에 올린다.",
+      "type": "업무 수행",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A005",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        440,
+        469
+      ]
+    },
+    {
+      "action_id": "ACT002",
+      "content": "적외선 기능의 구현 가능성과 생산 비용을 확인한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A004",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        416,
+        417,
+        418
+      ]
+    },
+    {
+      "action_id": "ACT003",
+      "content": "배터리 상태 표시 기능의 생산 비용을 검토한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A004",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        444,
+        450,
+        451
+      ]
+    }
+  ],
+  "review_needed": [],
+  "change_log": []
+}

@@ -1,10 +1,16 @@
 # 데이터
 data/
+!apps/web/data/
+
+# .DS_store
+.DS_store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
+outputs/
+.ipynb_checkpoints/
 
 # C extensions
 *.so

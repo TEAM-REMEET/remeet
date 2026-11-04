@@ -1,0 +1,235 @@
+{
+  "meeting_id": "TS3003c",
+  "gold_boundary_count": 11,
+  "gold_positions": [
+    28,
+    49,
+    95,
+    162,
+    190,
+    265,
+    286,
+    336,
+    345,
+    465,
+    691
+  ],
+  "expected_boundary_coverage": {
+    "expected_boundaries": [
+      14,
+      28,
+      35,
+      49,
+      54,
+      61,
+      68,
+      94,
+      137,
+      156,
+      167,
+      172,
+      180,
+      191,
+      230,
+      249,
+      267,
+      278,
+      305,
+      314,
+      334,
+      348,
+      368,
+      393,
+      420,
+      444,
+      477,
+      485,
+      501,
+      517,
+      533,
+      557,
+      583,
+      596,
+      616,
+      649,
+      669,
+      689,
+      710
+    ],
+    "gold_exact": [
+      28,
+      49
+    ],
+    "gold_within_3": [
+      28,
+      49,
+      95,
+      190,
+      265,
+      336,
+      345,
+      691
+    ],
+    "gold_within_search": [
+      28,
+      49,
+      95,
+      162,
+      190,
+      265,
+      336,
+      345,
+      691
+    ]
+  },
+  "conditions": {
+    "baseline": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "search_radius_utterances": 5,
+        "model": "gpt-6-luna"
+      },
+      "requests": 39,
+      "status": "partial",
+      "failed_requests": [
+        "R0021"
+      ],
+      "candidate_judgments": 38,
+      "golden_candidates": 38,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0028",
+        "u0049",
+        "u0097",
+        "u0172",
+        "u0557"
+      ],
+      "scores": {
+        "0": {
+          "tp": 2,
+          "fp": 3,
+          "fn": 9,
+          "precision": 0.4,
+          "recall": 0.18181818181818182,
+          "f1": 0.25000000000000006
+        },
+        "3": {
+          "tp": 3,
+          "fp": 2,
+          "fn": 8,
+          "precision": 0.6,
+          "recall": 0.2727272727272727,
+          "f1": 0.37499999999999994
+        }
+      }
+    },
+    "merge_900": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "search_radius_utterances": 5,
+        "model": "gpt-6-luna"
+      },
+      "requests": 26,
+      "status": "complete",
+      "failed_requests": [],
+      "candidate_judgments": 39,
+      "golden_candidates": 39,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0028",
+        "u0049",
+        "u0068",
+        "u0097",
+        "u0190",
+        "u0338",
+        "u0557"
+      ],
+      "scores": {
+        "0": {
+          "tp": 3,
+          "fp": 4,
+          "fn": 8,
+          "precision": 0.42857142857142855,
+          "recall": 0.2727272727272727,
+          "f1": 0.33333333333333326
+        },
+        "3": {
+          "tp": 5,
+          "fp": 2,
+          "fn": 6,
+          "precision": 0.7142857142857143,
+          "recall": 0.45454545454545453,
+          "f1": 0.5555555555555556
+        }
+      }
+    },
+    "merge_1200": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "search_radius_utterances": 5,
+        "model": "gpt-6-luna"
+      },
+      "requests": 16,
+      "status": "partial",
+      "failed_requests": [
+        "R0001"
+      ],
+      "candidate_judgments": 35,
+      "golden_candidates": 35,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0068",
+        "u0097",
+        "u0190",
+        "u0249",
+        "u0336",
+        "u0557"
+      ],
+      "scores": {
+        "0": {
+          "tp": 2,
+          "fp": 4,
+          "fn": 9,
+          "precision": 0.3333333333333333,
+          "recall": 0.18181818181818182,
+          "f1": 0.23529411764705885
+        },
+        "3": {
+          "tp": 3,
+          "fp": 3,
+          "fn": 8,
+          "precision": 0.5,
+          "recall": 0.2727272727272727,
+          "f1": 0.3529411764705882
+        }
+      }
+    }
+  },
+  "usage": {
+    "requests": 81,
+    "input_tokens": 125189,
+    "output_tokens": 40873,
+    "reasoning_tokens": 17673,
+    "retries": 0,
+    "seconds_total": 732.29,
+    "estimated_cost_usd": 0.032955
+  }
+}

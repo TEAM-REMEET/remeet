@@ -1,0 +1,15 @@
+{
+  "meeting_id": "TS3007b",
+  "title": "Real Reaction 신제품 TV 리모컨 개발 프로젝트 2차 회의 - 기능 설계",
+  "date": "2004-10-18",
+  "participants": [
+    "프로젝트 매니저",
+    "산업 디자이너",
+    "UI 디자이너",
+    "마케팅 담당자"
+  ],
+  "source": "playground/hyungjin/test/input/TS3007b.txt",
+  "corpus": "AMI 1.6.2",
+  "license": "CC BY 4.0",
+  "translation_reviewed": false
+}

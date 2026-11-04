@@ -1,0 +1,15 @@
+{
+  "chunk_id": 14,
+  "actions": [
+    {
+      "content": "확인 가능한지 살펴본다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        519,
+        527
+      ]
+    }
+  ]
+}

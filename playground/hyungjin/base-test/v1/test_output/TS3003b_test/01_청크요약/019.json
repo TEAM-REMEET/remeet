@@ -1,0 +1,75 @@
+{
+  "meeting_id": "TS3003b",
+  "chunk_id": 19,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "기능 설계",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "다음 회의 준비",
+          "tag": "정보",
+          "text": "다음 회의를 위해 산업 디자이너는 부품 콘셉트, UI 디자이너는 사용자 인터페이스 콘셉트와 트렌드 관찰을 맡는다. 대상 그룹과 요구 사항, 현재 진행 중인 트렌드에 관한 앞선 논의를 염두에 두도록 안내했다.",
+          "evidence_utterance_ids": [
+            700,
+            701,
+            702,
+            704
+          ]
+        },
+        {
+          "subtopic": "구체적 지시 전달",
+          "tag": "정보",
+          "text": "구체적인 지시 사항은 개인 코치가 보내기로 했다.",
+          "evidence_utterance_ids": [
+            705
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "다음 회의를 위한 담당 업무와 참고할 논의 내용, 구체적 지시 전달 방식을 공유했으며 기능 설계에 관한 별도의 결론은 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            700,
+            701,
+            702,
+            704,
+            705
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "A002",
+      "new_key": null,
+      "title": "발표 및 회의 진행",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "회의록 보관",
+          "tag": "정보",
+          "text": "회의록을 프로젝트 문서 폴더에 올려 두겠다고 알렸다.",
+          "evidence_utterance_ids": [
+            699
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "회의록 업로드 위치를 공유했다.",
+          "evidence_utterance_ids": [
+            699
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

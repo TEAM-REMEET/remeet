@@ -1,0 +1,15 @@
+{
+  "chunk_id": 14,
+  "actions": [
+    {
+      "content": "디자인이 대상 그룹에 적합한지 테스트한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A002",
+      "evidence_utterance_ids": [
+        702,
+        710
+      ]
+    }
+  ]
+}

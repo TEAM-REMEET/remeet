@@ -1,0 +1,409 @@
+{
+  "meeting_id": "ES2014c",
+  "created_date": "2026-10-26",
+  "annotation_basis": "input/criteria.md",
+  "source_transcript": "input/ES2014c.txt",
+  "utterance_mapping_source": "meetings/ES2014c.json",
+  "utterance_count": 880,
+  "position_definition": "메타데이터 3행과 빈 줄을 제외한 발화의 1부터 시작하는 순서. position은 새 구간의 첫 발화이며 경계는 position-1과 position 사이이다.",
+  "annotation_scope": "전체 전사 흐름에서 의미 있는 후보를 선정했다. 후보에 없는 위치도 경계가 아니며 boundary_positions가 채택 경계의 전체 목록이다.",
+  "segment_note": "연속 구간 안에 제외된 잡담·측면 전환·재논의가 포함될 수 있다. 같은 결정으로의 복귀는 새 경계로 세지 않는다.",
+  "verification_note": "동일 분석자가 근거와 제외 기준을 다시 대조했다. 독립된 인간 검수나 다중 평가자 합의는 수행하지 않았다.",
+  "boundary_positions": [
+    35,
+    107,
+    135,
+    172,
+    233,
+    295,
+    412,
+    461,
+    548,
+    848
+  ],
+  "segments": [
+    {
+      "start_utterance": 1,
+      "subject": "지난 기능·배치 결정과 발표 진행을 확인한다.",
+      "summary": "지난 기능·배치 결정과 발표 진행을 확인한다.",
+      "segment_id": 1,
+      "end_utterance": 34,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 35,
+      "subject": "공급 가능한 부품과 구현 제약을 보고한다.",
+      "summary": "전원·버튼·회로 기판·음성 인식 선택지를 보고했다. 누름 버튼·단순형 칩을 선호하고 음성 찾기 비용은 확인 사항으로 남겼다.",
+      "segment_id": 2,
+      "end_utterance": 106,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 107,
+      "subject": "발표와 의사결정을 진행하는 방식을 정한다.",
+      "summary": "발표를 모두 들은 뒤 돌아가기보다 화면에 정보가 있을 때 즉시 논의하는 방식에 동의했다.",
+      "segment_id": 3,
+      "end_utterance": 134,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 135,
+      "subject": "버튼 방식에 맞는 회로 기판을 선택한다.",
+      "summary": "스크롤 휠과 디스플레이를 피하고 누름 버튼·단순형 칩을 기본으로 택했다.",
+      "segment_id": 4,
+      "end_utterance": 171,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 172,
+      "subject": "음성 찾기 장치와 기본 회로의 관계를 검토한다.",
+      "summary": "찾기만 수행하는 별도 음성 장치로 보고 단순형 칩에 추가하는 가능성을 남겼다. 비용과 칩 호환성은 충분히 확인되지 않았다.",
+      "segment_id": 5,
+      "end_utterance": 232,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 233,
+      "subject": "제품의 전원 공급 방식을 선택한다.",
+      "summary": "배터리 교체가 필요 없는 운동 에너지 방식을 선호했다. 뒤에서 음성 기능 비용을 다시 논의했다.",
+      "segment_id": 6,
+      "end_utterance": 294,
+      "excluded_candidate_positions": [
+        250
+      ]
+    },
+    {
+      "start_utterance": 295,
+      "subject": "경쟁 UI와 특수 제품을 비교해 기본 제품의 방향을 정한다.",
+      "summary": "고급 다기능 경쟁보다 찾기 기능으로 차별화하고 어린이용 등 특수 시장은 후속 가능성으로 남겼다.",
+      "segment_id": 7,
+      "end_utterance": 411,
+      "excluded_candidate_positions": [
+        362
+      ]
+    },
+    {
+      "start_utterance": 412,
+      "subject": "버튼의 형태와 표시를 일관되게 정한다.",
+      "summary": "삼각형 방향과 글자 의미가 충돌하지 않도록 단순한 모양·상하 표시를 권했다.",
+      "segment_id": 8,
+      "end_utterance": 460,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 461,
+      "subject": "패션 트렌드 조사로 외관 방향을 검토한다.",
+      "summary": "외관·혁신·사용성의 우선순위와 과일·채소·말랑한 촉감 트렌드를 보고했다. 과도한 유행 반영 대신 일부 버튼의 형태 차별화를 검토했다.",
+      "segment_id": 9,
+      "end_utterance": 547,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 548,
+      "subject": "케이스 소재·교체 여부·형태를 결정한다.",
+      "summary": "교체 커버의 시장성과 유행 위험을 검토한 뒤 표준 고무 케이스와 단일 곡면을 택했다. 결정 재확인 중 빨간 사과 모양 대기 버튼을 정했다.",
+      "segment_id": 10,
+      "end_utterance": 847,
+      "excluded_candidate_positions": [
+        602,
+        713,
+        774
+      ]
+    },
+    {
+      "start_utterance": 848,
+      "subject": "버튼 상세 설계와 다음 제작 작업을 배정한다.",
+      "summary": "버튼 모양·표시를 단순하게 유지하고 두 디자이너가 모형을 제작하도록 했다.",
+      "segment_id": 11,
+      "end_utterance": 880,
+      "excluded_candidate_positions": []
+    }
+  ],
+  "candidates": [
+    {
+      "position": 35,
+      "before_subject": "지난 기능·배치 결정과 발표 진행을 확인한다.",
+      "after_subject": "공급 가능한 부품과 구현 제약을 보고한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "지난 결정과 발표 순서를 확인합니다 [5]-[27]. 부품 설계 보고에서 전원과 입력·칩의 가용성과 가격 관계를 설명합니다 [35]-[94].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 0
+    },
+    {
+      "position": 107,
+      "before_subject": "공급 가능한 부품과 구현 제약을 보고한다.",
+      "after_subject": "발표와 의사결정을 진행하는 방식을 정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "칩 종류의 추가 확인이 필요하다고 합니다 [98]-[106]. 지금 결정할지 발표 뒤 결정할지 별도 진행 방식을 검토합니다 [107]-[124].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 1
+    },
+    {
+      "position": 135,
+      "before_subject": "발표와 의사결정을 진행하는 방식을 정한다.",
+      "after_subject": "버튼 방식에 맞는 회로 기판을 선택한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "즉시 논의하는 진행 방식을 정합니다 [113]-[124]. 부품 자료를 근거로 스크롤 휠·디스플레이와 칩 비용을 비교해 기본 구성을 선택합니다 [135]-[169].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 2
+    },
+    {
+      "position": 172,
+      "before_subject": "버튼 방식에 맞는 회로 기판을 선택한다.",
+      "after_subject": "음성 찾기 장치와 기본 회로의 관계를 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "누름 버튼으로 단순하게 가기로 합니다 [164]-[169]. 음성 장치 자료를 확인하고 기본 회로에 영향을 주는지 별도로 검토합니다 [172]-[223].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 3
+    },
+    {
+      "position": 233,
+      "before_subject": "음성 찾기 장치와 기본 회로의 관계를 검토한다.",
+      "after_subject": "제품의 전원 공급 방식을 선택한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "음성 찾기를 추가 가능성으로 정리합니다 [222]-[232]. 운동 에너지 전원 제안을 확인하고 충전 원리를 검토합니다 [233]-[246].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 4
+    },
+    {
+      "position": 250,
+      "before_subject": "운동 에너지 전원을 검토한다.",
+      "after_subject": "음성 찾기의 칩과 비용을 다시 확인한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "음성 장치와 회로 관계는 이미 검토했습니다 [172]-[223]. 같은 기능의 칩 요구와 비용을 다시 묻는 재논의입니다 [250]-[290].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 5
+    },
+    {
+      "position": 295,
+      "before_subject": "제품의 전원 공급 방식을 선택한다.",
+      "after_subject": "경쟁 UI와 특수 제품을 비교해 기본 제품의 방향을 정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "음성 기능 비용은 더 알아본 뒤 정할 수 있다고 남깁니다 [275]-[290]. 새 발표에서 기존 리모컨과 특수 모델을 비교하며 제품 차별화 방향을 보고합니다 [295]-[355].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 6
+    },
+    {
+      "position": 362,
+      "before_subject": "경쟁 UI와 제품 범위를 검토한다.",
+      "after_subject": "찾기 기능·스크롤 제외·기본 제품 선택을 재확인한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "특수 시장은 후속 제품으로 남깁니다 [329]-[355]. 앞서 논의한 찾기와 입력 방식을 다시 정리하므로 새 대상이 아닙니다 [362]-[410].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 7
+    },
+    {
+      "position": 412,
+      "before_subject": "경쟁 UI와 특수 제품을 비교해 기본 제품의 방향을 정한다.",
+      "after_subject": "버튼의 형태와 표시를 일관되게 정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "찾기 차별화와 스크롤·어린이용 제외를 재확인합니다 [362]-[410]. 버튼 표시의 애매함을 별도로 제기하고 모양과 기능의 일관성을 검토합니다 [412]-[455].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 8
+    },
+    {
+      "position": 461,
+      "before_subject": "버튼의 형태와 표시를 일관되게 정한다.",
+      "after_subject": "패션 트렌드 조사로 외관 방향을 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "버튼 디자인을 모두 결정할지 묻습니다 [457]-[459]. 마케팅의 트렌드 관찰을 먼저 듣기로 하고 조사와 디자인 시사점을 보고합니다 [461]-[498].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 9
+    },
+    {
+      "position": 548,
+      "before_subject": "패션 트렌드 조사로 외관 방향을 검토한다.",
+      "after_subject": "케이스 소재·교체 여부·형태를 결정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "과일 모양을 전면 적용하는 문제와 은은한 반영 가능성을 논의합니다 [518]-[545]. 말랑한 소재·고무 케이스와 교체 구조, 곡면을 집중적으로 선택합니다 [548]-[769].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 10
+    },
+    {
+      "position": 602,
+      "before_subject": "케이스 소재와 유행 대응을 검토한다.",
+      "after_subject": "교체 가능한 커버를 대안으로 검토한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "유행 변화에 따른 생산·재고 문제를 검토합니다 [579]-[591]. 교체 커버는 같은 외장 설계 문제의 대안이며 결국 채택하지 않습니다 [602]-[708].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 11
+    },
+    {
+      "position": 713,
+      "before_subject": "케이스의 구성과 형태를 결정한다.",
+      "after_subject": "곡면과 포장·보관의 절충을 검토한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "표준 고무 케이스와 버튼을 선택합니다 [683]-[709]. 곡면은 같은 케이스의 형상 측면으로 단일 곡면을 선택합니다 [713]-[769].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 12
+    },
+    {
+      "position": 774,
+      "before_subject": "케이스 형상을 정리한다.",
+      "after_subject": "전원·회로·버튼과 음성 기능을 재확인한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "단일 곡면을 정리합니다 [768]-[773]. 이미 논의한 전원·재질·회로·음성 및 과일 버튼 결정을 다시 확인합니다 [774]-[843].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 13
+    },
+    {
+      "position": 848,
+      "before_subject": "케이스 소재·교체 여부·형태를 결정한다.",
+      "after_subject": "버튼 상세 설계와 다음 제작 작업을 배정한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "대기 버튼을 빨간 사과로 정리합니다 [799]-[843]. 다음 작업으로 버튼의 상세 형태·표시와 점토 제작을 안내합니다 [848]-[874].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 14
+    }
+  ]
+}

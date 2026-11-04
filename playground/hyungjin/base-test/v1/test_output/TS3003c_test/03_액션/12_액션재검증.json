@@ -1,0 +1,21 @@
+{
+  "meeting_id": "TS3003c",
+  "issues": [
+    {
+      "type": "근거 부족",
+      "description": "모든 액션의 agenda_id가 A001로 지정되어 있지만, 전사문에는 A001과 연결되는 안건 ID가 나타나지 않습니다. 안건 연결이 원문에서 확인되지 않으므로 추측한 연결일 수 있습니다.",
+      "evidence_utterance_ids": [
+        17,
+        690,
+        691,
+        692,
+        693,
+        694,
+        695
+      ],
+      "suggested_fix": "A001의 대응 관계가 원문에서 확인되지 않으면 해당 액션의 agenda_id를 null로 설정하세요."
+    }
+  ],
+  "review_needed": [],
+  "scope_limitations": []
+}

@@ -1,0 +1,43 @@
+{
+  "chunk_id": 19,
+  "actions": [
+    {
+      "content": "회의록을 프로젝트 문서 폴더에 올리기",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": null,
+      "evidence_utterance_ids": [
+        699
+      ]
+    },
+    {
+      "content": "부품 콘셉트 준비하기",
+      "assignee": "산업 디자이너",
+      "due_date": "다음 회의까지",
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        700
+      ]
+    },
+    {
+      "content": "사용자 인터페이스 콘셉트와 트렌드 관찰 준비하기",
+      "assignee": "UI 디자이너",
+      "due_date": "다음 회의까지",
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        701,
+        702,
+        704
+      ]
+    },
+    {
+      "content": "구체적인 지시 사항 보내기",
+      "assignee": "개인 코치",
+      "due_date": null,
+      "agenda_id": null,
+      "evidence_utterance_ids": [
+        705
+      ]
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "meeting_id": "ES2004a",
+  "created_date": "2026-10-26",
+  "annotation_basis": "input/criteria.md",
+  "source_transcript": "input/ES2004a.txt",
+  "utterance_mapping_source": "meetings/ES2004a.json",
+  "utterance_count": 469,
+  "position_definition": "메타데이터 3행과 빈 줄을 제외한 발화의 1부터 시작하는 순서. position은 새 구간의 첫 발화이며 경계는 position-1과 position 사이이다.",
+  "annotation_scope": "전체 전사 흐름에서 의미 있는 후보를 선정했다. 후보에 없는 위치도 경계가 아니며 boundary_positions가 채택 경계의 전체 목록이다.",
+  "segment_note": "연속 구간 안에 제외된 잡담·측면 전환·재논의가 포함될 수 있다. 같은 결정으로의 복귀는 새 경계로 세지 않는다.",
+  "verification_note": "동일 분석자가 근거와 제외 기준을 다시 대조했다. 독립된 인간 검수나 다중 평가자 합의는 수행하지 않았다.",
+  "boundary_positions": [
+    32,
+    53,
+    200,
+    270,
+    395,
+    422
+  ],
+  "segments": [
+    {
+      "start_utterance": 1,
+      "subject": "회의 준비와 안건 안내를 마친다.",
+      "summary": "회의 준비와 안건 안내를 마친다.",
+      "segment_id": 1,
+      "end_utterance": 31,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 32,
+      "subject": "신제품의 목표와 개발 단계를 공유한다.",
+      "summary": "독창적이고 트렌디하며 폭넓은 사용자가 쉽게 쓰는 리모컨을 목표로 세 설계 단계를 소개했다.",
+      "segment_id": 2,
+      "end_utterance": 52,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 53,
+      "subject": "화이트보드와 펜 사용을 동물 그리기로 연습한다.",
+      "summary": "각자 동물을 그리고 특징을 설명하며 펜과 화이트보드를 연습했다.",
+      "segment_id": 3,
+      "end_utterance": 199,
+      "excluded_candidate_positions": [
+        69,
+        178
+      ]
+    },
+    {
+      "start_utterance": 200,
+      "subject": "판매가와 원가 및 시장 범위를 확인한다.",
+      "summary": "판매가 25유로, 생산비 12.5유로, 목표 수익 5천만 유로와 국제·전 연령 시장을 논의했다.",
+      "segment_id": 4,
+      "end_utterance": 269,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 270,
+      "subject": "통합 리모컨과 간단한 조작에 필요한 사용자 요구를 검토한다.",
+      "summary": "여러 기기 통합과 단순한 버튼·기호를 제안하고 LCD 메뉴, 큰 글씨, 기본 버튼과 추가 메뉴 조합을 검토했다.",
+      "segment_id": 5,
+      "end_utterance": 394,
+      "excluded_candidate_positions": [
+        326
+      ]
+    },
+    {
+      "start_utterance": 395,
+      "subject": "접이식 리모컨의 형태와 소재를 검토한다.",
+      "summary": "폴더형으로 화면 공간을 확보하는 안과 가벼운 성형 플라스틱을 검토했지만 비용은 미확정이다.",
+      "segment_id": 6,
+      "end_utterance": 421,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 422,
+      "subject": "개인 작업과 다음 회의 일정을 정리한다.",
+      "summary": "각자 작업 후 약 30분 뒤 재회하기로 했다. 끝부분에 회사 이미지와 플라스틱 외관을 다시 검토했다.",
+      "segment_id": 7,
+      "end_utterance": 469,
+      "excluded_candidate_positions": [
+        430
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "position": 32,
+      "before_subject": "회의 준비와 안건 안내를 마친다.",
+      "after_subject": "신제품의 목표와 개발 단계를 공유한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "안건과 시간을 안내한 뒤 제품 목표를 제시합니다 [24]-[32]. 뒤에서는 제품 특성과 기능·콘셉트·상세 설계 계획을 다루므로 개발 계획으로 대상이 바뀝니다 [33]-[50].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 0
+    },
+    {
+      "position": 53,
+      "before_subject": "신제품의 목표와 개발 단계를 공유한다.",
+      "after_subject": "화이트보드와 펜 사용을 동물 그리기로 연습한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "개발 단계 설명을 마칩니다 [49]-[50]. 펜 연습과 동물 그리기를 시작하므로 도구 실습이라는 별도 안건입니다 [53]-[66].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 1
+    },
+    {
+      "position": 69,
+      "before_subject": "동물 그리기 실습을 진행한다.",
+      "after_subject": "다른 참가자가 같은 실습을 한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": false
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "호랑이 그림을 마친 뒤 다음 참가자를 요청합니다 [64]-[69]. 개의 특징을 설명하는 것은 같은 도구 연습이므로 참가자 변경을 경계로 세지 않습니다 [78]-[95].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 2
+    },
+    {
+      "position": 178,
+      "before_subject": "독수리 그림의 특징을 설명한다.",
+      "after_subject": "골프의 이글을 잠시 이야기한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "digression_return",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "독수리 특징 설명 중 골프 언어유희가 나옵니다 [174]-[187]. 다시 독수리의 자유로움과 용맹함으로 돌아가므로 잡담 삽입입니다 [188]-[192].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 3
+    },
+    {
+      "position": 200,
+      "before_subject": "화이트보드와 펜 사용을 동물 그리기로 연습한다.",
+      "after_subject": "판매가와 원가 및 시장 범위를 확인한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "그림 연습을 마치고 즐거웠다고 정리합니다 [192]-[199]. 재무 설명으로 전환해 가격·원가·시장 조건을 확인합니다 [200]-[267].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 4
+    },
+    {
+      "position": 270,
+      "before_subject": "판매가와 원가 및 시장 범위를 확인한다.",
+      "after_subject": "통합 리모컨과 간단한 조작에 필요한 사용자 요구를 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "국제 시장 범위 논의를 마친 뒤 사용 경험을 묻습니다 [252]-[270]. 실제 기기 통합과 복잡한 조작 문제를 해결할 요구 사항을 논의합니다 [274]-[318].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 5
+    },
+    {
+      "position": 326,
+      "before_subject": "간단한 조작 인터페이스를 검토한다.",
+      "after_subject": "LCD 메뉴로 버튼 복잡성을 줄이는 대안을 검토한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "기본 버튼과 숨겨진 추가 기능으로 복잡성을 줄이는 안이 나옵니다 [305]-[323]. LCD 메뉴도 같은 조작 단순화 문제의 대안이므로 분리하지 않습니다 [326]-[340].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 6
+    },
+    {
+      "position": 395,
+      "before_subject": "통합 리모컨과 간단한 조작에 필요한 사용자 요구를 검토한다.",
+      "after_subject": "접이식 리모컨의 형태와 소재를 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "기본 조작과 메뉴를 결합하는 안을 설명합니다 [388]-[391]. 다른 제안으로 폴더형 구조를 꺼내 크기·비용·소재를 검토하므로 외장 구조로 논의 대상이 바뀝니다 [395]-[417].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 7
+    },
+    {
+      "position": 422,
+      "before_subject": "접이식 리모컨의 형태와 소재를 검토한다.",
+      "after_subject": "개인 작업과 다음 회의 일정을 정리한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "형태와 소재 제안을 일단 마칩니다 [413]-[419]. 다음 회의까지의 개인 작업을 안내하므로 후속 일정 안건입니다 [422]-[427].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 8
+    },
+    {
+      "position": 430,
+      "before_subject": "후속 작업 일정을 정리한다.",
+      "after_subject": "회사 이미지와 플라스틱 외관을 다시 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "이미 가벼운 플라스틱과 외관 비용을 이야기했습니다 [399]-[417]. 마무리 직후 그 발언을 다시 인용해 회사의 패션 이미지와 외관을 논의하므로 재논의입니다 [430]-[460].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 9
+    }
+  ]
+}

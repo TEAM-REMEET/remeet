@@ -1,0 +1,186 @@
+{
+  "meeting_id": "TS3003c",
+  "gold_boundary_count": 11,
+  "gold_positions": [
+    28,
+    49,
+    95,
+    162,
+    190,
+    265,
+    286,
+    336,
+    345,
+    465,
+    691
+  ],
+  "conditions": {
+    "baseline": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "candidate_radius_chars": 300,
+        "model": "gpt-6-luna"
+      },
+      "requests": 39,
+      "status": "complete",
+      "failed_requests": [],
+      "candidate_judgments": 39,
+      "golden_candidates": 37,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0015",
+        "u0028",
+        "u0049",
+        "u0068",
+        "u0095",
+        "u0162",
+        "u0190",
+        "u0249",
+        "u0430",
+        "u0465",
+        "u0557",
+        "u0691",
+        "u0714"
+      ],
+      "scores": {
+        "0": {
+          "tp": 7,
+          "fp": 6,
+          "fn": 4,
+          "precision": 0.5384615384615384,
+          "recall": 0.6363636363636364,
+          "f1": 0.5833333333333334
+        },
+        "3": {
+          "tp": 7,
+          "fp": 6,
+          "fn": 4,
+          "precision": 0.5384615384615384,
+          "recall": 0.6363636363636364,
+          "f1": 0.5833333333333334
+        }
+      }
+    },
+    "merge_900": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "candidate_radius_chars": 300,
+        "model": "gpt-6-luna"
+      },
+      "requests": 26,
+      "status": "partial",
+      "failed_requests": [
+        "R0001",
+        "R0003"
+      ],
+      "candidate_judgments": 35,
+      "golden_candidates": 33,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0049",
+        "u0068",
+        "u0097",
+        "u0162",
+        "u0168",
+        "u0190",
+        "u0229",
+        "u0286",
+        "u0319",
+        "u0336",
+        "u0345",
+        "u0557",
+        "u0714"
+      ],
+      "scores": {
+        "0": {
+          "tp": 6,
+          "fp": 7,
+          "fn": 5,
+          "precision": 0.46153846153846156,
+          "recall": 0.5454545454545454,
+          "f1": 0.4999999999999999
+        },
+        "3": {
+          "tp": 7,
+          "fp": 6,
+          "fn": 4,
+          "precision": 0.5384615384615384,
+          "recall": 0.6363636363636364,
+          "f1": 0.5833333333333334
+        }
+      }
+    },
+    "merge_1200": {
+      "settings": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "reasoning_effort": "low",
+        "max_completion_tokens": 16384,
+        "service_tier": "default",
+        "window_chars": 200,
+        "overlap_chars": 100,
+        "candidate_depth_threshold": 0.1,
+        "candidate_radius_chars": 300,
+        "model": "gpt-6-luna"
+      },
+      "requests": 16,
+      "status": "partial",
+      "failed_requests": [
+        "R0001"
+      ],
+      "candidate_judgments": 35,
+      "golden_candidates": 32,
+      "conflicts": [],
+      "predicted_boundary_uids": [
+        "u0097",
+        "u0162",
+        "u0190",
+        "u0227",
+        "u0317",
+        "u0336",
+        "u0345",
+        "u0465",
+        "u0557",
+        "u0691"
+      ],
+      "scores": {
+        "0": {
+          "tp": 6,
+          "fp": 4,
+          "fn": 5,
+          "precision": 0.6,
+          "recall": 0.5454545454545454,
+          "f1": 0.5714285714285713
+        },
+        "3": {
+          "tp": 7,
+          "fp": 3,
+          "fn": 4,
+          "precision": 0.7,
+          "recall": 0.6363636363636364,
+          "f1": 0.6666666666666666
+        }
+      }
+    }
+  },
+  "usage": {
+    "requests": 81,
+    "input_tokens": 493351,
+    "output_tokens": 47752,
+    "reasoning_tokens": 21587,
+    "retries": 0,
+    "seconds_total": 733.16,
+    "estimated_cost_usd": 0.073211
+  }
+}

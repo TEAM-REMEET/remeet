@@ -1,0 +1,41 @@
+{
+  "meeting_id": "TS3003b",
+  "chunk_id": 10,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "기능 설계",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "새 제품 요구 사항 논의",
+          "tag": "질문",
+          "text": "새 제품 요구 사항을 논의할 여지가 있는지 질문했다.",
+          "evidence_utterance_ids": [
+            325
+          ]
+        },
+        {
+          "subtopic": "기능과 목표 시장의 조정",
+          "tag": "제안",
+          "text": "사용하고 싶은 기능과 제품으로 도달하려는 시장 사이에서 방법을 찾아볼 수 있다고 했다.",
+          "evidence_utterance_ids": [
+            326
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "기능과 목표 시장 사이에서 방법을 찾아볼 수 있다는 의견이 제시됐으며, 구체적인 결정은 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            326
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

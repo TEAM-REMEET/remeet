@@ -1,0 +1,20 @@
+{
+  "meeting_id": "TS3003a",
+  "agenda_id": "A001",
+  "issues": [
+    {
+      "type": "중요 내용 누락",
+      "location": "discussions: 회사 소개",
+      "description": "회사 소개 내용과 함께 참석자들이 회사 웹사이트를 확인했는지 묻고, 참석자들이 확인했다고 답한 짧은 교환이 원 청크에 있습니다. 킥오프의 회사 소개 맥락에서 참고할 만한 내용이지만 요약에 빠져 있습니다.",
+      "evidence_utterance_ids": [
+        61,
+        62,
+        63,
+        64
+      ],
+      "suggested_fix": "필요하다면 회사 소개 항목에 웹사이트 확인 여부를 물었고 참석자들이 확인했다고 답했다는 내용을 간결하게 추가하세요."
+    }
+  ],
+  "review_needed": [],
+  "scope_limitations": []
+}

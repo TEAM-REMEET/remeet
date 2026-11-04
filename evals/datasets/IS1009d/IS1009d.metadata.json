@@ -1,0 +1,15 @@
+{
+  "meeting_id": "IS1009d",
+  "title": "Real Reaction 신제품 TV 리모컨 개발 프로젝트 4차 회의 - 상세 설계",
+  "date": "2004-12-13",
+  "participants": [
+    "프로젝트 매니저",
+    "산업 디자이너",
+    "UI 디자이너",
+    "마케팅 담당자"
+  ],
+  "source": "playground/hyungjin/test/input/IS1009d.txt",
+  "corpus": "AMI 1.6.2",
+  "license": "CC BY 4.0",
+  "translation_reviewed": false
+}

@@ -1,0 +1,1182 @@
+[
+  {
+    "id": "m1",
+    "title": "주간 회의 — 10월 4주차",
+    "when": "10월 27일 (월)",
+    "date": "10/27",
+    "topic": "rel",
+    "host": "yun",
+    "people": ["yun", "doy", "har", "jiw", "min", "tae"],
+    "deep": false,
+    "time": "10:00 – 10:48",
+    "file": "주간회의_1027.txt",
+    "initial_status": "review",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] 신규 온보딩 플로우"
+      },
+      {
+        "id": "a1",
+        "speaker": "하린",
+        "text": "A/B 테스트에서 B안 전환율이 12% 더 높았어요. 5단계는 너무 길다는 피드백도 많았고요."
+      },
+      {
+        "id": "a2",
+        "speaker": "서윤",
+        "text": "그럼 3단계로 줄이고, 관심사 선택은 가입 후로 미루는 걸로 하죠."
+      },
+      {
+        "id": "a3",
+        "speaker": "하린",
+        "text": "좋아요. 3단계 안내 문구는 제가 11/3까지 정리할게요."
+      },
+      {
+        "id": "h2",
+        "speaker": "",
+        "text": "[안건 2] 결제 오류 재발"
+      },
+      {
+        "id": "b1",
+        "speaker": "지우",
+        "text": "10/13 이후 재시도를 1회로 줄였는데도 중복 결제가 2건 재현됐어요. 카드사 응답이 늦을 때 생겨요."
+      },
+      {
+        "id": "b2",
+        "speaker": "도윤",
+        "text": "재시도 로직 문제일 수도 있지만, PG사 웹훅 순서가 꼬이는 걸 수도 있어요. 로그를 더 봐야 해요."
+      },
+      {
+        "id": "b3",
+        "speaker": "태현",
+        "text": "웹훅 순서라면 멱등키로 막을 수 있지 않을까요?"
+      },
+      {
+        "id": "b4",
+        "speaker": "도윤",
+        "text": "가능성 있어요. 오류 로그는 제가 10/31까지 정리해서 공유할게요."
+      },
+      {
+        "id": "b5",
+        "speaker": "서윤",
+        "text": "얘기가 길어지네요. 이건 따로 회의를 잡아서 이어가죠. 일정은 제가 잡을게요."
+      },
+      {
+        "id": "b6",
+        "speaker": "민재",
+        "text": "고객 문의도 늘고 있으니 결제 오류 안내 문구는 CS 쪽에서 써주면 좋겠어요. 담당은 정해서 알려주세요."
+      },
+      {
+        "id": "h3",
+        "speaker": "",
+        "text": "[안건 3] 11월 릴리즈 일정"
+      },
+      {
+        "id": "c1",
+        "speaker": "민재",
+        "text": "결제 오류가 풀리느냐에 따라 11/14나 11/21 중 하나로 가야 할 것 같아요."
+      },
+      {
+        "id": "u1",
+        "speaker": "화자 3",
+        "text": "일정은 결제 오류 쪽 상황을 보고 다음 주에 다시 맞추는 게 좋겠습니다."
+      },
+      {
+        "id": "c2",
+        "speaker": "서윤",
+        "text": "두 날짜 비교표를 제가 11/2까지 만들어서 다음 주에 확정해요."
+      }
+    ],
+    "summary": {
+      "text": "온보딩을 3단계로 줄이기로 확정했고, 결제 오류는 원인 파악이 길어져 따로 이어서 논의하기로 했어요.",
+      "src": ["a2", "b5"]
+    },
+    "discussion": [
+      {
+        "label": "요구사항",
+        "text": "가입 이탈을 줄이고, 결제 오류는 원인부터 확정해야 함",
+        "src": ["a1", "b5"]
+      },
+      {
+        "label": "페인포인트",
+        "text": "5단계 가입이 길다는 피드백, 임시 조치 후에도 중복 결제 재발",
+        "src": ["a1", "b1"]
+      },
+      {
+        "label": "타임라인",
+        "text": "안내 문구 11/3, 오류 로그 10/31, 릴리즈일은 다음 주 확정",
+        "src": ["a3", "b4", "c2"]
+      },
+      {
+        "label": "의사결정",
+        "text": "온보딩은 3단계로 확정, 결제 오류는 별도 회의로 분리",
+        "src": ["a2", "b5"]
+      },
+      {
+        "label": "우려사항",
+        "text": "결제 오류가 길어지면 11월 릴리즈가 밀릴 수 있음",
+        "src": ["c1"]
+      },
+      {
+        "label": "요청사항",
+        "text": "고객 안내 문구는 CS 쪽에서 작성해 달라는 요청",
+        "src": ["b6"]
+      }
+    ],
+    "keywords": [
+      "온보딩 3단계",
+      "중복 결제",
+      "웹훅 순서",
+      "멱등키",
+      "릴리즈",
+      "A/B 테스트"
+    ],
+    "decisions": [
+      {
+        "text": "가입 단계 5단계 → 3단계로 축소",
+        "src": ["a1", "a2"]
+      },
+      {
+        "text": "관심사 선택은 가입 이후로 이동",
+        "src": ["a2"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "중복 결제 원인: 재시도 로직 vs 웹훅 순서",
+        "src": ["b2", "b3"]
+      },
+      {
+        "text": "11월 릴리즈일 11/14 또는 11/21",
+        "src": ["c1", "c2"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "신규 온보딩 플로우",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3"],
+        "points": [
+          {
+            "text": "B안 전환율이 12% 높았고, 5단계가 길다는 피드백이 많았어요",
+            "src": ["a1"]
+          },
+          {
+            "text": "3단계로 줄이고 관심사 선택은 가입 후로 옮겨요",
+            "src": ["a2"]
+          },
+          {
+            "text": "안내 문구는 최하린 님이 11/3까지 정리해요",
+            "src": ["a3"]
+          }
+        ]
+      },
+      {
+        "title": "결제 오류 재발",
+        "status": "길어짐",
+        "tone": "warn",
+        "deep": true,
+        "src": ["h2", "b1", "b2", "b3", "b4", "b5", "b6"],
+        "points": [
+          {
+            "text": "재시도 1회 조치 후에도 중복 결제 2건이 재현됐어요",
+            "src": ["b1"]
+          },
+          {
+            "text": "원인 후보: 재시도 로직 / PG사 웹훅 순서 — 멱등키 검토",
+            "src": ["b2", "b3"]
+          },
+          {
+            "text": "논의가 길어져 별도 회의로 이어가기로 했어요",
+            "src": ["b5"]
+          }
+        ]
+      },
+      {
+        "title": "11월 릴리즈 일정",
+        "status": "보류",
+        "tone": "hold",
+        "deep": false,
+        "src": ["h3", "c1", "c2"],
+        "points": [
+          {
+            "text": "결제 오류 해결 여부에 따라 11/14 또는 11/21",
+            "src": ["c1"]
+          },
+          {
+            "text": "비교표를 만들어 다음 주에 확정해요",
+            "src": ["c2"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "릴리즈 후보일 2안 비교표",
+        "owner": "yun",
+        "due": "11/2",
+        "src": ["c2"],
+        "urgent": true
+      },
+      {
+        "text": "「결제 오류 대응」 회의 일정 잡기",
+        "owner": "yun",
+        "due": "10/31",
+        "src": ["b5"],
+        "urgent": true
+      },
+      {
+        "text": "온보딩 3단계 안내 문구",
+        "owner": "har",
+        "due": "11/3",
+        "src": ["a3"],
+        "urgent": false
+      },
+      {
+        "text": "중복 결제 오류 로그 정리",
+        "owner": "doy",
+        "due": "10/31",
+        "src": ["b4"],
+        "urgent": false
+      },
+      {
+        "text": "결제 오류 고객 안내 문구 작성",
+        "owner": null,
+        "due": "11/5",
+        "src": ["b6"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m9",
+    "title": "결제 오류 대응 — 안건 분리",
+    "when": "10월 27일 주간 회의 안건 2에서 분리",
+    "date": "10/27",
+    "topic": "rel",
+    "host": "yun",
+    "people": ["yun", "doy", "jiw", "tae"],
+    "deep": true,
+    "time": "안건 분리로 생성",
+    "file": "주간회의_1027.txt (안건 2)",
+    "initial_status": "review",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[10/27 주간 회의 안건 2에서 옮겨옴] 결제 오류 재발"
+      },
+      {
+        "id": "a1",
+        "speaker": "지우",
+        "text": "재시도를 1회로 줄였는데도 중복 결제가 2건 재현됐어요."
+      },
+      {
+        "id": "a2",
+        "speaker": "도윤",
+        "text": "재시도 로직이거나 PG사 웹훅 순서 문제일 수 있어요."
+      },
+      {
+        "id": "a3",
+        "speaker": "태현",
+        "text": "웹훅 순서라면 멱등키로 막을 수 있어요."
+      },
+      {
+        "id": "a4",
+        "speaker": "도윤",
+        "text": "오류 로그는 10/31까지 정리해서 공유할게요."
+      },
+      {
+        "id": "a5",
+        "speaker": "서윤",
+        "text": "다음 회의는 로그 나온 뒤로 잡을게요."
+      }
+    ],
+    "summary": {
+      "text": "주간 회의에서 결론을 못 낸 중복 결제 원인을 이 회의록에서 이어서 다뤄요.",
+      "src": ["a1", "a5"]
+    },
+    "discussion": null,
+    "keywords": ["중복 결제", "웹훅 순서", "멱등키", "오류 로그"],
+    "decisions": [],
+    "open_issues": [
+      {
+        "text": "재시도 로직 vs 웹훅 순서",
+        "src": ["a2", "a3"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "중복 결제 원인",
+        "status": "진행 중",
+        "tone": "warn",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3", "a4", "a5"],
+        "points": [
+          {
+            "text": "2건 재현",
+            "src": ["a1"]
+          },
+          {
+            "text": "원인 후보 두 가지",
+            "src": ["a2", "a3"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "중복 결제 오류 로그 정리",
+        "owner": "doy",
+        "due": "10/31",
+        "src": ["a4"],
+        "urgent": false
+      },
+      {
+        "text": "다음 회의 일정 잡기",
+        "owner": "yun",
+        "due": "10/31",
+        "src": ["a5"],
+        "urgent": true
+      }
+    ],
+    "branch_of": {
+      "meeting": "m1",
+      "agenda_index": 1
+    }
+  },
+  {
+    "id": "m2",
+    "title": "PG사 선정 — 수수료 비교",
+    "when": "10월 29일 (수)",
+    "date": "10/29",
+    "topic": "rel",
+    "host": "doy",
+    "people": ["doy", "yun", "jiw", "tae"],
+    "deep": true,
+    "time": "14:00 – 14:32",
+    "file": "PG수수료비교_1029.docx",
+    "initial_status": "done",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] 수수료 구조"
+      },
+      {
+        "id": "a1",
+        "speaker": "도윤",
+        "text": "카드 기준으로 A사가 2.5%, B사가 2.8%예요."
+      },
+      {
+        "id": "a2",
+        "speaker": "태현",
+        "text": "간편결제 수수료는 두 곳이 같아요."
+      },
+      {
+        "id": "a3",
+        "speaker": "도윤",
+        "text": "후보는 계속 A사, B사 두 곳으로 가죠. 비교표는 제가 정리할게요."
+      },
+      {
+        "id": "h2",
+        "speaker": "",
+        "text": "[안건 2] 정산 주기"
+      },
+      {
+        "id": "b1",
+        "speaker": "지우",
+        "text": "B사는 D+1 정산이고 A사는 D+2예요."
+      },
+      {
+        "id": "b2",
+        "speaker": "서윤",
+        "text": "이건 재무팀이 판단해야 할 것 같아요. 제가 오늘 의견 요청할게요."
+      },
+      {
+        "id": "b3",
+        "speaker": "도윤",
+        "text": "재무팀 의견 받고 오늘 15시에 최종 결정해요."
+      }
+    ],
+    "summary": {
+      "text": "A사는 수수료가, B사는 정산 주기가 유리해요. 재무팀 의견을 받은 뒤 최종 결정해요.",
+      "src": ["a1", "b1", "b3"]
+    },
+    "discussion": [
+      {
+        "label": "비교 기준",
+        "text": "카드 수수료와 정산 주기 두 가지로 비교",
+        "src": ["a1", "b1"]
+      },
+      {
+        "label": "쟁점",
+        "text": "수수료는 A사, 정산 주기는 B사가 유리",
+        "src": ["a1", "b1"]
+      },
+      {
+        "label": "의사결정 프로세스",
+        "text": "재무팀 의견을 받은 뒤 최종 결정",
+        "src": ["b2", "b3"]
+      },
+      {
+        "label": "타임라인",
+        "text": "오늘 15시 최종 결정",
+        "src": ["b3"]
+      }
+    ],
+    "keywords": ["PG사 수수료", "정산 주기", "D+1", "재무팀"],
+    "decisions": [
+      {
+        "text": "후보는 A사·B사 두 곳으로 유지",
+        "src": ["a3"]
+      },
+      {
+        "text": "최종 결정 전 재무팀 의견 받기",
+        "src": ["b2", "b3"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "정산 주기 D+1 vs D+2 현금 흐름 영향",
+        "src": ["b1"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "수수료 구조",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3"],
+        "points": [
+          {
+            "text": "A사 2.5% / B사 2.8%",
+            "src": ["a1"]
+          },
+          {
+            "text": "간편결제는 동일",
+            "src": ["a2"]
+          }
+        ]
+      },
+      {
+        "title": "정산 주기",
+        "status": "보류",
+        "tone": "hold",
+        "deep": false,
+        "src": ["h2", "b1", "b2", "b3"],
+        "points": [
+          {
+            "text": "B사 D+1, A사 D+2",
+            "src": ["b1"]
+          },
+          {
+            "text": "재무팀 의견 후 결정",
+            "src": ["b2", "b3"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "재무팀에 정산 주기 의견 요청",
+        "owner": "yun",
+        "due": "오늘",
+        "src": ["b2"],
+        "urgent": true
+      },
+      {
+        "text": "수수료 비교표 정리",
+        "owner": "doy",
+        "due": "10/30",
+        "src": ["a3"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m4",
+    "title": "PG사 선정 — 기술 검토",
+    "when": "10월 24일 (금)",
+    "date": "10/24",
+    "topic": "rel",
+    "host": "doy",
+    "people": ["doy", "yun", "tae"],
+    "deep": true,
+    "time": "16:00 – 16:44",
+    "file": "PG기술검토_1024.md",
+    "initial_status": "done",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] API·웹훅"
+      },
+      {
+        "id": "a1",
+        "speaker": "태현",
+        "text": "두 곳 모두 SLA 99.9%이고 웹훅 재전송, 멱등키를 지원해요."
+      },
+      {
+        "id": "a2",
+        "speaker": "도윤",
+        "text": "기술 조건은 둘 다 통과로 보죠."
+      }
+    ],
+    "summary": {
+      "text": "두 PG사 모두 기술 조건을 통과했어요.",
+      "src": ["a1", "a2"]
+    },
+    "discussion": null,
+    "keywords": ["SLA", "웹훅 재전송", "멱등키"],
+    "decisions": [
+      {
+        "text": "기술 조건은 두 곳 모두 통과",
+        "src": ["a2"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "수수료·정산 주기 비교",
+        "src": ["a2"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "API·웹훅",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2"],
+        "points": [
+          {
+            "text": "SLA·재전송·멱등키 지원",
+            "src": ["a1"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "수수료 비교 회의 준비",
+        "owner": "doy",
+        "due": "10/29",
+        "src": ["a2"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m5",
+    "title": "PG사 선정 — 정산 API 검토",
+    "when": "10월 22일 (수)",
+    "date": "10/22",
+    "topic": "rel",
+    "host": "doy",
+    "people": ["doy", "tae", "jiw"],
+    "deep": true,
+    "time": "11:00 – 11:35",
+    "file": "정산API검토.txt",
+    "initial_status": "done",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] 정산 API 구조"
+      },
+      {
+        "id": "a1",
+        "speaker": "도윤",
+        "text": "A사는 정산 결과를 웹훅으로 보내주고, B사는 조회 API로만 줘요. 우리 정산 배치가 두 방식을 다 지원해야 해요."
+      },
+      {
+        "id": "a2",
+        "speaker": "태현",
+        "text": "B사 방식이면 배치를 하루에 한 번 더 돌려야 해요."
+      },
+      {
+        "id": "a3",
+        "speaker": "지우",
+        "text": "두 곳 테스트 계정은 받아뒀어요. 정산 테스트는 다음 주에 할게요."
+      }
+    ],
+    "summary": {
+      "text": "A사는 웹훅, B사는 조회 API로 정산 결과를 줘요. 두 방식 모두 대응하도록 배치를 설계해요.",
+      "src": ["a1", "a2"]
+    },
+    "discussion": null,
+    "keywords": ["정산 API", "웹훅", "조회 API", "정산 배치"],
+    "decisions": [
+      {
+        "text": "정산 배치는 두 방식 모두 지원",
+        "src": ["a1"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "B사 방식의 배치 추가 비용",
+        "src": ["a2"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "정산 API 구조",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3"],
+        "points": [
+          {
+            "text": "A사 웹훅 / B사 조회 API",
+            "src": ["a1"]
+          },
+          {
+            "text": "B사는 배치 1회 추가",
+            "src": ["a2"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "두 PG사 정산 테스트",
+        "owner": "jiw",
+        "due": "10/28",
+        "src": ["a3"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m3",
+    "title": "주간 회의 — 10월 3주차",
+    "when": "10월 20일 (월)",
+    "date": "10/20",
+    "topic": "rel",
+    "host": "yun",
+    "people": ["yun", "doy", "har", "jiw", "min", "tae"],
+    "deep": false,
+    "time": "10:00 – 10:41",
+    "file": "주간회의_1020.txt",
+    "initial_status": "confirmed",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] PG사 후보 검토"
+      },
+      {
+        "id": "a1",
+        "speaker": "도윤",
+        "text": "웹훅 재전송을 지원하는 곳은 4곳 중 2곳뿐이에요."
+      },
+      {
+        "id": "a2",
+        "speaker": "서윤",
+        "text": "두 곳으로 줄이고, 세부 비교는 따로 회의를 열죠."
+      },
+      {
+        "id": "h2",
+        "speaker": "",
+        "text": "[안건 2] 온보딩 A/B 결과"
+      },
+      {
+        "id": "b1",
+        "speaker": "하린",
+        "text": "B안 전환율이 12% 높았어요."
+      },
+      {
+        "id": "u2",
+        "speaker": "화자 1",
+        "text": "안내 문구 초안은 제가 먼저 정리해서 공유드릴게요."
+      }
+    ],
+    "summary": {
+      "text": "PG사 후보를 2곳으로 줄였고, 온보딩 B안이 더 나았어요.",
+      "src": ["a2", "b1"]
+    },
+    "discussion": null,
+    "keywords": ["PG사 후보", "웹훅 재전송", "온보딩 B안"],
+    "decisions": [
+      {
+        "text": "PG사 후보 A사·B사로 압축",
+        "src": ["a1", "a2"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "PG사 세부 비교는 심화 회의에서",
+        "src": ["a2"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "PG사 후보 검토",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2"],
+        "points": [
+          {
+            "text": "4곳 → 2곳",
+            "src": ["a1"]
+          }
+        ]
+      },
+      {
+        "title": "온보딩 A/B 결과",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h2", "b1"],
+        "points": [
+          {
+            "text": "B안 +12%",
+            "src": ["b1"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "온보딩 B안 결과 공유",
+        "owner": "yun",
+        "due": "10/22",
+        "src": ["b1"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m8",
+    "title": "고객 안내 개선 — 결제 오류 안내문",
+    "when": "10월 28일 (화)",
+    "date": "10/28",
+    "topic": "cs",
+    "host": "min",
+    "people": ["min", "yun", "har"],
+    "deep": false,
+    "time": "14:00 – 14:30",
+    "file": "안내문개선_1028.hwpx",
+    "initial_status": "confirmed",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] 결제 오류 안내문"
+      },
+      {
+        "id": "a1",
+        "speaker": "민재",
+        "text": "중복 결제가 생긴 고객에게 보낼 안내문 초안을 봤어요. 환불 일정이 빠져 있어요."
+      },
+      {
+        "id": "a2",
+        "speaker": "서윤",
+        "text": "환불은 영업일 3일 안이라고 넣죠. 문구는 CS 쪽 의견 받아서 확정할게요."
+      },
+      {
+        "id": "a3",
+        "speaker": "하린",
+        "text": "앱 안 배너 디자인은 제가 금요일까지 잡을게요."
+      }
+    ],
+    "summary": {
+      "text": "중복 결제 안내문에 환불 일정을 넣고, CS 의견을 받아 확정하기로 했어요.",
+      "src": ["a1", "a2"]
+    },
+    "discussion": null,
+    "keywords": ["안내문", "환불 일정", "앱 배너"],
+    "decisions": [
+      {
+        "text": "환불 일정(영업일 3일) 명시",
+        "src": ["a2"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "CS 의견 반영해 문구 확정",
+        "src": ["a2"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "결제 오류 안내문",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3"],
+        "points": [
+          {
+            "text": "환불 일정 누락 → 추가",
+            "src": ["a1", "a2"]
+          },
+          {
+            "text": "앱 배너 디자인",
+            "src": ["a3"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "CS 의견 받아 안내문 확정",
+        "owner": "yun",
+        "due": "10/31",
+        "src": ["a2"],
+        "urgent": true
+      },
+      {
+        "text": "앱 안 배너 디자인",
+        "owner": "har",
+        "due": "10/31",
+        "src": ["a3"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m7",
+    "title": "월간 회의 — 9월",
+    "when": "9월 26일 (금)",
+    "date": "9/26",
+    "topic": "q4",
+    "host": "min",
+    "people": ["min", "yun", "doy", "har", "jiw", "tae"],
+    "deep": false,
+    "time": "15:00 – 16:02",
+    "file": "월간회의_9월.docx",
+    "initial_status": "done",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] 4분기 우선순위"
+      },
+      {
+        "id": "a1",
+        "speaker": "민재",
+        "text": "4분기 1순위는 결제 모듈 개편으로 하죠. 정산 지연 민원이 가장 커요."
+      },
+      {
+        "id": "a2",
+        "speaker": "민재",
+        "text": "1차 배포는 11월 안에 나가는 걸 목표로 해요."
+      },
+      {
+        "id": "a3",
+        "speaker": "서윤",
+        "text": "주간 회의에서 진행 상황을 매주 공유할게요."
+      }
+    ],
+    "summary": {
+      "text": "4분기 1순위를 결제 모듈 개편으로 정하고, 11월 중 1차 배포를 목표로 했어요.",
+      "src": ["a1", "a2"]
+    },
+    "discussion": null,
+    "keywords": ["4분기 우선순위", "결제 모듈 개편", "1차 배포"],
+    "decisions": [
+      {
+        "text": "4분기 1순위: 결제 모듈 개편",
+        "src": ["a1"]
+      },
+      {
+        "text": "1차 배포는 11월 목표",
+        "src": ["a2"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "주간 회의에서 매주 진행 공유",
+        "src": ["a3"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "4분기 우선순위",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3"],
+        "points": [
+          {
+            "text": "결제 모듈 개편이 1순위",
+            "src": ["a1"]
+          },
+          {
+            "text": "11월 1차 배포",
+            "src": ["a2"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "주간 회의에서 개편 진행 공유",
+        "owner": "yun",
+        "due": "매주",
+        "src": ["a3"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m11",
+    "title": "온보딩 화면 디자인 리뷰",
+    "when": "10월 23일 (목)",
+    "date": "10/23",
+    "topic": "des",
+    "host": "har",
+    "people": ["har", "yun", "min"],
+    "deep": false,
+    "time": "16:00 – 16:40",
+    "file": "온보딩디자인리뷰.md",
+    "initial_status": "done",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] 3단계 가입 화면 시안"
+      },
+      {
+        "id": "a1",
+        "speaker": "하린",
+        "text": "3단계 안을 기준으로 시안 두 개를 만들었어요. A는 한 화면에 입력을 모으고 B는 단계별로 나눠요."
+      },
+      {
+        "id": "a2",
+        "speaker": "민재",
+        "text": "B가 어디서 이탈하는지 보기 쉬울 것 같아요."
+      },
+      {
+        "id": "a3",
+        "speaker": "서윤",
+        "text": "B로 가되, 진행 표시줄은 꼭 넣어 주세요."
+      }
+    ],
+    "summary": {
+      "text": "단계별로 나누는 B안으로 가고, 진행 표시줄을 넣기로 했어요.",
+      "src": ["a2", "a3"]
+    },
+    "discussion": null,
+    "keywords": ["가입 화면", "B안", "진행 표시줄"],
+    "decisions": [
+      {
+        "text": "B안(단계별 화면) 채택",
+        "src": ["a2", "a3"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "진행 표시줄 디자인",
+        "src": ["a3"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "3단계 가입 화면 시안",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3"],
+        "points": [
+          {
+            "text": "A: 한 화면 / B: 단계별",
+            "src": ["a1"]
+          },
+          {
+            "text": "B안 채택, 진행 표시줄 추가",
+            "src": ["a2", "a3"]
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "진행 표시줄 넣은 시안 수정",
+        "owner": "har",
+        "due": "10/27",
+        "src": ["a3"],
+        "urgent": false
+      }
+    ]
+  },
+  {
+    "id": "m10",
+    "title": "정산 정책 리뷰 — 11월 적용분",
+    "when": "10월 30일 (목)",
+    "date": "10/30",
+    "topic": null,
+    "host": "fin",
+    "people": ["fin", "min"],
+    "deep": false,
+    "time": "10:00 – 10:50",
+    "file": "정산정책리뷰.docx",
+    "initial_status": "done",
+    "paragraphs": [
+      {
+        "id": "h1",
+        "speaker": "",
+        "text": "[안건 1] PG사 정산 주기"
+      },
+      {
+        "id": "a1",
+        "speaker": "수현",
+        "text": "D+1 정산이면 월말 현금 흐름이 훨씬 안정적이에요. 재무팀은 B사를 선호해요."
+      },
+      {
+        "id": "a2",
+        "speaker": "민재",
+        "text": "수수료 차이는 연 기준으로 얼마나 되나요?"
+      },
+      {
+        "id": "a3",
+        "speaker": "수현",
+        "text": "현재 거래량 기준 연 1,800만 원 정도예요. 정산 주기 이점이 더 크다고 봐요."
+      }
+    ],
+    "summary": {
+      "text": "재무팀은 정산 주기가 빠른 B사를 선호해요. 수수료 차이(연 약 1,800만 원)보다 현금 흐름 이점이 크다는 의견이에요.",
+      "src": ["a1", "a3"]
+    },
+    "discussion": null,
+    "keywords": ["정산 주기", "D+1", "현금 흐름", "수수료 차이"],
+    "decisions": [
+      {
+        "text": "재무팀 의견: B사 선호",
+        "src": ["a1", "a3"]
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "서비스기획팀 최종 결정 대기",
+        "src": ["a2"]
+      }
+    ],
+    "agendas": [
+      {
+        "title": "PG사 정산 주기",
+        "status": "의견 전달",
+        "tone": "info",
+        "deep": false,
+        "src": ["h1", "a1", "a2", "a3"],
+        "points": [
+          {
+            "text": "D+1 정산이 현금 흐름에 유리",
+            "src": ["a1"]
+          },
+          {
+            "text": "수수료 차이 연 약 1,800만 원",
+            "src": ["a3"]
+          }
+        ]
+      }
+    ],
+    "todos": [],
+    "shared": {
+      "from": "강수현 · 재무팀",
+      "scope": "full",
+      "received": "10/30",
+      "lock_raw": false
+    }
+  },
+  {
+    "id": "m12",
+    "title": "결제 오류 문의 응대 점검",
+    "when": "10월 29일 (수)",
+    "date": "10/29",
+    "topic": null,
+    "host": "cs",
+    "people": ["cs", "dw"],
+    "deep": false,
+    "time": "15:00 – 15:40",
+    "file": "CS문의점검.txt",
+    "initial_status": "done",
+    "paragraphs": [],
+    "summary": {
+      "text": "중복 결제 문의가 하루 평균 14건으로 늘어, 응대 매크로를 새로 만들고 환불 안내를 통일하기로 했어요.",
+      "src": []
+    },
+    "discussion": [
+      {
+        "label": "현황",
+        "text": "중복 결제 문의 하루 평균 14건",
+        "src": []
+      },
+      {
+        "label": "요청사항",
+        "text": "서비스기획팀에 원인과 해결 일정 공유 요청",
+        "src": []
+      },
+      {
+        "label": "의사결정",
+        "text": "응대 매크로 신규 작성, 환불 안내 문구 통일",
+        "src": []
+      }
+    ],
+    "keywords": ["결제 오류 문의", "응대 매크로", "환불 안내"],
+    "decisions": [
+      {
+        "text": "응대 매크로 신규 작성",
+        "src": []
+      },
+      {
+        "text": "환불 안내 문구 통일",
+        "src": []
+      }
+    ],
+    "open_issues": [
+      {
+        "text": "서비스기획팀 원인 공유 대기",
+        "src": []
+      }
+    ],
+    "agendas": [
+      {
+        "title": "문의 현황",
+        "status": "공유",
+        "tone": "info",
+        "deep": false,
+        "src": [],
+        "points": [
+          {
+            "text": "중복 결제 문의 증가",
+            "src": []
+          }
+        ]
+      },
+      {
+        "title": "응대 방식",
+        "status": "결정",
+        "tone": "ok",
+        "deep": false,
+        "src": [],
+        "points": [
+          {
+            "text": "매크로 신규 작성",
+            "src": []
+          }
+        ]
+      }
+    ],
+    "todos": [
+      {
+        "text": "응대 매크로 초안 작성",
+        "owner": "cs",
+        "due": "11/3",
+        "src": [],
+        "urgent": false
+      }
+    ],
+    "shared": {
+      "from": "윤가은 · CS운영팀",
+      "scope": "summary",
+      "received": "10/31",
+      "lock_raw": true
+    }
+  }
+]

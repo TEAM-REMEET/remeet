@@ -1,0 +1,28 @@
+{
+  "model": "gpt-6-luna",
+  "reasoning_effort": "xhigh",
+  "temperature": null,
+  "use_llm_cache": true,
+  "run": "v2_luna-xhigh",
+  "prompt": "Extract_v2_target",
+  "prompt_sha256": "c07d71206082452cce4bc173a569c176b25fcac49ae9f3ac6c0fe27aaf6dc5a1",
+  "input_path": "C:\\Users\\hyung\\Desktop\\2차 프로젝트\\remeet\\playground\\chaewon\\dataset\\Meeting_Input\\TS3003d.txt",
+  "input_sha256": "28fb70e2a13ecd281e62a19a1f972bed8e1f9c69873c2c4c2f17418ddbe462f9",
+  "api_calls": 1,
+  "usage": [
+    {
+      "input_tokens": 18948,
+      "input_tokens_details": {
+        "cache_write_tokens": 13620,
+        "cached_tokens": 5325
+      },
+      "output_tokens": 18049,
+      "output_tokens_details": {
+        "reasoning_tokens": 14593
+      },
+      "total_tokens": 36997
+    }
+  ],
+  "elapsed_sec": 125.9,
+  "created_at": "2026-11-04T10:50:44"
+}

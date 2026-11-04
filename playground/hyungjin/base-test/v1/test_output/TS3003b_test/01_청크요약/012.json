@@ -1,0 +1,63 @@
+{
+  "meeting_id": "TS3003b",
+  "chunk_id": 12,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "기능 설계",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "프로젝트 초점",
+          "tag": "제안",
+          "text": "디자인보다 기능성에 집중하는 방향으로 프로젝트 초점을 바꾸면 제품을 판매할 수 있을 것이라는 의견이 나왔다.",
+          "evidence_utterance_ids": [
+            391,
+            393,
+            394
+          ]
+        },
+        {
+          "subtopic": "주요 고객층",
+          "tag": "제안",
+          "text": "새 제품들이 젊은 사람들을 위해 특별히 디자인된 만큼, 노인층에 집중할 수 있다는 의견이 제시되었다.",
+          "evidence_utterance_ids": [
+            396,
+            397
+          ]
+        },
+        {
+          "subtopic": "필요 기능",
+          "tag": "정보",
+          "text": "채널 선택, 볼륨 조절, 전원, 문자 방송이 중요한 요구 사항으로 언급되었다.",
+          "evidence_utterance_ids": [
+            398,
+            399
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "기능 중심으로 초점을 바꾸거나 노인층을 주요 대상으로 삼는 방향이 제안되었으나, 이 청크에서는 명시적인 결정이 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            391,
+            393,
+            397
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "노인층을 대상으로 할 때 필요한 요구 사항을 더 살펴볼 필요가 있다. 채널 선택, 볼륨 조절, 전원, 문자 방송이 중요하다고 언급되었지만 구체적인 요구 수준은 확인되지 않았다.",
+          "evidence_utterance_ids": [
+            398,
+            399
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    }
+  ]
+}

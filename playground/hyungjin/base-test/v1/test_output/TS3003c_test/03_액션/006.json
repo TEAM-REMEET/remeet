@@ -1,0 +1,14 @@
+{
+  "chunk_id": 6,
+  "actions": [
+    {
+      "content": "운동 에너지원을 예산 안에서 적용할 수 있는지 검토한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        196
+      ]
+    }
+  ]
+}

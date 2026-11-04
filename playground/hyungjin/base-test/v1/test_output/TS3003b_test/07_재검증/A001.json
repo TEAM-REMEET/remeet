@@ -1,0 +1,28 @@
+{
+  "meeting_id": "TS3003b",
+  "agenda_id": "A001",
+  "issues": [
+    {
+      "type": "중요 내용 누락",
+      "location": "discussions[0].text (제품 범위와 목표 고객)",
+      "description": "프로젝트 매니저가 40세 이상을 겨냥하자는 요구를 내면서 젊은 고객용 신제품을 별도로 개발할 예정이라고 설명한 맥락이 빠져 있습니다. 이 점은 목표 고객 논쟁의 배경을 이해하는 데 중요합니다.",
+      "evidence_utterance_ids": [
+        310,
+        311
+      ],
+      "suggested_fix": "40세 이상 대상 제품과 별도로 젊은 고객용 신제품도 개발할 예정이라는 요구를 함께 요약하세요."
+    },
+    {
+      "type": "중요 내용 누락",
+      "location": "background[2] 및 discussions[0].text (시장 구성·목표 고객 논의)",
+      "description": "시장 조사에서 16~46세가 시장의 60%, 46~65세가 40%라는 수치가 제시됐지만 병합 결과에는 포함되지 않았습니다. 연령 범위의 불일치만 review_notes에 언급되어 시장 규모 논쟁의 기초가 된 수치가 드러나지 않습니다.",
+      "evidence_utterance_ids": [
+        85,
+        91
+      ],
+      "suggested_fix": "조사에서 제시된 두 연령대의 시장 비중을 포함하고, 이후 발언의 연령 범위와 완전히 일치하지 않는다는 점은 별도로 표시하세요."
+    }
+  ],
+  "review_needed": [],
+  "scope_limitations": []
+}

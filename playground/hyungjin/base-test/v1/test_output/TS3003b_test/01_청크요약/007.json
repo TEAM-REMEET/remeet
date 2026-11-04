@@ -1,0 +1,92 @@
+{
+  "meeting_id": "TS3003b",
+  "chunk_id": 7,
+  "agendas": [
+    {
+      "agenda_id": "A001",
+      "new_key": null,
+      "title": "기능 설계",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "저가 터치스크린 가능성",
+          "tag": "정보",
+          "text": "인터넷에서 몇 주 전에 본 사례로, 터치스크린이 20유로 이하인 제품이 언급되었고 구현 가능하다는 의견이 나왔다.",
+          "evidence_utterance_ids": [
+            229,
+            230,
+            232
+          ]
+        },
+        {
+          "subtopic": "디자인과 내구성",
+          "tag": "정보",
+          "text": "멋진 디자인이 될 수 있다는 반응이 있었지만, 튼튼하지 않고 깨지기 쉬우며 흠집이 날 수 있다는 우려가 제기됐다. 이를 살펴봐야 한다는 의견이 나왔다.",
+          "evidence_utterance_ids": [
+            236,
+            239,
+            241,
+            242,
+            246
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "공유",
+          "text": "터치스크린의 가격 가능성과 디자인·내구성 관련 의견을 공유했으며, 이 청크에서는 기능 설계에 대한 최종 결정이 확인되지 않는다.",
+          "evidence_utterance_ids": [
+            230,
+            232,
+            236,
+            239,
+            246
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "text": "터치스크린이 실제로 충분히 튼튼한지, 깨짐과 흠집 우려를 어떻게 다룰지 살펴볼 필요가 있다.",
+          "evidence_utterance_ids": [
+            239,
+            241,
+            242,
+            246
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_id": "A002",
+      "new_key": null,
+      "title": "발표 및 회의 진행",
+      "background": [],
+      "discussions": [
+        {
+          "subtopic": "발표와 논의 순서",
+          "tag": "제안",
+          "text": "먼저 발표를 듣고, 그다음 요구 사항과 디자인을 잠깐 논의하자는 진행 순서가 제안됐다.",
+          "evidence_utterance_ids": [
+            247,
+            248
+          ]
+        }
+      ],
+      "decision_states": [
+        {
+          "tag": "결정",
+          "text": "제안된 대로 발표를 먼저 듣고 이후 요구 사항과 디자인을 논의하는 순서에 동의했다.",
+          "evidence_utterance_ids": [
+            247,
+            248,
+            250,
+            251
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}

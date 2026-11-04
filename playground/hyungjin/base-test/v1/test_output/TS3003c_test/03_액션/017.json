@@ -1,0 +1,33 @@
+{
+  "chunk_id": 17,
+  "actions": [
+    {
+      "content": "회사 웹사이트를 살펴보고 회사 디자인 이미지를 리모컨 디자인에 반영할 요소를 확인한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        691,
+        692
+      ]
+    },
+    {
+      "content": "회의록을 폴더에 업로드한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        698
+      ]
+    },
+    {
+      "content": "이번 작업의 지시 사항을 전달한다.",
+      "assignee": "코치",
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        696
+      ]
+    }
+  ]
+}

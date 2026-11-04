@@ -1,0 +1,16 @@
+{
+  "chunk_id": 18,
+  "actions": [
+    {
+      "content": "대상 연령층을 구체적으로 더 알아본다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        657,
+        661,
+        662
+      ]
+    }
+  ]
+}

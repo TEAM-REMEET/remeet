@@ -1,0 +1,24 @@
+{
+  "meeting_id": "TS3003d",
+  "issues": [
+    {
+      "type": "안건 연결 근거 부족",
+      "description": "입력에는 안건 ID와 발언의 연결을 확인할 수 있는 정보가 없어, 네 액션의 agenda_id(A003, A002, A004)를 원문 근거로 검증할 수 없습니다.",
+      "evidence_utterance_ids": [
+        154,
+        155,
+        702,
+        710,
+        1005,
+        1008,
+        1012,
+        1015
+      ],
+      "suggested_fix": "안건 연결을 뒷받침하는 정보가 없다면 각 agenda_id를 null로 둡니다."
+    }
+  ],
+  "review_needed": [],
+  "scope_limitations": [
+    "제공된 전사문에 안건 ID 목록이나 안건별 범위가 없어 agenda_id의 정확성을 확인할 수 없습니다."
+  ]
+}

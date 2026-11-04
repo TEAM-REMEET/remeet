@@ -1,0 +1,395 @@
+{
+  "meeting_id": "TS3007b",
+  "created_date": "2026-10-26",
+  "annotation_basis": "input/criteria.md",
+  "source_transcript": "input/TS3007b.txt",
+  "utterance_mapping_source": "meetings/TS3007b.json",
+  "utterance_count": 973,
+  "position_definition": "메타데이터 3행과 빈 줄을 제외한 발화의 1부터 시작하는 순서. position은 새 구간의 첫 발화이며 경계는 position-1과 position 사이이다.",
+  "annotation_scope": "전체 전사 흐름에서 의미 있는 후보를 선정했다. 후보에 없는 위치도 경계가 아니며 boundary_positions가 채택 경계의 전체 목록이다.",
+  "segment_note": "연속 구간 안에 제외된 잡담·측면 전환·재논의가 포함될 수 있다. 같은 결정으로의 복귀는 새 경계로 세지 않는다.",
+  "verification_note": "동일 분석자가 근거와 제외 기준을 다시 대조했다. 독립된 인간 검수나 다중 평가자 합의는 수행하지 않았다.",
+  "boundary_positions": [
+    26,
+    48,
+    152,
+    289,
+    515,
+    631,
+    655,
+    851
+  ],
+  "segments": [
+    {
+      "start_utterance": 1,
+      "subject": "기능 설계 회의를 열고 진행 방식과 회의록 공유를 안내한다.",
+      "summary": "인사와 노트북 정리 뒤 각자 작업 결과를 발표하는 방식과 회의록 공유 위치를 안내했다.",
+      "segment_id": 1,
+      "end_utterance": 25,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 26,
+      "subject": "경영 이사회의 새 지시 사항을 공유하고 발표 순서를 정한다.",
+      "summary": "문자 방송 쇠퇴, TV 전용 리모컨, 40세 미만 고객층, 로고 노출이라는 네 가지 지시를 전하고 발표당 10분을 배정했다.",
+      "segment_id": 2,
+      "end_utterance": 47,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 48,
+      "subject": "마케팅 담당자가 사용자 설문 결과와 권고를 발표한다.",
+      "summary": "16~45세 대상층 집중, 채널·문자 방송·볼륨 기능 개선, 분실 방지 거치대를 제안했다. 문자 방송 지시와 설문 결과의 상충도 짚었다.",
+      "segment_id": 3,
+      "end_utterance": 151,
+      "excluded_candidate_positions": [
+        90,
+        109
+      ]
+    },
+    {
+      "start_utterance": 152,
+      "subject": "산업 디자이너가 리모컨 작동 구조와 부품을 발표한다.",
+      "summary": "적외선 송신 전용, 일반 배터리, 버튼 확인 표시등을 제안하고 블루투스와 수신기는 비용 때문에 배제하자고 했다.",
+      "segment_id": 4,
+      "end_utterance": 288,
+      "excluded_candidate_positions": [
+        205
+      ]
+    },
+    {
+      "start_utterance": 289,
+      "subject": "UI 디자이너가 사용성 원칙과 터치스크린 인터페이스를 발표하고 질의응답한다.",
+      "summary": "기능 최소화와 계층 구조, 큰 기본 버튼, TV 메뉴 의존 회피를 권고했고 기본 버튼은 고정하고 추가 기능은 터치스크린에 두는 안에 공감했다.",
+      "segment_id": 5,
+      "end_utterance": 514,
+      "excluded_candidate_positions": [
+        443
+      ]
+    },
+    {
+      "start_utterance": 515,
+      "subject": "보호자 잠금 기능을 검토한다.",
+      "summary": "PIN 코드로 아이들의 채널 접근을 막는 방안을 논의했으나 TV별 채널 차이 문제가 있어 후속 단계로 미뤘다. 이후 완전·부분 터치스크린 선택을 다시 짧게 논의했다.",
+      "segment_id": 6,
+      "end_utterance": 630,
+      "excluded_candidate_positions": [
+        590
+      ]
+    },
+    {
+      "start_utterance": 631,
+      "subject": "이번 회의의 요점을 회의록으로 정리한다.",
+      "summary": "단순하되 확장 여지를 두고 메뉴·보호자 잠금 같은 기능은 리모컨에서 처리한다는 요점을 정리했다.",
+      "segment_id": 7,
+      "end_utterance": 654,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 655,
+      "subject": "여러 TV 기종에 메뉴를 맞추는 방식과 업데이트 경로를 정한다.",
+      "summary": "TV 기종 코드별 프로필을 리모컨 메모리에 두고, 신형 TV는 서비스 센터나 매장에서 업데이트하기로 했다. 이어 인터페이스 안을 투표로 다시 골랐다.",
+      "segment_id": 8,
+      "end_utterance": 850,
+      "excluded_candidate_positions": [
+        743,
+        817
+      ]
+    },
+    {
+      "start_utterance": 851,
+      "subject": "점심 이후 일정과 다음 작업, 파일 저장을 정리한다.",
+      "summary": "점심 뒤 30분 개별 작업과 이메일 지시를 안내하고 스마트보드 그림을 이미지로 저장했다.",
+      "segment_id": 9,
+      "end_utterance": 973,
+      "excluded_candidate_positions": []
+    }
+  ],
+  "candidates": [
+    {
+      "position": 26,
+      "before_subject": "회의 진행 방식과 회의록 공유를 안내한다.",
+      "after_subject": "경영 이사회의 새 지시 사항을 공유한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "발표 방식과 회의록 위치 안내가 마무리됩니다 [20]-[25]. 이사회 이메일의 네 가지 요점으로 결정 조건이라는 다른 대상을 다룹니다 [26]-[42].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 0
+    },
+    {
+      "position": 48,
+      "before_subject": "경영 이사회의 지시 사항을 공유하고 발표 시간을 배정한다.",
+      "after_subject": "마케팅 담당자가 사용자 설문 결과를 발표한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "지시 사항을 전한 뒤 발표당 10분을 배정해 정리합니다 [43]-[46]. 마케팅 담당자에게 발표를 넘기고 설문 방법과 대상층 결과를 보고합니다 [48]-[66].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 1
+    },
+    {
+      "position": 90,
+      "before_subject": "설문 결과 가장 중요한 기능을 보고한다.",
+      "after_subject": "문자 방송을 구식으로 본 이사회 지시를 다시 검토한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": false
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "설문에서 문자 방송이 중요 기능으로 나오자 [86]-[89] 앞서 전달된 이사회 지시 [30]-[31]가 이상하다고 다시 논의합니다 [90]-[106]. 이미 공유된 지시에 대한 재검토이므로 경계로 보지 않았습니다.",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 2
+    },
+    {
+      "position": 109,
+      "before_subject": "설문 조사 결과를 보고한다.",
+      "after_subject": "대상층·기능 개선·거치대 등 마케팅 담당자의 개인 권고를 제시한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "설문 결과 보고가 이어집니다 [63]-[89]. 개인 선호와 거치대 제안 [109]-[122]은 같은 마케팅 보고 안의 결과에서 권고로 넘어가는 측면입니다.",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 3
+    },
+    {
+      "position": 152,
+      "before_subject": "마케팅 설문 결과와 권고에 대한 질의응답을 한다.",
+      "after_subject": "산업 디자이너가 리모컨 작동 구조와 부품을 발표한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "'이상이에요'와 감사 인사로 마케팅 발표가 끝납니다 [150]-[151]. 다른 담당 영역인 작동 설계 발표로 넘어가 기존 리모컨 분해 결과를 설명합니다 [152]-[166].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 4
+    },
+    {
+      "position": 205,
+      "before_subject": "블루투스 대신 적외선을 쓰는 이유와 거치대 수신기 대안을 검토한다.",
+      "after_subject": "음성으로 리모컨 위치를 찾는 기능을 제안한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "digression_return",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "거치대 이야기에서 '리모컨 어디 있어?' 음성 찾기 아이디어가 잠시 나옵니다 [205]-[211]. 곧 에너지원과 부품 설명으로 돌아오므로 [212]-[220] 원래 발표로 복귀하는 삽입 화제로 보았습니다.",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 5
+    },
+    {
+      "position": 289,
+      "before_subject": "산업 디자이너가 작동 구조와 개인 권고를 발표한다.",
+      "after_subject": "UI 디자이너가 사용성 원칙과 인터페이스 구성을 발표한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "단순함을 강조하며 '제 발표였어요'로 마칩니다 [282]-[287]. 마지막 발표자가 기술적 기능과 사용성 원칙을 다루며 대상이 바뀝니다 [289]-[310].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 6
+    },
+    {
+      "position": 443,
+      "before_subject": "UI 디자이너가 단순한 버튼 구성과 터치스크린 활용을 권고한다.",
+      "after_subject": "터치스크린 구성 방식에 대해 질의응답한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "발표자가 '적을수록 좋다'는 결론을 냅니다 [430]-[442]. 이어지는 터치스크린 장점과 화면 구성 질문 [443]-[510]은 같은 제안에 대한 질의응답이므로 나누지 않았습니다.",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 7
+    },
+    {
+      "position": 515,
+      "before_subject": "기본 버튼은 고정하고 추가 기능만 터치스크린에 두는 안에 합의한다.",
+      "after_subject": "PIN 코드를 이용한 보호자 잠금 기능을 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "기본 버튼은 항상 쓰고 특수 옵션에만 터치스크린을 쓰는 데 동의합니다 [503]-[514]. 아이들의 채널 접근을 막는 보호자 잠금이라는 새 기능을 제안하고 실현 방식을 논의합니다 [515]-[566].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 8
+    },
+    {
+      "position": 590,
+      "before_subject": "보호자 잠금 기능을 나중 단계로 미룬다.",
+      "after_subject": "완전한 터치스크린과 부분 터치스크린 중 무엇으로 할지 다시 논의한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "보호자 잠금은 좋은 아이디어지만 나중 단계에서 하자며 보류합니다 [584]-[589]. 이미 다룬 터치스크린 범위 [499]-[510]를 노년층 사용성 관점에서 다시 묻는 재논의입니다 [590]-[620].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 9
+    },
+    {
+      "position": 631,
+      "before_subject": "터치스크린 범위와 대상 사용자층을 다시 확인한다.",
+      "after_subject": "이번 회의의 요점을 회의록으로 정리한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "젊은 대상층과 기존 기술 사례로 논의를 맺습니다 [615]-[630]. 프로젝트 매니저가 회의록과 이사회 지시, 회의 요점을 정리합니다 [631]-[653].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 10
+    },
+    {
+      "position": 655,
+      "before_subject": "회의 요점을 정리한다.",
+      "after_subject": "여러 TV 기종에 메뉴를 맞추는 방식을 논의한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "요점 정리에 '그중 일부'라고 답한 뒤 [653]-[654], TV마다 다른 메뉴를 어떻게 맞출지라는 구체적 결정 대상을 논의합니다 [655]-[731].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 11
+    },
+    {
+      "position": 743,
+      "before_subject": "TV 기종 코드별 프로필을 리모컨 메모리에 두는 방식을 정한다.",
+      "after_subject": "프로필에 없는 신형 TV를 위한 업데이트 경로를 정한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "기종 프로필 방식이 가능하다고 확인합니다 [729]-[742]. 신형 TV 대응을 위한 펌웨어 업데이트 경로 [743]-[813]는 같은 기종 대응 방안의 세부 측면입니다.",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 12
+    },
+    {
+      "position": 817,
+      "before_subject": "신형 TV용 업데이트를 서비스 센터에서 하기로 정한다.",
+      "after_subject": "인터페이스 안 중 어느 것으로 갈지 투표한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "업데이트는 서비스 센터나 매장에서 하기로 정리됩니다 [801]-[813]. 앞서 논의한 터치스크린 배치 안 [463]-[510]을 투표로 다시 고르는 것이므로 [817]-[840] 같은 결정의 재논의로 처리했습니다.",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 13
+    },
+    {
+      "position": 851,
+      "before_subject": "인터페이스 안을 투표로 고른다.",
+      "after_subject": "점심 이후 일정과 다음 작업, 파일 저장을 정리한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "투표와 의견 확인으로 선택을 마칩니다 [822]-[850]. '거의 끝났어요'라며 점심 뒤 개별 작업과 이메일 지시를 안내합니다 [851]-[869].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 14
+    }
+  ]
+}

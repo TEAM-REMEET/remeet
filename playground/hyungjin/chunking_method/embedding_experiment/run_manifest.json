@@ -1,0 +1,22 @@
+{
+  "status": "partial",
+  "finished_at": "2026-10-26T22:06:45.609121+09:00",
+  "models": {
+    "BAAI/bge-m3": "BGE-m3",
+    "Gameselo/STS-multilingual-mpnet-base-v2": "STS multilingual MPNet",
+    "jinaai/jina-embeddings-v5-text-small-text-matching": "Jina embeddings v5 small (text-matching)",
+    "alphabrothers/alpha-sts-v0": "Alpha STS"
+  },
+  "model_errors": {
+    "Gameselo/STS-multilingual-mpnet-base-v2": null,
+    "alphabrothers/alpha-sts-v0": null
+  },
+  "device": "cpu",
+  "batch_size": 32,
+  "depth_radius": 3,
+  "llm_calls": 0,
+  "embedding_api_calls": 0,
+  "completed_conditions": 144,
+  "total_conditions": 288,
+  "dataset_sha256": "3a600f725b56802f19688a0609c186ccfa82c6544bc1e6cd60e2b79ba19ca241"
+}

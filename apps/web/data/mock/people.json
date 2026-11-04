@@ -1,0 +1,55 @@
+{
+  "yun": {
+    "short": "서윤",
+    "name": "이서윤",
+    "team": "서비스기획팀"
+  },
+  "doy": {
+    "short": "도윤",
+    "name": "박도윤",
+    "team": "결제개발팀"
+  },
+  "har": {
+    "short": "하린",
+    "name": "최하린",
+    "team": "디자인팀"
+  },
+  "jiw": {
+    "short": "지우",
+    "name": "한지우",
+    "team": "QA팀"
+  },
+  "min": {
+    "short": "민재",
+    "name": "정민재",
+    "team": "서비스기획팀"
+  },
+  "tae": {
+    "short": "태현",
+    "name": "오태현",
+    "team": "결제개발팀"
+  },
+  "dw": {
+    "short": "동욱",
+    "name": "최동욱",
+    "team": "CS운영팀"
+  },
+  "fin": {
+    "short": "수현",
+    "name": "강수현",
+    "team": "재무팀"
+  },
+  "cs": {
+    "short": "가은",
+    "name": "윤가은",
+    "team": "CS운영팀"
+  },
+  "fin2": { "short": "지훈", "name": "오지훈", "team": "재무팀" },
+  "fin3": { "short": "서영", "name": "문서영", "team": "재무팀" },
+  "des2": { "short": "도아", "name": "김도아", "team": "디자인팀" },
+  "cs3": { "short": "서준", "name": "박서준", "team": "CS운영팀" },
+  "qa2": { "short": "준호", "name": "이준호", "team": "QA팀" },
+  "mkt1": { "short": "민아", "name": "송민아", "team": "마케팅팀" },
+  "mkt2": { "short": "나래", "name": "이나래", "team": "마케팅팀" },
+  "ux1": { "short": "민지", "name": "김민지", "team": "UX디자인팀" }
+}

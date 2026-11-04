@@ -1,0 +1,27 @@
+{
+  "meeting_id": "TS3003a",
+  "agenda_id": "A002",
+  "issues": [
+    {
+      "type": "중요 내용 누락",
+      "location": "discussions[2].text",
+      "description": "재무·시장 방향을 요약하면서 국제 시장이 다른 목표보다 더 중요하다는 발표자의 강조가 빠졌습니다. 발화 333은 판매 가격과 목표 수익을 되짚은 뒤, “더 중요한 건 우리가 노리는 국제 시장”이라고 구분합니다.",
+      "evidence_utterance_ids": [
+        333
+      ],
+      "suggested_fix": "판매 가격과 수익 목표를 함께 적되, 국제 시장을 더 중요한 방향으로 강조했다는 점을 추가합니다."
+    },
+    {
+      "type": "사실 오류",
+      "location": "discussions[2].text",
+      "description": "“목표 수익은 5천만 유로”라는 표현은 발화 323의 조건을 충분히 반영하지 않습니다. 원문은 이 금액을 리모컨으로 최소한 벌어야 하는 금액이라고 설명하므로, 단순한 목표 수익보다 최소 달성 기준의 의미가 있습니다.",
+      "evidence_utterance_ids": [
+        322,
+        323
+      ],
+      "suggested_fix": "5천만 유로를 리모컨으로 최소한 벌어야 하는 목표 금액이라고 표현합니다."
+    }
+  ],
+  "review_needed": [],
+  "scope_limitations": []
+}

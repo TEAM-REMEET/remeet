@@ -1,0 +1,136 @@
+{
+  "meeting_id": "TS3003c",
+  "actions": [
+    {
+      "action_id": "ACT003",
+      "content": "색상 적용에 따른 비용을 조사한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        363,
+        366
+      ]
+    },
+    {
+      "action_id": "ACT004",
+      "content": "교체 가능한 나무 커버와 플라스틱 커버 모두에 적합하도록 리모컨 디자인과 비용을 검토한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        402,
+        404,
+        415,
+        418,
+        424,
+        428
+      ]
+    },
+    {
+      "action_id": "ACT005",
+      "content": "회사 웹사이트를 살펴보고 회사의 디자인 이미지를 리모컨 디자인에 반영할 요소를 확인한다.",
+      "type": "조사·검토",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        690,
+        691,
+        692
+      ]
+    },
+    {
+      "action_id": "ACT006",
+      "content": "다음 회의에서 다룰 제품 외관·사용자 인터페이스 디자인과 제품 평가를 산업 디자이너와 UI 디자이너가 함께 준비한다.",
+      "type": "업무 수행",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        690,
+        693,
+        694,
+        695
+      ]
+    },
+    {
+      "action_id": "ACT007",
+      "content": "이번 작업의 지시 사항을 전달한다.",
+      "type": "업무 수행",
+      "assignee": "코치",
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        696
+      ]
+    },
+    {
+      "action_id": "ACT008",
+      "content": "회의록을 폴더에 업로드한다.",
+      "type": "업무 수행",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "criteria": {
+        "actionable": true,
+        "future": true,
+        "intent": true
+      },
+      "evidence_utterance_ids": [
+        698
+      ]
+    }
+  ],
+  "review_needed": [],
+  "change_log": [
+    {
+      "description": "운동 에너지를 예산 안에서 적용할 수 있는지 검토하는 업무는 배터리를 선택하기로 합의하면서 취소된 것으로 보고 활성 목록에서 제외했다.",
+      "evidence_utterance_ids": [
+        196,
+        327,
+        328,
+        332,
+        334
+      ]
+    },
+    {
+      "description": "음성 인식의 생산 비용을 제조 부서에 문의하는 업무는 음성 인식 기능을 제외하기로 한 논의에 따라 더 이상 필요하지 않은 것으로 보고 활성 목록에서 제외했다.",
+      "evidence_utterance_ids": [
+        264,
+        267,
+        318,
+        319,
+        320,
+        334
+      ]
+    }
+  ]
+}

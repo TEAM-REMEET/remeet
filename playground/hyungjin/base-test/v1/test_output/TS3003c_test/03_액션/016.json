@@ -1,0 +1,15 @@
+{
+  "chunk_id": 16,
+  "actions": [
+    {
+      "content": "빈 페이지에서 콘셉트 설계를 새로 시작한다.",
+      "assignee": null,
+      "due_date": null,
+      "agenda_id": "A001",
+      "evidence_utterance_ids": [
+        657,
+        659
+      ]
+    }
+  ]
+}

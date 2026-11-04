@@ -1,0 +1,270 @@
+{
+  "meeting_id": "ES2004d",
+  "created_date": "2026-10-26",
+  "annotation_basis": "input/criteria.md",
+  "source_transcript": "input/ES2004d.txt",
+  "utterance_mapping_source": "meetings/ES2004d.json",
+  "utterance_count": 1112,
+  "position_definition": "메타데이터 3행과 빈 줄을 제외한 발화의 1부터 시작하는 순서. position은 새 구간의 첫 발화이며 경계는 position-1과 position 사이이다.",
+  "annotation_scope": "전체 전사 흐름에서 의미 있는 후보를 선정했다. 후보에 없는 위치도 경계가 아니며 boundary_positions가 채택 경계의 전체 목록이다.",
+  "segment_note": "연속 구간 안에 제외된 잡담·측면 전환·재논의가 포함될 수 있다. 같은 결정으로의 복귀는 새 경계로 세지 않는다.",
+  "verification_note": "동일 분석자가 근거와 제외 기준을 다시 대조했다. 독립된 인간 검수나 다중 평가자 합의는 수행하지 않았다.",
+  "boundary_positions": [
+    26,
+    182,
+    493,
+    829,
+    1076
+  ],
+  "segments": [
+    {
+      "start_utterance": 1,
+      "subject": "지난 콘셉트 결정과 최종 발표 준비를 확인한다.",
+      "summary": "지난 콘셉트 결정과 최종 발표 준비를 확인한다.",
+      "segment_id": 1,
+      "end_utterance": 25,
+      "excluded_candidate_positions": []
+    },
+    {
+      "start_utterance": 26,
+      "subject": "프로토타입의 외관·작동·인터페이스를 검토한다.",
+      "summary": "플라스틱 본체와 고무 커버, 폴더형 흑백 터치 LCD, 기본 버튼, 운동 에너지·음성 찾기 제안을 발표했다.",
+      "segment_id": 2,
+      "end_utterance": 181,
+      "excluded_candidate_positions": [
+        143
+      ]
+    },
+    {
+      "start_utterance": 182,
+      "subject": "시장 조사 기준으로 제품을 평가한다.",
+      "summary": "1이 긍정·7이 부정인 척도로 평가했다. 패션 트렌드·찾기는 긍정적이고 RSI 감소는 중립에 가까우며 진행 가능하다는 의견이었다.",
+      "segment_id": 3,
+      "end_utterance": 492,
+      "excluded_candidate_positions": [
+        248,
+        384
+      ]
+    },
+    {
+      "start_utterance": 493,
+      "subject": "원가표로 예산 충족과 설계 감축을 검토한다.",
+      "summary": "전원·소재·인터페이스 비용을 계산하고 일반 배터리 전환과 음성 인식 제외·상위 버전 이관을 검토해 예산에 맞추는 방향으로 정리했다.",
+      "segment_id": 4,
+      "end_utterance": 828,
+      "excluded_candidate_positions": [
+        641
+      ]
+    },
+    {
+      "start_utterance": 829,
+      "subject": "프로젝트의 창의성·협업·도구와 개선점을 평가한다.",
+      "summary": "팀워크와 경청을 긍정적으로 평가하고 가격·마케팅 정보의 조기 제공을 아쉬워했다. 시장 조사와 다른 분야의 아이디어 활용, 도구의 효용을 돌아봤다.",
+      "segment_id": 5,
+      "end_utterance": 1075,
+      "excluded_candidate_positions": [
+        1031
+      ]
+    },
+    {
+      "start_utterance": 1076,
+      "subject": "프로젝트 종료와 설문·잔여 문서 작업을 정리한다.",
+      "summary": "프로젝트 평가 종료 후 설문과 남은 회의록 등 후속 작업을 확인했다.",
+      "segment_id": 6,
+      "end_utterance": 1112,
+      "excluded_candidate_positions": []
+    }
+  ],
+  "candidates": [
+    {
+      "position": 26,
+      "before_subject": "지난 콘셉트 결정과 최종 발표 준비를 확인한다.",
+      "after_subject": "프로토타입의 외관·작동·인터페이스를 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "지난 결정 사항을 정리합니다 [15]-[24]. 프로토타입 발표로 전환해 공동 제작물의 외관과 기능을 설명합니다 [26]-[32], [62]-[158].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 0
+    },
+    {
+      "position": 143,
+      "before_subject": "프로토타입의 구조와 기능을 검토한다.",
+      "after_subject": "LCD와 기본 버튼의 배치를 설명한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "같은 프로토타입의 적외선과 접이식 구조를 설명합니다 [118]-[139]. 마지막 인터페이스 설명도 동일 제작물의 구성 요소입니다 [143]-[158].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 1
+    },
+    {
+      "position": 182,
+      "before_subject": "프로토타입의 외관·작동·인터페이스를 검토한다.",
+      "after_subject": "시장 조사 기준으로 제품을 평가한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "최종 발표를 마치고 평가 발표로 전환합니다 [158]-[176]. 시장 조사에서 얻은 기준과 팀 평가 절차를 제시하므로 제품 평가 안건입니다 [182]-[220].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 2
+    },
+    {
+      "position": 248,
+      "before_subject": "공유한 기준으로 제품을 평가한다.",
+      "after_subject": "첫 항목부터 점수를 매긴다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "평가 척도와 점수 계산 절차를 정합니다 [200]-[244]. 외관부터 항목별 채점을 진행하는 것은 같은 제품 평가의 실행입니다 [248]-[279].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 3
+    },
+    {
+      "position": 384,
+      "before_subject": "제품 기준별 점수를 매긴다.",
+      "after_subject": "RSI 최소화 기준을 평가한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "패션 트렌드 반영 여부를 채점합니다 [341]-[376]. RSI와 찾기 항목도 같은 평가표의 항목이므로 경계를 나누지 않습니다 [384]-[454].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 4
+    },
+    {
+      "position": 493,
+      "before_subject": "시장 조사 기준으로 제품을 평가한다.",
+      "after_subject": "원가표로 예산 충족과 설계 감축을 검토한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "제품 평가와 질문을 마칩니다 [465]-[483]. 원가 계산을 놓고 전원·전자 부품 수량과 감축을 검토하므로 예산 충족이 새 결정 대상입니다 [509]-[542], [692]-[752].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 5
+    },
+    {
+      "position": 641,
+      "before_subject": "생산비를 예산 내로 조정한다.",
+      "after_subject": "운동 에너지 대신 일반 배터리를 검토한다.",
+      "checks": {
+        "subject_change": false,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "same_subject_aspect",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "소재·색상·입력부 비용을 계산합니다 [578]-[634]. 배터리 교체는 동일 원가 절감 문제의 대안입니다 [641]-[728].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 6
+    },
+    {
+      "position": 829,
+      "before_subject": "원가표로 예산 충족과 설계 감축을 검토한다.",
+      "after_subject": "프로젝트의 창의성·협업·도구와 개선점을 평가한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "음성 인식 부가 부품을 빼도 된다고 정리합니다 [814]-[820]. 창의성·리더십·팀워크와 도구를 평가하므로 제품 원가에서 프로젝트 회고로 전환합니다 [830]-[918].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 7
+    },
+    {
+      "position": 1031,
+      "before_subject": "프로젝트 경험과 개선점을 회고한다.",
+      "after_subject": "예산 상향과 판매가를 다시 논의한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": false,
+        "independent_summary": true
+      },
+      "shift_type": "re_discussion",
+      "shift_result": false,
+      "verdict": "X",
+      "evidence": "이미 본사 사양과 상위 버전 권고를 논의했습니다 [741]-[770]. 회고 말미의 예산 증액과 간접비 논의는 같은 예산 결정의 재검토로 새 경계가 아닙니다 [1031]-[1056].",
+      "verification": {
+        "checked": true,
+        "rule": "판정 질문의 참 여부보다 제외 기준을 우선 적용했다."
+      },
+      "candidate_id": 8
+    },
+    {
+      "position": 1076,
+      "before_subject": "프로젝트의 창의성·협업·도구와 개선점을 평가한다.",
+      "after_subject": "프로젝트 종료와 설문·잔여 문서 작업을 정리한다.",
+      "checks": {
+        "subject_change": true,
+        "closure_signal": true,
+        "independent_summary": true
+      },
+      "shift_type": "new_agenda",
+      "shift_result": true,
+      "verdict": "O",
+      "evidence": "예산과 프로젝트 범위를 재논의한 뒤 수행 결과를 평가합니다 [1031]-[1067]. 프로젝트 평가가 끝났다고 명시하고 설문과 잔여 업무로 넘어갑니다 [1076]-[1109].",
+      "verification": {
+        "checked": true,
+        "rule": "제외 기준을 대조한 결과 다른 논의 대상이며 하나 이상의 판정 질문이 참이다."
+      },
+      "candidate_id": 9
+    }
+  ]
+}

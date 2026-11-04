@@ -1,0 +1,99 @@
+{
+  "organization": "데모컴퍼니",
+  "tools": [
+    {
+      "id": "slack",
+      "mark": "S",
+      "name": "Slack",
+      "desc": "채널에 회의 결과를 공유합니다",
+      "target": "사내 워크스페이스",
+      "phase2": false
+    },
+    {
+      "id": "mail",
+      "mark": "이",
+      "name": "이메일",
+      "desc": "참석자에게 회의 결과를 메일로 보냅니다",
+      "target": "사내 메일 서버",
+      "phase2": false
+    },
+    {
+      "id": "cal",
+      "mark": "캘",
+      "name": "캘린더",
+      "desc": "다음 회의 일정을 등록합니다",
+      "target": "팀 공용 캘린더",
+      "phase2": false
+    },
+    {
+      "id": "jira",
+      "mark": "J",
+      "name": "Jira",
+      "desc": "액션 아이템을 이슈로 만듭니다",
+      "target": "ONB · SEC 프로젝트",
+      "phase2": false
+    },
+    {
+      "id": "notion",
+      "mark": "N",
+      "name": "Notion",
+      "desc": "회의록 페이지를 만듭니다",
+      "target": "팀 위키",
+      "phase2": false
+    },
+    {
+      "id": "teams",
+      "mark": "M",
+      "name": "Microsoft Teams",
+      "desc": "팀 채널에 회의 결과를 공유합니다",
+      "target": "",
+      "phase2": true
+    },
+    {
+      "id": "conf",
+      "mark": "C",
+      "name": "Confluence",
+      "desc": "회의록 페이지를 만듭니다",
+      "target": "",
+      "phase2": true
+    }
+  ],
+  "initial_status": {
+    "slack": "on",
+    "mail": "on",
+    "cal": "on",
+    "jira": "expired",
+    "notion": "on",
+    "teams": "off",
+    "conf": "off"
+  },
+  "ai_toggles": [
+    {
+      "key": "wiki",
+      "label": "개인 위키 포함",
+      "desc": "내 위키의 항목과 흐름을 AI가 읽을 수 있어요.",
+      "default": true
+    },
+    {
+      "key": "raw",
+      "label": "원문 포함",
+      "desc": "끄면 AI는 요약·결정·액션 아이템만 읽어요.",
+      "default": false
+    },
+    {
+      "key": "write",
+      "label": "쓰기 권한",
+      "desc": "내 할 일 완료 처리만 허용해요. 회의록 수정·공유·담당자 지정은 할 수 없어요.",
+      "default": false
+    }
+  ],
+  "ai_default_folders": {
+    "rel": true,
+    "cs": true,
+    "q4": true,
+    "des": false
+  },
+  "failed_exports": {
+    "jira": ["m3"]
+  }
+}
