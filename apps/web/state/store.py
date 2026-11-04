@@ -14,6 +14,7 @@ import streamlit as st
 
 from config import CURRENT_USER_ID
 from data import repository as repo
+from data.models import Meeting
 
 _KEY = "_app_state"
 
@@ -53,10 +54,12 @@ class AppState:
 
     # --- 라우팅
     screen: str = "compose"  # compose | archive | search | folder | note | deliver | sent | recv | mcp
+    not_found: str = ""  # 없는 주소로 들어왔으면 그 주소 → 404 화면 (views/not_found.py)
+    url_checked: bool = False  # 처음 들어온 주소를 확인했는지
     pending_route: str | None = None  # 콜백이 예약한 이동 (state/router.py)
     nav_by_action: bool = False
     last_route: str | None = None
-    toast: str = ""
+    toast: str = ""  # 오른쪽 위에 잠깐 떴다 사라지는 알림 (st.toast) · 한 번 띄우면 비움
     read_notifications: set[str] = field(default_factory=set)
     bell_seen: set[str] = field(default_factory=set)  # 알림 아이콘을 눌러 확인한 알림 (빨간 점 끄기용)
     modal: str | None = None  # members | delete_folder | delete_meeting | people | assign | share
@@ -81,7 +84,6 @@ class AppState:
     insight_tab: str = "sum"  # sum | ag | todo | kw | rel
     left_tab: str = "raw"  # raw | ratio
     raw_query: str = ""
-    speaker_map: dict[str, str] = field(default_factory=dict)  # "회의id:화자 3" → 사람 id (미지정 화자에 이름 지정)
     highlight: list[str] = field(default_factory=list)
     highlight_key: str = ""
     todo_scope: str = "mine"
@@ -92,7 +94,7 @@ class AppState:
     agenda_backup: list[str] = field(default_factory=list)  # 편집 시작 때의 추가 안건 (취소하면 되돌림)
     branch_requests: set[str] = field(default_factory=set)  # 주관자에게 안건 분리를 요청한 회의
     done: dict[str, bool] = field(default_factory=dict)  # "mid:index"
-    assigned: dict[str, str] = field(default_factory=dict)  # "mid:index" → 이름
+    assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 이름들 (여러 명)
     status_override: dict[str, str] = field(default_factory=dict)
     copied: str = ""
 
@@ -115,6 +117,8 @@ class AppState:
     assign_scope_all: bool = False
     assign_sort: str = "score"
     assign_pending: str = ""
+    assign_prev: dict[str, list[str]] = field(default_factory=dict)  # 마지막으로 바꾸기 전 담당자 ("누구 → 누구" 안내용)
+    assign_draft: list[str] = field(default_factory=list)  # 담당자 모달에서 고르는 중인 이름들 (「맡기기」를 눌러야 반영)
     assign_team: str = ""  # 담당자 지정 · 팀에서 직접 고르기 (빈 값이면 추천 1순위의 팀)
 
     # --- 폴더 멤버 추가 (팀 → 팀원)
@@ -142,6 +146,19 @@ class AppState:
     nn_group: str = "project"  # 폴더를 고른 보기: project(프로젝트별) | period(주차별·월별·일별)
     nn_period: str = ""  # 기간 폴더 키 (w1026 · m10 · d1023) · 아직 없는 기간이면 새로 만들어질 폴더
     nn_error: str = ""  # 작성 화면 오류 안내 (빈 값이면 없음)
+    # 3단계 작성: 1 회의 내용 입력 → 2 발화자 확인 → 3 분석 및 결과
+    cp_step: int = 1
+    cp_text_rev: int = 0  # 예시를 넣을 때마다 바뀌어 입력칸을 새로 그림
+    nn_title: str = ""
+    nn_date: object = None  # datetime.date
+    nn_text: str = ""  # 직접 쓴 회의 내용
+    nn_files: list[tuple[str, str]] = field(default_factory=list)  # 첨부한 TXT · MD (이름, 내용)
+    nn_speaker_map: dict[str, str] = field(default_factory=dict)  # 발화자 표기(참석자1 · A) → 사람 id ('' 미지정)
+    cp_example: str = "plain"  # 고른 입력 형식 (버튼 주황 테두리 · 입력칸 회색 예시) — 처음엔 발화자 없는 텍스트
+    preview_meeting: Meeting | None = None  # 3단계 「분석 및 결과」에서 보여 주는 미리보기 회의록
+    pick_label: str = ""  # 발화자 연결 모달에서 다루는 발화자 표기 (참석자1 · A)
+    new_meetings: dict[str, Meeting] = field(default_factory=dict)  # 「회의록 생성 완료」로 만든 회의
+    created_notes: list[tuple[str, str]] = field(default_factory=list)  # (폴더 id, 회의 id)
     nn_host: str = CURRENT_USER_ID  # 주관자 (기본: 나)
     nn_people: list[str] = field(default_factory=list)  # 참석자
     # 작성 화면의 선택 모달(폴더 · 주관자 · 참석자): 「선택」을 누르기 전까지는 여기 임시로 담아 둠

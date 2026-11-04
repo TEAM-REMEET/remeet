@@ -7,7 +7,12 @@ AppState.modal 값에 맞는 모달 하나만 엽니다. 사용자가 X/바깥 �
 from __future__ import annotations
 
 from components.dialogs.assign import assign_dialog
-from components.dialogs.compose_pickers import folder_picker_dialog, host_picker_dialog, people_picker_dialog
+from components.dialogs.compose_pickers import (
+    folder_picker_dialog,
+    host_picker_dialog,
+    people_picker_dialog,
+    speaker_picker_dialog,
+)
 from components.dialogs.folder import delete_folder_dialog, delete_meeting_dialog, members_dialog
 from components.dialogs.meeting_people import people_dialog
 from components.dialogs.share import share_dialog
@@ -23,6 +28,7 @@ _DIALOGS = {
     "cp_folder": folder_picker_dialog,
     "cp_host": host_picker_dialog,
     "cp_people": people_picker_dialog,
+    "cp_speaker": speaker_picker_dialog,
 }
 
 

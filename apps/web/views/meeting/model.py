@@ -31,17 +31,22 @@ def speaker_name(short: str) -> str:
 
 
 def speaker_pid(s: AppState, m: Meeting, label: str) -> str | None:
-    """원문 화자 → 사람 id. 인식된 사람이 아니면 주관자가 지정한 이름, 그것도 없으면 None(미지정)."""
-    return sel.speaker_id(label) or s.speaker_map.get(f"{m.id}:{label}")
+    """원문 화자 → 사람 id. 사람으로 인식되지 않은 화자(예: 화자 3)는 None → 화면에는 「미지정」."""
+    return sel.speaker_id(label)
 
 
-def speakers(s: AppState, m: Meeting) -> list[tuple[str, str | None, int]]:
-    """이 회의 원문의 화자: [(원문 화자 이름, 사람 id 또는 None, 발언 수)] · 나온 순서대로."""
-    counts: dict[str, int] = {}
+UNKNOWN = "미지정"
+
+
+def speakers(s: AppState, m: Meeting) -> list[tuple[str | None, int]]:
+    """이 회의 원문의 화자: [(사람 id 또는 None=미지정, 발언 수)] · 나온 순서대로, 미지정은 하나로 묶어 맨 뒤."""
+    counts: dict[str | None, int] = {}
     for p in m.paragraphs:
         if not p.is_heading:
-            counts[p.speaker] = counts.get(p.speaker, 0) + 1
-    return [(label, speaker_pid(s, m, label), n) for label, n in counts.items()]
+            pid = speaker_pid(s, m, p.speaker)
+            counts[pid] = counts.get(pid, 0) + 1
+    unknown = counts.pop(None, 0)
+    return list(counts.items()) + ([(None, unknown)] if unknown else [])
 
 
 def speaker_initial(short: str) -> str:
@@ -71,10 +76,12 @@ def discussion(m: Meeting) -> tuple[Discussion, ...]:
 
 
 def speaking_ratio(m: Meeting) -> list[tuple[str, int]]:
+    """[(원문 화자, %)] · 사람으로 인식되지 않은 화자는 모두 「미지정」 하나로 합침."""
     counts: dict[str, int] = {}
     for p in m.paragraphs:
         if p.speaker:
-            counts[p.speaker] = counts.get(p.speaker, 0) + len(p.text)
+            label = p.speaker if sel.speaker_id(p.speaker) else UNKNOWN
+            counts[label] = counts.get(label, 0) + len(p.text)
     total = sum(counts.values()) or 1
     return [(name, round(n * 100 / total)) for name, n in sorted(counts.items(), key=lambda x: -x[1])]
 
@@ -169,7 +176,7 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
         key = sel.todo_key(m.id, i)
         done = s.done.get(key, False)
         mine = t.owner == ME
-        who = sel.name_of(t.owner) if t.owner else s.assigned.get(key, "담당 미정")
+        who = sel.name_of(t.owner) if t.owner else (", ".join(s.assigned.get(key, [])) or "담당 미정")
         para = m.paragraph(t.src[0]) if t.src else None
         out.append(TodoView(
             index=i, key=key, text=t.text, done=done, mine=mine,
@@ -185,10 +192,14 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
     return out
 
 
-def assignable(s: AppState, m: Meeting) -> list[tuple[str, str, str, str]]:
-    """회의록에서 담당자가 정해지지 않았던 일. (todo key, 할 일, 마감, 지정한 사람 이름 또는 '')"""
+def assignable(s: AppState, m: Meeting) -> list[tuple[str, str, list[str], list[str], tuple[str, ...]]]:
+    """회의록에서 담당자가 정해지지 않았던 일.
+
+    (todo key, 할 일, 지금 담당자들, 바꾸기 전 담당자들, 원문 근거 문단 id들) · 담당자가 없으면 빈 목록
+    """
     return [
-        (sel.todo_key(m.id, i), t.text, f"{t.due}까지", s.assigned.get(sel.todo_key(m.id, i), ""))
+        (sel.todo_key(m.id, i), t.text, list(s.assigned.get(sel.todo_key(m.id, i), [])),
+         list(s.assign_prev.get(sel.todo_key(m.id, i), [])), t.src)
         for i, t in enumerate(m.todos)
         if not t.owner
     ]

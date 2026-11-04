@@ -1,30 +1,38 @@
-"""새 회의록 작성 (로그인 후 첫 화면).
+"""새 회의록 작성 (로그인 후 첫 화면) — 3단계.
 
-다른 화면과 같은 너비·시작 위치를 쓰고, 위에서부터
-  1) 기본 정보: 회의 제목* · 회의 날짜* · 주관자* · 참석자 · 회의 종류·폴더*
-  2) 회의 내용: 직접 쓰거나 붙여 넣기 + 「파일 첨부」(txt · md · docx · hwpx)
-     (주관자 · 참석자 · 회의 종류·폴더는 칸을 누르면 모달에서 골라요)
-  3) 「회의록 생성하기」
-글과 파일 중 하나만 있어도 됩니다. 입력칸 key 에 compose_nonce 를 붙여, 생성하고 나면 칸이 비워집니다.
+  1) 회의 내용 입력: 기본 정보(제목 · 날짜 · 주관자 · 참석자 · 회의 종류·폴더) + 회의 내용(직접 쓰기 / TXT · MD 첨부)
+     · 지원하는 입력 형식: 발화자 없는 텍스트(기본) · [발화자] 형식 · 발화자: 형식 중 하나를 고름
+       고른 형식의 규칙은 회색 안내글로, 예시는 입력칸의 회색 글씨(placeholder)로 보여 줌
+     · 고른 형식에서 벗어나면 「발화자 확인 →」에서 다음 단계로 못 가요
+  2) 발화자 확인: AI 가 붙인 임시 발화자(참석자1 · A …)를 실제 사람과 연결 (칸을 누르면 팀 → 팀원 모달 · 모르면 미지정)
+  3) 분석 및 결과: 회의 상세와 같은 화면(원문 · 요약 · 안건 · 액션 아이템 …)으로 미리 보고 「회의록 생성 완료」
+     → 완성된 회의록이 폴더에 생기고 회의 상세 화면으로 이동
+분석 규칙과 회의록 만들기는 state/compose_ai.py 에 있어요 (실제 서비스에서는 AI 서버가 대신함).
 """
 
 from __future__ import annotations
 
+import json
+
 import streamlit as st
 
+from components.member_pills import member_pills
 from config import CURRENT_USER_ID as ME
 from data import repository as repo
 from state import actions
 from state import archive as arc
+from state import compose_ai as ai
 from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button
 from ui.html import markup
-from ui.layout import page, page_header
+from ui.layout import page
 from ui.tags import tag
 from utils.text import esc
+from views.meeting.insight_tabs import render_insights
+from views.meeting.raw_panel import render_raw_panel
 
-_FILE_TYPES = ["txt", "md", "docx", "hwpx"]
+_FILE_TYPES = ["txt", "md"]  # 데모에서 내용을 읽을 수 있는 형식
 _NEW = "new"
 
 
@@ -61,22 +69,36 @@ def _field(label: str, key: str, value: str, placeholder: str, icon_name: str, m
            on_click=actions.open_picker, args=(modal,), width="stretch")
 
 
-def _content(n: int) -> None:
-    markup('<h2 class="cp-section">회의 내용</h2>')
-    # 우리가 만든 둥근 네모(cp-editor) 안에 테두리 없는 입력칸을 넣어 씀 (입력칸 자체는 모서리를 바꾸기 어려워서)
-    with st.container(key="cp-editor", gap=None):
-        st.text_area(
-            "회의 내용",
-            key=f"cp_text_{n}",
-            height=400,
-            label_visibility="collapsed",
-            placeholder="회의 내용을 이곳에 붙여넣거나 직접 작성하세요.\n\n"
-                        "회의에서 논의한 안건, 결정사항, 후속 업무 등을 자유롭게 입력할 수 있습니다.",
-        )
-    with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
-        with st.container(key="cp-attach", width="content"):
-            st.file_uploader("파일 첨부", type=_FILE_TYPES, accept_multiple_files=True, key=f"cp_files_{n}",
-                             label_visibility="collapsed")
+_STEPS = ("회의 내용 입력", "발화자 확인", "분석 및 결과")
+
+
+# ================================================================ 공통
+def _stepper(step: int) -> None:
+    items = []
+    for i, name in enumerate(_STEPS, 1):
+        state = "done" if i < step else ("on" if i == step else "todo")
+        mark = "✓" if state == "done" else str(i)
+        items.append(f'<span class="wz-step {state}"><span class="dot">{mark}</span>{esc(name)}</span>')
+    markup('<div class="wz-steps">' + '<span class="wz-arrow">→</span>'.join(items) + "</div>")
+
+
+def _card_head(title: str, badge: str = "") -> None:
+    markup(f'<div class="wz-head"><h2>{esc(title)}</h2>' + (f'<span class="wz-badge">{esc(badge)}</span>' if badge else "")
+           + "</div>")
+
+
+def _info(html: str, tone: str = "info") -> None:
+    """안내 상자. tone: info(회색) | ok(초록) | warn(주황) | error(빨강)"""
+    markup(f'<div class="wz-box wz-{tone}">{html}</div>')
+
+
+def _current_text(s: AppState, n: int) -> str:
+    """지금 입력칸에 있는 글 + 첨부 파일 내용 (형식 검사용)."""
+    typed = st.session_state.get(f"cp_text_{n}_{s.cp_text_rev}", s.nn_text) or ""
+    files = st.session_state.get(f"cp_files_{n}") or []
+    bodies = [f.getvalue().decode("utf-8", errors="replace") for f in files] if files else [b for _, b in s.nn_files]
+    return "\n".join(x.strip() for x in [typed, *bodies] if x and x.strip())
+
 
 def _basic_info(s: AppState, n: int) -> None:
     with st.container(horizontal=True, vertical_alignment="bottom"):
@@ -91,9 +113,9 @@ def _basic_info(s: AppState, n: int) -> None:
     with st.container(key="cp-grid", gap="small"):
         c1, c2 = st.columns(2, gap="medium")
         with c1:
-            st.text_input("회의 제목 *", key=f"cp_title_{n}", placeholder="예: 4분기 계획 회의")
+            st.text_input("회의 제목 *", key=f"cp_title_{n}", value=s.nn_title, placeholder="예: 4분기 계획 회의")
         with c2:
-            st.date_input("회의 날짜 *", value=None, key=f"cp_date_{n}", format="YYYY/MM/DD")
+            st.date_input("회의 날짜 *", value=s.nn_date, key=f"cp_date_{n}", format="YYYY/MM/DD")
         c1, c2 = st.columns(2, gap="medium")
         with c1:
             _field("주관자 *", "cp_host_field", _person_label(s.nn_host) if s.nn_host else "", "주관자 선택",
@@ -119,19 +141,138 @@ def _basic_info(s: AppState, n: int) -> None:
     markup(f'<span class="cp-hint">{esc(hint)}</span>')
 
 
+# ================================================================ 1단계: 회의 내용 입력
+def _content(s: AppState, n: int) -> None:
+    markup('<h2 class="cp-section">회의 내용 <span class="req">*</span></h2>')
+    with st.container(key="wz-formats", gap="small"):
+        markup('<div class="wz-formats-head"><b>ⓘ 지원하는 입력 형식</b><span>하나를 고르고 그 형식에 맞춰 적어 주세요.</span></div>')
+        with st.container(horizontal=True, gap="small"):
+            for kind in ("plain", "bracket", "colon"):
+                button(ai.FORMAT_LABEL[kind], key=f"cp_ex_{kind}",
+                       variant="accentline" if s.cp_example == kind else "secondary",  # 고른 형식은 주황 테두리
+                       on_click=actions.compose_example, args=(kind,))
+        markup(f'<p class="wz-format-rule">{esc(ai.FORMAT_RULE[s.cp_example])} '
+               "이 형식에서 벗어나면 회의록을 만들 수 없어요.</p>")
+    with st.container(key="cp-editor", gap=None):
+        st.text_area(
+            "회의 내용",
+            key=f"cp_text_{n}_{s.cp_text_rev}",
+            value=s.nn_text,
+            height=320,
+            label_visibility="collapsed",
+            on_change=actions.compose_check,
+            # 예시는 값이 아니라 회색 안내글(placeholder)로만 보여 줌 → 수정 불가, 입력칸을 누르면 사라짐
+            placeholder=ai.EXAMPLES[s.cp_example],
+        )
+    with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
+        with st.container(key="cp-attach", width="content"):
+            st.file_uploader("파일 첨부", type=_FILE_TYPES, accept_multiple_files=True, key=f"cp_files_{n}",
+                             label_visibility="collapsed")
+        markup('<span class="cp-types">TXT · MD</span>')
+        markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
+    if s.nn_files and not st.session_state.get(f"cp_files_{n}"):
+        with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+            markup('<span class="cp-hint">앞에서 첨부한 파일: ' + esc(", ".join(nm for nm, _ in s.nn_files)) + "</span>")
+            button("파일 빼기", key="cp_clear_files", variant="mini", on_click=actions.compose_clear_files)
+
+
+def _step1(s: AppState, n: int) -> None:
+    with st.container(key="wz-card", gap="medium"):
+        _basic_info(s, n)
+        markup('<hr class="cp-divider">')
+        _content(s, n)
+        if s.nn_error:
+            markup(f'<span role="alert" class="cp-error">{esc(s.nn_error)}</span>')
+        with st.container(horizontal=True, vertical_alignment="center"):
+            button("초기화", key="cp_reset", variant="secondary", on_click=actions.compose_reset)
+            st.space("stretch")
+            button("발화자 확인 →", key="cp_next1", variant="primary", on_click=actions.compose_next, args=(n,))
+
+
+# ================================================================ 2단계: 발화자 확인
+def _step2(s: AppState) -> None:
+    parsed = ai.parse(actions.compose_text(s))
+    labels = parsed.labels
+    with st.container(key="wz-card-full", gap="medium"):
+        _card_head("발화자 확인 및 매칭", f"{len(labels)}명 감지")
+        _info("<span>AI가 읽은 발화자 표기를 실제 참석자와 연결하세요. <b>매칭은 선택 사항</b>이며 "
+              "이름을 모르면 「미지정」으로 두고 진행할 수 있어요.</span>")
+        if not labels:
+            _info("<b>발화자 표기가 없는 회의 내용이에요</b><span>연결할 발화자가 없어서 바로 분석으로 넘어가면 돼요. "
+                  "원문에서는 모든 발언이 「미지정」으로 보여요.</span>", "warn")
+        with st.container(key="wz-matches", gap="small"):
+            for i, label in enumerate(labels):
+                with st.container(key=f"wz-match-{i}", horizontal=True, vertical_alignment="center", gap="medium"):
+                    markup(f'<div class="wz-label">{esc(label)}</div>')
+                    markup('<span class="wz-to">→</span>')
+                    pid = s.nn_speaker_map.get(label, "")
+                    value = f"{sel.name_of(pid)} · {sel.person(pid).team}" if pid else ""
+                    # 누르면 「발화자 연결」 모달 (팀 → 팀원) · 비어 있으면 미지정
+                    button(value or "미지정 (나중에 확인)", key=f"wz_map_{i}", variant="field" if value else "fieldempty",
+                           icon=":material/person:", on_click=actions.open_speaker_picker, args=(label,),
+                           width="stretch")
+        if labels:
+            done = sum(1 for lb in labels if s.nn_speaker_map.get(lb))
+            _info(f"<b>{done}/{len(labels)}명 매칭 완료</b><span>미지정 발화자가 있어도 분석을 진행할 수 있어요. "
+                  "한 사람을 여러 발화자 표기에 연결할 수도 있어요.</span>", "warn" if done < len(labels) else "ok")
+        with st.container(key="wz-foot", horizontal=True, vertical_alignment="center"):  # 카드 맨 아래
+            button("← 이전 단계", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
+            st.space("stretch")
+            button("분석 내용 확인 →", key="cp_next2", variant="primary", on_click=actions.compose_goto, args=(3,))
+
+
+# ================================================================ 3단계: 분석 및 결과 (회의 상세와 같은 화면)
+def _step3(s: AppState) -> None:
+    m = s.preview_meeting
+    if m is None:  # 새로고침 등으로 미리보기가 없으면 다시 만들기
+        actions.compose_goto(3)
+        m = s.preview_meeting
+    s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
+    parsed = ai.parse(actions.compose_text(s))
+    result = ai.analyze(parsed, s.nn_speaker_map, s.nn_title)
+
+    data = {
+        "title": s.nn_title, "date": str(s.nn_date), "host": sel.name_of(s.nn_host),
+        "speakers": {lb: (sel.name_of(p) if p else "미지정") for lb, p in s.nn_speaker_map.items()},
+        "summary": result.summary,
+        "agendas": [{"title": t, "lines": list(b)} for t, b in result.agendas],
+        "todos": [{"text": t, "owner": w, "due": d} for t, w, d in result.todos],
+    }
+    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(편집 · 공유 대신 수정 · 저장 · 생성 완료)
+    with st.container(horizontal=True, vertical_alignment="bottom"):
+        markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+               f'<h1 class="section-title" style="font-size:20px">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
+        with st.container(horizontal=True, width="content", gap="small"):
+            button("← 발화자 매칭 수정", key="cp_prev3", variant="secondary", on_click=actions.compose_goto, args=(2,))
+            with st.container(key="b-secondary-cp_json", width="content"):
+                st.download_button("결과 JSON 저장", json.dumps(data, ensure_ascii=False, indent=2),
+                                   file_name="meeting_result.json", mime="application/json", key="cp_json")
+            button("회의록 생성 완료 ✓", key="cp_finish", variant="primary", on_click=actions.compose_finish)
+    with st.container(horizontal=True, vertical_alignment="center"):
+        member_pills(f"{m.when} · 참석 {len(m.people)}명", m.host, list(m.people))
+        mapped = " · ".join(f"{lb} → {sel.name_of(p) if p else '미지정'}" for lb, p in s.nn_speaker_map.items())
+        note = "프로토타입 · AI 분석 예시 — 「회의록 생성 완료」를 눌러야 저장돼요"
+        st.html(f'<span class="read-note">{esc(note)}' + (f"<br>발화자 매칭: {esc(mapped)}" if mapped else "")
+                + "</span>", width="content")
+
+    # 본문: 회의 상세와 같은 원문 · 인사이트 탭
+    with st.container(key="md-split"):
+        left, right = st.columns([1, 1.15], gap=None)
+        with left, st.container(key="md-left", gap="small"):
+            render_raw_panel(s, m)
+        with right, st.container(key="md-right", gap=None):
+            render_insights(s, m)
+
+
+# ================================================================ 진입점
 def render() -> None:
     s = get_state()
     n = s.compose_nonce
     with page("compose"):
-        with st.container(horizontal=True, vertical_alignment="top"):
-            page_header("새 회의록 작성", "회의 내용을 입력하거나 파일을 첨부해 주세요.")
-            st.html(tag("새 회의", "att"), width="content")
-        markup('<hr class="cp-divider">')
-        _basic_info(s, n)  # 1) 기본 정보 (제목 · 날짜 · 주관자 · 참석자 · 회의 종류·폴더)
-        markup('<hr class="cp-divider">')
-        _content(n)  # 2) 회의 내용 + 파일 첨부
-        if s.nn_error:
-            markup(f'<span role="alert" class="cp-error">{esc(s.nn_error)}</span>')
-        with st.container(horizontal=True, horizontal_alignment="right"):
-            button("회의록 생성하기", key="cp_submit", variant="primary", icon=":material/auto_awesome:",
-                   on_click=actions.submit_compose, args=(n,))
+        _stepper(s.cp_step)
+        if s.cp_step == 2:
+            _step2(s)
+        elif s.cp_step == 3:
+            _step3(s)
+        else:
+            _step1(s, n)

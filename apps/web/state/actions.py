@@ -18,7 +18,8 @@ from state import selectors as sel
 from state.store import Delivery, NewFolder, SentShare, get_state, reset_state
 
 # 화면을 옮길 때 항상 초기화하는 값
-_SCREEN_RESET = dict(editing=False, highlight=[], highlight_key="", show_brief=False, raw_query="", copied="", nn_error="")
+_SCREEN_RESET = dict(editing=False, highlight=[], highlight_key="", show_brief=False, raw_query="", copied="", nn_error="",
+                     not_found="")
 
 
 def _set(**kwargs) -> None:
@@ -40,12 +41,12 @@ def toggle(attr: str) -> None:
 # ---------------------------------------------------------------- 인증
 def login(email: str, password: str) -> bool:
     ok = email.strip() == DEMO_EMAIL and password == DEMO_PASSWORD
-    _set(logged_in=ok, login_error=not ok, screen="compose")
+    _set(logged_in=ok, login_error=not ok, screen="compose", not_found="")
     return ok
 
 
 def demo_login() -> None:
-    _set(logged_in=True, login_error=False, screen="compose")
+    _set(logged_in=True, login_error=False, screen="compose", not_found="")
 
 
 def logout() -> None:
@@ -141,10 +142,6 @@ def open_source(mid: str, src: tuple[str, ...]) -> None:
     _set(highlight=list(src), highlight_key="wiki")
 
 
-def close_toast() -> None:
-    _set(toast="")
-
-
 # ---------------------------------------------------------------- 모달
 def open_modal(name: str, **extra) -> None:
     _set(modal=name, **extra)
@@ -152,6 +149,12 @@ def open_modal(name: str, **extra) -> None:
 
 def close_modal() -> None:
     _set(modal=None, assign_pending="", members_folder="", members_scope=[], delete_target=())
+
+
+def _wizard_reset() -> dict:
+    """새 회의록 3단계 작성을 처음(1단계 · 빈 칸)으로."""
+    return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
+                cp_example="plain", preview_meeting=None)
 
 
 def open_new_note() -> None:
@@ -168,15 +171,155 @@ def open_new_note() -> None:
             p = archive.period(s, mtype, s.archive_period)
             if p:  # 기간 폴더에서 왔으면 그 기간 폴더를 미리 골라 둠
                 go("compose", nn_type=mtype, nn_group="period", nn_period=p.key, nn_topic=topic, nn_name="",
-                   nn_host=ME, nn_people=[], compose_nonce=s.compose_nonce + 1)
+                   nn_host=ME, nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
                 return
     go("compose", nn_type=mtype, nn_group="project", nn_period="", nn_topic=topic, nn_name="", nn_host=ME,
-       nn_people=[], compose_nonce=s.compose_nonce + 1)
+       nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
 
 
 def set_new_note_type(mtype: str) -> None:
     s = get_state()
     _set(nn_type=mtype, nn_topic=(sel.folder_ids_of_type(s, mtype) or ["new"])[0])
+
+
+# ---------------------------------------------------------------- 새 회의록 3단계 (state/compose_ai.py)
+def compose_text(s) -> str:
+    """직접 쓴 내용 + 첨부한 TXT · MD 내용."""
+    parts = [s.nn_text.strip()] + [body.strip() for _, body in s.nn_files]
+    return "\n".join(p for p in parts if p)
+
+
+def compose_example(kind: str) -> None:
+    """「지원하는 입력 형식」 버튼: 입력 형식을 고름. 입력칸에는 그 형식의 예시가 회색 안내글(placeholder)로만 보임.
+
+    입력한 내용(nn_text)은 건드리지 않음 — 예시는 값이 아니라서 수정·제출되지 않음.
+    """
+    _set(cp_example=kind, nn_error="")
+
+
+def compose_reset() -> None:
+    """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
+    s = get_state()
+    _set(compose_nonce=s.compose_nonce + 1, nn_host=ME, nn_people=[], nn_name="", **_wizard_reset())
+
+
+def compose_sync(nonce: int) -> None:
+    """1단계 입력칸 값을 상태에 옮겨 둠 (다른 단계로 가도 남도록)."""
+    s = get_state()
+    ss = st.session_state
+    s.nn_title = (ss.get(f"cp_title_{nonce}") or "").strip()
+    s.nn_date = ss.get(f"cp_date_{nonce}")
+    s.nn_text = ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or ""
+    files = ss.get(f"cp_files_{nonce}") or []
+    if files:
+        s.nn_files = [(f.name, f.getvalue().decode("utf-8", errors="replace")) for f in files]
+
+
+def compose_check() -> None:
+    """회의 내용 칸을 바꿀 때마다(칸을 벗어나면) 형식 검사 결과를 새로."""
+    get_state().nn_error = ""
+
+
+def compose_next(nonce: int) -> None:
+    """1단계 → 2단계: 기본 정보와 입력 형식을 확인."""
+    from state import compose_ai
+
+    compose_sync(nonce)
+    s = get_state()
+    missing = [n for n, ok in (("회의 제목", s.nn_title), ("회의 날짜", s.nn_date), ("주관자", s.nn_host)) if not ok]
+    if s.nn_group == "period" and not s.nn_period:
+        missing.append("회의 종류 · 폴더")
+    elif s.nn_group != "period" and s.nn_topic not in sel.folder_ids_of_type(s, s.nn_type) and not s.nn_name.strip():
+        missing.append("회의 종류 · 폴더")
+    parsed = compose_ai.parse(compose_text(s))
+    if missing:
+        s.nn_error = " · ".join(missing) + "을(를) 입력해 주세요."
+        return
+    if parsed.error or parsed.format != s.cp_example:  # 고른 형식에서 벗어나면 다음 단계로 못 감
+        s.nn_error = f"회의 내용이 「{compose_ai.FORMAT_LABEL[s.cp_example]}」 형식에 맞지 않아요. 입력칸 위 안내대로 적어 주세요."
+        return
+    # 처음 보는 발화자는 이름이 같은 사람으로 미리 연결 (모르면 미지정)
+    s.nn_speaker_map = {lb: s.nn_speaker_map.get(lb, compose_ai.auto_match(lb)) for lb in parsed.labels}
+    _set(cp_step=2, nn_error="")
+
+
+PREVIEW_ID = "cp-preview"
+
+
+def _build_preview(s, mid: str):
+    from state import compose_ai
+
+    parsed = compose_ai.parse(compose_text(s))
+    topic = s.nn_topic if s.nn_group != "period" and s.nn_topic in sel.folder_ids_of_type(s, s.nn_type) else None
+    return compose_ai.build_meeting(
+        mid, title=s.nn_title, day=s.nn_date, topic=topic, host=s.nn_host, people=list(s.nn_people),
+        parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
+    )
+
+
+def compose_goto(step: int) -> None:
+    """단계 이동. 3단계(분석 및 결과)로 가면 회의 상세와 같은 화면으로 볼 미리보기 회의록을 만듦."""
+    s = get_state()
+    if step == 3:
+        s.preview_meeting = _build_preview(s, PREVIEW_ID)
+        _set(meeting_id=PREVIEW_ID, insight_tab="sum", left_tab="raw", highlight=[], highlight_key="", raw_query="")
+    _set(cp_step=step, nn_error="")
+
+
+def open_speaker_picker(label: str) -> None:
+    """2단계: 발화자 표기(참석자1 · A)를 실제 사람과 연결하는 모달 (팀 → 팀원)."""
+    s = get_state()
+    cur = s.nn_speaker_map.get(label, "")
+    first = cur or s.nn_host or ME
+    open_modal("cp_speaker", pick_label=label, pick_draft=[cur] if cur else [], pick_team=sel.person(first).team,
+               pick_nonce=s.pick_nonce + 1)
+
+
+def set_speaker_match(label: str, widget_key: str) -> None:
+    get_state().nn_speaker_map[label] = st.session_state.get(widget_key) or ""
+
+
+def compose_clear_files() -> None:
+    _set(nn_files=[])
+
+
+def compose_finish() -> None:
+    """3단계 「회의록 생성 완료」: 완성된 회의록을 만들어 폴더에 넣고, 회의 상세로 이동."""
+    from state import compose_ai
+
+    s = get_state()
+    parsed = compose_ai.parse(compose_text(s))
+    if parsed.error:
+        _set(cp_step=1, nn_error="회의 내용 형식을 확인해 주세요.")
+        return
+    # 폴더: 프로젝트별은 고른 폴더(새 폴더면 만들기), 기간별은 그 회의 종류의 「미분류」 폴더에 넣음 (기간은 날짜로 묶여요)
+    topics = sel.folder_ids_of_type(s, s.nn_type)
+    if s.nn_group == "period":
+        fs = sel.folders(s)
+        fid = next((k for k in topics if fs[k].name == "미분류"), "")
+        if not fid:
+            fid = f"n{len(s.new_folders) + 1}"
+            s.new_folders.append(NewFolder(fid, "미분류", s.nn_type))
+    elif s.nn_topic in topics:
+        fid = s.nn_topic
+    else:
+        fid = f"n{len(s.new_folders) + 1}"
+        s.new_folders.append(NewFolder(fid, s.nn_name.strip() or "새 폴더", s.nn_type))
+    mid = f"new{len(s.new_meetings) + 1}"
+    s.new_meetings[mid] = compose_ai.build_meeting(
+        mid, title=s.nn_title, day=s.nn_date, topic=fid, host=s.nn_host, people=list(s.nn_people),
+        parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
+    )
+    s.created_notes.append((fid, mid))
+    for store in (s.assigned, s.done):  # 미리보기에서 정한 담당자 · 완료 체크를 새 회의로 옮김
+        for key in [k for k in store if k.startswith(f"{PREVIEW_ID}:")]:
+            store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
+    s.preview_meeting = None
+    title = s.nn_title
+    open_meeting(mid)
+    _set(toast=f"「{title}」 회의록을 만들었어요. 내용을 검토한 뒤 확정해 주세요.",
+         compose_nonce=s.compose_nonce + 1, nn_host=ME, nn_people=[], nn_name="", **_wizard_reset())
+    s.tree_open |= {"root", f"t:{s.nn_type}", f"g:{s.nn_type}:project"}
 
 
 def submit_compose(nonce: int) -> None:
@@ -271,6 +414,8 @@ def confirm_pick(kind: str) -> None:
         s.nn_host = s.pick_draft[0] if s.pick_draft else s.nn_host
     elif kind == "cp_people":
         s.nn_people = list(s.pick_draft)
+    elif kind == "cp_speaker":  # 고른 사람이 없으면 미지정
+        s.nn_speaker_map[s.pick_label] = s.pick_draft[0] if s.pick_draft else ""
     elif kind == "cp_folder":
         s.nn_type, s.nn_group = s.pick_type, s.pick_group
         if s.pick_group == "period":
@@ -368,18 +513,6 @@ def search_keyword(keyword: str) -> None:
         _set(raw_query="")
     else:
         _set(raw_query=keyword, left_tab="raw", highlight=[], highlight_key="")
-
-
-def set_speaker(mid: str, label: str, widget_key: str) -> None:
-    """미지정 화자(예: 화자 3)에 사람 이름 지정 → 이 회의의 그 화자 발언 전체에 적용."""
-    s = get_state()
-    pid = st.session_state.get(widget_key)
-    if pid:
-        s.speaker_map[f"{mid}:{label}"] = pid  # 원문·발언 비율에 바로 반영 (위쪽 알림은 띄우지 않음: 화면이 밀리지 않도록)
-
-
-def clear_speaker(mid: str, label: str) -> None:
-    get_state().speaker_map.pop(f"{mid}:{label}", None)
 
 
 def toggle_todo(key: str) -> None:
@@ -489,17 +622,32 @@ def open_assign(key: str, text: str) -> None:
         assign_pending="",
         assign_query="",
         assign_team="",
+        assign_draft=list(get_state().assigned.get(key, [])),  # 지금 담당자들을 미리 골라 둠
     )
 
 
-def assign_to(name: str) -> None:
+def toggle_assignee(name: str) -> None:
+    """담당자 모달: 누르면 고르고, 다시 누르면 빼기 (여러 명)."""
     s = get_state()
-    s.assigned[s.assign_key] = name
-    _set(
-        modal=None,
-        assign_pending="",
-        last_assign=f"{s.assign_text} → {name} 님에게 맡겼어요. 확정하기 전까지 바꿀 수 있고, 확정하면 알림이 가요.",
-    )
+    if name in s.assign_draft:
+        s.assign_draft.remove(name)
+    else:
+        s.assign_draft.append(name)
+
+
+def assign_to(names: list[str] | None = None) -> None:
+    """고른 사람들에게 맡기기 (여러 명). 빈 목록이면 담당자를 비움."""
+    s = get_state()
+    names = list(s.assign_draft if names is None else names)
+    s.assign_prev[s.assign_key] = list(s.assigned.get(s.assign_key, []))  # 바꾸기 전 담당자 (「누구 → 누구」 안내)
+    if names:
+        s.assigned[s.assign_key] = names
+        who = ", ".join(names)
+        msg = f"{s.assign_text} → {who} 님에게 맡겼어요. 확정하기 전까지 바꿀 수 있고, 확정하면 알림이 가요."
+    else:
+        s.assigned.pop(s.assign_key, None)
+        msg = f"{s.assign_text} → 담당자를 비웠어요."
+    _set(modal=None, assign_pending="", assign_draft=[], last_assign=msg)
 
 
 # ---------------------------------------------------------------- 결과 전달

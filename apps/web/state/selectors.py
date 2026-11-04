@@ -67,6 +67,9 @@ def folders(state: AppState) -> dict[str, Folder]:
         notes = list(out["rel"].notes)
         notes.insert(1, "m9")
         out["rel"] = replace(out["rel"], notes=tuple(notes))
+    for fid, mid in state.created_notes:  # 「회의록 생성 완료」로 만든 회의를 그 폴더에 넣음 (최근 회의가 앞)
+        if fid in out:
+            out[fid] = replace(out[fid], notes=(mid, *out[fid].notes))
     for fid in state.deleted_folders:
         out.pop(fid, None)
     return out
@@ -91,6 +94,8 @@ def can_see(state: AppState, mid: str) -> bool:
     """회의록이 나에게 보이는지: 주관했거나 참석했거나, 미참석했지만 주관자가 공유해 준 경우."""
     if mid in state.deleted_meetings:
         return False
+    if mid in state.new_meetings:  # 내가 새로 만든 회의록은 항상 보임
+        return True
     m = repo.meeting(mid)
     return m.host == ME or ME in m.people or ME in state.absent_shares.get(mid, [])
 
@@ -164,7 +169,7 @@ def my_todo_keys(state: AppState, mid: str) -> list[str]:
     keys = []
     for i, t in enumerate(repo.meeting(mid).todos):
         key = todo_key(mid, i)
-        owner_is_me = state.assigned[key] == my_name if key in state.assigned else t.owner == ME
+        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else t.owner == ME
         if owner_is_me:
             keys.append(key)
     return keys
@@ -201,7 +206,7 @@ def todo_key(mid: str, index: int) -> str:
 
 def unassigned_count(state: AppState, mid: str) -> int:
     m = repo.meeting(mid)
-    return sum(1 for i, t in enumerate(m.todos) if not t.owner and todo_key(mid, i) not in state.assigned)
+    return sum(1 for i, t in enumerate(m.todos) if not t.owner and not state.assigned.get(todo_key(mid, i)))
 
 
 def status_of(state: AppState, mid: str) -> str:
@@ -309,6 +314,8 @@ def home_meeting_ids(state: AppState) -> list[str]:
 def breadcrumbs(state: AppState) -> list[str]:
     from state import archive  # archive 가 이 모듈을 쓰므로 함수 안에서 불러옴
 
+    if state.not_found:
+        return ["페이지를 찾을 수 없음"]
     s = state.screen
     types = repo.meeting_types()
     fs = folders(state)

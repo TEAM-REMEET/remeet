@@ -240,7 +240,7 @@ def _people_picker(kind: str, *, single: bool) -> None:
     chosen = set(s.pick_draft)
 
     # 지금 고른 사람: 제목은 상자 위에 고정, 사람 칩만 상자 안에서 스크롤
-    title = "주관자" if single else f"선택한 참석자 {len(s.pick_draft)}명"
+    title = ("연결할 사람" if kind == "cp_speaker" else "주관자") if single else f"선택한 참석자 {len(s.pick_draft)}명"
     if s.pick_draft:
         chips = "".join(
             f'<span class="pick-chip">{avatar(sel.person(pid).initial, size=22, host=single)}'
@@ -259,7 +259,8 @@ def _people_picker(kind: str, *, single: bool) -> None:
     # 「팀」 글씨만 상자 밖 위에 두고, 팀 버튼 · 팀원은 한 상자 안에
     markup('<div class="pick-section-head"><b>팀</b><span class="hint">팀을 고르면 그 팀 사람들이 아래에 나와요</span></div>')
     ids = dict(groups)[team]
-    hint = "이름을 누르면 주관자로 골라져요" if single else "이름을 누르면 선택 · 다시 누르면 해제"
+    hint = ("이름을 누르면 이 발화자로 연결돼요" if kind == "cp_speaker" else "이름을 누르면 주관자로 골라져요") if single \
+        else "이름을 누르면 선택 · 다시 누르면 해제"
     # key 를 매번 바꾸지 않아야 누를 때 칩이 새로 만들어지지 않고 그 자리에서 바로 바뀜
     widget_key = f"{kind}_pick_{s.pick_nonce}_{team}"
     default = next((pid for pid in ids if pid in chosen), None) if single else [pid for pid in ids if pid in chosen]
@@ -297,3 +298,23 @@ def people_picker_dialog() -> None:
     n = len(get_state().pick_draft)
     _people_picker("cp_people", single=False)
     _footer("cp_people", f"{n}명 선택" if n else "선택 안 함")
+
+
+@st.dialog("발화자 연결", width="medium", on_dismiss=actions.close_modal)
+def speaker_picker_dialog() -> None:
+    """2단계: 임시 발화자(참석자1 · A)를 실제 사람과 연결. 팀을 고르면 팀원이 나와요. 모르면 미지정."""
+    s = get_state()
+    markup(f'<p class="hint" style="font-size:14px;color:#2B2F36">원문의 <b>「{esc(s.pick_label)}」</b>은(는) 누구인가요? '
+           "팀을 고르고 이름을 누르세요. 모르면 「미지정으로 두기」를 누르면 돼요.</p>")
+    _people_picker("cp_speaker", single=True)
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="cp_speaker_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        if button("미지정으로 두기", key="cp_speaker_none", variant="secondary"):
+            s.pick_draft = []
+            actions.confirm_pick("cp_speaker")
+            st.rerun()
+        if button("연결하기", key="cp_speaker_ok", variant="primary", disabled=not s.pick_draft):
+            actions.confirm_pick("cp_speaker")
+            st.rerun()
