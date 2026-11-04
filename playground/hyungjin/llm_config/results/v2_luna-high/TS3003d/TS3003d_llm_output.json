@@ -1,0 +1,472 @@
+{
+  "agendas": [
+    {
+      "agenda_title": "리모컨 버튼 구성",
+      "discussion_background": [
+        {
+          "text": "시제품은 전원·음소거·볼륨·채널·도움말·숫자·문자방송·자막 버튼과 로고로 구성됨.",
+          "evidence_utterance_indices": [
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "버튼 수",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "프로젝트 매니저는 이전에 버튼 수를 줄이고 크게 만들기로 했던 방향과 달리 버튼이 많다고 우려했으며, 산업 디자이너는 전원·숫자·문자방송·자막은 필요하고 도움말도 사용자가 기능을 알 수 있도록 필요하다고 설명함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            70,
+            72,
+            73,
+            74,
+            78,
+            82,
+            86,
+            88,
+            102,
+            106,
+            111
+          ]
+        },
+        {
+          "subtopic": "문자방송 조작",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "문자방송에서 숫자 버튼으로 페이지를 입력하고 채널 이동 버튼으로 페이지를 넘길 수 있다고 설명됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            59,
+            63,
+            66
+          ]
+        },
+        {
+          "subtopic": "LED 표시",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "LCD 화면을 사용하므로 별도 LED 표시등은 넣지 않기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            132,
+            134,
+            137,
+            138,
+            140
+          ]
+        },
+        {
+          "subtopic": "버튼 소재",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "케이스와 다른 색으로 눈에 띄게 하는 고무 버튼을 적용한 안이 제시됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            142,
+            145,
+            147
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "리모컨 원가와 외관",
+      "discussion_background": [
+        {
+          "text": "리모컨 한 대당 생산비 12.5유로를 넘을 수 없으며, 버튼이 주요 비용이고 LCD와 고급형 칩도 비용 부담 요인으로 언급됨.",
+          "evidence_utterance_indices": [
+            29,
+            32,
+            167,
+            183,
+            187
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "원가 절감",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "현재 구성으로는 12.5유로 한도 달성이 어려우며, 버튼을 줄이거나 평면 케이스를 선택하면 비용을 낮출 수 있다고 검토됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            152,
+            171,
+            183,
+            184,
+            275,
+            387,
+            388
+          ]
+        },
+        {
+          "subtopic": "버튼 축소",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "음소거·도움말 버튼을 길게 누르는 동작으로 대체하거나 숫자 버튼을 묶고, 스크롤 휠로 숫자 입력을 대신하는 방안이 제안됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            205,
+            208,
+            232,
+            234,
+            295,
+            346,
+            353
+          ]
+        },
+        {
+          "subtopic": "스크롤 조작",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "스크롤 휠은 비용 절감과 LCD 활용에 도움이 될 수 있지만, 익숙하지 않은 고령층이 사용하기 어렵고 리모컨의 사용성이 떨어질 수 있다는 우려가 제기됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            298,
+            326,
+            360,
+            365,
+            372,
+            375,
+            428,
+            434,
+            435,
+            439
+          ]
+        },
+        {
+          "subtopic": "곡면 유지",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "LCD 화면을 돋보이게 하기 위해 단일 곡면 케이스를 유지하는 방향으로 정리됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            501,
+            509,
+            510,
+            518,
+            521,
+            524
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "세부 미정",
+          "text": "거치대 비용이 산정에 포함되지 않았고, 최종 버튼·스크롤 구성과 거치대 비용까지 반영해 12.5유로 한도를 충족할 수 있는지는 정해지지 않음.",
+          "evidence_utterance_indices": [
+            275,
+            280,
+            285,
+            288,
+            291,
+            318,
+            325,
+            365,
+            378
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "리모컨 디자인 평가",
+      "discussion_background": [
+        {
+          "text": "문헌 조사와 앞서 정한 요구 사항을 바탕으로 외관·혁신성·사용성·기능·비용·대상 그룹 적합성·회사 인지도를 평가 기준으로 삼음.",
+          "evidence_utterance_indices": [
+            607,
+            609,
+            611,
+            612,
+            613,
+            615,
+            618,
+            619,
+            620
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "평가 결과",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "디자인 평가는 41점/49점, 약 84%로 집계됐으며 외관은 6점, 혁신성과 기능성은 7점, 사용성은 4점으로 평가됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            638,
+            640,
+            641,
+            653,
+            661,
+            668,
+            671,
+            675,
+            688,
+            760,
+            766,
+            767
+          ]
+        },
+        {
+          "subtopic": "고령층 적합성",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "대상 그룹 적합성은 3점으로 정리됐으며, 디자인이 고령층에게 낯설고 화려해 보일 수 있고 사용성도 실제 사용자 테스트가 필요하다는 의견이 나옴.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            703,
+            704,
+            711,
+            714,
+            717,
+            720,
+            722,
+            723,
+            725
+          ]
+        },
+        {
+          "subtopic": "회사 인지도",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "로고와 탈부착식 앞면 커버가 있어 회사와 제품을 알아보기 쉽다는 평가가 제시됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            728,
+            732,
+            735,
+            736,
+            738,
+            741
+          ]
+        },
+        {
+          "subtopic": "고객층 확대",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "젊은층을 겨냥하거나 여러 고객층에 교체형 커버를 제공하고, 젊은층용 디자인 커버를 시험해 보는 방안이 제안됐으나 대상 고객층을 바꾸기로 합의되지는 않음.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            805,
+            807,
+            948,
+            952,
+            953,
+            954,
+            956,
+            960,
+            963
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": null,
+          "text": "제품의 주요 고객층을 고령층으로 유지할지, 젊은층까지 넓히거나 재설정할지는 결론 나지 않음.",
+          "evidence_utterance_indices": [
+            537,
+            541,
+            546,
+            703,
+            714,
+            717,
+            948,
+            952,
+            960,
+            963
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "프로젝트 진행 평가",
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "subtopic": "진행과 협업",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "참석자들은 프로젝트 단계와 역할이 대체로 적절했고 협업도 괜찮았으며, 과제가 구조화돼 단계별로 진행하기 쉬웠다고 평가함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            780,
+            781,
+            812,
+            813,
+            814,
+            816,
+            818,
+            821,
+            822,
+            823
+          ]
+        },
+        {
+          "subtopic": "재무 정보",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "생산비 자료를 디자인 단계보다 훨씬 일찍 받았어야 했으며, 늦은 재무 정보가 창의적인 선택을 제한했다는 의견이 제기됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            784,
+            787,
+            788,
+            794,
+            797,
+            798,
+            800,
+            801
+          ]
+        },
+        {
+          "subtopic": "작업 도구",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "스마트보드에서 그리기와 파일 접근이 불편했지만 디지털 펜은 유용했다는 평가와 함께, 플립차트나 더 정밀한 디지털 도구가 대안으로 제시됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            832,
+            833,
+            841,
+            843,
+            845,
+            849,
+            859,
+            862,
+            865,
+            867,
+            869
+          ]
+        },
+        {
+          "subtopic": "평가 방식",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "각자 점수를 입력하면 평균을 자동 계산하는 컴퓨터 기반 평가 방식이 제안됐으나 도입 여부는 정해지지 않음.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            891,
+            894,
+            896,
+            900,
+            902,
+            909
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "회의 운영과 후속 업무",
+      "discussion_background": [
+        {
+          "text": "지난 회의 회의록을 볼 수 없었으며, 프로젝트 매니저는 디지털 펜의 데이터 업로드와 관련 소프트웨어 다운로드에서 오류가 났다고 설명함.",
+          "evidence_utterance_indices": [
+            626,
+            627,
+            629,
+            633,
+            635
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "최종 발표 자료",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "최종 발표 자료와 프로젝트 요약을 준비해 약 10분 뒤 참석자들에게 보여주기로 함.",
+          "assignee": "프로젝트 매니저",
+          "due": "10분쯤 뒤",
+          "evidence_utterance_indices": [
+            1006,
+            1008,
+            1009,
+            1020
+          ]
+        },
+        {
+          "subtopic": "설문 작성",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "참석자들이 각자 방에서 설문지를 받아 작성하기로 함.",
+          "assignee": "참석자",
+          "due": null,
+          "evidence_utterance_indices": [
+            971,
+            1013,
+            1014,
+            1016,
+            1017,
+            1018
+          ]
+        },
+        {
+          "subtopic": "자료 저장",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "프로젝트 폴더에 접근할 수 없어 자료를 내 문서에 저장하기로 함.",
+          "assignee": "프로젝트 매니저",
+          "due": null,
+          "evidence_utterance_indices": [
+            987,
+            994,
+            995,
+            996,
+            1001
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "확인 필요",
+          "text": "디지털 펜의 자료 업로드 오류와 스마트보드 파일을 다른 컴퓨터에서 열거나 내보내는 문제가 해결됐는지는 확인되지 않음.",
+          "evidence_utterance_indices": [
+            629,
+            633,
+            635,
+            859,
+            862,
+            865,
+            867,
+            869
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    }
+  ]
+}

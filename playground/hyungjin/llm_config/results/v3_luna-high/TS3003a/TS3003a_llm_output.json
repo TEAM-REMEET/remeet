@@ -1,0 +1,266 @@
+{
+  "agendas": [
+    {
+      "agenda_title": "리모컨 목표: 제품 요건과 사업 조건",
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "subtopic": "제품 요건",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "새 리모컨은 독창적이고 트렌디하며 사용하기 쉬워야 한다는 목표가 공유됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            81,
+            82,
+            83
+          ]
+        },
+        {
+          "subtopic": "사업 조건",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "국제 시장과 다양한 사용자·문화·트렌드를 고려하며, 판매 가격은 25유로, 목표 수익은 5천만 유로, 생산 비용은 최대 12.5유로로 제시됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            326,
+            327,
+            329,
+            334
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "회의 운영과 후속 업무",
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "subtopic": "설계 단계",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "기능 설계에 이어 콘셉트 설계와 상세 설계를 진행하는 흐름이 안내됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            91,
+            93
+          ]
+        },
+        {
+          "subtopic": "담당 범위",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "산업 디자이너는 작동·부품 설계와 외관 디자인 일부, UI 디자이너는 기술 기능 및 UI 설계, 마케팅 담당자는 사용자 요구 명세·트렌드 관찰·제품 평가를 맡는다고 안내됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            96,
+            97,
+            98,
+            99
+          ]
+        },
+        {
+          "subtopic": "회의록 업로드",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "이번 회의 회의록을 프로젝트 폴더에 올리기로 함.",
+          "assignee": "프로젝트 매니저",
+          "due": null,
+          "evidence_utterance_indices": [
+            441,
+            470
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "통합 리모컨: 여러 기기와 적외선 제어",
+      "discussion_background": [
+        {
+          "text": "마케팅 담당자는 TV·비디오·DVD 플레이어용 리모컨을 각각 사용한다고 설명함.",
+          "evidence_utterance_indices": [
+            381,
+            382
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "통합 제어",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "TV·비디오·DVD 플레이어 등을 리모컨 하나로 조작하는 방안이 제안됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            384,
+            385,
+            386
+          ]
+        },
+        {
+          "subtopic": "기존 사례",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "프로젝트 매니저는 약 8개 기기를 프로그래밍할 수 있는 리모컨과, 적외선으로 다른 층의 기기를 조작하는 사례를 소개함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            387,
+            388,
+            391,
+            392,
+            393,
+            397
+          ]
+        },
+        {
+          "subtopic": "적외선",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "리모컨의 적외선 기능 구현 가능성과 생산 비용 영향을 확인하기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            417,
+            418,
+            419
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "미논의",
+          "text": "여러 기기를 하나의 리모컨으로 조작하는 기능을 채택할지는 정해지지 않음.",
+          "evidence_utterance_indices": [
+            384,
+            404,
+            408
+          ]
+        },
+        {
+          "tag": "확인 필요",
+          "text": "적외선 기능의 구현 가능성과 생산 비용 영향은 확인되지 않음.",
+          "evidence_utterance_indices": [
+            417,
+            418,
+            419
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "리모컨 내구성: 충격 방지와 방수",
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "subtopic": "충격 방지",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "리모컨을 자주 떨어뜨린다는 이유로 충격에 강해야 한다는 의견이 제시됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            427,
+            429,
+            431
+          ]
+        },
+        {
+          "subtopic": "방수",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "방수 기능도 고려할 수 있다는 의견이 제시됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            432,
+            435,
+            438
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "미논의",
+          "text": "충격 방지와 방수 기능을 적용할지는 결정되지 않음.",
+          "evidence_utterance_indices": [
+            427,
+            432,
+            438,
+            440
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "배터리 표시: 구현 방식과 원가",
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "subtopic": "잔량 표시",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "배터리 잔량을 확인할 수 있는 표시를 넣는 방안이 제안됐으며, 작은 LED도 가능성으로 언급됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            444,
+            445,
+            446,
+            450,
+            456,
+            457
+          ]
+        },
+        {
+          "subtopic": "원가 우려",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "배터리 잔량 표시가 생산 비용을 크게 높일 수 있다는 우려가 제기됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            451,
+            452
+          ]
+        },
+        {
+          "subtopic": "비용 확인",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "배터리 잔량 표시의 생산 비용을 따져 보기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            451,
+            452
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "확인 필요",
+          "text": "배터리 잔량 표시의 비용 영향과 적용 여부는 확인되지 않음.",
+          "evidence_utterance_indices": [
+            451,
+            452,
+            456,
+            457
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    }
+  ]
+}

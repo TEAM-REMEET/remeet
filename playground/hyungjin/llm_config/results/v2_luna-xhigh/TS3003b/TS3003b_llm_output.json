@@ -1,0 +1,640 @@
+{
+  "agendas": [
+    {
+      "agenda_title": "목표 연령층",
+      "discussion_background": [
+        {
+          "text": "마케팅 조사는 100명을 대상으로 진행됐으며, 시장의 60%는 16~46세, 40%는 46~65세로 조사됨. 젊은층은 새 기능을 좋아하지만 까다롭고, 46~65세는 기능에는 덜 관심을 보이나 지출은 더 쉽게 하는 경향이 있다고 공유됨.",
+          "evidence_utterance_indices": [
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            86,
+            87,
+            88,
+            89,
+            90,
+            92,
+            93,
+            94
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "젊은층 제안",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "마케팅 담당자는 시장 규모와 수익 가능성을 고려해 16~45세에 초점을 맞추고 멋진 디자인을 만들자고 제안함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            95,
+            96,
+            97,
+            98,
+            99
+          ]
+        },
+        {
+          "subtopic": "40세 이상",
+          "discussion_tag": "정보",
+          "decision_tag": "결정",
+          "text": "젊은층용 신제품은 별도로 개발할 예정이므로 이번 리모컨은 40세 이상 고객을 대상으로 하기로 요구사항이 제시됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            300,
+            301,
+            302,
+            303,
+            305,
+            311,
+            312,
+            315,
+            317,
+            319,
+            320
+          ]
+        },
+        {
+          "subtopic": "시장 의견",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "마케팅 담당자는 40세 이상 시장이 상대적으로 작고 디자인에 덜 민감하다고 우려했으며, 프로젝트 매니저와 산업 디자이너는 고령층에 특화된 제품도 성공 가능성이 있다고 봄.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            343,
+            344,
+            352,
+            362,
+            364,
+            366,
+            367,
+            368,
+            372,
+            373,
+            374,
+            376,
+            377,
+            380,
+            383,
+            385,
+            392,
+            394,
+            395,
+            398,
+            399
+          ]
+        },
+        {
+          "subtopic": "세부 연령",
+          "discussion_tag": "제안",
+          "decision_tag": "보류",
+          "text": "실제 노년층을 겨냥하는 방안과 함께 60~80세가 예시로 제시됐으나, 구체적인 연령 범위는 더 알아보기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            642,
+            643,
+            644,
+            649,
+            650,
+            658,
+            659,
+            662
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "확인 필요",
+          "text": "40세 이상이라는 범위 안에서 실제 목표 연령층을 어디까지로 정할지 추가 확인이 필요함.",
+          "evidence_utterance_indices": [
+            642,
+            643,
+            644,
+            658,
+            659,
+            662
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "TV 전용 조작 범위",
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "subtopic": "터치 UI",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "UI 디자이너는 전원·음량 같은 일반 버튼과 기기 선택 버튼을 두고, 선택한 기기의 기능을 터치스크린에 표시하는 다기기 리모컨을 제안함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            157,
+            161,
+            162,
+            171,
+            179,
+            181,
+            185,
+            189,
+            192,
+            193,
+            198,
+            203
+          ]
+        },
+        {
+          "subtopic": "화면 비용",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "산업 디자이너는 터치스크린이 12.5유로를 넘을 수 있고 깨지거나 흠집 날 우려가 있다고 했으며, UI 디자이너는 단색 터치스크린이 20유로 이하일 수 있다고 설명함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            223,
+            224,
+            226,
+            228,
+            230,
+            231,
+            233,
+            240,
+            242,
+            243,
+            246,
+            247
+          ]
+        },
+        {
+          "subtopic": "TV 전용",
+          "discussion_tag": "정보",
+          "decision_tag": "결정",
+          "text": "기능을 더하면 복잡해지고 출시가 늦어질 수 있으므로 이번 제품은 TV 전용으로 제한하기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            298,
+            300,
+            301,
+            303,
+            305,
+            309,
+            310
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "내부 구조·소재",
+      "discussion_background": [
+        {
+          "text": "설문 응답자의 75%는 리모컨이 못생겼다고 답했고, 80%는 멋져 보이는 리모컨에 더 지출할 의향이 있다고 답함.",
+          "evidence_utterance_indices": [
+            62,
+            64,
+            65
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "작동 구조",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "버튼을 누르면 칩이 입력을 처리해 적외선 LED를 통해 TV로 신호를 보내는 단순한 구조로 설명됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            257,
+            261,
+            262,
+            263,
+            264,
+            267,
+            268,
+            269,
+            270,
+            276,
+            277
+          ]
+        },
+        {
+          "subtopic": "소재·비용",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "산업 디자이너는 기본 플라스틱과 단순한 내부 구조로 내구성을 확보하고, 제품마다 비용이 드는 첨단 소재보다 디자인과 UI에 투자하자고 제안함. 프로젝트 매니저도 고령층에는 소재 차이가 중요하지 않을 수 있다고 봄.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            280,
+            281,
+            282,
+            283,
+            284,
+            285,
+            286,
+            288,
+            634,
+            635,
+            636,
+            637
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "문자 방송·자막",
+      "discussion_background": [
+        {
+          "text": "설문에서 문자 방송의 중요도는 10점 만점에 6.5점으로 조사됨.",
+          "evidence_utterance_indices": [
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            80,
+            82
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "문자 방송",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "인터넷 확산을 이유로 문자 방송을 빼자는 초기 제안이 있었으나, 고령층이 인터넷 TV를 갖기 어려울 수 있고 청각 장애인의 자막에도 필요하다는 의견에 따라 문자 방송을 유지하기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            306,
+            307,
+            308,
+            330,
+            331,
+            332,
+            333,
+            334,
+            335,
+            337,
+            338,
+            415,
+            417,
+            423,
+            427,
+            428,
+            430,
+            431
+          ]
+        },
+        {
+          "subtopic": "자막 버튼",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "자막을 쉽게 켤 수 있도록 큰 자막 버튼을 리모컨에 바로 두는 방안이 제안됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            432,
+            433,
+            435,
+            436,
+            437,
+            438,
+            441
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "세부 미정",
+          "text": "문자 방송 유지 외에 큰 자막 전용 버튼을 둘지는 확정되지 않음.",
+          "evidence_utterance_indices": [
+            432,
+            433,
+            435,
+            436,
+            437,
+            441
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "버튼 구성·배열",
+      "discussion_background": [
+        {
+          "text": "응답자의 절반은 리모컨 버튼의 약 10%만 사용한다고 답했고, 채널·음량 선택은 중요도 10점, 전원은 9점으로 평가됨. 채널 선택은 시간당 168회 사용된다고 보고됐으며, 약 4분의 1은 리모컨이 RSI를 유발한다고 생각함.",
+          "evidence_utterance_indices": [
+            67,
+            68,
+            73,
+            74,
+            75,
+            83,
+            100,
+            101
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "버튼 최소화",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "마케팅 담당자는 버튼을 줄이고 자주 쓰는 채널·음량 버튼을 강조하며 쉽게 고장 나지 않게 해야 한다고 제안함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111
+          ]
+        },
+        {
+          "subtopic": "버튼 배열",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "스크롤 버튼이나 조이스틱 대신 고령층에 익숙한 기본 버튼 배열을 유지하는 방향으로 의견이 모임.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            466,
+            470,
+            473,
+            477,
+            478,
+            486,
+            487,
+            488,
+            492,
+            493,
+            494,
+            495,
+            498
+          ]
+        },
+        {
+          "subtopic": "경쟁력 우려",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "text": "마케팅 담당자는 TV 전용 리모컨은 원래 버튼 수가 적어 버튼을 더 줄여도 경쟁 우위가 크지 않으므로 이 부분에 과도한 시간을 쓰지 말자고 우려함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            505,
+            506,
+            507,
+            508,
+            516,
+            518,
+            519,
+            520,
+            525,
+            529,
+            531,
+            532,
+            535,
+            536,
+            537,
+            539,
+            541
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "분실 방지 거치대",
+      "discussion_background": [
+        {
+          "text": "응답자의 절반이 리모컨을 방 안에서 자주 잃어버린다고 답함.",
+          "evidence_utterance_indices": [
+            69,
+            112,
+            572
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "거치대 기능",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "거치대에 호출 버튼을 달아 리모컨에서 소리가 나게 하고, 리모컨을 꽂아 배터리를 충전하는 방안이 제안됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            116,
+            117,
+            118,
+            119,
+            120,
+            121
+          ]
+        },
+        {
+          "subtopic": "분실 알림",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "방 안에서 리모컨을 찾을 수 있도록 소리 신호를 내는 기능을 넣는 방향에 의견이 모임.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            569,
+            570,
+            572,
+            574,
+            575,
+            576,
+            590,
+            591
+          ]
+        },
+        {
+          "subtopic": "예산 조건",
+          "discussion_tag": "정보",
+          "decision_tag": null,
+          "text": "산업 디자이너는 거치대가 지나치게 화려하지 않고 리모컨을 작게 유지하면 예산에 맞을 수 있다고 봄.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            543,
+            544,
+            547,
+            553,
+            557,
+            558
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "확인 필요",
+          "text": "거치대와 충전 기능을 어느 범위로 구현할지, 예산에 맞는지 확인이 필요함.",
+          "evidence_utterance_indices": [
+            543,
+            544,
+            547,
+            598,
+            599
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "버튼 안내 LCD",
+      "discussion_background": [
+        {
+          "text": "설문 응답자의 34%는 새 리모컨 조작법을 익히기 어렵다고 답함.",
+          "evidence_utterance_indices": [
+            102
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "기능 안내",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "버튼을 누르면 해당 기능을 설명해 주는 작고 단순한 LCD를 두자는 제안이 나왔으며, 터치스크린이나 비싼 화면일 필요는 없다고 설명됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            604,
+            605,
+            606,
+            607,
+            608,
+            609,
+            611,
+            615,
+            617,
+            618,
+            623
+          ]
+        },
+        {
+          "subtopic": "시장별 언어",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "화면의 언어를 고려할 때 별도 언어 버튼을 두기보다 시장별로 제품을 맞춰 출시하는 방향이 낫다고 정리됨.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            679,
+            681,
+            683,
+            688,
+            690,
+            693,
+            694,
+            695
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "확인 필요",
+          "text": "버튼 안내용 LCD가 비용 조건에 맞는지 확인이 필요함.",
+          "evidence_utterance_indices": [
+            625,
+            626,
+            627,
+            628,
+            629
+          ]
+        }
+      ],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "회의 운영과 후속 업무",
+      "discussion_background": [],
+      "major_discussions": [
+        {
+          "subtopic": "회의록 업로드",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "회의록을 작성해 프로젝트 문서 폴더에 올리기로 함.",
+          "assignee": "프로젝트 매니저",
+          "due": null,
+          "evidence_utterance_indices": [
+            30,
+            700
+          ]
+        },
+        {
+          "subtopic": "부품 콘셉트",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "논의한 대상 그룹·요구 사항·트렌드를 반영해 부품 콘셉트를 준비하기로 함.",
+          "assignee": "산업 디자이너",
+          "due": "다음 회의",
+          "evidence_utterance_indices": [
+            701,
+            705
+          ]
+        },
+        {
+          "subtopic": "UI 콘셉트",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "논의한 대상 그룹·요구 사항·트렌드를 반영해 사용자 인터페이스 콘셉트를 준비하기로 함.",
+          "assignee": "UI 디자이너",
+          "due": "다음 회의",
+          "evidence_utterance_indices": [
+            702,
+            705
+          ]
+        },
+        {
+          "subtopic": "트렌드 관찰",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "논의한 대상 그룹과 요구 사항에 관련된 트렌드를 관찰하기로 함.",
+          "assignee": "UI 디자이너",
+          "due": "다음 회의",
+          "evidence_utterance_indices": [
+            703,
+            705
+          ]
+        },
+        {
+          "subtopic": "과제 지침",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "개인 코치가 과제별 구체적인 지침을 보내기로 함.",
+          "assignee": "개인 코치",
+          "due": null,
+          "evidence_utterance_indices": [
+            706
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    }
+  ]
+}
