@@ -93,11 +93,7 @@ jobs:
     name: EC2 배포
     needs: [changes, build-web, build-backend]
     # 빌드가 건너뛰어져도(skipped) 실패만 아니면 배포. 관련 폴더가 하나도 안 바뀌었으면 배포 안 함
-    if: >-
-      !failure() && !cancelled() &&
-      (needs.changes.outputs.web == 'true' ||
-       needs.changes.outputs.backend == 'true' ||
-       needs.changes.outputs.deploy == 'true')
+    if: ${{false}}
     runs-on: ubuntu-latest
     steps:
       - name: SSH로 접속해 최신 이미지 받아 재시작
