@@ -7,6 +7,8 @@
     ■ 안건별 상세     안건 제목 / 논의 배경 / 주요 논의 (N-M. 소주제) / 결정사항 / 미해결 이슈 / 다음 회의 후보 안건
     ■ 원본 전사문     근거 발화 번호를 누르면 해당 발화로 이동 (config.SHOW_TRANSCRIPT)
 
+- 회의 정보에는 메타데이터 '발화자'를 보여주지 않음 (JSON에만 저장)
+  원본 전사문에는 발화별 화자를 표시 이름으로 씀 ('홍길동(산업디자이너): 발화문')
 - 결정사항 = decision_tag '결정'이고 액션이 아닌 항목 (안건 목차 · 회의 결과의 결정 수와 같은 기준)
   주요 논의의 항목을 다시 보여주는 것이며 JSON에는 item_id 하나로만 저장됨
 - JSON만 있으면 LLM 없이 다시 만들 수 있음 (JSON을 직접 고친 뒤 md만 다시 생성)
@@ -38,18 +40,19 @@ def _alive(items: list[BaseItem]) -> list[BaseItem]:
 
 
 def participants_text(info) -> str:
-    # '프로젝트 매니저(A), 산업 디자이너(C) … (4명)' — 발화자 표기가 있으면 역할 옆에 붙임
-    label_of = {role: label for label, role in info.speakers.items()}
-    people = [f"{p}({label_of[p]})" if p in label_of else p for p in info.participants]
-    people += [f"{role}({label})" for label, role in info.speakers.items() if role not in info.participants]
-    return ", ".join(people) + (f" ({info.participant_count}명)" if info.participant_count else "")
+    # '한유리, 홍길동(산업디자이너) … (4명)' (metadata '참여자'의 표시 이름)
+    return ", ".join(p.display_name for p in info.participants) + (f" ({info.participant_count}명)" if info.participant_count else "")
+
+
+def speakers_text(info) -> str:
+    # '홍길동(산업디자이너) · 김철수' (metadata '발화자'의 표시 이름, none 모드면 빈 문자열)
+    shown = {p.user_id: p.display_name for p in info.participants}
+    return " · ".join(shown.get(user_id, user_id) for user_id in info.speaker_user_ids)
 
 
 def speaker_text(u) -> str:
-    # 'A(프로젝트 매니저)' / 역할을 모르면 'A'
-    if not u.speaker:
-        return ""
-    return f"{u.speaker}({u.speaker_role})" if u.speaker_role else u.speaker
+    # 표시 이름 / none 모드면 빈 문자열
+    return u.speaker_display or ""
 
 
 def _agenda_anchor(number: int) -> str:
@@ -106,12 +109,11 @@ def _section(label: str, lines: list[str], level: str = "####") -> list[str]:
 # ── 블록 ──────────────────────────────────────────────
 def render_meeting_info(s: MeetingSummary) -> list[str]:
     info, src = s.meeting_info, s.source_document
-    when = " ".join(x for x in (info.date, f"({info.duration})" if info.duration else None) if x)
-    people = participants_text(info)
+    # 메타데이터 '발화자'는 표시하지 않음 — JSON에만 저장
     return ["## ■ 회의 정보", "",
             f"- **제목**: {_esc(info.title) or '-'}",
-            f"- **일시**: {_esc(when) or '-'}",
-            f"- **참석자**: {_esc(people) or '-'}",
+            f"- **일시**: {_esc(info.date) or '-'}",
+            f"- **참석자**: {_esc(participants_text(info)) or '-'}",
             f"- **원본 문서**: `{Path(src.input_path).name}` (발화 {src.utterance_count}개)"]
 
 
@@ -162,16 +164,17 @@ def render_agenda(a) -> list[str]:
 
 def render_agenda_details(s: MeetingSummary) -> list[str]:
     lines = ["## ■ 안건별 상세"]
-    for a in s.agendas:
+    for a in s.active_agendas():
         lines += render_agenda(a)
     return lines
 
 
 def render_transcript(s: MeetingSummary) -> list[str]:
     # 줄마다 앵커 → 근거 발화 링크로 이동 / 줄 끝 공백 두 칸 = 줄바꿈
+    # 원본 형식(inline · block · plain)과 관계없이 같은 형태: '[번호] 표시 이름: 발화문' / none 모드는 '[번호] 발화문'
     return ["## ■ 원본 전사문", ""] + [
         f'<a id="{_utt_anchor(u.utterance_index)}"></a>**\\[{u.utterance_index}\\]** '
-        + (f"{_esc(speaker_text(u))}: " if u.speaker else "") + _esc(u.text) + "  " for u in s.transcript]
+        + (f"{_esc(speaker_text(u))}: " if speaker_text(u) else "") + _esc(u.text) + "  " for u in s.transcript]
 
 
 def render_markdown(s: MeetingSummary) -> str:
@@ -179,7 +182,32 @@ def render_markdown(s: MeetingSummary) -> str:
     if cfg.SHOW_TRANSCRIPT:
         blocks.append(render_transcript(s))
     body = "\n\n---\n\n".join("\n".join(b) for b in blocks)
-    return f"# {_esc(s.meeting_info.title or s.meeting_id)} 회의록\n\n{body}\n"
+    banner = render_review_banner(s)
+    banner = "\n".join(banner) + "\n\n" if banner else ""
+    return f"# {_esc(s.meeting_info.title or s.meeting_id)} 회의록\n\n{banner}{body}\n"
+
+
+def review_issue_lines(s: MeetingSummary) -> list[str]:
+    # 해결되지 않은 검증 문제 → '[유형] 대상: 설명' (md · txt 공용, 이스케이프 전)
+    lines = []
+    for i in s.verification.remaining_issues():
+        target = ", ".join(i.item_ids) if cfg.SHOW_ITEM_ID and i.item_ids else None
+        if target is None and i.agenda_id and (a := next((a for a in s.agendas if a.agenda_id == i.agenda_id), None)):
+            target = f"안건{a.agenda_number}"
+        lines.append(f"[{i.issue_type}] {target + ': ' if target else ''}{i.description}")
+    return lines
+
+
+def render_review_banner(s: MeetingSummary) -> list[str]:
+    # 검증을 MAX_VERIFY_ROUNDS회 해도 통과하지 못한 경우만 상단 경고
+    v = s.verification
+    if v.status != "REVIEW_REQUIRED":
+        return []
+    lines = [f"> **{_esc(cfg.REVIEW_BANNER)}** — {_esc(v.message or '')}",
+             f"> 문제가 남은 항목에는 {_esc(cfg.REVIEW_MARK.strip())} 표시"]
+    if cfg.SHOW_REVIEW_REASONS:
+        lines += [">"] + [f"> - {_esc(line)}" for line in review_issue_lines(s)]
+    return lines
 
 
 # ── JSON → md ─────────────────────────────────────────
