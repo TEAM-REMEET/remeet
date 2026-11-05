@@ -1,6 +1,6 @@
 """왼쪽 패널: 회의록 원문 (검색 · 발화자 구분 · 근거 강조) / 발언 비율.
 
-발화자: 사람으로 인식된 화자는 이름, 모르는 화자(예: 화자 3)는 「미지정」.
+발화자: 사람으로 인식된 화자는 이름, 그 밖의 화자는 원문 표기 그대로 (화자 처리는 AI 쪽에서 함).
 """
 
 from __future__ import annotations
@@ -27,13 +27,12 @@ def _sync_query() -> None:
 
 
 def _speaker_html(s: AppState, m: Meeting, label: str, size: int = 28) -> tuple[str, str]:
-    """(아바타, 이름 html) — 사람을 모르면 회색 ? 아바타 + 「미지정」 글자 (화자 3 같은 이름은 보이지 않음)."""
+    """(아바타, 이름 html) — 사람으로 연결되지 않은 화자는 원문 표기 그대로."""
     pid = model.speaker_pid(s, m, label)
     if pid:
         p = sel.person(pid)
         return avatar(p.initial, size=size, host=pid == m.host), esc(p.name)
-    return (f'<span class="spk-unknown" style="width:{size}px;height:{size}px">?</span>',
-            '<span class="who-unknown">미지정</span>')  # 네모 없이 글자만
+    return avatar((label or " ")[:1], size=size), esc(label)
 
 
 def _paragraphs_html(s: AppState, m: Meeting, query: str) -> str:
@@ -56,10 +55,9 @@ def _paragraphs_html(s: AppState, m: Meeting, query: str) -> str:
 
 
 def _speaker_bar(s: AppState, m: Meeting) -> None:
-    """발화자: 이 회의에 나온 사람(발언 수) · 사람으로 인식되지 않은 화자는 모두 「미지정」 하나로."""
+    """발화자: 이 회의에 나온 사람(발언 수)."""
     chips = "".join(
-        f'<span class="spk-chip">{esc(sel.name_of(pid))}<span class="n">{n}</span></span>' if pid
-        else f'<span class="spk-chip unknown">미지정<span class="n">{n}</span></span>'
+        f'<span class="spk-chip">{esc(sel.name_of(pid))}<span class="n">{n}</span></span>'
         for pid, n in model.speakers(s, m)
     )
     with st.container(key="spk-bar", horizontal=True, vertical_alignment="center", gap="xsmall"):

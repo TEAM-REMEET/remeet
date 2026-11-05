@@ -56,7 +56,7 @@ meeting_note/
 │
 ├── views/                  # 페이지 (AppState.screen → 렌더 함수, views/__init__.py 의 ROUTES)
 │   ├── login.py, home.py, folder.py, delivery.py
-│   ├── shared_sent.py, shared_received.py, integrations.py, my_wiki.py
+│   ├── shared_sent.py, shared_received.py, integrations.py
 │   └── meeting/            # 회의 상세: header / raw_panel(원문) / insight_tabs(요약·안건·할 일·키워드·연관) / model
 │
 └── utils/                  # 범용 도우미 (날짜, 문자열·이스케이프, 클립보드·스크롤 스크립트)

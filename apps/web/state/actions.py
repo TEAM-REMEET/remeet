@@ -555,6 +555,27 @@ def pick_evidence(key: str, src: tuple[str, ...]) -> None:
         _set(highlight=list(src), highlight_key=key, left_tab="raw", raw_query="")
 
 
+def toggle_agenda_detail(mid: str, index: int) -> None:
+    """요약 탭 「안건별 상세」: 안건 하나 펼치기/접기."""
+    s = get_state()
+    k = f"{mid}:{index}"
+    _set(agenda_open=[x for x in s.agenda_open if x != k] if k in s.agenda_open else [*s.agenda_open, k])
+
+
+def set_all_agenda_details(mid: str, count: int, open_: bool) -> None:
+    s = get_state()
+    rest = [x for x in s.agenda_open if not x.startswith(f"{mid}:")]
+    _set(agenda_open=rest + ([f"{mid}:{i}" for i in range(count)] if open_ else []))
+
+
+def jump_to_agenda(mid: str, index: int) -> None:
+    """안건 목차 → 해당 안건 상세를 펼치고 그 자리로 스크롤."""
+    s = get_state()
+    k = f"{mid}:{index}"
+    _set(agenda_open=s.agenda_open if k in s.agenda_open else [*s.agenda_open, k],
+         agenda_jump=f"agd-{mid}-{index}", agenda_jump_n=s.agenda_jump_n + 1)
+
+
 def clear_highlight() -> None:
     _set(highlight=[], highlight_key="")
 
