@@ -1,5 +1,9 @@
 # 백엔드 서버 전용 의존성 (루트 pyproject.toml의 실험용 무거운 패키지는 제외)
-fastapi>=0.115
-uvicorn[standard]>=0.30
-langgraph>=0.2
-python-dotenv>=1.0
+fastapi>=0.162.0
+uvicorn[standard]>=0.54.0
+langgraph>=1.2.19
+neo4j>=6.4.1
+langchain-openai>=1.7.3
+openai>=3.35.1
+pydantic>=2.14.1
+python-dotenv>=1.2.4

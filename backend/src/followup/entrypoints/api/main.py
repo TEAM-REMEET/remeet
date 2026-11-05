@@ -9,12 +9,18 @@ API 문서: /api/docs
 
 from fastapi import FastAPI
 
+from followup.entrypoints.api.recommend_routes import router as recommend_router
+from followup.entrypoints.api.summary_routes import router as summary_router
+
 app = FastAPI(
     title="RE:MEET API",
     docs_url="/api/docs",
     redoc_url=None,
     openapi_url="/api/openapi.json",
 )
+
+app.include_router(summary_router)
+app.include_router(recommend_router)
 
 
 @app.get("/api/health")
