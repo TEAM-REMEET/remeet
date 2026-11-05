@@ -3,25 +3,36 @@
 실행 (ontology 폴더에서, load.py 적재 후):
     uv run python scripts/recommend_agent.py            # 담당자 미결정 + 추천 없는 액션아이템
     uv run python scripts/recommend_agent.py --force    # 이미 추천된 건도 다시 (pending만 교체)
+    uv run python scripts/recommend_agent.py --reset --effort low   # 추천 결과를 전부 지우고 처음부터
     uv run python scripts/recommend_agent.py --self-check   # 가짜 DB·LLM으로 그래프 전체 검사
+실행이 끝나면 비용을 data/reports/cost_log.jsonl에 쌓고 data/reports/recommend_report/<label>/<YYYYMMDD-HHMM>.md 리포트를 만든다.
+.env에 LANGSMITH_TRACING=true면 LangGraph 실행 전체(노드·LLM 호출)가 LangSmith에 'recommend_agent'로 남는다.
 
 [run 그래프]  load_items ──Send(액션아이템별 병렬)──▶ process_item ──▶ END
-[item 그래프] fetch_context → interpret(LLM) → validate → score → explain(LLM) → save
-              (validate 실패 시 interpret 1회 재시도, 그래도 실패하면 give_up → save)
+[item 그래프] fetch_context → interpret(LLM) → validate → score → save
+              (validate 실패 시 interpret 1회 재시도. 그래도 스킬을 못 고르면 borrow: 이름이 가장 비슷한
+               다른 액션아이템의 REQUIRES_SKILL을 빌려 score로, 빌릴 것도 없으면 give_up → save)
+회의록에 담당자가 명시됐거나(meeting_explicit) 선행 업무 담당자가 있는(history) 액션아이템은
+load.py가 ASSIGNED_TO로 바로 이어서 여기 대상에서 빠진다.
 
-점수·순위는 Python 함수로 계산한다 (점수 계산 섹션). LLM은 해석과 설명만 한다.
-ASSIGNED_TO는 만들지 않고 RECOMMENDED_FOR(status='pending')만 남긴다.
+점수·순위는 Python 함수로 계산한다 (점수 계산 섹션). LLM은 요구 스킬 해석만 한다.
+Neo4j에 남기는 것 (파일은 만들지 않는다):
+  (Person)-[:RECOMMENDED_FOR {status:'pending', score, skill_score, role_team_score, workload_score, rank}]->(ActionItem)
+      직급별 Top-2에게만. rank = 같은 직급 안 순서(1|2)
+  (ActionItem)-[:REQUIRES_SKILL {importance, reason, source:'llm'|'similar_item'}]->(Skill)
+  (ActionItem)-[:BORROWED_SKILLS_FROM]->(ActionItem)   유사 업무에서 스킬을 빌렸을 때만
+  ActionItem.recommend_status = 'no_candidate'|'skill_unclear' (추천 엣지가 없는 경우만), ActionItem.missing_skills
+조회·LLM 실패는 아무것도 쓰지 않는다 → 추천 엣지·recommend_status가 없으니 다음 실행 때 자동으로 다시 처리된다.
 """
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from difflib import SequenceMatcher
 import json
 import operator
 import os
 from pathlib import Path
 import sys
-import tempfile
 from types import SimpleNamespace
 from typing import Annotated, TypedDict
 import uuid
@@ -33,26 +44,26 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent  # = ontology/
 
 INTERPRET_PROMPT = (SCRIPT_DIR / "prompts/interpret.md").read_text(encoding="utf-8")
-EXPLAIN_PROMPT = (SCRIPT_DIR / "prompts/explain.md").read_text(encoding="utf-8")
-RESULTS_DIR = ROOT / "data" / "recommend_results"
 
 POSITIONS = ("senior", "mid", "junior")
 PER_POSITION = 2
-MAIN_SLOTS = {"senior": 1, "mid": 1, "junior": 2}
 MAX_INTERPRET = 2  # 최초 1회 + 재시도 1회
 DISCLAIMER = "추천은 후보 제안이며, 최종 배정은 관리자가 검토 후 결정합니다."
+LLM_MODEL, LLM_EFFORT = "gpt-6-luna", "high"
+LLM_RETRIES = 3  # 일시적 오류(네트워크·rate limit)는 여기서 해결. 그래도 실패하면 저장 안 하고 다음 실행에 다시
 
 # ─────────────────────────────── 고정 쿼리 (LLM은 ID만 넘김) ───────────────────────────────
 
 CATALOG_QUERIES = {
-    "skills": "MATCH (s:Skill) RETURN s.skill_id AS id, s.name AS name ORDER BY id",
+    "skills": "MATCH (s:Skill) RETURN s.skill_id AS id, s.name AS name, s.description AS description ORDER BY id",
     "roles": "MATCH (r:Role) RETURN r.role_id AS id, r.name AS name ORDER BY id",
     "teams": "MATCH (t:Team) RETURN t.team_id AS id, t.name AS name ORDER BY id",
     "users": "MATCH (p:Person) RETURN p.user_id AS id, p.name AS name ORDER BY id",
 }
 ITEMS_QUERY = """
     MATCH (ai:ActionItem {status: 'open'})
-    WHERE NOT ()-[:ASSIGNED_TO]->(ai) AND ($force OR NOT ()-[:RECOMMENDED_FOR]->(ai))
+    WHERE NOT ()-[:ASSIGNED_TO]->(ai)
+      AND ($force OR (NOT ()-[:RECOMMENDED_FOR]->(ai) AND ai.recommend_status IS NULL))
     RETURN ai.action_item_id AS id ORDER BY id"""
 # 액션아이템은 소주제(Discussion)에서 나온다: Meeting → Agenda → Discussion → ActionItem
 # discussion은 그 소주제의 논의 문장들이라, 이 할 일이 어떤 논의 끝에 나왔는지 LLM이 볼 수 있다.
@@ -62,7 +73,7 @@ CONTEXT_QUERY = """
     OPTIONAL MATCH (ag)-[:ABOUT]->(tp:Topic)
     OPTIONAL MATCH (p:Person)-[:ATTENDED]->(mt)
     RETURN ai.action_item_id AS action_item_id, ai.description AS title, ai.due AS due,
-        ai.owner_raw AS owner_raw, mt.meeting_id AS meeting_id, mt.title AS meeting_title,
+        ai.owner_raw AS owner_raw, ai.status AS status, mt.meeting_id AS meeting_id, mt.title AS meeting_title,
         toString(mt.held_at) AS held_at, pr.project_id AS project_id, pr.name AS project_name,
         ag.title AS agenda_title, ag.background AS background, ag.decisions AS decisions,
         dn.title AS discussion_title, dn.discussions AS discussion,
@@ -76,27 +87,58 @@ CANDIDATE_QUERY = """
     WITH p, [x IN collect(DISTINCT t {id: t.team_id, .name}) WHERE x IS NOT NULL] AS teams,
             [x IN collect(DISTINCT r {id: r.role_id, .name}) WHERE x IS NOT NULL] AS roles
     OPTIONAL MATCH (p)-[h:HAS_SKILL]->(s:Skill)
-    WITH p, teams, roles, [x IN collect({id: s.skill_id, name: s.name, level: h.level,
-                                         verification_status: h.verification_status})
+    WITH p, teams, roles, [x IN collect({id: s.skill_id, name: s.name, level: h.level})
                            WHERE x.id IS NOT NULL] AS skills
     OPTIONAL MATCH (p)-[a:ASSIGNED_TO]->(ai:ActionItem)
     WHERE coalesce(a.work_status, 'in_work') <> 'work_completed' AND coalesce(ai.status, 'open') <> 'completed'
-    OPTIONAL MATCH (mt:Meeting)-[:HAS_AGENDA]->(:Agenda)-[:HAS_DISCUSSION]->(:Discussion)-[:PRODUCED]->(ai)
     RETURN p.user_id AS user_id, p.name AS name, p.is_active AS is_active, p.position AS position,
-        teams, roles, skills, count(DISTINCT ai) AS open_tasks, collect(mt.meeting_id) AS open_task_meetings
+        teams, roles, skills, count(DISTINCT ai) AS open_tasks
     ORDER BY user_id"""
-# 다시 추천하면 pending만 지운다. 관리자가 처리한(accepted/rejected) 추천은 남는다.
+# 다시 추천하면 pending만 지운다. 관리자가 처리한(selected/not_selected) 추천은 남는다.
 CLEAR_PENDING = """MATCH ()-[r:RECOMMENDED_FOR {status: 'pending'}]->(:ActionItem {action_item_id: $id})
     DELETE r"""
+# recommend_status / missing_skills에 null을 넣으면 속성이 지워진다 (추천 성공 = 엣지만 남음)
 SAVE_RECOMMENDATIONS = """
     MATCH (a:ActionItem {action_item_id: $id})
-    SET a.recommend_status = $status, a.recommend_run_id = $run_id,
-        a.recommended_at = datetime(), a.recommend_warnings = $warnings
+    SET a.recommend_status = $status, a.missing_skills = $missing
     WITH a
     UNWIND $rows AS row
     MATCH (p:Person {user_id: row.user_id})
     CREATE (p)-[r:RECOMMENDED_FOR]->(a)
-    SET r = row, r.run_id = $run_id, r.status = 'pending', r.created_at = datetime()"""
+    SET r.status = 'pending', r.score = row.score, r.skill_score = row.skill_score,
+        r.role_team_score = row.role_team_score, r.workload_score = row.workload_score, r.rank = row.rank"""
+# LLM이 만든 것만 교체한다. 나중에 사람이 고친 REQUIRES_SKILL(source가 다른 것)은 건드리지 않는다.
+SAVE_REQUIRED_SKILLS = """
+    MATCH (a:ActionItem {action_item_id: $id})
+    OPTIONAL MATCH (a)-[old:REQUIRES_SKILL]->(:Skill) WHERE old.source IN ['llm', 'similar_item']
+    DELETE old
+    WITH DISTINCT a
+    OPTIONAL MATCH (a)-[b:BORROWED_SKILLS_FROM]->(:ActionItem)
+    DELETE b
+    WITH DISTINCT a
+    OPTIONAL MATCH (src:ActionItem {action_item_id: $borrowed_from})
+    FOREACH (_ IN CASE WHEN src IS NULL THEN [] ELSE [1] END | CREATE (a)-[:BORROWED_SKILLS_FROM]->(src))
+    WITH DISTINCT a
+    UNWIND $skills AS sk
+    MATCH (s:Skill {skill_id: sk.skill_id})
+    CREATE (a)-[r:REQUIRES_SKILL]->(s)
+    SET r.importance = sk.importance, r.reason = sk.reason, r.source = $source"""
+# --reset: 이 스크립트가 만든 것(추천 엣지 전부, LLM·빌려 온 REQUIRES_SKILL, 추천 속성)을 지운다. ASSIGNED_TO는 남는다.
+# REMOVE의 recommend_run_id 이후는 예전 구조에서 쓰던 속성이라 남아 있으면 같이 지운다.
+RESET_QUERIES = [
+    "MATCH ()-[r:RECOMMENDED_FOR]->(:ActionItem) DELETE r",
+    "MATCH (:ActionItem)-[r:REQUIRES_SKILL]->(:Skill) WHERE r.source IN ['llm', 'similar_item'] DELETE r",
+    "MATCH (:ActionItem)-[r:BORROWED_SKILLS_FROM]->(:ActionItem) DELETE r",
+    """MATCH (a:ActionItem)
+    REMOVE a.recommend_status, a.missing_skills, a.recommend_run_id, a.recommended_at, a.recommend_warnings,
+           a.skill_source, a.skill_source_item_id, a.recommend_notices""",
+]
+# 빌려 온 스킬(similar_item)은 다시 빌려주지 않는다. 추측이 꼬리를 물고 퍼지지 않게.
+SIMILAR_SKILLS_QUERY = """
+    MATCH (other:ActionItem)-[r:REQUIRES_SKILL]->(s:Skill)
+    WHERE other.action_item_id <> $id AND r.source <> 'similar_item'
+    RETURN other.action_item_id AS id, other.description AS description,
+        collect({skill_id: s.skill_id, importance: r.importance, reason: r.reason}) AS required_skills"""
 
 
 # ─────────────────────────────── 점수 계산 (junbyong/graph_rag_test/3_recommend_assignee.py에서 그대로 옮김) ───────────────────────────────
@@ -262,9 +304,7 @@ def rank_candidates(spec: dict, candidates: list[dict]) -> tuple[list[dict], lis
             "open_tasks": c["open_tasks"],
             "skill_evidence": [
                 {"skill_id": skill_id, "importance": IMPORTANCE_KO[imp],
-                 "weight": round(weights[skill_id], 3), "level": levels.get(skill_id, 0),
-                 "verification_status": next((s["verification_status"] for s in c["skills"]
-                                              if s["id"] == skill_id), None)}
+                 "weight": round(weights[skill_id], 3), "level": levels.get(skill_id, 0)}
                 for skill_id, imp in ((s["skill_id"], s["importance"]) for s in spec["required_skills"])
             ],
         })
@@ -284,9 +324,6 @@ def data_warnings(spec: dict, candidates: list[dict], workload_present: bool) ->
         warnings.append("DB에 ASSIGNED_TO 업무 데이터가 없어 모든 후보의 업무량 점수가 100점으로 같습니다.")
     if not has_role_team_target(spec):
         warnings.append("목표 역할·팀이 명시되지 않아 역할·팀 점수를 생략하고 (스킬×0.5+업무량×0.3)÷0.8로 계산했습니다.")
-    if any(sk.get("verification_status") == "inferred_unverified"
-           for c in candidates for sk in c["skills"]):
-        warnings.append("스킬 숙련도는 검증 전 테스트 추론치입니다.")
     return warnings
 
 
@@ -301,130 +338,90 @@ def response_text(response) -> str:
 
 # ─────────────────────────────── 순수 함수 ───────────────────────────────
 
-def select_by_position(ranked: list[dict]) -> tuple[dict, list[dict], list[str]]:
-    """전체 순위에서 직급별 상위 2명, 메인은 senior 1 / mid 1 / junior 2. 부족한 직급은 비워 둔다."""
+def first_tier(attendee_ids: set[str], candidates: list[dict]) -> set[str]:
+    """1차 풀: 회의 참석자 + 참석자와 같은 팀 사람."""
+    teams = {t["id"] for c in candidates if c["user_id"] in attendee_ids for t in c["teams"]}
+    return attendee_ids | {c["user_id"] for c in candidates if teams & {t["id"] for t in c["teams"]}}
+
+
+def select_by_position(ranked: list[dict]) -> tuple[dict, list[str]]:
+    """직급별 2명. 1차 풀(tier 1)에서 순위대로 먼저 채우고, 모자란 자리만 팀 외(tier 2)에서 채운다.
+    그래도 부족한 직급은 비워 둔다. 리스트 순서가 직급 안 순위(rank)다."""
     by_position = {p: [] for p in POSITIONS}
-    warnings = []
-    for r in ranked:
+    warnings, outside = [], set()
+    for r in sorted(ranked, key=lambda r: r["tier"]):  # 안정 정렬이라 tier 안에서는 순위가 유지된다
         if r.get("position") not in by_position:
             warnings.append(f"{r['name']}({r['user_id']})의 직급 '{r.get('position')}'을(를) 알 수 없어 선발에서 뺐습니다.")
         elif len(by_position[r["position"]]) < PER_POSITION:
             by_position[r["position"]].append(r["user_id"])
+            if r["tier"] == 2:
+                outside.add(r["position"])
     for p, ids in by_position.items():
+        if p in outside:
+            warnings.append(f"{p} 직급은 회의 참석자·같은 팀 후보가 부족해 팀 외 후보로 채웠습니다.")
         if len(ids) < PER_POSITION:
             warnings.append(f"{p} 직급 후보가 {len(ids)}명입니다 (목표 {PER_POSITION}명). 다른 직급으로 채우지 않았습니다.")
-    main = [{"slot": p, "user_id": uid} for p in POSITIONS for uid in by_position[p][:MAIN_SLOTS[p]]]
-    return by_position, [{"order": i, **m} for i, m in enumerate(main, 1)], warnings
+    return by_position, warnings
 
 
-def scores_of(spec: dict, c: dict) -> dict:
-    """rank_candidates와 같은 계산. 제외된 사람에게는 참고용 점수로만 쓴다."""
-    team_ids, role_ids = {t["id"] for t in c["teams"]}, {r["id"] for r in c["roles"]}
-    skill = skill_score(skill_weights(spec["required_skills"]),
-                            {s["id"]: s["level"] or 0 for s in c["skills"]})
-    role_team = role_team_score(spec, team_ids, role_ids)
-    workload = workload_score(c["open_tasks"])
-    return {"total": round(total_score(skill, role_team, workload), 1), "skill": round(skill, 1),
-            "role_team": role_team, "workload": round(workload, 1)}
+def most_similar(title: str, rows: list[dict]) -> tuple[dict, float] | None:
+    """이름(description)이 가장 비슷한 액션아이템. 같으면 ID 순."""
+    # shortcut: 글자 단위 유사도(difflib)라 뜻이 같아도 표현이 다르면 못 잡는다. 정확도가 부족하면 임베딩/LLM 비교로 바꾼다.
+    scored = [(SequenceMatcher(None, title, r["description"] or "").ratio(), r)
+              for r in sorted(rows, key=lambda r: r["id"])]
+    if not scored:
+        return None
+    ratio, best = max(scored, key=lambda x: x[0])  # max는 같은 값이면 앞(ID가 작은 쪽)을 고른다
+    return best, ratio
+
+
+def llm_context(ctx: dict) -> dict:
+    """LLM에는 ActionItem과 그 위 Discussion, Agenda의 정해진 속성만 준다."""
+    return {
+        "action_item": {"action_item_id": ctx["action_item_id"], "description": ctx.get("title"),
+                        "due": ctx.get("due"), "owner_raw": ctx.get("owner_raw"), "status": ctx.get("status")},
+        "discussion": {"title": ctx.get("discussion_title"), "discussions": ctx.get("discussion") or []},
+        "agenda": {"title": ctx.get("agenda_title"), "background": ctx.get("background") or []},
+    }
+
+
+LLM_CALLS: list[dict] = []  # cost.summarize가 읽는 모양 {model, usage}. Send 병렬에서도 list.append는 안전하다
 
 
 def call_json(llm, prompt: str, payload: dict) -> dict:
     response = llm.bind(response_format={"type": "json_object"}).invoke(
         [("system", prompt), ("human", json.dumps(payload, ensure_ascii=False, default=str))])
+    meta = getattr(response, "response_metadata", None) or {}
+    if meta.get("token_usage"):  # OpenAI 원본 usage (cached·reasoning 토큰 포함)
+        LLM_CALLS.append({"model": meta.get("model_name"), "usage": meta["token_usage"]})
     out = json.loads(response_text(response))
     if not isinstance(out, dict):
         raise ValueError("LLM 결과가 JSON 객체가 아닙니다.")
     return out
 
 
-def build_output(s: dict) -> dict:
-    """담당자 지정 모달용 JSON. 화면은 점수를 계산하지 않고 이 값을 그대로 쓴다."""
-    ctx = s.get("context") or {"action_item_id": s["item_id"]}
-    spec, catalog = s.get("spec"), s["catalog"]
-    by_position, main = s.get("by_position") or {}, s.get("main") or []
+def build_result(s: dict) -> dict:
+    """save가 Neo4j에 쓰는 값. RECOMMENDED_FOR는 직급별 Top-2에게만, rank는 직급 안 순서."""
+    spec = s.get("spec")
     ranked = {r["user_id"]: r for r in s.get("ranked") or []}
-    excluded = {e["user_id"]: e["reason"] for e in s.get("excluded") or []}
-    explained = s.get("explained") or {}
-    pool = {uid: (p, i) for p, ids in by_position.items() for i, uid in enumerate(ids, 1)}
-    main_slot = {m["user_id"]: m["slot"] for m in main}
-    required = {x["skill_id"] for x in spec["required_skills"]} if spec else set()
-    attendees = {a["user_id"] for a in ctx.get("attendees", [])}
-    skill_names = {k["id"]: k["name"] for k in catalog["skills"]}
-
-    people, teams = {}, {}
-    for c in s.get("candidates") or []:
-        uid = c["user_id"]
-        scores = scores_of(spec, c) if spec else None
-        position, rank_in_position = pool.get(uid, (None, None))
-        people[uid] = {
-            "user_id": uid, "name": c["name"],
-            "team": next(({"team_id": t["id"], "name": t["name"]} for t in c["teams"]), None),
-            "teams": [{"team_id": t["id"], "name": t["name"]} for t in c["teams"]],
-            "role": next(({"role_id": r["id"], "name": r["name"]} for r in c["roles"]), None),
-            "position": c.get("position"), "is_attendee": uid in attendees,
-            "eligible": uid in ranked, "excluded_reason": excluded.get(uid),
-            "recommendation": {"is_main": uid in main_slot, "slot": main_slot.get(uid),
-                               "rank_in_position": rank_in_position,
-                               "overall_rank": ranked[uid]["rank"] if uid in ranked else None},
-            "scores": scores,
-            "open_tasks": {"total": c["open_tasks"],
-                           "from_this_meeting": c.get("open_task_meetings", []).count(ctx.get("meeting_id"))},
-            "skills": [{"skill_id": k["id"], "name": k["name"], "level": k["level"],
-                        "matched": k["id"] in required and (k["level"] or 0) > 0,
-                        "verification_status": k.get("verification_status")} for k in c["skills"]],
-            "reason": explained.get("reasons", {}).get(uid),
-        }
-        for t in c["teams"]:
-            teams.setdefault(t["id"], {"team_id": t["id"], "name": t["name"], "member_ids": []})["member_ids"].append(uid)
-    for t in teams.values():  # 추천 후보 → 지정 가능 → 총점 순
-        t["member_ids"].sort(key=lambda u: (u not in pool, u not in ranked,
-                                            -((people[u]["scores"] or {}).get("total") or 0), u))
-
+    rows = [{"user_id": uid, "position": position, "rank": i, "score": ranked[uid]["total"],
+             "skill_score": ranked[uid]["skill_score"], "role_team_score": ranked[uid]["role_team_score"],
+             "workload_score": ranked[uid]["workload_score"]}
+            for position, ids in (s.get("by_position") or {}).items() for i, uid in enumerate(ids, 1)]
     return {
-        "action_item": {k: v for k, v in ctx.items() if k != "attendees"},
-        "recommendation": {
-            "run_id": s["run_id"], "status": s["status"],
-            "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-            "selection_rule": "by_position",
-            "explanation": explained.get("explanation") or DISCLAIMER,
-            "manager_checks": explained.get("manager_checks", []),
-            "warnings": s.get("warnings", []),
-        },
-        "score_axes": [
-            {"key": "skill", "label": "스킬", "weight": WEIGHTS["skill"], "applied": bool(spec)},
-            {"key": "role_team", "label": "부서·역할", "weight": WEIGHTS["role_team"],
-             "applied": bool(spec) and has_role_team_target(spec)},
-            {"key": "workload", "label": "업무 여유", "weight": WEIGHTS["workload"], "applied": bool(spec)},
-        ],
-        "required_skills": [{**x, "name": skill_names.get(x["skill_id"])} for x in spec["required_skills"]] if spec else [],
-        "unmatched_skills": spec["unmatched_skills"] if spec else [],
-        "main_recommendations": main,
-        "candidates_by_position": by_position,
-        "teams": sorted(teams.values(), key=lambda t: t["team_id"]),
-        "people": people,
+        "action_item_id": s["item_id"], "status": s["status"],
+        "required_skills": [{k: x[k] for k in ("skill_id", "importance", "reason")}
+                            for x in spec["required_skills"]] if spec else [],
+        "skill_source": s.get("skill_source", "llm"), "borrowed_from": s.get("borrowed_from"),
+        "missing_skills": s.get("missing_skills") or None,
+        "recommendations": rows, "warnings": s.get("warnings", []),
     }
-
-
-def recommend_rows(output: dict) -> list[dict]:
-    """RECOMMENDED_FOR 속성. 후보 풀(최대 6명)만."""
-    rows = []
-    for position, ids in output["candidates_by_position"].items():
-        for uid in ids:
-            p = output["people"][uid]
-            rows.append({"user_id": uid, "position": position,
-                         "rank_in_position": p["recommendation"]["rank_in_position"],
-                         "is_main": p["recommendation"]["is_main"], "slot": p["recommendation"]["slot"],
-                         "total": p["scores"]["total"], "skill_score": p["scores"]["skill"],
-                         "role_team_score": p["scores"]["role_team"], "workload_score": p["scores"]["workload"],
-                         "open_tasks": p["open_tasks"]["total"], "reason": p["reason"]})
-    return rows
 
 
 # ─────────────────────────────── 그래프 ───────────────────────────────
 
 class ItemState(TypedDict, total=False):
     item_id: str
-    run_id: str
     catalog: dict
     context: dict
     candidates: list[dict]
@@ -435,26 +432,25 @@ class ItemState(TypedDict, total=False):
     failure_kind: str | None  # 'llm' | 'skill'
     spec: dict
     ranked: list[dict]
-    excluded: list[dict]
     by_position: dict
-    main: list[dict]
-    explained: dict
-    warnings: list[str]
-    status: str
+    warnings: list[str]  # 터미널 출력용 (저장하지 않음)
+    missing_skills: list[str]  # LLM이 필요하다고 봤지만 스킬 목록에 없는 기술
+    skill_source: str  # 'llm' | 'similar_item'
+    borrowed_from: str | None
+    status: str  # 'pending_manager_review' | 'no_candidate' | 'skill_unclear' | 'error'(저장 안 함)
     output: dict
 
 
 class RunState(TypedDict, total=False):
-    run_id: str
     force: bool
     catalog: dict
     item_ids: list[str]
     results: Annotated[list[dict], operator.add]
 
 
-def build_graph(tools: dict, llm, out_dir: Path):
+def build_graph(tools: dict, llm):
     """tools: catalog(), items(force), context(id), candidates() -> (rows, workload_present),
-    save(id, run_id, status, warnings, rows). 주입받아서 같은 그래프가 Neo4j와 가짜(--self-check)에서 돈다."""
+    similar(id) -> REQUIRES_SKILL이 있는 다른 액션아이템들, save(result). 주입받아서 같은 그래프가 Neo4j와 가짜(--self-check)에서 돈다."""
 
     def fetch_context(s: ItemState) -> dict:
         try:
@@ -464,13 +460,16 @@ def build_graph(tools: dict, llm, out_dir: Path):
             return {"status": "error", "warnings": [f"맥락·후보 조회 실패 ({type(exc).__name__})"]}
         if context is None:
             return {"status": "error", "warnings": ["액션아이템의 회의 맥락을 찾지 못했습니다."]}
+        # 명시된 담당자는 load.py가 이미 ASSIGNED_TO로 이었다. 여기 남은 owner_raw는 참석자와 못 맞춘 것.
+        warnings = ([f"회의록 담당자 '{context['owner_raw']}'를 참석자와 맞추지 못해 추천을 실행했습니다."]
+                    if context.get("owner_raw") else [])
         return {"context": context, "candidates": candidates, "workload_present": workload_present,
-                "attempts": 0, "warnings": []}
+                "attempts": 0, "warnings": warnings}
 
     def interpret(s: ItemState) -> dict:
         previous = ({"spec": s.get("raw_spec"), "failure": s["failure"]}
                     if s.get("failure_kind") == "skill" else None)
-        payload = {"action_item": s["context"], "catalog": s["catalog"], "previous_attempt": previous}
+        payload = {**llm_context(s["context"]), "catalog": s["catalog"], "previous_attempt": previous}
         try:
             raw = call_json(llm, INTERPRET_PROMPT, payload)
         except Exception as exc:
@@ -485,73 +484,81 @@ def build_graph(tools: dict, llm, out_dir: Path):
             spec, warnings = normalize_spec(s["raw_spec"], s["catalog"])
         except ValueError as exc:
             return {"failure": str(exc), "failure_kind": "skill"}
-        return {"spec": spec, "warnings": s["warnings"] + warnings}
+        return {"spec": spec, "missing_skills": spec["unmatched_skills"], "warnings": s["warnings"] + warnings}
 
     def give_up(s: ItemState) -> dict:
         status = "error" if s.get("failure_kind") == "llm" else "skill_unclear"
         return {"status": status, "warnings": s["warnings"] + [f"{s['failure']} (해석 {s['attempts']}회 시도)"]}
 
-    def score(s: ItemState) -> dict:
-        ranked, excluded = rank_candidates(s["spec"], s["candidates"])
-        position = {c["user_id"]: c.get("position") for c in s["candidates"]}
-        ranked = [{**r, "position": position[r["user_id"]]} for r in ranked]
-        by_position, main, warnings = select_by_position(ranked)
-        warnings = s["warnings"] + data_warnings(s["spec"], s["candidates"], s["workload_present"]) + warnings
-        return {"ranked": ranked, "excluded": excluded, "by_position": by_position, "main": main,
-                "warnings": warnings, "status": "pending_manager_review" if main else "no_candidate"}
-
-    def explain(s: ItemState) -> dict:
-        pool = {uid for ids in s["by_position"].values() for uid in ids}
-        main = {m["user_id"]: m["slot"] for m in s["main"]}
-        payload = {"action_item": s["context"], "spec": s["spec"], "warnings": s["warnings"],
-                   "candidates": [{**r, "is_main": r["user_id"] in main, "slot": main.get(r["user_id"])}
-                                  for r in s["ranked"] if r["user_id"] in pool],
-                   "excluded": s["excluded"]}
+    def borrow(s: ItemState) -> dict:
+        """스킬 목록에서 맞는 스킬을 못 골랐을 때: 이름이 가장 비슷한 액션아이템의 요구 스킬을 빌린다."""
+        missing = [m for m in (s.get("raw_spec") or {}).get("unmatched_skills") or [] if isinstance(m, str)]
         try:
-            out = call_json(llm, EXPLAIN_PROMPT, payload)
+            found = most_similar(s["context"].get("title") or "", tools["similar"](s["item_id"]))
         except Exception as exc:
-            return {"warnings": s["warnings"] + [f"LLM 설명 생성 실패 ({type(exc).__name__}). 점수 결과만 저장했습니다."]}
-        reasons = out.get("reasons") if isinstance(out.get("reasons"), dict) else {}
-        checks = out.get("manager_checks") if isinstance(out.get("manager_checks"), list) else []
-        return {"explained": {
-            "explanation": str(out.get("explanation") or DISCLAIMER),
-            "manager_checks": [str(c) for c in checks],
-            "reasons": {uid: str(text) for uid, text in reasons.items() if uid in pool},  # 후보 풀 밖은 버림
-        }}
+            return {"missing_skills": missing,
+                    "warnings": s["warnings"] + [f"유사 업무 조회 실패 ({type(exc).__name__})"]}
+        if found is None:
+            return {"missing_skills": missing}
+        best, ratio = found
+        try:
+            spec, warnings = normalize_spec({**(s.get("raw_spec") or {}), "required_skills": best["required_skills"]},
+                                            s["catalog"])
+        except ValueError:
+            return {"missing_skills": missing}
+        return {"spec": spec, "missing_skills": missing, "skill_source": "similar_item", "borrowed_from": best["id"],
+                "warnings": s["warnings"] + warnings
+                            + [f"유사 업무 '{best['description']}'의 요구 스킬을 빌림 (이름 유사도 {ratio:.2f})"]}
+
+    def score(s: ItemState) -> dict:
+        ranked, _ = rank_candidates(s["spec"], s["candidates"])
+        position = {c["user_id"]: c.get("position") for c in s["candidates"]}
+        tier1 = first_tier({a["user_id"] for a in s["context"].get("attendees", [])}, s["candidates"])
+        ranked = [{**r, "position": position[r["user_id"]], "tier": 1 if r["user_id"] in tier1 else 2}
+                  for r in ranked]
+        by_position, warnings = select_by_position(ranked)
+        warnings = s["warnings"] + data_warnings(s["spec"], s["candidates"], s["workload_present"]) + warnings
+        picked = any(by_position.values())
+        return {"ranked": ranked, "by_position": by_position, "warnings": warnings,
+                "status": "pending_manager_review" if picked else "no_candidate"}
 
     def save(s: ItemState) -> dict:
-        output = build_output(s)
-        warnings = output["recommendation"]["warnings"]
+        result = build_result(s)
+        if s["status"] == "error":  # 판단을 못 한 것이라 아무것도 쓰지 않는다 → 다음 실행에 다시 처리
+            print(f"  [error] {s['item_id']}  저장 안 함, 다음 실행에 다시 시도: {'; '.join(result['warnings'])}")
+            return {"output": result}
         try:
-            tools["save"](s["item_id"], s["run_id"], s["status"], warnings, recommend_rows(output))
+            tools["save"](result)
         except Exception as exc:
-            warnings.append(f"Neo4j 저장 실패 ({type(exc).__name__}). JSON 파일만 저장했습니다.")
-        try:
-            out_dir.mkdir(parents=True, exist_ok=True)
-            (out_dir / f"{s['item_id']}.json").write_text(
-                json.dumps(output, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
-        except OSError as exc:  # 결과는 run_{run_id}.json에도 남는다
-            print(f"[{s['item_id']}] 결과 JSON 저장 실패 ({type(exc).__name__})", file=sys.stderr)
-        print(f"  [{s['status']}] {s['item_id']}  메인 {len(output['main_recommendations'])}명")
-        return {"output": output}
+            result["status"] = "error"
+            print(f"  [error] {s['item_id']}  Neo4j 저장 실패 ({type(exc).__name__})", file=sys.stderr)
+            return {"output": result}
+        print(f"  [{s['status']}] {s['item_id']}  추천 {len(result['recommendations'])}명")
+        for k in result["required_skills"]:
+            print(f"      요구 스킬 {k['skill_id']} ({IMPORTANCE_KO[k['importance']]}): {k['reason']}")
+        for w in result["warnings"]:
+            print(f"      ⚠️ {w}")
+        return {"output": result}
 
     def after_validate(s: ItemState) -> str:
         if s.get("spec"):
             return "score"
-        return "interpret" if s["attempts"] < MAX_INTERPRET else "give_up"
+        if s["attempts"] < MAX_INTERPRET:
+            return "interpret"
+        return "borrow" if s.get("failure_kind") == "skill" else "give_up"
 
     item = StateGraph(ItemState)
     for name, node in [("fetch_context", fetch_context), ("interpret", interpret), ("validate", validate),
-                       ("give_up", give_up), ("score", score), ("explain", explain), ("save", save)]:
+                       ("borrow", borrow), ("give_up", give_up), ("score", score), ("save", save)]:
         item.add_node(name, node)
     item.add_edge(START, "fetch_context")
     item.add_conditional_edges("fetch_context", lambda s: "save" if s.get("status") == "error" else "interpret",
                                ["save", "interpret"])
     item.add_edge("interpret", "validate")
-    item.add_conditional_edges("validate", after_validate, ["score", "interpret", "give_up"])
+    item.add_conditional_edges("validate", after_validate, ["score", "interpret", "borrow", "give_up"])
+    item.add_conditional_edges("borrow", lambda s: "score" if s.get("spec") else "give_up", ["score", "give_up"])
     item.add_edge("give_up", "save")
-    item.add_conditional_edges("score", lambda s: "explain" if s["main"] else "save", ["explain", "save"])
-    item.add_edge("explain", "save")
+    item.add_edge("score", "save")
     item.add_edge("save", END)
     item_graph = item.compile()
 
@@ -559,17 +566,14 @@ def build_graph(tools: dict, llm, out_dir: Path):
         return {"catalog": tools["catalog"](), "item_ids": tools["items"](s.get("force", False))}
 
     def fan_out(s: RunState):
-        return [Send("process_item", {"item_id": i, "run_id": s["run_id"], "catalog": s["catalog"]})
-                for i in s["item_ids"]] or END
+        return [Send("process_item", {"item_id": i, "catalog": s["catalog"]}) for i in s["item_ids"]] or END
 
     def process_item(payload: dict) -> dict:
         try:
             return {"results": [item_graph.invoke(payload)["output"]]}
-        except Exception as exc:  # 한 건이 실패해도 다른 건에 영향 없게
+        except Exception as exc:  # 한 건이 실패해도 다른 건에 영향 없게. 저장 안 했으니 다음 실행에 다시
             print(f"[{payload['item_id']}] 처리 실패 ({type(exc).__name__})", file=sys.stderr)
-            return {"results": [{"action_item": {"action_item_id": payload["item_id"]},
-                                 "recommendation": {"run_id": payload["run_id"], "status": "error",
-                                                    "warnings": [f"처리 실패 ({type(exc).__name__})"]}}]}
+            return {"results": [{"action_item_id": payload["item_id"], "status": "error"}]}
 
     run = StateGraph(RunState)
     run.add_node("load_items", load_items)
@@ -580,14 +584,10 @@ def build_graph(tools: dict, llm, out_dir: Path):
     return run.compile()
 
 
-def run_once(graph, force: bool, out_dir: Path) -> list[dict]:
-    run_id = uuid.uuid4().hex[:12]
-    results = graph.invoke({"run_id": run_id, "force": force}).get("results") or []
-    if results:  # 미결정 액션아이템이 없으면 아무것도 쓰지 않는다
-        (out_dir / f"run_{run_id}.json").write_text(
-            json.dumps({"run_id": run_id, "items": results}, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8")
-    return results
+def run_once(graph, force: bool, metadata: dict | None = None) -> list[dict]:
+    config = {"run_name": "recommend_agent",
+              "metadata": {"recommend_run_id": uuid.uuid4().hex[:12], **(metadata or {})}}
+    return graph.invoke({"force": force}, config).get("results") or []
 
 
 # ─────────────────────────────── Neo4j ───────────────────────────────
@@ -597,14 +597,18 @@ def neo4j_tools(driver) -> dict:
     def q(query, **params):
         return driver.execute_query(query, params, routing_="r").records
 
-    def save_tx(tx, item_id, run_id, status, warnings, rows):
+    def save_tx(tx, result):
+        item_id = result["action_item_id"]
         tx.run(CLEAR_PENDING, id=item_id).consume()
-        tx.run(SAVE_RECOMMENDATIONS, id=item_id, run_id=run_id, status=status,
-               warnings=warnings, rows=rows).consume()
+        status = None if result["status"] == "pending_manager_review" else result["status"]  # 성공은 엣지로 알 수 있다
+        tx.run(SAVE_RECOMMENDATIONS, id=item_id, status=status, missing=result["missing_skills"],
+               rows=result["recommendations"]).consume()
+        tx.run(SAVE_REQUIRED_SKILLS, id=item_id, source=result["skill_source"],
+               borrowed_from=result["borrowed_from"], skills=result["required_skills"]).consume()
 
-    def save(*args):
+    def save(result):
         with driver.session() as session:
-            session.execute_write(save_tx, *args)
+            session.execute_write(save_tx, result)
 
     def context(item_id):
         records = q(CONTEXT_QUERY, id=item_id)
@@ -614,6 +618,7 @@ def neo4j_tools(driver) -> dict:
         "catalog": lambda: {name: [r.data() for r in q(query)] for name, query in CATALOG_QUERIES.items()},
         "items": lambda force: [r["id"] for r in q(ITEMS_QUERY, force=force)],
         "context": context,
+        "similar": lambda item_id: [r.data() for r in q(SIMILAR_SKILLS_QUERY, id=item_id)],
         "candidates": lambda: ([r.data() for r in q(CANDIDATE_QUERY)],
                                q(WORKLOAD_DATA_QUERY)[0]["present"]),
         "save": save,
@@ -627,71 +632,90 @@ class FakeLLM:
 
     def __init__(self, interpret_answers: dict):
         self.answers = interpret_answers
+        self.payloads = []
 
     def bind(self, **_):
         return self
 
     def invoke(self, messages):
         payload = json.loads(messages[1][1])
-        if "previous_attempt" in payload:
-            answer = self.answers[payload["action_item"]["action_item_id"]].pop(0)
-        else:
-            answer = {"explanation": "설명", "manager_checks": ["확인"], "reasons": {"s1": "스킬 일치", "zz": "풀 밖"}}
+        self.payloads.append(payload)
+        answer = self.answers[payload["action_item"]["action_item_id"]].pop(0)
         if isinstance(answer, Exception):
             raise answer
         return SimpleNamespace(content=json.dumps(answer))
 
 
 def self_check() -> None:
-    def person(uid, position, level, active=True):
+    def person(uid, position, level, active=True, team="t1"):
         return {"user_id": uid, "name": uid, "is_active": active, "position": position,
-                "teams": [{"id": "t1", "name": "팀1"}], "roles": [], "open_tasks": 0, "open_task_meetings": [],
-                "skills": [{"id": "A", "name": "A", "level": level, "verification_status": None}]}
+                "teams": [{"id": team, "name": team}], "roles": [], "open_tasks": 0,
+                "skills": [{"id": "A", "name": "A", "level": level}]}
     people = [person("s1", "senior", 4), person("s2", "senior", 2), person("s3", "senior", 3),
-              person("m1", "mid", 3), person("j1", "junior", 1), person("x1", None, 4), person("off", "mid", 4, False)]
-    people[3]["open_tasks"], people[3]["open_task_meetings"] = 1, ["m-1"]
-    good = {"required_skills": [{"skill_id": "A", "importance": "core"}]}
-    bad = {"required_skills": [{"skill_id": "NOPE", "importance": "core"}]}
-    llm = FakeLLM({"ok": [bad, good], "unclear": [bad, bad], "llmfail": [RuntimeError(), RuntimeError()],
+              person("m1", "mid", 3), person("j1", "junior", 1), person("x1", None, 4), person("off", "mid", 4, False),
+              person("o1", "senior", 4, team="t2"), person("o2", "junior", 4, team="t2"),  # 참석자(s1) 팀 밖
+              person("z1", "mid", 0)]
+    people[3]["open_tasks"] = 1
+    good = {"required_skills": [{"skill_id": "A", "importance": "core", "reason": "핵심"}],
+            "unmatched_skills": ["엑셀"]}
+    bad = {"required_skills": [{"skill_id": "NOPE", "importance": "core"}], "unmatched_skills": ["3D 프린팅"]}
+    llm = FakeLLM({"ok": [bad, good], "unclear": [bad, bad], "borrow": [bad, bad],
+                   "llmfail": [RuntimeError(), RuntimeError()],
                    "nocand": [{"required_skills": [{"skill_id": "B", "importance": "core"}]}]})
     saved = {}
     tools = {
         "catalog": lambda: {"skills": [{"id": "A", "name": "A"}, {"id": "B", "name": "B"}], "roles": [], "teams": [],
                             "users": [{"id": p["user_id"]} for p in people]},
-        "items": lambda force: ["ok", "unclear", "llmfail", "nocand", "gone"],
+        "items": lambda force: ["ok", "unclear", "borrow", "llmfail", "nocand", "gone"],
         "context": lambda i: None if i == "gone" else {"action_item_id": i, "meeting_id": "m-1",
+                                                      "title": "할 일", "discussion_title": "소주제",
+                                                      "discussion": ["논의"], "agenda_title": "안건",
+                                                      "background": ["배경"], "decisions": ["결정"],
                                                       "attendees": [{"user_id": "s1", "name": "s1"}]},
         "candidates": lambda: (people, True),
-        "save": lambda i, run_id, status, warnings, rows: saved.update({i: (status, rows)}),
+        "similar": lambda i: [] if i == "unclear" else [
+            {"id": "far", "description": "예산 정리", "required_skills": [{"skill_id": "B", "importance": "core"}]},
+            {"id": "near", "description": "할 일 정리", "required_skills": [{"skill_id": "A", "importance": "core",
+                                                                          "reason": "빌림"}]}],
+        "save": lambda out: saved.update({out["action_item_id"]: out}),
     }
-    with tempfile.TemporaryDirectory() as tmp:
-        out_dir = Path(tmp)
-        results = run_once(build_graph(tools, llm, out_dir), False, out_dir)
-        files = sorted(p.name for p in out_dir.iterdir())
-    by_id = {r["action_item"]["action_item_id"]: r for r in results}
-    status = {k: r["recommendation"]["status"] for k, r in by_id.items()}
-    assert status == {"ok": "pending_manager_review", "unclear": "skill_unclear", "llmfail": "error",
-                      "nocand": "no_candidate", "gone": "error"}, status
-    ok = by_id["ok"]
-    assert ok["candidates_by_position"] == {"senior": ["s1", "s3"], "mid": ["m1"], "junior": ["j1"]}
-    assert [(m["slot"], m["user_id"]) for m in ok["main_recommendations"]] == [
-        ("senior", "s1"), ("mid", "m1"), ("junior", "j1")], "부족한 직급은 다른 직급으로 채우지 않는다"
-    warns = " ".join(ok["recommendation"]["warnings"])
-    assert "mid 직급 후보가 1명" in warns and "junior 직급 후보가 1명" in warns and "x1(x1)" in warns
-    assert ok["people"]["off"]["eligible"] is False and ok["people"]["off"]["excluded_reason"] == "비활성 팀원"
-    assert ok["people"]["s1"]["is_attendee"] and ok["people"]["m1"]["open_tasks"] == {"total": 1, "from_this_meeting": 1}
-    assert ok["people"]["s1"]["reason"] == "스킬 일치" and "zz" not in ok["people"]
-    assert ok["teams"][0]["member_ids"][:4] == ["s1", "s3", "m1", "j1"], ok["teams"][0]["member_ids"]
-    rows = saved["ok"][1]
-    assert len(rows) == 4 and sum(r["is_main"] for r in rows) == 3 and saved["nocand"] == ("no_candidate", [])
-    assert files == sorted(["ok.json", "unclear.json", "llmfail.json", "nocand.json", "gone.json",
-                            f"run_{ok['recommendation']['run_id']}.json"]), files
+    results = run_once(build_graph(tools, llm), False)
+    status = {r["action_item_id"]: r["status"] for r in results}
+    assert status == {"ok": "pending_manager_review", "unclear": "skill_unclear", "borrow": "pending_manager_review",
+                      "llmfail": "error", "nocand": "no_candidate", "gone": "error"}, status
+    # 실패한 건은 아무것도 저장하지 않는다 → 다음 실행에 다시 처리
+    assert set(saved) == {"ok", "unclear", "borrow", "nocand"}, saved.keys()
 
-    empty = dict(tools, items=lambda force: [])
-    with tempfile.TemporaryDirectory() as tmp:
-        assert run_once(build_graph(empty, llm, Path(tmp)), False, Path(tmp)) == [] and not any(Path(tmp).iterdir())
-    print("self-check 통과: 재시도 후 성공, skill_unclear / error / no_candidate, 직급별 선발, 빈 슬롯 유지, "
-          "후보 풀 밖 reason 제거, 미결정 없으면 아무것도 안 씀.")
+    ok = saved["ok"]
+    # o1은 s3보다 점수가 높지만 팀 밖이라 senior 자리를 못 얻는다. o2는 j1보다 점수가 높지만 모자란 자리만 채우므로 2등
+    rows = [(r["position"], r["user_id"], r["rank"]) for r in ok["recommendations"]]
+    assert rows == [("senior", "s1", 1), ("senior", "s3", 2), ("mid", "m1", 1), ("junior", "j1", 1),
+                    ("junior", "o2", 2)], rows
+    by_user = {r["user_id"]: r for r in ok["recommendations"]}
+    assert by_user["o2"]["score"] > by_user["j1"]["score"], "rank는 점수 순이 아니라 tier 우선"
+    assert set(by_user["s1"]) == {"user_id", "position", "rank", "score", "skill_score", "role_team_score",
+                                  "workload_score"}
+    assert ok["required_skills"] == [{"skill_id": "A", "importance": "core", "reason": "핵심"}]
+    assert ok["skill_source"] == "llm" and ok["borrowed_from"] is None and ok["missing_skills"] == ["엑셀"]
+    warns = " ".join(ok["warnings"])
+    assert "mid 직급 후보가 1명" in warns and "junior 직급은 회의 참석자·같은 팀 후보가 부족해" in warns
+    assert "x1(x1)" in warns and "off" not in by_user and "z1" not in by_user
+
+    borrowed = saved["borrow"]
+    assert borrowed["skill_source"] == "similar_item" and borrowed["borrowed_from"] == "near"
+    assert borrowed["missing_skills"] == ["3D 프린팅"] and borrowed["required_skills"][0]["reason"] == "빌림"
+    unclear = saved["unclear"]
+    assert unclear["required_skills"] == [] and unclear["recommendations"] == [] and unclear["borrowed_from"] is None
+    assert unclear["missing_skills"] == ["3D 프린팅"]
+    assert saved["nocand"]["recommendations"] == [] and saved["nocand"]["missing_skills"] is None
+    assert most_similar("x", []) is None
+
+    sent = llm.payloads[0]
+    assert set(sent) == {"action_item", "discussion", "agenda", "catalog", "previous_attempt"}, sent.keys()
+    assert sent["agenda"] == {"title": "안건", "background": ["배경"]} and "decisions" not in json.dumps(sent)
+    assert run_once(build_graph(dict(tools, items=lambda force: []), llm), False) == []
+    print("self-check 통과: 재시도 후 성공, 유사 업무 스킬 차용, skill_unclear / no_candidate, 실패 건은 저장 안 함, "
+          "직급별 Top-2와 rank(tier 우선), 빈 슬롯 유지, 비활성·스킬 없음 제외.")
 
 
 # ─────────────────────────────── main ───────────────────────────────
@@ -699,7 +723,12 @@ def self_check() -> None:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="담당자 추천 에이전트 (LangGraph)")
     parser.add_argument("--force", action="store_true", help="이미 RECOMMENDED_FOR가 있는 건도 다시 추천")
-    parser.add_argument("--model", help="미지정 시 OPENAI_MODEL / LLM_MODEL, 없으면 gpt-5.5")
+    parser.add_argument("--reset", action="store_true",
+                        help="실행 전에 추천 결과(RECOMMENDED_FOR 전부 - 관리자가 처리한 것 포함, LLM이 만든 REQUIRES_SKILL, "
+                             "ActionItem의 추천 속성)를 지우고 처음부터 추천한다. ASSIGNED_TO는 남는다. 되돌릴 수 없다.")
+    parser.add_argument("--model", default=LLM_MODEL)
+    parser.add_argument("--effort", default=LLM_EFFORT, choices=["none", "low", "medium", "high", "xhigh"])
+    parser.add_argument("--label", help="리포트 이름 (기본: 모델 끝 이름_effort, 예: luna_high)")
     parser.add_argument("--self-check", action="store_true", help="가짜 DB·LLM으로 그래프 전체 검사")
     args = parser.parse_args(argv)
     if args.self_check:
@@ -714,18 +743,37 @@ def main(argv=None) -> int:
     if not os.getenv("OPENAI_API_KEY") or not os.getenv("NEO4J_PASSWORD"):
         print("OPENAI_API_KEY와 NEO4J_PASSWORD 설정이 필요합니다.", file=sys.stderr)
         return 1
-    llm = ChatOpenAI(model=args.model or os.getenv("OPENAI_MODEL") or os.getenv("LLM_MODEL") or "gpt-5.5",
-                     timeout=60, max_retries=1)
+    from langchain_core.tracers.langchain import wait_for_all_tracers
+    import cost
+    import recommend_report
+    llm = ChatOpenAI(model=args.model, reasoning_effort=args.effort, timeout=120, max_retries=LLM_RETRIES)
+    print(f"LLM: {args.model} (reasoning_effort={args.effort})")
+    label = args.label or f"{args.model.split('-')[-1]}_{args.effort}"  # gpt-6-luna + high → luna_high
+    status, results = "failed", []
     with GraphDatabase.driver(os.getenv("NEO4J_URI", "bolt://localhost:7687"),
                               auth=(os.getenv("NEO4J_USERNAME", "neo4j"), os.environ["NEO4J_PASSWORD"]),
                               notifications_disabled_classifications=["UNRECOGNIZED"]) as driver:
         driver.verify_connectivity()
-        RESULTS_DIR.mkdir(exist_ok=True)
-        results = run_once(build_graph(neo4j_tools(driver), llm, RESULTS_DIR), args.force, RESULTS_DIR)
+        if args.reset:
+            for query in RESET_QUERIES:
+                driver.execute_query(query)
+            args.force = True
+            print("[초기화] 추천 결과 삭제")
+        try:
+            results = run_once(build_graph(neo4j_tools(driver), llm), args.force,
+                               {"model": args.model, "effort": args.effort})
+            status = "ok"
+        finally:
+            # 중간에 실패해도 그때까지 나간 호출 비용은 기록한다 (load.py와 같은 규칙)
+            if LLM_CALLS:
+                cost.record_run(Path(__file__).name, args.model, args.effort, LLM_CALLS, status)
+            wait_for_all_tracers()  # LangSmith로 보낼 trace가 남은 채로 끝나지 않게
+        print(f"리포트: {recommend_report.write(driver, label)}")
     if not results:
         print("담당자 미결정 액션아이템이 없습니다.")
         return 0
-    print(f"\n{len(results)}건 처리, 결과: {RESULTS_DIR}")
+    failed = sum(r["status"] == "error" for r in results)
+    print(f"\n{len(results)}건 처리" + (f" (실패 {failed}건은 저장 안 함, 다음 실행에 다시 시도)" if failed else ""))
     print("※ " + DISCLAIMER)
     return 0
 
