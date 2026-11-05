@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 import config as cfg
-from render_md import markdown_from_json, participants_text, speaker_text
+from render_md import markdown_from_json, participants_text, review_issue_lines, speaker_text, speakers_text
 from schemas import BaseItem, DiscussionItem, MeetingSummary
 
 
@@ -34,13 +34,12 @@ def format_item(item: BaseItem) -> str:
 
 def render_meeting_info(s: MeetingSummary) -> list[str]:
     info, i = s.meeting_info, cfg.INDENT
-    when = " ".join(x for x in (info.date, f"({info.duration})" if info.duration else None) if x)
-    people = participants_text(info)
+    people, speakers = participants_text(info), speakers_text(info)
     src = s.source_document
     return ["■ 회의 정보",
             f"{i}제목: {info.title or '-'}",
-            f"{i}일시: {when or '-'}",
-            f"{i}참석자: {people or '-'}",
+            f"{i}일시: {info.date or '-'}",
+            f"{i}참석자: {people or '-'}"] + ([f"{i}발화자: {speakers}"] if speakers else []) + [
             f"{i}원본 문서: {Path(src.input_path).name} (발화 {src.utterance_count}개)"]
 
 
@@ -69,7 +68,7 @@ def render_meeting_results(s: MeetingSummary) -> list[str]:
 def render_agenda_details(s: MeetingSummary) -> list[str]:
     i = cfg.INDENT
     lines = ["■ 안건별 상세"]
-    for a in s.agendas:
+    for a in s.active_agendas():
         lines += ["", f"{i}{a.agenda_number}. {a.agenda_title}"]
         background = _alive(a.discussion_background)
         if background or not cfg.HIDE_EMPTY:
@@ -96,12 +95,25 @@ def render_agenda_details(s: MeetingSummary) -> list[str]:
 
 
 def render_transcript(s: MeetingSummary) -> list[str]:
-    return ["■ 원본 전사문"] + [f"{cfg.INDENT}[{u.utterance_index}] " + (f"{speaker_text(u)}: " if u.speaker else "") + u.text
+    return ["■ 원본 전사문"] + [f"{cfg.INDENT}[{u.utterance_index}] " + (f"{speaker_text(u)}: " if speaker_text(u) else "") + u.text
                               for u in s.transcript]
 
 
+def render_review_banner(s: MeetingSummary) -> list[str]:
+    # 검증을 MAX_VERIFY_ROUNDS회 해도 통과하지 못한 경우만 상단 경고
+    v = s.verification
+    if v.status != "REVIEW_REQUIRED":
+        return []
+    lines = [f"{cfg.REVIEW_BANNER} — {v.message or ''}", f"{cfg.INDENT}문제가 남은 항목에는 {cfg.REVIEW_MARK.strip()} 표시"]
+    if cfg.SHOW_REVIEW_REASONS:
+        lines += [f"{cfg.INDENT}- {line}" for line in review_issue_lines(s)]
+    return lines
+
+
 def render_minutes(s: MeetingSummary) -> str:
-    blocks = [render_meeting_info(s), render_agenda_index(s), render_meeting_results(s), render_agenda_details(s)]
+    blocks = [render_review_banner(s), render_meeting_info(s), render_agenda_index(s), render_meeting_results(s),
+              render_agenda_details(s)]
+    blocks = [b for b in blocks if b]
     if cfg.SHOW_TRANSCRIPT:
         blocks.append(render_transcript(s))
     return "\n\n".join("\n".join(b) for b in blocks) + "\n"

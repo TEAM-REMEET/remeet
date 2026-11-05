@@ -106,3 +106,40 @@ def focus_input(label: str, nonce: str = "") -> None:
         " el.focus(); var n = el.value.length; try { el.setSelectionRange(n, n); } catch (_) {}"
         " }, 120);"
     )
+
+
+def keep_scroll(selector: str) -> None:
+    """selector 스크롤 상자가 다시 그려져도(버튼을 누를 때마다) 맨 위로 튀지 않고 보던 위치를 지키게.
+
+    한 번만 설치되는 스크립트: 스크롤할 때 위치를 기억해 두고, 상자가 바뀌어 위치가 0으로 돌아가면 즉시 되돌림.
+    """
+    target = json.dumps(selector)
+    _run(
+        "(function () { window.__keepScroll = window.__keepScroll || {};"
+        f" var sel = {target}; if (window.__keepScroll[sel]) return; window.__keepScroll[sel] = {{top: 0}};"
+        " var mem = window.__keepScroll[sel];"
+        " document.addEventListener('scroll', function (e) {"
+        "  var t = e.target; if (t && t.matches && t.matches(sel)) mem.top = t.scrollTop; }, true);"
+        " new MutationObserver(function () {"
+        "  var box = document.querySelector(sel);"
+        "  if (!box) { mem.top = 0; return; }"
+        "  if (mem.top > 0 && Math.abs(box.scrollTop - mem.top) > 2) box.scrollTop = mem.top;"
+        " }).observe(document.body, {childList: true, subtree: true}); })();"
+    )
+
+
+def hide_page_not_found() -> None:
+    """Streamlit 자체 「Page not found」 창을 닫음 (대신 우리 404 화면을 보여 줌). 몇 초 동안만 지켜봄.
+
+    숨기기만 하면 뒤 화면이 눌리지 않아서, 창의 닫기(Close) 버튼을 눌러 닫습니다.
+    """
+    _run(
+        "(function () { var stop = Date.now() + 5000;"
+        " function hide() { document.querySelectorAll('[data-testid=stDialog]').forEach(function (d) {"
+        "   if ((d.innerText || '').indexOf('Page not found') !== 0) return;"
+        "   d.style.visibility = 'hidden';"
+        "   var btn = d.querySelector('button[aria-label=Close]') || d.querySelector('button[aria-label=Dismiss]');"
+        "   if (btn) btn.click(); }); }"
+        " hide(); var ob = new MutationObserver(function () { hide(); if (Date.now() > stop) ob.disconnect(); });"
+        " ob.observe(document.body, {childList: true, subtree: true}); })();"
+    )

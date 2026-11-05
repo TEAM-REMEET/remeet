@@ -1,7 +1,31 @@
+"""URL 라우팅.
+
+화면마다 고유한 URL 경로를 둡니다. (Streamlit 은 경로에 '/' 를 못 쓰고, 쿼리 파라미터는 브라우저
+뒤로가기 기록과 잘 맞지 않아서 회의·폴더 id 를 경로 안에 넣습니다.)
+
+  /                              새 회의록 (로그인 후 첫 화면)
+  /meetings                      회의록 (월간·주간·일반 고르기)
+  /meetings-weekly               회의 종류 (weekly | monthly | normal) → 주차별 / 프로젝트별 고르기
+  /meetings-weekly-period        주차별(월별·일별) 묶음 목록
+  /meetings-weekly-period-w1027  한 주(달·날)의 회의 목록
+  /meetings-weekly-project       프로젝트(폴더) 목록
+  /search                        검색 결과 (회의록 첫 화면 검색칸에서)
+  /folder-rel                    폴더
+  /meeting-m1                    회의 상세
+  /deliver-m1                    결과 전달
+  /shared-sent · /shared-received
+  /admin-cost · /admin-members · /admin-mcp   관리자 화면 (관리자 계정만)
+
+흐름
+  1) 버튼 콜백(actions.go)이 request(screen) 로 '이동 예약'
+  2) app.py 가 실행 초반에 apply_pending() → st.switch_page() 로 URL 변경 (브라우저 기록에 남음)
+  3) 매 실행마다 sync_from_url() 로 URL → 상태 반영 (브라우저 뒤로가기·앞으로가기도 여기서 처리)
+"""
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from urllib.parse import urlparse
 from dataclasses import dataclass
 
 import streamlit as st
@@ -10,6 +34,7 @@ from data import repository as repo
 from state import archive
 from state import selectors as sel
 from state.store import AppState, Delivery, get_state
+from utils.browser import hide_page_not_found
 
 # 고정 경로 화면: screen → (url_path, 탭 제목)
 STATIC = {
@@ -17,7 +42,9 @@ STATIC = {
     "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),
     "recv": ("shared-received", "공유 받은 회의"),
-    "mcp": ("integrations", "외부 연동"),
+    "adm_cost": ("admin-cost", "비용 관리"),
+    "adm_members": ("admin-members", "구성원 관리"),
+    "adm_mcp": ("admin-mcp", "MCP 관리"),
 }
 
 # 화면이 바뀌면 지우는 일시적인 값
@@ -84,6 +111,22 @@ def build_pages(renderers: dict[str, Callable[[], None]]) -> dict[str, st.Page]:
     return pages
 
 
+def check_not_found(pages: dict[str, st.Page]) -> None:
+    """세션을 시작할 때 한 번: 들어온 주소가 우리 화면이 아니면 not_found 에 그 주소를 적어 둠.
+
+    Streamlit 은 모르는 주소면 첫 화면으로 바꿔 보여 주면서 「Page not found」 창을 띄우는데,
+    그 창은 숨기고(utils/browser.hide_page_not_found) 우리 404 화면을 보여 줍니다.
+    """
+    s = get_state()
+    if s.url_checked:
+        return
+    s.url_checked = True
+    path = urlparse(st.context.url or "").path.strip("/")
+    if path and path not in pages:
+        s.not_found = "/" + path
+        hide_page_not_found()
+
+
 def request(screen: str) -> None:
     """콜백 안에서 호출: 다음 실행 때 해당 화면으로 URL 이동."""
     s = get_state()
@@ -126,9 +169,22 @@ def sync_from_url(current_path: str) -> str:
         if s.last_route is not None and not s.nav_by_action:
             for k, v in _TRANSIENT.items():
                 setattr(s, k, list(v) if isinstance(v, list) else v)
+        if s.last_route is not None:
+            s.not_found = ""  # 다른 화면으로 옮기면 404 끝
         s.last_route = route.path
         # 사이드바 트리: 지금 화면까지 가는 폴더들을 펼침 (사용자가 접은 건 다음 이동 전까지 그대로)
         node, ancestors = archive.node_of_location(s)
         s.tree_open |= set(ancestors) | ({node} if node else set())
     s.nav_by_action = False
     return route.screen
+
+
+def guard(current_path: str) -> None:
+    """계정별로 볼 수 있는 화면만: 관리자는 관리자 화면만, 사용자는 관리자 화면 X(404)."""
+    s = get_state()
+    on_admin = s.screen in sel.ADMIN_SCREENS
+    if s.is_admin and not on_admin and not s.not_found:
+        request("adm_cost")
+        st.rerun()
+    elif not s.is_admin and on_admin:
+        s.not_found = "/" + current_path

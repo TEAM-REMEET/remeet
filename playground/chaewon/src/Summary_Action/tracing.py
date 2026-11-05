@@ -5,11 +5,15 @@
 - langsmith 패키지가 없어도 동작 (traceable · wrap_client가 원래 함수 · 클라이언트를 그대로 반환)
 
 기록되는 것 (LangSmith 프로젝트: .env LANGSMITH_PROJECT, 없으면 config.LANGSMITH_PROJECT)
-    summary_action_run          회의 하나 전체 (입력 경로 → 요약 결과 요약 정보)
-      ├ load_input              입력 JSON → 메타데이터 · 전사문
-      ├ generate_summary        시스템 · 사용자 프롬프트 → LLM 출력 (ID 없음)
-      │   └ call_structured → OpenAI 호출 (프롬프트 · 응답 · 토큰 — wrap_openai)
-      └ build_summary           LLM 출력 → 근거 검사 · ID 부여 결과 (후처리 기록 포함)
+    summary_action_{회의 ID}    LangGraph 실행 1회 (graph.py) — 노드별 입력 · 출력 상태
+      ├ load_input              전사문 txt → 메타데이터 · 발화
+      ├ generate                └ call_structured → OpenAI 호출 (프롬프트 · 응답 · 토큰 — wrap_openai)
+      ├ postprocess             └ build_summary (근거 검사 · ID 부여)
+      ├ verify (1~3회)          └ call_structured → OpenAI 호출
+      ├ revise (0~2회)          └ call_structured → OpenAI 호출
+      ├ mark_review             (검증 미통과 시)
+      ├ finalize
+      └ save
 """
 
 import os

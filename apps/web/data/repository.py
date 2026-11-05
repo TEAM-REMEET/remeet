@@ -7,12 +7,14 @@ data/mock/*.json 을 한 번만 읽어서 모델 객체로 돌려줍니다. 실�
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from functools import lru_cache
 from pathlib import Path
 
+import streamlit as st
+
 from data.models import (
     Agenda,
-    AiToggle,
     BriefItem,
     Candidate,
     Discussion,
@@ -20,6 +22,7 @@ from data.models import (
     Folder,
     GraphEdge,
     GraphNode,
+    ExportFailure,
     IntegrationTool,
     KnowledgeGraph,
     Meeting,
@@ -48,11 +51,22 @@ def _evidence(items: list[dict]) -> tuple[Evidence, ...]:
 
 # ---------------------------------------------------------------- people
 @lru_cache(maxsize=1)
-def people() -> dict[str, Person]:
+def _base_people() -> dict[str, Person]:
     return {k: Person(k, v["short"], v["name"], v["team"]) for k, v in _load("people").items()}
 
 
-@lru_cache(maxsize=1)
+def people() -> dict[str, Person]:
+    """조직 구성원. 관리자가 바꾼 팀 · 새로 추가한 구성원까지 반영 (사용자 화면의 사람 고르기에 바로 보임)."""
+    org = _server()["org"]
+    out = {}
+    for k, p in _base_people().items():
+        team = org["edits"].get(k, {}).get("team", p.team)
+        out[k] = Person(k, p.short, p.name, team) if team != p.team else p
+    for k, a in org["added"].items():
+        out[k] = Person(k, a["name"][1:] or a["name"], a["name"], org["edits"].get(k, {}).get("team", a["team"]))
+    return {k: p for k, p in out.items() if org["status"].get(k) != "removed"}
+
+
 def people_by_short_name() -> dict[str, str]:
     """원문 화자 이름(서윤) → 사람 id(yun)."""
     return {p.short: p.id for p in people().values()}
@@ -94,8 +108,28 @@ def _meeting(d: dict) -> Meeting:
 
 
 @lru_cache(maxsize=1)
-def meetings() -> dict[str, Meeting]:
+def _base_meetings() -> dict[str, Meeting]:
     return {d["id"]: _meeting(d) for d in _load("meetings")}
+
+
+def _session_meetings() -> dict[str, Meeting]:
+    """이 화면(세션)에서 「회의록 생성 완료」로 새로 만든 회의 (AppState.new_meetings). 목업이라 새로고침하면 사라짐."""
+    try:
+        import streamlit as st
+
+        state = st.session_state.get("_app_state")
+    except Exception:  # noqa: BLE001 - Streamlit 밖(테스트 등)에서 부를 때
+        return {}
+    out = dict(getattr(state, "new_meetings", {}) or {})
+    preview = getattr(state, "preview_meeting", None)  # 새 회의록 3단계 미리보기 (폴더에는 넣지 않음)
+    if preview is not None:
+        out[preview.id] = preview
+    return out
+
+
+def meetings() -> dict[str, Meeting]:
+    """목업 회의 + 새로 만든 회의."""
+    return {**_base_meetings(), **_session_meetings()}
 
 
 def meeting(mid: str) -> Meeting:
@@ -184,31 +218,171 @@ def integrations() -> dict:
         "organization": raw["organization"],
         "tools": [IntegrationTool(**t) for t in raw["tools"]],
         "initial_status": raw["initial_status"],
-        "ai_toggles": [AiToggle(**t) for t in raw["ai_toggles"]],
-        "ai_default_folders": raw["ai_default_folders"],
-        # 도구 id → 인증 만료로 보내지 못한 회의 id (예: Jira 이슈 생성 실패)
-        "failed_exports": raw.get("failed_exports", {}),
+        # 외부 도구로 보내다 실패한 기록 (단순 이슈 · 기술 이슈)
+        "failures": [ExportFailure(**f) for f in raw.get("failures", [])],
     }
+
+
+# ---------------------------------------------------------------- 서버 공용 저장소 (데모)
+# 사용자 · 관리자 화면이 함께 보는 값. 실제 서비스에서는 서버 DB 에 있는 값이에요.
+# 데모 서버(streamlit)를 다시 켜면 처음 상태로 돌아가요.
+@st.cache_resource
+def _server() -> dict:
+    return {
+        "tools": dict(integrations()["initial_status"]),  # 조직의 외부 도구 연결 상태 (관리자가 바꿈)
+        "failures": {},  # 결과 전달 중에 새로 생긴 전송 실패
+        "resolved": set(),  # 관리자가 다시 보내 해결한 실패 id
+        "notis": {"admin": [], "user": []},  # 새로 생긴 알림 (관리자 · 사용자)
+        # 조직 (관리자 · 구성원 관리): 새로 추가한 구성원 · 팀/직무 변경 · 권한 · 상태
+        "org": {"added": {}, "edits": {}, "roles": {}, "status": {}},
+        "org_version": 0,  # 조직이 바뀔 때마다 +1 → 열려 있는 사용자 화면이 알아채고 새로 그림
+        "budget": {"amount": admin()["budget"], "alert_at": admin()["alert_at"]},  # 월 예산 · 알림 기준 (%)
+        "budget_alerted": set(),  # 이미 보낸 예산 알림 (같은 알림을 또 보내지 않게)
+    }
+
+
+def org() -> dict:
+    """구성원 관리 값 (added · edits · roles · status). 바꾼 뒤에는 org_changed() 를 불러 주세요."""
+    return _server()["org"]
+
+
+def org_changed() -> None:
+    _server()["org_version"] += 1
+
+
+def org_version() -> int:
+    return _server()["org_version"]
+
+
+def org_tree() -> list[dict]:
+    """조직도: 본부 › 부 › 팀 (이름 · children)."""
+    return admin()["org_tree"]
+
+
+def job_catalog() -> list[str]:
+    """직무 목록 (추천 직무) + 지금 쓰고 있는 직무."""
+    used = [mb.role for t in teams().values() for mb in t.members if mb.role]
+    return list(dict.fromkeys(admin()["jobs"] + used))
+
+
+def budget() -> dict:
+    return _server()["budget"]
+
+
+def budget_alert_once(key: str) -> bool:
+    """이 예산 알림을 처음 보내는 거면 True (보낸 것으로 기록)."""
+    sent = _server()["budget_alerted"]
+    if key in sent:
+        return False
+    sent.add(key)
+    return True
+
+
+def tool_status(tool_id: str) -> str:
+    return _server()["tools"].get(tool_id, "off")
+
+
+def tool_statuses() -> dict[str, str]:
+    return dict(_server()["tools"])
+
+
+def set_tool_status(tool_id: str, status: str) -> None:
+    _server()["tools"][tool_id] = status
+
+
+def add_export_failure(f: ExportFailure) -> None:
+    _server()["failures"][f.id] = f
+    _server()["resolved"].discard(f.id)
+
+
+def resolve_failure(fid: str) -> None:
+    _server()["resolved"].add(fid)
+
+
+def is_resolved(fid: str) -> bool:
+    return fid in _server()["resolved"]
+
+
+def export_failures(mid: str | None = None) -> list[ExportFailure]:
+    """전송 실패 기록 (mid 를 주면 그 회의 것만). 새로 생긴 기록이 앞."""
+    items = list(reversed(_server()["failures"].values())) + integrations()["failures"]
+    return [f for f in items if mid is None or f.meeting == mid]
+
+
+def push_notification(audience: str, kind: str, text: str, when: str, meeting: str | None = None) -> None:
+    """새 알림 (audience: admin | user)."""
+    notis = _server()["notis"][audience]
+    notis.insert(0, Notification(f"live-{audience}-{len(notis) + 1}", kind, text, when, meeting, True))
+
+
+def live_notifications(audience: str) -> list[Notification]:
+    return list(_server()["notis"][audience])
+
+
+def tool(tool_id: str) -> IntegrationTool:
+    return next(t for t in integrations()["tools"] if t.id == tool_id)
+
+
+# ---------------------------------------------------------------- 관리자 (비용 · 구성원 · MCP)
+@lru_cache(maxsize=1)
+def admin() -> dict:
+    """관리자 화면 목업: 관리자 계정 · 월 예산 · 월별 비용 · 팀별/기능별 비중 · 구성원 이메일·최근 접속."""
+    return _load("admin")
 
 
 # ---------------------------------------------------------------- notifications
 @lru_cache(maxsize=1)
-def notifications() -> list[Notification]:
+def _mock_notifications() -> list[Notification]:
     return [Notification(**n) for n in _load("notifications")]
+
+
+def notifications(audience: str = "user") -> list[Notification]:
+    """알림 목록: 새로 생긴 알림이 앞. 관리자는 새로 생긴 알림만."""
+    live = live_notifications(audience)
+    return live if audience == "admin" else live + _mock_notifications()
 
 
 
 # ---------------------------------------------------------------- directory (공유 대상 팀·구성원)
 @lru_cache(maxsize=1)
-def teams() -> dict[str, Team]:
+def _base_teams() -> dict[str, Team]:
     return {
         t["id"]: Team(t["id"], t["name"], tuple(TeamMember(**mb) for mb in t["members"]))
         for t in _load("directory")
     }
 
 
+def teams() -> dict[str, Team]:
+    """조직도 (팀 → 구성원 · 직무). 관리자가 바꾼 팀 · 직무와 새로 추가한 구성원까지 반영."""
+    o = org()
+    members: dict[str, list[TeamMember]] = {}
+    names = {t.name: tid for tid, t in _base_teams().items()}
+    for tid, t in _base_teams().items():
+        members[tid] = []
+    everyone = [(mb.id, mb.name, mb.role, t.name) for t in _base_teams().values() for mb in t.members]
+    everyone += [(k, a["name"], a["job"], a["team"]) for k, a in o["added"].items()]
+    for pid, name, job, team in everyone:
+        if o["status"].get(pid) == "removed":
+            continue
+        e = o["edits"].get(pid, {})
+        team, job = e.get("team", team), e.get("job", job)
+        tid = names.get(team) or f"t-{team}"
+        names[team] = tid
+        members.setdefault(tid, []).append(TeamMember(pid, name, job))
+    tname = {v: k for k, v in names.items()}
+    return {tid: Team(tid, tname[tid], tuple(mbs)) for tid, mbs in members.items()}
+
+
 
 def team_candidates() -> dict[str, list[Candidate]]:
     """팀 id → 그 팀 구성원의 담당자 점수 (조직도 + 후보 점수를 이름으로 연결)."""
     by_name = {c.name: c for c in assignee_config()["candidates"]}
-    return {tid: [by_name[mb.name] for mb in t.members if mb.name in by_name] for tid, t in teams().items()}
+
+    def cand(mb: TeamMember, team: str) -> Candidate:
+        c = by_name.get(mb.name)
+        if c:  # 관리자가 바꾼 팀 · 직무 반영
+            return replace(c, team=team, role=mb.role)
+        # 점수 기록이 없는 사람 (새로 추가한 구성원 등): 진행 중 업무 0건 · 기본 점수
+        return Candidate(f"c-{mb.id}", mb.name, team, mb.role, 40, 0, 50, 100, 0, False, ())
+
+    return {tid: [cand(mb, t.name) for mb in t.members] for tid, t in teams().items()}

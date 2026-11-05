@@ -13,7 +13,7 @@ from state.store import AppState
 from ui.buttons import button, button_group
 from ui.html import markup
 from ui.icons import icon_box
-from ui.layout import card, card_title, hint, notice
+from ui.layout import card, card_title, hint
 from ui.tags import md_tag, tag
 from utils.browser import copy_to_clipboard
 from utils.text import esc, md_escape
@@ -35,29 +35,36 @@ def _copy_button(s: AppState, key: str, text: str) -> None:
 
 
 # ---------------------------------------------------------------- 요약
+def _assign_card(s: AppState, m: Meeting, items: list, *, host: bool, editable: bool) -> None:
+    """담당자가 없던 일: 할 일을 누르면 원문 근거 강조 · 아래 줄에 「누구 → 누구」로 바뀐 내용."""
+    unassigned = any(not who for _, _, who, _, _ in items)
+    with card("unassigned", tone="warn"):
+        title = "담당자가 아직 없는 일" if unassigned else "담당자를 정한 일"
+        markup(f'<h3 style="font-size:13px;font-weight:700;color:#7A5200">{title}'
+               + ('<span style="font-weight:500;color:#9A7A3A"> · 확정하기 전까지 바꿀 수 있어요</span>' if editable else "")
+               + "</h3>")
+        for i, (key, text, who, _prev, src) in enumerate(items):
+            with st.container(key=f"asgrow-{i}", horizontal=True, vertical_alignment="center", gap="small"):
+                with st.container(gap=None):
+                    _pick(f"**{md_escape(text)}**", f"asg{i}", s, src)
+                    if who:  # 처음(담당 미정) → 지금 담당자들 · 중간에 바꾼 기록은 보이지 않음
+                        markup(f'<span class="asg-change">{esc("담당 미정 → " + ", ".join(who))}</span>')
+                    else:
+                        markup('<span class="asg-change">담당 미정'
+                               + ("" if host and editable else " · 주관자가 지정할 예정") + "</span>")
+                if host and editable:
+                    if who:
+                        button("변경", key=f"assign_{key}", variant="secondary", on_click=actions.open_assign, args=(key, text))
+                    else:
+                        button("담당자 지정", key=f"assign_{key}", variant="primary", on_click=actions.open_assign,
+                               args=(key, text))
+
+
 def _summary_tab(s: AppState, m: Meeting) -> None:
     host = model.is_host(m)
     editable = model.assignee_editable(s, m)
     items = model.assignable(s, m)
-    if any(not who for *_, who in items) or (items and editable):
-        with card("unassigned", tone="warn"):
-            title = "담당자가 아직 없는 일" if any(not who for *_, who in items) else "담당자를 정한 일"
-            markup(f'<h3 style="font-size:13px;font-weight:700;color:#7A5200">{title}'
-                   + ('<span style="font-weight:500;color:#9A7A3A"> · 확정하기 전까지 바꿀 수 있어요</span>' if editable else "")
-                   + "</h3>")
-            for key, text, due, who in items:
-                with st.container(horizontal=True, vertical_alignment="center"):
-                    markup(f'<span style="display:flex;flex-direction:column;line-height:1.4"><b style="font-weight:600">{esc(text)}</b>'
-                           f'<span style="font-size:12px;color:#80858E">{esc(due)}</span></span>')
-                    if who:
-                        st.html(tag(who, "att"), width="content")
-                    if host and editable:
-                        if who:
-                            button("변경", key=f"assign_{key}", variant="secondary", on_click=actions.open_assign, args=(key, text))
-                        else:
-                            button("담당자 지정", key=f"assign_{key}", variant="primary", on_click=actions.open_assign, args=(key, text))
-                    elif not who:
-                        st.html('<span class="hint" style="font-size:13px">주관자가 지정할 예정</span>', width="content")
+    show = any(not who for _, _, who, _, _ in items) or (items and editable)
 
     with card("summary"):
         card_title("핵심 요약", icon_html=icon_box("lines-full", bg="#F1F2F4", color="#F37321"))
@@ -83,8 +90,12 @@ def _summary_tab(s: AppState, m: Meeting) -> None:
             _pick(md_escape(d.text), f"dec{i}", s, d.src)
     with card("open"):
         card_title("다음에 이어서", icon_html=icon_box("clock", bg="transparent", color="#9A6700", size=15, box=16), size=14)
+        if not m.open_issues:
+            hint("결론이 나지 않아 다음 회의로 넘긴 일이 없어요.", size=13)
         for i, d in enumerate(m.open_issues):
             _pick(md_escape(d.text), f"open{i}", s, d.src)
+    if show:  # 담당자 카드는 항상 「다음에 이어서」 아래에
+        _assign_card(s, m, items, host=host, editable=editable)
 
 
 # ---------------------------------------------------------------- 안건

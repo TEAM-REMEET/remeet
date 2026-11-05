@@ -1,6 +1,6 @@
 """왼쪽 패널: 회의록 원문 (검색 · 발화자 구분 · 근거 강조) / 발언 비율.
 
-발화자: 사람으로 인식된 화자는 이름, 모르는 화자(예: 화자 3)는 「미지정」 태그 · 주관자는 이름을 지정할 수 있어요.
+발화자: 사람으로 인식된 화자는 이름, 모르는 화자(예: 화자 3)는 「미지정」.
 """
 
 from __future__ import annotations
@@ -12,10 +12,9 @@ from state import actions
 from state import selectors as sel
 from state.store import AppState
 from ui.avatar import avatar
-from ui.buttons import button, button_group
+from ui.buttons import button_group
 from ui.html import markup
 from ui.icons import icon
-from ui.tags import tag
 from utils.browser import scroll_into_view
 from utils.text import esc
 from views.meeting import model
@@ -28,13 +27,13 @@ def _sync_query() -> None:
 
 
 def _speaker_html(s: AppState, m: Meeting, label: str, size: int = 28) -> tuple[str, str]:
-    """(아바타, 이름 html) — 사람을 모르면 회색 ? 아바타 + 원문 화자 이름 + 「미지정」 태그."""
+    """(아바타, 이름 html) — 사람을 모르면 회색 ? 아바타 + 「미지정」 글자 (화자 3 같은 이름은 보이지 않음)."""
     pid = model.speaker_pid(s, m, label)
     if pid:
         p = sel.person(pid)
         return avatar(p.initial, size=size, host=pid == m.host), esc(p.name)
     return (f'<span class="spk-unknown" style="width:{size}px;height:{size}px">?</span>',
-            f'{esc(label)} {tag("미지정", "abs")}')
+            '<span class="who-unknown">미지정</span>')  # 네모 없이 글자만
 
 
 def _paragraphs_html(s: AppState, m: Meeting, query: str) -> str:
@@ -57,34 +56,14 @@ def _paragraphs_html(s: AppState, m: Meeting, query: str) -> str:
 
 
 def _speaker_bar(s: AppState, m: Meeting) -> None:
-    """발화자 구분: 이 회의에 나온 사람(발언 수) · 모르는 화자는 「미지정」 + 주관자는 이름 지정. (누르는 기능 없음)"""
-    spk = model.speakers(s, m)
+    """발화자: 이 회의에 나온 사람(발언 수) · 사람으로 인식되지 않은 화자는 모두 「미지정」 하나로."""
+    chips = "".join(
+        f'<span class="spk-chip">{esc(sel.name_of(pid))}<span class="n">{n}</span></span>' if pid
+        else f'<span class="spk-chip unknown">미지정<span class="n">{n}</span></span>'
+        for pid, n in model.speakers(s, m)
+    )
     with st.container(key="spk-bar", horizontal=True, vertical_alignment="center", gap="xsmall"):
-        chips = "".join(
-            f'<span class="spk-chip">{esc(sel.name_of(pid))}<span class="n">{n}</span></span>' if pid
-            else f'<span class="spk-chip unknown">{esc(label)} {tag("미지정", "abs")}<span class="n">{n}</span></span>'
-            for label, pid, n in spk
-        )
         markup(f'<div class="spk-list"><span class="inline-label">발화자</span>{chips}</div>')
-        unknown = [(i, label) for i, (label, pid, _) in enumerate(spk) if not sel.speaker_id(label)]
-        if unknown and model.is_host(m):
-            with st.popover("이름 지정", icon=":material/person_add:", help="미지정 화자에 사람 이름을 붙여요"):
-                markup('<b style="font-size:14px">미지정 화자 이름 지정</b>'
-                       '<p class="hint" style="font-size:12px">고른 사람으로 이 회의의 그 화자 발언이 모두 바뀌어요.</p>')
-                people = list(m.people) + [p for p in sel.all_people_ids() if p not in m.people]
-                for i, label in unknown:
-                    key = f"spk_pick_{m.id}_{i}"
-                    cur = s.speaker_map.get(f"{m.id}:{label}")
-                    with st.container(horizontal=True, vertical_alignment="center", gap="small"):
-                        markup(f'<span class="inline-label">{esc(label)}</span>')
-                        st.selectbox(f"{label} 이름", people, index=people.index(cur) if cur in people else None,
-                                     key=key, label_visibility="collapsed", placeholder="사람 선택",
-                                     format_func=lambda pid: f"{sel.name_of(pid)} · {sel.person(pid).team}"
-                                     + ("" if pid in m.people else " (참석자 아님)"),
-                                     on_change=actions.set_speaker, args=(m.id, label, key))
-                        if cur:
-                            button("", key=f"spk_clear_{i}", variant="ghost", icon=":material/close:",
-                                   help="미지정으로 되돌리기", on_click=actions.clear_speaker, args=(m.id, label))
 
 
 def _raw(s: AppState, m: Meeting) -> None:

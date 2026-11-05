@@ -67,6 +67,9 @@ def folders(state: AppState) -> dict[str, Folder]:
         notes = list(out["rel"].notes)
         notes.insert(1, "m9")
         out["rel"] = replace(out["rel"], notes=tuple(notes))
+    for fid, mid in state.created_notes:  # 「회의록 생성 완료」로 만든 회의를 그 폴더에 넣음 (최근 회의가 앞)
+        if fid in out:
+            out[fid] = replace(out[fid], notes=(mid, *out[fid].notes))
     for fid in state.deleted_folders:
         out.pop(fid, None)
     return out
@@ -78,9 +81,23 @@ def members_of(state: AppState, fid: str) -> list[str]:
     return [p for p in members if f"{fid}:{p}" not in state.members_removed]
 
 
+PERIOD_PREFIX = "period-"  # 주차별 · 월별 · 일별에만 보이는 회의를 담는 폴더 (프로젝트별에는 안 보임)
+
+
+def is_period_folder(fid: str) -> bool:
+    return fid.startswith(PERIOD_PREFIX)
+
+
 def folder_ids_of_type(state: AppState, mtype: str) -> list[str]:
-    """내가 멤버인 폴더만 (회의 종류별)."""
-    return [k for k, f in folders(state).items() if f.type == mtype and ME in members_of(state, k)]
+    """내가 멤버인 프로젝트 폴더만 (회의 종류별). 주차별·월별·일별 전용 폴더는 빼요."""
+    return [k for k, f in folders(state).items()
+            if f.type == mtype and not is_period_folder(k) and ME in members_of(state, k)]
+
+
+def period_container_ids(state: AppState, mtype: str) -> list[str]:
+    """주차별 · 월별 · 일별 회의를 담는 폴더 (내가 멤버인 것)."""
+    return [k for k, f in folders(state).items()
+            if f.type == mtype and is_period_folder(k) and ME in members_of(state, k)]
 
 
 def all_my_folder_ids(state: AppState) -> list[str]:
@@ -91,6 +108,8 @@ def can_see(state: AppState, mid: str) -> bool:
     """회의록이 나에게 보이는지: 주관했거나 참석했거나, 미참석했지만 주관자가 공유해 준 경우."""
     if mid in state.deleted_meetings:
         return False
+    if mid in state.new_meetings:  # 내가 새로 만든 회의록은 항상 보임
+        return True
     m = repo.meeting(mid)
     return m.host == ME or ME in m.people or ME in state.absent_shares.get(mid, [])
 
@@ -128,6 +147,10 @@ def folder_label(state: AppState, m: Meeting) -> str:
     fs = folders(state)
     if m.topic in fs:
         f = fs[m.topic]
+        if is_period_folder(m.topic):  # 주차별 · 월별 · 일별 회의: 「주간 회의 / 10월 3주차」
+            from state import archive  # archive 가 이 모듈을 쓰므로 함수 안에서 불러옴
+
+            return f"{repo.meeting_types()[f.type].name} / {archive.period_label(archive.period_key(f.type, m.date))}"
         return f"{repo.meeting_types()[f.type].name} / {f.name}"
     return "공유 받은 회의" if m.shared else ""
 
@@ -164,7 +187,7 @@ def my_todo_keys(state: AppState, mid: str) -> list[str]:
     keys = []
     for i, t in enumerate(repo.meeting(mid).todos):
         key = todo_key(mid, i)
-        owner_is_me = state.assigned[key] == my_name if key in state.assigned else t.owner == ME
+        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else t.owner == ME
         if owner_is_me:
             keys.append(key)
     return keys
@@ -201,12 +224,27 @@ def todo_key(mid: str, index: int) -> str:
 
 def unassigned_count(state: AppState, mid: str) -> int:
     m = repo.meeting(mid)
-    return sum(1 for i, t in enumerate(m.todos) if not t.owner and todo_key(mid, i) not in state.assigned)
+    return sum(1 for i, t in enumerate(m.todos) if not t.owner and not state.assigned.get(todo_key(mid, i)))
 
 
 def status_of(state: AppState, mid: str) -> str:
-    """review | confirmed | sending | fail | done"""
-    return state.status_override.get(mid) or repo.meeting(mid).initial_status
+    """review | confirmed | sending | fail | done
+
+    외부 도구(MCP) 전송에 실패하고 아직 해결되지 않은 회의는 「전송 실패」.
+    """
+    if mid in state.status_override:
+        o = state.status_override[mid]
+        if o == "fail" and repo.export_failures(mid) and not open_export_failure(state, mid):
+            return "done"  # 관리자가 실패한 전송을 다시 보내 해결함 → 전달 완료
+        return o
+    if open_export_failure(state, mid):
+        return "fail"
+    return repo.meeting(mid).initial_status
+
+
+def open_export_failure(state: AppState, mid: str):
+    """아직 해결되지 않은 외부 도구 전송 실패 (없으면 None)."""
+    return next((f for f in repo.export_failures(mid) if failure_open(state, f.id)), None)
 
 
 def scope_label(scope: str) -> str:
@@ -248,6 +286,19 @@ _STATUS_VIEW = {
 }
 
 
+def _fail_is_tech(state: AppState, mid: str) -> bool:
+    f = open_export_failure(state, mid)
+    return bool(f and f.kind == "tech")
+
+
+def _fail_sub(state: AppState, mid: str) -> str:
+    f = open_export_failure(state, mid)
+    if not f:
+        return "일부 참석자 미전달"
+    tool = repo.tool(f.tool).name
+    return f"{tool} 연동 문제 · 관리자 문의 필요" if f.kind == "tech" else f"{tool} 전송 실패 · 다시 보내기"
+
+
 def meeting_row(state: AppState, mid: str) -> MeetingRow:
     m = repo.meeting(mid)
     st = status_of(state, mid)
@@ -258,11 +309,13 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
         "review": "확정 전 검토가 필요해요",
         "confirmed": f"{dotted} 확정 · 버전 1",
         "sending": "참석자에게 보내는 중",
-        "fail": "일부 참석자 미전달",
+        "fail": _fail_sub(state, mid),
         "done": f"{dotted} 전달",
     }
     button, kind = "결과 보기", "view"
-    if is_host:
+    if st == "fail" and _fail_is_tech(state, mid):  # 기술 이슈: 다시 보내도 실패 → 재시도 없음 (결과 보기)
+        pass
+    elif is_host:  # 재시도 · 검토 · 전달은 주관자만
         button, kind = {
             "review": ("검토하기", "review"),
             "confirmed": ("전달하기", "deliver"),
@@ -309,6 +362,8 @@ def home_meeting_ids(state: AppState) -> list[str]:
 def breadcrumbs(state: AppState) -> list[str]:
     from state import archive  # archive 가 이 모듈을 쓰므로 함수 안에서 불러옴
 
+    if state.not_found:
+        return ["페이지를 찾을 수 없음"]
     s = state.screen
     types = repo.meeting_types()
     fs = folders(state)
@@ -320,8 +375,12 @@ def breadcrumbs(state: AppState) -> list[str]:
         return ["공유", "공유한 회의"]
     if s == "recv":
         return ["공유", "공유 받은 회의"]
-    if s == "mcp":
-        return ["설정", "외부 연동"]
+    if s == "adm_cost":
+        return ["관리자", "비용 관리"]
+    if s == "adm_members":
+        return ["관리자", "구성원 관리"]
+    if s == "adm_mcp":
+        return ["관리자", "MCP 관리"]
     if s == "archive":
         crumbs = ["회의록"]
         t, g, p = state.archive_type, state.archive_group, state.archive_period
@@ -341,6 +400,9 @@ def breadcrumbs(state: AppState) -> list[str]:
         m = repo.meeting(state.meeting_id)
         if m.topic in fs:
             f = fs[m.topic]
+            if is_period_folder(m.topic):
+                p = archive.period_key(f.type, m.date)
+                return ["회의록", types[f.type].name, archive.PERIOD_LABEL[f.type], archive.period_label(p), m.title]
             return ["회의록", types[f.type].name, f.name, m.title]
         return ["공유 받은 회의", m.title]
     if s == "deliver":
@@ -349,7 +411,7 @@ def breadcrumbs(state: AppState) -> list[str]:
 
 
 def has_integration_warning(state: AppState) -> bool:
-    return any(v == "expired" for v in state.integrations.values())
+    return any(v == "expired" for v in repo.tool_statuses().values())
 
 
 def source_label(mid: str, src: tuple[str, ...]) -> str:
@@ -364,14 +426,92 @@ def source_label(mid: str, src: tuple[str, ...]) -> str:
 
 
 def unread_notifications(state: AppState) -> int:
-    return sum(1 for n in repo.notifications() if n.unread and n.id not in state.read_notifications)
+    return sum(1 for n in notifications(state) if n.unread and n.id not in state.read_notifications)
 
+
+
+def notifications(state: AppState) -> list:
+    """이 계정의 알림 (관리자 · 사용자)."""
+    return repo.notifications("admin" if state.is_admin else "user")
 
 
 def is_unread(state: AppState, nid: str) -> bool:
-    n = next(x for x in repo.notifications() if x.id == nid)
+    n = next(x for x in notifications(state) if x.id == nid)
     return n.unread and nid not in state.read_notifications
 
 
 def show_bell_dot(state: AppState) -> bool:
-    return any(is_unread(state, n.id) and n.id not in state.bell_seen for n in repo.notifications())
+    return any(is_unread(state, n.id) and n.id not in state.bell_seen for n in notifications(state))
+
+
+# ---------------------------------------------------------------- 관리자
+ADMIN_SCREENS = ("adm_cost", "adm_members", "adm_mcp")
+ADMIN_SELF = "admin"  # 관리자 계정 자신 (구성원 목록 맨 위, 권한·상태 못 바꿈)
+
+
+@dataclass(frozen=True)
+class AdminMember:
+    id: str
+    name: str
+    email: str
+    team: str
+    job: str
+    role: str  # admin | member
+    status: str  # active | invited | inactive
+    last: str  # 최근 접속
+    is_self: bool = False
+
+
+def admin_members(state: AppState) -> list[AdminMember]:
+    """구성원 관리 목록: 관리자 계정 → 조직 구성원(팀 순, 새로 추가한 사람 포함).
+
+    팀 · 직무 · 권한 · 상태는 서버 공용 값(관리자가 바꾼 값)을 씀 → 사용자 화면에도 그대로 반영.
+    """
+    cfg = repo.admin()
+    o = repo.org()
+    me = cfg["admin"]
+    rows = [AdminMember(ADMIN_SELF, me["name"], me["email"], me["team"], "시스템 관리", "admin", "active", "지금 접속 중", True)]
+    extra = cfg["members"]
+    for team, pids in sorted(team_groups(), key=lambda g: g[0]):
+        for pid in pids:
+            p = repo.people()[pid]
+            x = extra.get(pid) or o["added"].get(pid, {})
+            status = o["status"].get(pid) or ("invited" if x.get("invited") else "inactive" if x.get("inactive") else "active")
+            role = o["roles"].get(pid) or ("admin" if x.get("admin") or x.get("role") == "admin" else "member")
+            last = x.get("last", "") if pid in extra else "방금 추가됨"
+            rows.append(AdminMember(pid, p.name, x.get("email", f"{pid}@democompany.kr"), p.team,
+                                    person_role(pid) or "-", role, status, last))
+    return rows
+
+
+def admin_member(state: AppState, pid: str) -> AdminMember:
+    return next(m for m in admin_members(state) if m.id == pid)
+
+
+def _org_walk(nodes: list[dict], path: tuple[str, ...] = ()):
+    """조직도를 돌며 (이름, 위 단계들, 자식 있는지) 를 차례로."""
+    for n in nodes:
+        yield n["name"], path, bool(n.get("children"))
+        yield from _org_walk(n.get("children", []), path + (n["name"],))
+
+
+def admin_teams() -> list[str]:
+    """고를 수 있는 팀: 조직도 순서 → 조직도에 없는 팀."""
+    in_tree = [name for name, _, has_kids in _org_walk(repo.org_tree()) if not has_kids]
+    extra = sorted(({t.name for t in repo.teams().values()} | {p.team for p in repo.people().values()}) - set(in_tree))
+    return in_tree + extra
+
+
+def team_ancestors(team: str) -> tuple[str, ...]:
+    """팀의 위 단계 (본부, 부)."""
+    return next((path for name, path, _ in _org_walk(repo.org_tree()) if name == team), ())
+
+
+def team_path(team: str) -> str:
+    """「제품본부 › 프로덕트부」 (조직도에 없으면 빈 값)."""
+    return " › ".join(team_ancestors(team))
+
+
+def failure_open(state: AppState, fid: str) -> bool:
+    """아직 다시 보내지 않은 전송 실패인지."""
+    return fid not in state.export_resent and not repo.is_resolved(fid)  # 내가 다시 보냄 · 관리자가 해결함

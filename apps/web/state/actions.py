@@ -11,14 +11,16 @@ import time
 import streamlit as st
 
 from config import CURRENT_USER_ID as ME
-from config import DEMO_EMAIL, DEMO_PASSWORD
+from config import ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_EMAIL, DEMO_PASSWORD
 from data import repository as repo
 from state import router
+from utils.files import ALLOWED_LABEL, is_allowed, read_text
 from state import selectors as sel
 from state.store import Delivery, NewFolder, SentShare, get_state, reset_state
 
 # 화면을 옮길 때 항상 초기화하는 값
-_SCREEN_RESET = dict(editing=False, highlight=[], highlight_key="", show_brief=False, raw_query="", copied="", nn_error="")
+_SCREEN_RESET = dict(editing=False, highlight=[], highlight_key="", show_brief=False, raw_query="", copied="", nn_error="",
+                     not_found="")
 
 
 def _set(**kwargs) -> None:
@@ -39,13 +41,23 @@ def toggle(attr: str) -> None:
 
 # ---------------------------------------------------------------- 인증
 def login(email: str, password: str) -> bool:
-    ok = email.strip() == DEMO_EMAIL and password == DEMO_PASSWORD
-    _set(logged_in=ok, login_error=not ok, screen="compose")
+    email = email.strip()
+    if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
+        admin_demo_login()
+        return True
+    ok = email == DEMO_EMAIL and password == DEMO_PASSWORD
+    _set(logged_in=ok, login_error=not ok, is_admin=False, screen="compose", not_found="")
     return ok
 
 
 def demo_login() -> None:
-    _set(logged_in=True, login_error=False, screen="compose")
+    _set(logged_in=True, login_error=False, is_admin=False, screen="compose", not_found="")
+
+
+def admin_demo_login() -> None:
+    """관리자 계정: 관리자 화면(비용 관리)으로 시작."""
+    _set(logged_in=True, login_error=False, is_admin=True, screen="adm_cost", not_found="")
+    router.request("adm_cost")
 
 
 def logout() -> None:
@@ -141,17 +153,20 @@ def open_source(mid: str, src: tuple[str, ...]) -> None:
     _set(highlight=list(src), highlight_key="wiki")
 
 
-def close_toast() -> None:
-    _set(toast="")
-
-
 # ---------------------------------------------------------------- 모달
 def open_modal(name: str, **extra) -> None:
     _set(modal=name, **extra)
 
 
 def close_modal() -> None:
+    get_state().pp_nonce += 1  # 사람 고르기 검색칸 비우기 (다음에 열 때 새로)
     _set(modal=None, assign_pending="", members_folder="", members_scope=[], delete_target=())
+
+
+def _wizard_reset() -> dict:
+    """새 회의록 3단계 작성을 처음(1단계 · 빈 칸)으로."""
+    return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
+                cp_example="plain", preview_meeting=None)
 
 
 def open_new_note() -> None:
@@ -168,15 +183,166 @@ def open_new_note() -> None:
             p = archive.period(s, mtype, s.archive_period)
             if p:  # 기간 폴더에서 왔으면 그 기간 폴더를 미리 골라 둠
                 go("compose", nn_type=mtype, nn_group="period", nn_period=p.key, nn_topic=topic, nn_name="",
-                   nn_host=ME, nn_people=[], compose_nonce=s.compose_nonce + 1)
+                   nn_host=ME, nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
                 return
     go("compose", nn_type=mtype, nn_group="project", nn_period="", nn_topic=topic, nn_name="", nn_host=ME,
-       nn_people=[], compose_nonce=s.compose_nonce + 1)
+       nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
 
 
 def set_new_note_type(mtype: str) -> None:
     s = get_state()
     _set(nn_type=mtype, nn_topic=(sel.folder_ids_of_type(s, mtype) or ["new"])[0])
+
+
+# ---------------------------------------------------------------- 새 회의록 3단계 (state/compose_ai.py)
+def compose_text(s) -> str:
+    """직접 쓴 내용 + 첨부한 TXT · MD · DOCX · HWPX 내용."""
+    parts = [s.nn_text.strip()] + [body.strip() for _, body in s.nn_files if body]  # 읽지 못한 파일은 빼고
+    return "\n\n".join(p for p in parts if p)  # 직접 쓴 내용 · 파일 사이도 한 줄 띄움 (빈 줄 규칙)
+
+
+def compose_example(kind: str) -> None:
+    """「지원하는 입력 형식」 버튼: 입력 형식을 고름. 입력칸에는 그 형식의 예시가 회색 안내글(placeholder)로만 보임.
+
+    입력한 내용(nn_text)은 건드리지 않음 — 예시는 값이 아니라서 수정·제출되지 않음.
+    """
+    _set(cp_example=kind, nn_error="")
+
+
+def compose_reset() -> None:
+    """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
+    s = get_state()
+    _set(compose_nonce=s.compose_nonce + 1, nn_host=ME, nn_people=[], nn_name="", **_wizard_reset())
+
+
+def compose_sync(nonce: int) -> None:
+    """1단계 입력칸 값을 상태에 옮겨 둠 (다른 단계로 가도 남도록)."""
+    s = get_state()
+    ss = st.session_state
+    s.nn_title = (ss.get(f"cp_title_{nonce}") or "").strip()
+    s.nn_date = ss.get(f"cp_date_{nonce}")
+    s.nn_text = ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or ""
+    files = ss.get(f"cp_files_{nonce}") or []
+    if files:  # TXT · MD · DOCX · HWPX 는 글을 읽고, 그 밖의 형식 · 읽을 수 없는 파일은 None (발화자 확인 때 안내)
+        s.nn_files = [(f.name, read_text(f.name, f.getvalue())) for f in files]
+
+
+def compose_check() -> None:
+    """회의 내용 칸을 바꿀 때마다(칸을 벗어나면) 형식 검사 결과를 새로."""
+    get_state().nn_error = ""
+
+
+def compose_next(nonce: int) -> None:
+    """1단계 → 2단계: 기본 정보와 입력 형식을 확인."""
+    from state import compose_ai
+
+    compose_sync(nonce)
+    s = get_state()
+    missing = [n for n, ok in (("회의 제목", s.nn_title), ("회의 날짜", s.nn_date), ("주관자", s.nn_host)) if not ok]
+    if s.nn_group == "period" and not s.nn_period:
+        missing.append("회의 종류 · 폴더")
+    elif s.nn_group != "period" and s.nn_topic not in sel.folder_ids_of_type(s, s.nn_type) and not s.nn_name.strip():
+        missing.append("회의 종류 · 폴더")
+    parsed = compose_ai.parse(compose_text(s))
+    if missing:
+        s.nn_error = " · ".join(missing) + "을(를) 입력해 주세요."
+        return
+    # 첨부 파일: TXT · MD · DOCX · HWPX 만 (그 밖의 형식이면 다음 단계로 못 감)
+    wrong = [name for name, _ in s.nn_files if not is_allowed(name)]
+    if wrong:
+        s.nn_error = (f"지원하지 않는 파일 형식이에요: {', '.join(wrong)} · "
+                      f"{ALLOWED_LABEL} 파일만 첨부할 수 있어요.")
+        return
+    broken = [name for name, body in s.nn_files if body is None]
+    if broken:
+        s.nn_error = f"파일을 읽을 수 없어요: {', '.join(broken)} · 파일이 손상되지 않았는지 확인해 주세요."
+        return
+    if parsed.error or parsed.format != s.cp_example:  # 고른 형식에서 벗어나면 다음 단계로 못 감
+        s.nn_error = f"회의 내용이 「{compose_ai.FORMAT_LABEL[s.cp_example]}」 형식에 맞지 않아요. 입력칸 위 안내대로 적어 주세요."
+        return
+    # 처음 보는 발화자는 이름이 같은 사람으로 미리 연결 (모르면 미지정)
+    s.nn_speaker_map = {lb: s.nn_speaker_map.get(lb, compose_ai.auto_match(lb)) for lb in parsed.labels}
+    _set(cp_step=2, nn_error="")
+
+
+PREVIEW_ID = "cp-preview"
+
+
+def _build_preview(s, mid: str):
+    from state import compose_ai
+
+    parsed = compose_ai.parse(compose_text(s))
+    topic = s.nn_topic if s.nn_group != "period" and s.nn_topic in sel.folder_ids_of_type(s, s.nn_type) else None
+    return compose_ai.build_meeting(
+        mid, title=s.nn_title, day=s.nn_date, topic=topic, host=s.nn_host, people=list(s.nn_people),
+        parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
+    )
+
+
+def compose_goto(step: int) -> None:
+    """단계 이동. 3단계(분석 및 결과)로 가면 회의 상세와 같은 화면으로 볼 미리보기 회의록을 만듦."""
+    s = get_state()
+    if step == 3:
+        s.preview_meeting = _build_preview(s, PREVIEW_ID)
+        _set(meeting_id=PREVIEW_ID, insight_tab="sum", left_tab="raw", highlight=[], highlight_key="", raw_query="")
+    _set(cp_step=step, nn_error="")
+
+
+def open_speaker_picker(label: str) -> None:
+    """2단계: 발화자 표기(참석자1 · A)를 실제 사람과 연결하는 모달 (팀 → 팀원)."""
+    s = get_state()
+    cur = s.nn_speaker_map.get(label, "")
+    first = cur or s.nn_host or ME
+    open_modal("cp_speaker", pick_label=label, pick_draft=[cur] if cur else [], pick_team=sel.person(first).team,
+               pick_nonce=s.pick_nonce + 1)
+
+
+def set_speaker_match(label: str, widget_key: str) -> None:
+    get_state().nn_speaker_map[label] = st.session_state.get(widget_key) or ""
+
+
+def compose_clear_files() -> None:
+    _set(nn_files=[])
+
+
+def compose_finish() -> None:
+    """3단계 「회의록 생성 완료」: 완성된 회의록을 만들어 폴더에 넣고, 회의 상세로 이동."""
+    from state import compose_ai
+
+    s = get_state()
+    parsed = compose_ai.parse(compose_text(s))
+    if parsed.error:
+        _set(cp_step=1, nn_error="회의 내용 형식을 확인해 주세요.")
+        return
+    # 폴더: 프로젝트별은 고른 폴더(새 폴더면 만들기), 기간별은 그 회의 종류의 주차별·월별·일별 전용 폴더
+    # (기간은 날짜로 묶여요 · 프로젝트별 목록에는 나오지 않아요)
+    topics = sel.folder_ids_of_type(s, s.nn_type)
+    if s.nn_group == "period":
+        from state import archive
+
+        fid = f"{sel.PERIOD_PREFIX}{s.nn_type}"
+        if fid not in sel.folders(s):
+            s.new_folders.append(NewFolder(fid, archive.PERIOD_LABEL[s.nn_type], s.nn_type))
+    elif s.nn_topic in topics:
+        fid = s.nn_topic
+    else:
+        fid = f"n{len(s.new_folders) + 1}"
+        s.new_folders.append(NewFolder(fid, s.nn_name.strip() or "새 폴더", s.nn_type))
+    mid = f"new{len(s.new_meetings) + 1}"
+    s.new_meetings[mid] = compose_ai.build_meeting(
+        mid, title=s.nn_title, day=s.nn_date, topic=fid, host=s.nn_host, people=list(s.nn_people),
+        parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
+    )
+    s.created_notes.append((fid, mid))
+    for store in (s.assigned, s.done):  # 미리보기에서 정한 담당자 · 완료 체크를 새 회의로 옮김
+        for key in [k for k in store if k.startswith(f"{PREVIEW_ID}:")]:
+            store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
+    s.preview_meeting = None
+    title = s.nn_title
+    open_meeting(mid)
+    _set(toast=f"「{title}」 회의록을 만들었어요. 내용을 검토한 뒤 확정해 주세요.",
+         compose_nonce=s.compose_nonce + 1, nn_host=ME, nn_people=[], nn_name="", **_wizard_reset())
+    s.tree_open |= {"root", f"t:{s.nn_type}", f"g:{s.nn_type}:project"}
 
 
 def submit_compose(nonce: int) -> None:
@@ -255,6 +421,39 @@ def set_pick_group(group: str) -> None:
     _set(pick_group=group, pick_folder="", pick_period="", pick_query="")
 
 
+# ---------------------------------------------------------------- 사람 고르기 (조직도 · components/org_people.py)
+def people_pick(ctx: str, pid: str, on_pick) -> None:
+    """이름을 누름: 부르는 쪽의 고르기/빼기 + 「최근」에 넣기."""
+    s = get_state()
+    on_pick(pid)
+    s.pp_recent = [pid] + [p for p in s.pp_recent if p != pid][:7]
+
+
+def people_toggle(ctx: str, node: str) -> None:
+    s = get_state()
+    s.pp_open.setdefault(ctx, set()).symmetric_difference_update({node})
+
+
+def people_tab(ctx: str, tab: str) -> None:
+    get_state().pp_tab[ctx] = tab
+
+
+def people_fav(pid: str) -> None:
+    s = get_state()
+    s.pp_fav ^= {pid}
+
+
+def pick_person(pid: str, single: bool) -> None:
+    """새 회의록 · 주관자/참석자/발화자 연결: 한 명이면 바꾸기, 여러 명이면 고르기/빼기."""
+    s = get_state()
+    if single:
+        s.pick_draft = [] if s.pick_draft == [pid] else [pid]
+    elif pid in s.pick_draft:
+        s.pick_draft.remove(pid)
+    else:
+        s.pick_draft.append(pid)
+
+
 def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
     """팀원 칩을 누를 때: 이 팀에서 고른 사람으로 임시 선택을 갱신 (다른 팀에서 고른 사람은 그대로)."""
     s = get_state()
@@ -271,6 +470,8 @@ def confirm_pick(kind: str) -> None:
         s.nn_host = s.pick_draft[0] if s.pick_draft else s.nn_host
     elif kind == "cp_people":
         s.nn_people = list(s.pick_draft)
+    elif kind == "cp_speaker":  # 고른 사람이 없으면 미지정
+        s.nn_speaker_map[s.pick_label] = s.pick_draft[0] if s.pick_draft else ""
     elif kind == "cp_folder":
         s.nn_type, s.nn_group = s.pick_type, s.pick_group
         if s.pick_group == "period":
@@ -370,18 +571,6 @@ def search_keyword(keyword: str) -> None:
         _set(raw_query=keyword, left_tab="raw", highlight=[], highlight_key="")
 
 
-def set_speaker(mid: str, label: str, widget_key: str) -> None:
-    """미지정 화자(예: 화자 3)에 사람 이름 지정 → 이 회의의 그 화자 발언 전체에 적용."""
-    s = get_state()
-    pid = st.session_state.get(widget_key)
-    if pid:
-        s.speaker_map[f"{mid}:{label}"] = pid  # 원문·발언 비율에 바로 반영 (위쪽 알림은 띄우지 않음: 화면이 밀리지 않도록)
-
-
-def clear_speaker(mid: str, label: str) -> None:
-    get_state().speaker_map.pop(f"{mid}:{label}", None)
-
-
 def toggle_todo(key: str) -> None:
     s = get_state()
     s.done[key] = not s.done.get(key, False)
@@ -434,6 +623,15 @@ def branch_agenda() -> None:
 def open_share() -> None:
     s = get_state()
     open_modal("share", share_nonce=s.share_nonce + 1, share_scope="summary", share_team="", share_recipients=[])
+
+
+def toggle_share_recipient(pid: str) -> None:
+    """회의 공유 모달 · 조직도에서 사람을 누름: 고르기/빼기."""
+    s = get_state()
+    if pid in s.share_recipients:
+        s.share_recipients.remove(pid)
+    else:
+        s.share_recipients.append(pid)
 
 
 def set_share_team_selection(team_id: str, widget_key: str) -> None:
@@ -489,23 +687,47 @@ def open_assign(key: str, text: str) -> None:
         assign_pending="",
         assign_query="",
         assign_team="",
+        assign_draft=list(get_state().assigned.get(key, [])),  # 지금 담당자들을 미리 골라 둠
     )
 
 
-def assign_to(name: str) -> None:
+def toggle_assignee(name: str) -> None:
+    """담당자 모달: 누르면 고르고, 다시 누르면 빼기 (여러 명)."""
     s = get_state()
-    s.assigned[s.assign_key] = name
-    _set(
-        modal=None,
-        assign_pending="",
-        last_assign=f"{s.assign_text} → {name} 님에게 맡겼어요. 확정하기 전까지 바꿀 수 있고, 확정하면 알림이 가요.",
-    )
+    if name in s.assign_draft:
+        s.assign_draft.remove(name)
+    else:
+        s.assign_draft.append(name)
+
+
+def toggle_assignee_pid(pid: str) -> None:
+    """담당자 모달 · 조직도에서 사람을 누름 (담당자는 이름으로 저장)."""
+    toggle_assignee(repo.people()[pid].name)
+
+
+def assign_to(names: list[str] | None = None) -> None:
+    """고른 사람들에게 맡기기 (여러 명). 빈 목록이면 담당자를 비움."""
+    s = get_state()
+    names = list(s.assign_draft if names is None else names)
+    s.assign_prev[s.assign_key] = list(s.assigned.get(s.assign_key, []))  # 바꾸기 전 담당자 (「누구 → 누구」 안내)
+    if names:
+        s.assigned[s.assign_key] = names
+        who = ", ".join(names)
+        msg = f"{s.assign_text} → {who} 님에게 맡겼어요. 확정하기 전까지 바꿀 수 있고, 확정하면 알림이 가요."
+    else:
+        s.assigned.pop(s.assign_key, None)
+        msg = f"{s.assign_text} → 담당자를 비웠어요."
+    _set(modal=None, assign_pending="", assign_draft=[], last_assign=msg)
 
 
 # ---------------------------------------------------------------- 결과 전달
 def start_delivery(mid: str, attempt: int = 1) -> None:
     s = get_state()
-    s.delivery = Delivery(meeting_id=mid, attempt=attempt, started_at=time.time(), finished=False)
+    from state import delivery  # delivery 가 store 를 쓰므로 함수 안에서 불러옴
+
+    s.delivery = Delivery(meeting_id=mid, attempt=attempt, started_at=time.time(), finished=False,
+                          fids=delivery.open_ids(s, mid),
+                          expired=tuple(k for k, v in repo.tool_statuses().items() if v == "expired"))
     s.status_override[mid] = "sending"
     go("deliver")
 
@@ -527,44 +749,265 @@ def run_row_action(mid: str, kind: str) -> None:
 
 # ---------------------------------------------------------------- 외부 연동
 def set_integration(tool_id: str) -> None:
+    """관리자 · MCP 관리: 조직의 외부 도구 연결 (모든 사용자에게 적용)."""
     s = get_state()
-    tool = next(t for t in repo.integrations()["tools"] if t.id == tool_id)
-    cur = s.integrations.get(tool_id, "off")
+    tool = repo.tool(tool_id)
+    cur = repo.tool_status(tool_id)
     if cur == "on":
-        s.integrations[tool_id] = "off"
+        repo.set_tool_status(tool_id, "off")
         s.toast = f"{tool.name} 연결을 해제했어요."
     elif cur == "expired":
-        # 갱신 안내는 전체 알림으로 띄우지 않고, 전송에 실패했던 회의록 안에서 보여 줌 (views/meeting/header.py)
-        s.integrations[tool_id] = "on"
+        repo.set_tool_status(tool_id, "on")  # 인증 갱신 → 아래 「전송 실패 기록」에서 다시 보낼 수 있음
+        s.toast = f"{tool.name}을(를) 다시 연결했어요. 보내지 못한 회의 결과를 다시 보낼 수 있어요."
     elif tool.phase2:
         s.toast = f"{tool.name} 연동은 2단계(Phase 2)에서 제공될 예정이에요."
     else:
-        s.integrations[tool_id] = "on"
+        repo.set_tool_status(tool_id, "on")
         s.toast = f"{tool.name}을(를) 연결했어요."
 
 
-def resend_export(tool_id: str, mid: str) -> None:
-    """인증을 갱신한 뒤 회의록 안에서 「다시 보내기」."""
-    get_state().export_resent.add(f"{tool_id}:{mid}")
+def resend_export(fid: str) -> None:
+    """단순 이슈: 주관자가 회의록 안에서 「다시 보내기」."""
+    s = get_state()
+    f = next(x for x in repo.export_failures() if x.id == fid)
+    s.export_resent.add(fid)
+    if not any(sel.failure_open(s, x.id) for x in repo.export_failures(f.meeting)):
+        s.status_override[f.meeting] = "done"  # 남은 실패가 없으면 「전달 완료」
+    s.toast = f"「{repo.meeting(f.meeting).title}」 결과를 {repo.tool(f.tool).name}(으)로 다시 보냈어요."
 
+
+def admin_resend(fid: str) -> None:
+    """관리자 · MCP 관리: 기술 이슈를 다시 보냄 → 실패 해결 · 사용자 회의 「전달 완료」 · 사용자에게 알림."""
+    from state import delivery
+
+    s = get_state()
+    f = next(x for x in repo.export_failures() if x.id == fid)
+    tool = repo.tool(f.tool)
+    title = repo.meeting(f.meeting).title
+    repo.resolve_failure(f.id)
+    repo.push_notification("user", "delivered", f"관리자가 「{title}」 결과를 {tool.name}(으)로 다시 보냈어요. 전달 완료!",
+                           delivery.now_text(), f.meeting)
+    s.toast = f"「{title}」 결과를 {tool.name}(으)로 보냈어요. 사용자에게 전달 완료 알림을 보냈어요."
+
+
+def open_contact_admin(fid: str) -> None:
+    """기술 이슈로 보내지 못함 → 「관리자에게 문의」 모달."""
+    _set(modal="contact_admin", contact_failure=fid, copied="")
+
+
+# ---------------------------------------------------------------- 관리자
+def adm_set_month(key: str) -> None:
+    _set(adm_month=key)
+
+
+def adm_pick_month(year_key: str, month_key: str) -> None:
+    """비용 관리: 연도 · 월 고르기. 그 연도에 없는 달이면 그 연도의 마지막 달로."""
+    keys = [m["key"] for m in repo.admin()["months"]]
+    y = st.session_state.get(year_key)
+    mth = st.session_state.get(month_key)
+    key = f"{y}-{mth:02d}"
+    if key not in keys:
+        key = [k for k in keys if k.startswith(f"{y}-")][-1]
+    _set(adm_month=key)
+
+
+def adm_save_budget(budget_key: str, alert_key: str) -> None:
+    """월 예산 · 알림 기준 저장 (조직 설정 · 서버 공용)."""
+    s = get_state()
+    b = repo.budget()
+    b["amount"] = int(st.session_state.get(budget_key) or b["amount"])
+    b["alert_at"] = int(st.session_state.get(alert_key) or b["alert_at"])
+    s.toast = f"월 예산을 {b['amount']:,}원, 알림 기준을 {b['alert_at']}%로 저장했어요."
+
+
+def check_budget_alert() -> None:
+    """관리자: 이번 달 월말 예상 금액이 알림 기준을 넘으면 알림 (같은 예산 · 기준으로는 한 번만)."""
+    from state import delivery
+
+    cur = next(m for m in repo.admin()["months"] if m.get("running"))
+    b = repo.budget()
+    forecast = cur["amount"] / cur["days"] * cur["month_days"]
+    pct = forecast / b["amount"] * 100
+    if pct >= b["alert_at"] and repo.budget_alert_once(f"{cur['key']}:{b['amount']}:{b['alert_at']}"):
+        repo.push_notification("admin", "budget",
+                               f"{cur['month']}월 예산 알림: 이 속도면 월말에 예산의 {pct:.0f}%를 써요. "
+                               f"(알림 기준 {b['alert_at']}%)", delivery.now_text())
+
+
+def adm_filter(query_key: str) -> None:
+    get_state().adm_query = (st.session_state.get(query_key) or "").strip()
+
+
+def adm_set_team(team: str) -> None:
+    _set(adm_team=team)
+
+
+def set_member_role(pid: str, role: str) -> None:
+    s = get_state()
+    repo.org()["roles"][pid] = role
+    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
+    name = sel.admin_member(s, pid).name
+    s.toast = f"{name} 님의 권한을 「{'관리자' if role == 'admin' else '구성원'}」(으)로 바꿨어요."
+
+
+def _set_team(pid: str, team: str) -> None:
+    s = get_state()
+    repo.org()["edits"].setdefault(pid, {})["team"] = team
+    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
+    s.toast = f"{sel.admin_member(s, pid).name} 님의 팀을 「{team}」(으)로 바꿨어요."
+
+
+def _set_job(pid: str, job: str) -> None:
+    s = get_state()
+    repo.org()["edits"].setdefault(pid, {})["job"] = job
+    repo.org_changed()
+    _remember_job(job)
+    s.toast = f"{sel.admin_member(s, pid).name} 님의 직무를 「{job}」(으)로 바꿨어요."
+
+
+def member_pick_team(pid: str, team: str) -> None:
+    """목록 · 팀 팝오버에서 고름 → 바꾸고 팝오버 닫기."""
+    _set_team(pid, team)
+    st.session_state[f"tpop_{pid}"] = False
+
+
+def member_pick_job(pid: str, job: str) -> None:
+    """목록 · 직무 팝오버에서 고름(또는 직접 입력) → 바꾸고 팝오버 닫기."""
+    job = job.strip()
+    if job:
+        _set_job(pid, job)
+    st.session_state[f"jpop_{pid}"] = False
+
+
+def toggle_member_status(pid: str) -> None:
+    s = get_state()
+    m = sel.admin_member(s, pid)
+    new = "active" if m.status == "inactive" else "inactive"
+    repo.org()["status"][pid] = new
+    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
+    s.toast = f"{m.name} 님을 {'다시 활성화했어요' if new == 'active' else '비활성화했어요. 더 이상 로그인할 수 없어요'}."
+
+
+def cancel_invite(pid: str) -> None:
+    s = get_state()
+    m = sel.admin_member(s, pid)
+    repo.org()["status"][pid] = "removed"
+    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
+    s.toast = f"{m.email} 초대를 취소했어요."
+
+
+def _remember_job(job: str) -> None:
+    """「최근 사용」 직무 (최근 것이 앞 · 최대 3개)."""
+    s = get_state()
+    s.adm_recent_jobs = [job] + [j for j in s.adm_recent_jobs if j != job][:2]
+
+
+def add_set_job(nonce: int, job: str) -> None:
+    """구성원 추가 · 「최근 사용」 직무 칩을 누르면 직무 칸에 넣음."""
+    st.session_state[f"add_job_{nonce}"] = job
+
+
+# ---------------------------------------------------------------- 조직 선택 모달 (구성원 추가 · 팀)
+def open_org_picker(target: str) -> None:
+    """조직 선택 패널 열기. target: "add"(구성원 추가 줄) | 사람 id(목록의 팀 바꾸기)."""
+    s = get_state()
+    if target == "add":
+        cur = st.session_state.get(f"add_team_{s.adm_nonce}") or ""
+    else:
+        cur = repo.people()[target].team if target in repo.people() else ""
+        st.session_state[f"tpop_{target}"] = False  # 팀 팝오버는 닫고 패널로
+    _set(modal="org_picker", adm_org_target=target, adm_org_pick=cur, adm_org_query="", adm_org_tab="all",
+         adm_org_open=set(sel.team_ancestors(cur)) or {"제품본부", "프로덕트부"}, adm_org_nonce=s.adm_org_nonce + 1)
+
+
+def org_toggle(node: str) -> None:
+    s = get_state()
+    s.adm_org_open ^= {node}
+
+
+def org_pick(team: str) -> None:
+    _set(adm_org_pick=team)
+
+
+def org_tab(tab: str) -> None:
+    _set(adm_org_tab=tab)
+
+
+def org_query(widget_key: str) -> None:
+    get_state().adm_org_query = (st.session_state.get(widget_key) or "").strip()
+
+
+def org_fav(team: str) -> None:
+    s = get_state()
+    s.adm_org_fav ^= {team}
+
+
+def org_done() -> None:
+    """「선택 완료」: 구성원 추가 줄의 팀 칸(다음에 그릴 때) 또는 그 사람의 팀에 넣고 패널 닫기."""
+    s = get_state()
+    if s.adm_org_pick and s.adm_org_target != "add":
+        _set_team(s.adm_org_target, s.adm_org_pick)
+    elif s.adm_org_pick:
+        s.adm_team_pending = s.adm_org_pick
+    if s.adm_org_pick:
+        s.adm_org_recent = [s.adm_org_pick] + [x for x in s.adm_org_recent if x != s.adm_org_pick][:4]
+    s.modal = None
+
+
+def toggle_add_member() -> None:
+    """구성원 관리: 「구성원 추가」 입력 줄 열기/닫기."""
+    s = get_state()
+    _set(adm_adding=not s.adm_adding, adm_invite_error="", adm_nonce=s.adm_nonce + 1)
+
+
+def adm_add_member(nonce: int) -> None:
+    """구성원 바로 추가 (초대 메일 없이) → 바로 「활성」 · 사용자 화면에 바로 반영."""
+    s = get_state()
+    g = lambda k: (st.session_state.get(f"add_{k}_{nonce}") or "").strip()  # noqa: E731
+    name, email, team, job = g("name"), g("email"), g("team"), g("job")
+    role = "admin" if st.session_state.get(f"add_role_{nonce}") == "admin" else "member"
+    if not name:
+        s.adm_invite_error = "이름을 적어 주세요."
+    elif "@" not in email or "." not in email.split("@")[-1]:
+        s.adm_invite_error = "이메일 주소를 확인해 주세요."
+    elif any(m.email == email for m in sel.admin_members(s)):
+        s.adm_invite_error = "이미 등록된 이메일이에요."
+    elif not team:
+        s.adm_invite_error = "팀을 골라 주세요."
+    else:
+        o = repo.org()
+        pid = f"new-{len(o['added']) + 1}"
+        o["added"][pid] = {"name": name, "email": email, "team": team, "job": job or "사원", "role": role}
+        repo.org_changed()
+        _remember_job(job or "사원")
+        _set(adm_adding=False, adm_invite_error="", adm_nonce=s.adm_nonce + 1,
+             toast=f"{name} 님을 {team} 구성원으로 추가했어요. 이제 회의 참석자 · 담당자로 고를 수 있어요.")
 
 
 # ---------------------------------------------------------------- 알림
 def open_bell() -> None:
     s = get_state()
-    s.bell_seen |= {n.id for n in repo.notifications()}
+    s.bell_seen |= {n.id for n in sel.notifications(s)}
 
 
 def open_notification(nid: str) -> None:
     s = get_state()
     s.read_notifications.add(nid)
-    n = next(x for x in repo.notifications() if x.id == nid)
-    if n.meeting:
+    n = next(x for x in sel.notifications(s) if x.id == nid)
+    if n.kind == "fail":  # 관리자: 사용자 전송 실패 → MCP 관리
+        go("adm_mcp")
+    elif n.kind == "budget":  # 관리자: 예산 알림 → 비용 관리
+        go("adm_cost")
+    elif n.meeting:
         open_meeting(n.meeting)
     elif n.folder and n.folder in sel.folders(s):  # 멤버로 추가됨 → 그 폴더로
         open_folder(n.folder)
-    elif n.kind == "integration":
-        go("mcp")
+
+def add_member_now(fid: str, pid: str) -> None:
+    """폴더 멤버 모달 · 조직도에서 이름을 누르면 바로 멤버로 추가 → 목록 맨 아래로."""
+    add_members(fid, [pid])
+    get_state().member_just_added = True
+
 
 def add_picked_members(fid: str, widget_key: str) -> None:
     """팀원 칩을 누르는 즉시(on_change) 멤버로 추가 → 목록에 바로 반영."""

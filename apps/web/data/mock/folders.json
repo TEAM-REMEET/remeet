@@ -21,21 +21,8 @@
       "name": "11월 릴리즈 준비",
       "type": "weekly",
       "host": "yun",
-      "members": [
-        "yun",
-        "doy",
-        "har",
-        "jiw",
-        "min",
-        "tae"
-      ],
-      "notes": [
-        "m2",
-        "m1",
-        "m4",
-        "m5",
-        "m3"
-      ],
+      "members": ["yun", "doy", "har", "jiw", "min", "tae"],
+      "notes": ["m2", "m4", "m5"],
       "brief": [
         {
           "label": "한 줄로",
@@ -59,43 +46,36 @@
       "name": "고객 안내 개선",
       "type": "weekly",
       "host": "min",
-      "members": [
-        "min",
-        "yun",
-        "har"
-      ],
-      "notes": [
-        "m8"
-      ]
+      "members": ["min", "yun", "har"],
+      "notes": ["m8"]
     },
     "q4": {
       "name": "4분기 계획",
       "type": "monthly",
       "host": "min",
-      "members": [
-        "min",
-        "yun",
-        "doy",
-        "har",
-        "jiw",
-        "tae"
-      ],
-      "notes": [
-        "m7"
-      ]
+      "members": ["min", "yun", "doy", "har", "jiw", "tae"],
+      "notes": []
     },
     "des": {
       "name": "온보딩 디자인 리뷰",
       "type": "normal",
       "host": "har",
-      "members": [
-        "har",
-        "yun",
-        "min"
-      ],
-      "notes": [
-        "m11"
-      ]
+      "members": ["har", "yun", "min"],
+      "notes": ["m11"]
+    },
+    "period-weekly": {
+      "name": "주차별",
+      "type": "weekly",
+      "host": "yun",
+      "members": ["yun", "doy", "har", "jiw", "min", "tae"],
+      "notes": ["m1", "m3"]
+    },
+    "period-monthly": {
+      "name": "월별",
+      "type": "monthly",
+      "host": "min",
+      "members": ["min", "yun", "doy", "har", "jiw", "tae"],
+      "notes": ["m7"]
     }
   }
 }

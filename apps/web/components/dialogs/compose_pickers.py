@@ -9,10 +9,13 @@
 
 from __future__ import annotations
 
+import functools
+
 from datetime import date
 
 import streamlit as st
 
+from components.org_people import org_people_picker
 from config import CURRENT_USER_ID as ME
 from data import repository as repo
 from state import actions
@@ -234,13 +237,9 @@ _CHOSEN_SCROLL_JS = """<script>
 
 def _people_picker(kind: str, *, single: bool) -> None:
     s = get_state()
-    groups = sel.team_groups()
-    team_names = [t for t, _ in groups]
-    team = s.pick_team if s.pick_team in team_names else team_names[0]
-    chosen = set(s.pick_draft)
 
     # 지금 고른 사람: 제목은 상자 위에 고정, 사람 칩만 상자 안에서 스크롤
-    title = "주관자" if single else f"선택한 참석자 {len(s.pick_draft)}명"
+    title = ("연결할 사람" if kind == "cp_speaker" else "주관자") if single else f"선택한 참석자 {len(s.pick_draft)}명"
     if s.pick_draft:
         chips = "".join(
             f'<span class="pick-chip">{avatar(sel.person(pid).initial, size=22, host=single)}'
@@ -256,34 +255,12 @@ def _people_picker(kind: str, *, single: bool) -> None:
         with st.container(key="pick-js"):  # 화면에 자리를 차지하지 않는 숨은 칸
             st.html(_CHOSEN_SCROLL_JS, unsafe_allow_javascript=True)
 
-    # 「팀」 글씨만 상자 밖 위에 두고, 팀 버튼 · 팀원은 한 상자 안에
-    markup('<div class="pick-section-head"><b>팀</b><span class="hint">팀을 고르면 그 팀 사람들이 아래에 나와요</span></div>')
-    ids = dict(groups)[team]
-    hint = "이름을 누르면 주관자로 골라져요" if single else "이름을 누르면 선택 · 다시 누르면 해제"
-    # key 를 매번 바꾸지 않아야 누를 때 칩이 새로 만들어지지 않고 그 자리에서 바로 바뀜
-    widget_key = f"{kind}_pick_{s.pick_nonce}_{team}"
-    default = next((pid for pid in ids if pid in chosen), None) if single else [pid for pid in ids if pid in chosen]
-    with st.container(key=f"pick-box-{kind}", gap="small"):
-        # 팀 이름이 한글이라 버튼 key 가 겹치지 않도록 값은 순번(t0, t1 …)으로
-        options = []
-        for i, (name, gids) in enumerate(groups):
-            n = sum(1 for pid in gids if pid in chosen)
-            options.append((f"t{i}", f"{name} {n}" if n and not single else name))
-        button_group(options, f"t{team_names.index(team)}",
-                     lambda v: actions.update(pick_team=team_names[int(v[1:])]), key=f"{kind}_team")
-        markup(f'<div class="pick-members-head"><b>{esc(team)} {len(ids)}명</b><span class="hint">{hint}</span></div>')
-        with st.container(key=f"pick-members-{kind}", gap=None):  # 팀원이 많으면 여기만 스크롤
-            st.pills(
-                f"{team} 사람",
-                options=ids,
-                format_func=_person_option,
-                selection_mode="single" if single else "multi",
-                default=default,
-                key=widget_key,
-                label_visibility="collapsed",
-                on_change=actions.pick_people,
-                args=(ids, widget_key, single),
-            )
+    # 사람 고르기: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기 (팀 · 조직이 많아도 찾기 쉽게)
+    hint = ("이름을 누르면 이 발화자로 연결돼요" if kind == "cp_speaker" else "이름을 누르면 주관자로 골라져요") if single \
+        else "이름을 누르면 선택 · 다시 누르면 해제"
+    markup(f'<div class="pick-section-head"><b>사람 찾기</b><span class="hint">{esc(hint)}</span></div>')
+    org_people_picker(kind, chosen=list(s.pick_draft), single=single,
+                      on_pick=functools.partial(actions.pick_person, single=single), height=280)
 
 
 @st.dialog("주관자 선택", width="medium", on_dismiss=actions.close_modal)
@@ -297,3 +274,23 @@ def people_picker_dialog() -> None:
     n = len(get_state().pick_draft)
     _people_picker("cp_people", single=False)
     _footer("cp_people", f"{n}명 선택" if n else "선택 안 함")
+
+
+@st.dialog("발화자 연결", width="medium", on_dismiss=actions.close_modal)
+def speaker_picker_dialog() -> None:
+    """2단계: 임시 발화자(참석자1 · A)를 실제 사람과 연결. 팀을 고르면 팀원이 나와요. 모르면 미지정."""
+    s = get_state()
+    markup(f'<p class="hint" style="font-size:14px;color:#2B2F36">원문의 <b>「{esc(s.pick_label)}」</b>은(는) 누구인가요? '
+           "팀을 고르고 이름을 누르세요. 모르면 「미지정으로 두기」를 누르면 돼요.</p>")
+    _people_picker("cp_speaker", single=True)
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="cp_speaker_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        if button("미지정으로 두기", key="cp_speaker_none", variant="secondary"):
+            s.pick_draft = []
+            actions.confirm_pick("cp_speaker")
+            st.rerun()
+        if button("연결하기", key="cp_speaker_ok", variant="primary", disabled=not s.pick_draft):
+            actions.confirm_pick("cp_speaker")
+            st.rerun()
