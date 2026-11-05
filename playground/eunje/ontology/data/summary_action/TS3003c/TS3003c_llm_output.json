@@ -1,94 +1,73 @@
 {
   "agendas": [
     {
-      "agenda_title": "외관 소재와 케이스",
+      "agenda_title": "고객·외관 콘셉트",
       "discussion_background": [
         {
-          "text": "시장 조사에서 멋진 디자인이 가장 중요한 요소였으며, 60~80세 고객은 어두운 색과 알아보기 쉬운 형태, 익숙한 소재를 선호했고 특히 나무에 호감을 보임.",
+          "text": "지난 회의에서 60~80세 고객을 목표로 하고 문자 방송, 거치대, 소리 신호, 소형 화면, 버튼 정보 등을 요구사항으로 정함.",
           "evidence_utterance_indices": [
-            56,
-            57,
-            58,
-            60,
-            61,
-            64,
-            65,
-            66
-          ]
-        },
-        {
-          "text": "실제 나무는 생산 비용이 높아질 수 있으며, 제조 부서는 평면·단일 곡면·이중 곡면 케이스를 공급할 수 있음.",
-          "evidence_utterance_indices": [
-            168,
-            169,
-            170,
-            176,
-            177,
-            350
+            29,
+            30,
+            37
           ]
         }
       ],
       "major_discussions": [
         {
-          "subtopic": "소재와 색상",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "text": "방에 자연스럽게 어울리는 단순한 디자인과 나무 느낌의 고급형, 회흑색의 일반형 두 가지 버전이 제안됨.",
+          "subtopic": "시장 우선순위",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "시장 조사에서 멋진 디자인이 가장 중요했고, 혁신성은 그 절반 정도, 사용 편의성은 혁신성의 절반 정도로 나타남. 60~80세 그룹에서는 세 요소의 중요도가 더 비슷하게 나타남.",
           "assignee": null,
           "due": null,
           "evidence_utterance_indices": [
+            49,
+            55,
+            56,
+            57,
+            58,
+            60,
+            61
+          ]
+        },
+        {
+          "subtopic": "외관 선호",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "text": "고령층은 어두운 색, 알아보기 쉬운 형태와 익숙한 소재를 선호하고 특히 나무를 적합한 소재로 보았음. 트렌드 관찰원은 눈에 띄지 않는 단순한 외관과 목재색·회흑색의 두 버전을 권고함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            64,
+            65,
+            66,
             68,
             69,
             70,
             71,
+            77,
             83,
             84,
             85
           ]
         },
         {
-          "subtopic": "소재와 색상",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "text": "나무의 실제 소재보다는 색상이 중요하므로 반드시 실제 나무를 쓸 필요는 없다는 의견이 제시됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            358,
-            359,
-            360,
-            362
-          ]
-        },
-        {
-          "subtopic": "소재와 색상",
-          "discussion_tag": "액션",
-          "decision_tag": "결정",
-          "text": "케이스에 색상을 적용하는 비용을 조사하기로 함.",
-          "assignee": "산업 디자이너",
-          "due": null,
-          "evidence_utterance_indices": [
-            364,
-            365,
-            367,
-            368
-          ]
-        },
-        {
           "subtopic": "교체형 커버",
           "discussion_tag": "제안",
           "decision_tag": "결정",
-          "text": "표준 리모컨 하나에 다양한 색상과 소재의 커버를 교체해 사용할 수 있도록 하기로 함.",
+          "text": "커버를 교체할 수 있으면 색상 선택과 선물용 홍보에 차별점이 생긴다는 점을 고려해, 리모컨 본체는 하나로 두고 케이스 커버를 교체하는 방향으로 정함.",
           "assignee": null,
           "due": null,
           "evidence_utterance_indices": [
             374,
             378,
             384,
-            385,
-            386,
             389,
-            400,
+            390,
+            392,
+            397,
+            403,
+            405,
             416,
             418,
             419,
@@ -99,86 +78,41 @@
           ]
         },
         {
-          "subtopic": "교체형 커버",
-          "discussion_tag": "반대·우려",
-          "decision_tag": null,
-          "text": "하나의 리모컨이 나무와 플라스틱 등 서로 다른 커버에 모두 어울리도록 디자인을 신중히 살펴봐야 한다는 의견이 제기됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            403,
-            405,
-            419
-          ]
-        },
-        {
           "subtopic": "케이스 형태",
           "discussion_tag": "제안",
-          "decision_tag": null,
-          "text": "사용 중 화면을 쉽게 볼 수 있도록 화면이 놓이는 면에 각도를 줄 수 있는 단일 곡면 케이스가 제안됨.",
+          "decision_tag": "결정",
+          "text": "세워 두는 전화기형보다 눕혀 쓰는 형태를 택하고, 화면을 보기 쉬운 각도를 고려해 단일 곡면 케이스와 둥근 모서리를 적용하는 콘셉트로 정함.",
           "assignee": null,
           "due": null,
           "evidence_utterance_indices": [
-            576,
+            77,
+            80,
+            81,
+            451,
+            452,
+            453,
+            455,
+            458,
             587,
             588,
             589,
             590,
             591,
-            598,
-            599
-          ]
-        },
-        {
-          "subtopic": "케이스 형태",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "text": "리모컨이 친근하고 눈에 편하게 보이도록 모서리를 둥글게 하기로 함.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
+            648,
+            649,
             679,
-            680,
-            681,
             682,
             683,
             685
           ]
         },
         {
-          "subtopic": "후속 디자인",
+          "subtopic": "색상 비용",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "text": "산업 디자인과 사용자 인터페이스 디자인을 함께 작업하기로 함.",
-          "assignee": "산업 디자이너, UI 디자이너",
+          "text": "케이스 색상 적용에 따른 추가 비용을 조사하기로 함.",
+          "assignee": "브라운",
           "due": null,
-          "evidence_utterance_indices": [
-            691,
-            692,
-            694,
-            696,
-            697
-          ]
-        },
-        {
-          "subtopic": "후속 디자인",
-          "discussion_tag": "액션",
-          "decision_tag": "결정",
-          "text": "리모컨에 회사 디자인 이미지를 반영할 수 있도록 회사 웹사이트를 살펴보기로 함.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            691,
-            692,
-            693,
-            694
-          ]
-        }
-      ],
-      "unresolved_issues": [
-        {
-          "tag": "확인 필요",
-          "text": "케이스 색상 적용 비용은 조사 후 확인이 필요함.",
           "evidence_utterance_indices": [
             364,
             365,
@@ -186,95 +120,147 @@
           ]
         },
         {
-          "tag": "세부 미정",
-          "text": "케이스의 구체적인 곡면 형태와 교체형 커버의 소재·색상 구성은 확정되지 않음.",
+          "subtopic": "디자인 후속 작업",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "다음 회의에서 검토할 외관·느낌 및 UI 디자인을 함께 진행하기로 함.",
+          "assignee": "브라운, 리처드",
+          "due": null,
           "evidence_utterance_indices": [
-            400,
-            425,
-            429,
-            584,
-            587,
-            588,
-            689
+            691,
+            694,
+            696
+          ]
+        },
+        {
+          "subtopic": "회사 디자인 참고",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "text": "회사 디자인 이미지를 파악하기 위해 회사 웹사이트를 살펴보기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            692,
+            693
+          ]
+        }
+      ],
+      "unresolved_issues": [
+        {
+          "tag": "세부 미정",
+          "text": "교체형 커버의 소재와 색상, 목재와 목재색 플라스틱 중 선택 및 관련 비용은 정해지지 않음.",
+          "evidence_utterance_indices": [
+            83,
+            84,
+            85,
+            350,
+            358,
+            359,
+            364,
+            365,
+            367,
+            403,
+            405,
+            419
           ]
         }
       ],
       "next_meeting_topics": [
         {
           "tag": "결과 공유",
-          "text": "리모컨의 외관과 느낌 디자인을 살펴보기로 함.",
+          "text": "외관·느낌 디자인과 UI 디자인, 제품 평가를 검토하기로 함.",
           "evidence_utterance_indices": [
-            689,
             691,
             692,
+            694,
+            695,
             696
           ]
         }
       ]
     },
     {
-      "agenda_title": "사용자 인터페이스와 기능",
+      "agenda_title": "인터페이스 구성",
       "discussion_background": [
         {
-          "text": "이전 회의에서 버튼을 적게 사용하고 작은 화면과 버튼 정보 등 부가 기능을 고려하기로 했음.",
+          "text": "이전 회의에서 버튼을 몇 개만 사용하는 방향을 논의함.",
           "evidence_utterance_indices": [
-            29,
-            30,
             98,
-            100,
-            105
+            99,
+            100
           ]
         }
       ],
       "major_discussions": [
         {
-          "subtopic": "버튼 기능",
+          "subtopic": "기본 기능",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "text": "큰 버튼을 사용하고 전원·음량·채널·숫자 등 기본 기능을 유지하는 인터페이스가 제안됨.",
+          "text": "전원·음소거·볼륨·채널·숫자 버튼을 기본으로 하고, 큰 버튼과 한 번 누르면 작은 자막·두 번 누르면 큰 자막이 나오는 자막 버튼, 기능과 현재 채널을 보여주는 소형 화면을 두는 안이 제시됨.",
           "assignee": null,
           "due": null,
           "evidence_utterance_indices": [
             109,
-            110,
             111,
+            116,
             119,
             121,
-            135,
-            137
-          ]
-        },
-        {
-          "subtopic": "버튼 기능",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "text": "자막 전용 버튼을 한 번 누르면 작은 자막, 두 번 누르면 큰 자막을 표시하는 방식이 제안됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
             130,
             131,
             132,
-            133
+            133,
+            137,
+            138,
+            139
           ]
         },
         {
-          "subtopic": "화면 배치",
+          "subtopic": "분실 리모컨 찾기",
           "discussion_tag": "제안",
           "decision_tag": "결정",
-          "text": "작은 LCD로 버튼 기능과 채널 등 추가 정보를 보여 주고, 화면이 손에 가리지 않도록 리모컨 위쪽에 배치하기로 함.",
+          "text": "음성 명령 대신 거치대의 버튼을 눌러 리모컨에서 신호음이 나도록 하는 방식으로 찾기 기능을 두기로 함.",
           "assignee": null,
           "due": null,
           "evidence_utterance_indices": [
-            138,
-            139,
-            147,
-            148,
-            149,
-            311,
-            312,
-            314,
-            316,
+            255,
+            258,
+            259,
+            260,
+            261,
+            264
+          ]
+        },
+        {
+          "subtopic": "음성 인식",
+          "discussion_tag": "반대·우려",
+          "decision_tag": "결정",
+          "text": "대상 고객의 추가 지불 의향이 낮고 사용 편의성 개선도 크지 않을 수 있으며 비용을 높일 우려가 있어 음성 인식은 제외하기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            265,
+            275,
+            277,
+            279,
+            281,
+            294,
+            295,
+            296,
+            299,
+            319,
+            320,
+            321,
+            322
+          ]
+        },
+        {
+          "subtopic": "화면 위치",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "손에 가려지지 않고 사용 중 확인하기 쉽도록 소형 화면을 리모컨 위쪽에 배치하는 방향으로 정함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
             633,
             645,
             648,
@@ -284,276 +270,128 @@
           ]
         },
         {
-          "subtopic": "음성 인식",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "text": "리모컨 찾기와 채널·음량 조작에 음성 인식을 사용하는 방안이 제안됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            102,
-            104,
-            122,
-            123,
-            125,
-            128
-          ]
-        },
-        {
-          "subtopic": "음성 인식",
+          "subtopic": "양손 조작",
           "discussion_tag": "반대·우려",
           "decision_tag": null,
-          "text": "대상 연령층은 음성 인식에 추가 비용을 낼 의향이 없다는 조사 결과가 공유됐으며, 판매 가격이 오른다면 기능을 넣지 말아야 한다는 의견이 제기됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            265,
-            267,
-            268,
-            275,
-            277,
-            279,
-            281
-          ]
-        },
-        {
-          "subtopic": "음성 인식",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "text": "음성 인식은 비용을 높이는 반면 사용 편의성 개선 효과가 크지 않을 것으로 보고 제외하기로 함.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            296,
-            299,
-            303,
-            318,
-            319,
-            320,
-            321,
-            322,
-            325
-          ]
-        },
-        {
-          "subtopic": "양손 사용",
-          "discussion_tag": "반대·우려",
-          "decision_tag": null,
-          "text": "왼손잡이를 위해 채널과 볼륨 버튼을 양쪽에 중복 배치하면 버튼 수가 늘어 사용자가 혼동할 수 있다는 우려가 제기됨.",
+          "text": "左손잡이 사용자도 고려해 양쪽에 조작 버튼을 두는 안이 나왔으나, 버튼이 늘면 혼동될 수 있다는 우려와 반대 손으로 조작해도 괜찮다는 의견이 함께 제기됨.",
           "assignee": null,
           "due": null,
           "evidence_utterance_indices": [
             484,
             486,
             506,
-            508,
             511,
             513,
-            515,
-            517
-          ]
-        },
-        {
-          "subtopic": "양손 사용",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "text": "최종 스케치에서 왼손잡이와 오른손잡이를 위해 양쪽에 버튼을 일부 배치하기로 함.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            665,
+            517,
+            544,
+            546,
+            550,
+            554,
             667,
-            668,
-            669
+            668
           ]
-        },
+        }
+      ],
+      "unresolved_issues": [
         {
-          "subtopic": "양손 사용",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "text": "리모컨을 뒤집어 양손으로 동일하게 쓰는 구상은 플러스·마이너스 방향이 바뀌어 불편할 것으로 판단됨.",
-          "assignee": null,
-          "due": null,
+          "tag": "세부 미정",
+          "text": "왼손·오른손잡이 사용자를 위한 버튼의 최종 위치와 양쪽에 둘 기능 범위는 확정되지 않음.",
           "evidence_utterance_indices": [
+            484,
+            492,
+            506,
+            511,
+            519,
             520,
-            523,
-            533,
-            534,
-            535,
-            536,
-            540
-          ]
-        }
-      ],
-      "unresolved_issues": [
-        {
-          "tag": "세부 미정",
-          "text": "양손 사용을 위한 버튼의 구체적인 기능과 배치, 자막 버튼의 작동 방식은 최종 확정되지 않음.",
-          "evidence_utterance_indices": [
-            130,
-            131,
-            132,
-            133,
+            544,
+            554,
             667,
-            668,
-            671
-          ]
-        }
-      ],
-      "next_meeting_topics": [
-        {
-          "tag": "결과 공유",
-          "text": "사용자 인터페이스 디자인과 제품 평가를 살펴보기로 함.",
-          "evidence_utterance_indices": [
-            691,
-            694,
-            695,
-            696
-          ]
-        }
-      ]
-    },
-    {
-      "agenda_title": "전원과 거치대",
-      "discussion_background": [
-        {
-          "text": "이전 회의에서 거치대와 소리 신호를 부가 기능으로 고려했으며, 거치대와 작은 화면은 제품의 주요 혁신 요소로 제시됨.",
-          "evidence_utterance_indices": [
-            29,
-            30,
-            74,
-            75,
-            76
-          ]
-        },
-        {
-          "text": "전원 후보로 일반 배터리, 손 발전기, 태양 전지, 운동 에너지가 제시됨.",
-          "evidence_utterance_indices": [
-            200,
-            201,
-            203,
-            208,
-            213
-          ]
-        }
-      ],
-      "major_discussions": [
-        {
-          "subtopic": "전원 방식",
-          "discussion_tag": "반대·우려",
-          "decision_tag": null,
-          "text": "운동 에너지 방식은 고령 사용자가 리모컨을 흔들기 불편하고 거치대의 충전 용도를 약화할 수 있다는 우려가 제기됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            164,
-            165,
-            166,
-            218,
-            225,
-            226,
-            227
-          ]
-        },
-        {
-          "subtopic": "전원 방식",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "text": "음성 인식을 제외해 전력 소비가 크지 않을 것으로 보고, 거치대에서 충전할 수 있는 배터리를 사용하기로 함.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            319,
-            325,
-            328,
-            329,
-            330,
-            331,
-            333,
-            335
-          ]
-        },
-        {
-          "subtopic": "거치 방식",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "text": "리모컨을 거치대에 세우지 않고 눕혀 놓는 방식으로 하기로 함.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            77,
-            78,
-            80,
-            81,
-            451,
-            452,
-            453,
-            454,
-            455,
-            456,
-            458
-          ]
-        },
-        {
-          "subtopic": "분실 방지",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "text": "거치대 버튼을 누르면 리모컨에서 소리가 나게 하는 찾기 기능이 음성 인식보다 효율적이고 저렴한 대안으로 제안됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            255,
-            257,
-            258,
-            259,
-            260
-          ]
-        },
-        {
-          "subtopic": "칩셋",
-          "discussion_tag": "정보",
-          "decision_tag": "결정",
-          "text": "디스플레이 사용에 필요한 고급형 칩셋을 쓰기로 함.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            173,
-            174,
-            175,
-            336,
-            338,
-            339,
-            340,
-            341,
-            342,
-            344
-          ]
-        }
-      ],
-      "unresolved_issues": [
-        {
-          "tag": "세부 미정",
-          "text": "거치대 버튼을 이용한 리모컨 찾기 기능의 채택 여부와 구현 세부는 확정되지 않음.",
-          "evidence_utterance_indices": [
-            255,
-            258,
-            259,
-            260
+            668
           ]
         }
       ],
       "next_meeting_topics": []
     },
     {
-      "agenda_title": "회의록 공유",
+      "agenda_title": "전원·칩셋 사양",
+      "discussion_background": [
+        {
+          "text": "소형 화면은 이전 회의에서 정한 요구사항에 포함되어 있음.",
+          "evidence_utterance_indices": [
+            29,
+            30
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "전원 방식",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "text": "손 발전기는 TV 시청 전에 흔들어야 하고 태양 전지는 모든 방이 밝지 않다는 제약이 있으며, 운동 에너지는 고령층이 흔들기 불편하고 거치대를 무용하게 할 수 있음. 사용 전력이 적고 비용도 낮은 배터리를 선택하고 거치대에서 충전하는 방향으로 정함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            163,
+            164,
+            165,
+            166,
+            167,
+            203,
+            206,
+            208,
+            209,
+            211,
+            218,
+            225,
+            227,
+            229,
+            230,
+            242,
+            244,
+            245,
+            324,
+            328,
+            329,
+            330,
+            333,
+            335
+          ]
+        },
+        {
+          "subtopic": "칩셋 등급",
+          "discussion_tag": "정보",
+          "decision_tag": "결정",
+          "text": "LCD 화면을 사용하므로 고급형 칩셋이 필요해 고급형을 적용하기로 함.",
+          "assignee": null,
+          "due": null,
+          "evidence_utterance_indices": [
+            173,
+            174,
+            175,
+            184,
+            185,
+            338,
+            339,
+            340,
+            341,
+            344
+          ]
+        }
+      ],
+      "unresolved_issues": [],
+      "next_meeting_topics": []
+    },
+    {
+      "agenda_title": "기타",
       "discussion_background": [],
       "major_discussions": [
         {
-          "subtopic": "자료 공유",
+          "subtopic": "회의록 공유",
           "discussion_tag": "액션",
           "decision_tag": "결정",
           "text": "회의록을 폴더에 올리기로 함.",
-          "assignee": "프로젝트 매니저",
+          "assignee": "바트",
           "due": null,
           "evidence_utterance_indices": [
             699
