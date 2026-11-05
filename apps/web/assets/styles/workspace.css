@@ -535,7 +535,7 @@ hr.cp-divider {
   > span
   > button::before,
 .st-key-cp-attach [data-testid="stFileChips"] > button::before {
-  content: "📎 파일 첨부";
+  content: "📎 파일 첨부(txt/md/docx/hwpx)";
   font-size: 14px;
   font-weight: 600;
 }
@@ -1579,4 +1579,1161 @@ hr.cp-divider {
   > [data-testid="stLayoutWrapper"]:has([class*="st-key-b-field"]) {
   flex: 1 1 0% !important;
   min-width: 0;
+}
+
+/* =========================================================
+   관리자 계정 (비용 관리 · 구성원 관리 · MCP 관리)
+   ========================================================= */
+/* 로그인: 관리자 데모 계정 상자 (데모 계정 상자와 같은 모양) */
+.st-key-login .st-key-demo-box-admin {
+  min-height: 0 !important;
+  gap: 1rem !important;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+/* 사이드바 로고 옆 「관리자」 */
+.sb-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sb-admin-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--ink-2);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+/* 제목 줄: 제목은 왼쪽, 버튼은 오른쪽 */
+[class*="st-key-page-adm-"]
+  > [data-testid="stLayoutWrapper"]:first-child
+  > [data-testid="stHorizontalBlock"] {
+  justify-content: space-between;
+}
+.adm-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.adm-note b {
+  color: var(--ink-2);
+}
+.adm-alert {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: #fff8f2;
+  border: 1px solid var(--accent-line);
+  color: #8a4a12;
+  font-size: 14px;
+}
+.adm-alert b {
+  color: #a5501b;
+  flex: none;
+}
+
+/* 비용 관리: 숫자 카드 4개 */
+.adm-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.adm-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+.adm-kpi.warn {
+  border-color: var(--accent-line);
+}
+.adm-kpi .lb {
+  font-size: 13px;
+  color: var(--muted);
+}
+.adm-kpi b {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.adm-kpi .sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.adm-kpi .meter {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: #eef0f3;
+  overflow: visible;
+}
+.adm-kpi .meter i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.adm-kpi .meter i.fc {
+  background: var(--accent-line);
+  opacity: 0.6;
+}
+.adm-kpi .meter em {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--ink-2);
+}
+
+/* 비용 관리: 월별 막대 (금액 줄 · 막대 영역 + 예산 선 · 달 이름 줄) */
+.adm-trend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.adm-trend .row,
+.adm-trend .area {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.adm-trend .area {
+  position: relative;
+  height: 190px;
+}
+.adm-trend .val {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 32px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.adm-trend .val em {
+  font-style: normal;
+  font-size: 11px;
+  color: #b0763f;
+}
+.adm-trend .val.on {
+  color: var(--ink);
+  font-weight: 700;
+}
+.adm-trend .track {
+  position: relative;
+  width: 100%;
+  max-width: 56px;
+  justify-self: center;
+}
+.adm-trend .track i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: #d9dce1;
+}
+.adm-trend .track i.fc {
+  background: transparent;
+  border: 1.5px dashed var(--accent-line);
+  border-bottom: none;
+}
+.adm-trend .track.on i:not(.fc) {
+  background: var(--accent);
+}
+.adm-trend .mo {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.adm-trend .mo.on {
+  font-weight: 700;
+  color: var(--ink);
+}
+.adm-trend .area {
+  border-bottom: 1px solid var(--line);
+}
+.adm-trend .budget {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed #8b9097;
+  z-index: 1;
+  pointer-events: none;
+}
+.adm-trend .budget b {
+  position: absolute;
+  right: 0;
+  top: -20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f646d;
+  background: #ffffff;
+  padding: 0 4px;
+}
+
+/* 비용 관리: 팀별 · 기능별 비중 막대 */
+.adm-shares {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adm-share {
+  display: grid;
+  grid-template-columns: 96px 1fr 40px 150px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.adm-shares.wide .adm-share {
+  grid-template-columns: 200px 1fr 40px 90px;
+}
+.adm-share .nm {
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.adm-share .bar {
+  height: 8px;
+  border-radius: 4px;
+  background: #f0f1f3;
+  overflow: hidden;
+}
+.adm-share .bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+.adm-share .pct {
+  text-align: right;
+  font-weight: 700;
+  color: var(--ink);
+}
+.adm-share .amt {
+  text-align: right;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* 구성원 관리 */
+.adm-sum {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.adm-sum span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+.adm-sum b {
+  color: var(--ink);
+}
+.st-key-adm-filter .stElementContainer:has(.stTextInput) {
+  flex: 1 1 0% !important;
+  max-width: 420px;
+}
+.st-key-adm-filter .stElementContainer:has(.stSelectbox) {
+  flex: none !important;
+  width: 200px !important;
+}
+.st-key-adm-table,
+.st-key-adm-fails .st-key-adm-fthead {
+  background: #ffffff;
+}
+.st-key-adm-table {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.st-key-adm-thead,
+.st-key-adm-fthead {
+  background: #f6f7f9;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 18px;
+}
+[class*="st-key-adm-mrow-"],
+[class*="st-key-adm-frow-"] {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--line-soft, #eceef1);
+}
+[class*="st-key-adm-mrow-"]:last-child {
+  border-bottom: none;
+}
+[class*="st-key-adm-mrow-"]:hover {
+  background: #fbfbfc;
+}
+.adm-th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.adm-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.adm-who > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.4;
+}
+.adm-who b {
+  font-size: 14px;
+  color: var(--ink);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.adm-who b .me {
+  font-size: 11px;
+  font-weight: 600;
+  color: #a5501b;
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 0 5px;
+}
+.adm-who > span > span,
+.adm-cell > span {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-cell {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.45;
+  min-width: 0;
+}
+.adm-cell.muted {
+  font-size: 13px;
+  color: var(--muted);
+}
+.adm-cell b {
+  font-weight: 600;
+  color: var(--ink);
+}
+.adm-cell .code {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+}
+
+/* MCP 관리: 도구 줄 */
+[class*="st-key-adm-tool-"] {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line-soft, #eceef1);
+  justify-content: space-between;
+}
+[class*="st-key-adm-tool-"]:last-child {
+  border-bottom: none;
+}
+.adm-tool {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.st-key-adm-fails .st-key-adm-fthead {
+  margin-top: 6px;
+  border-radius: 4px 4px 0 0;
+}
+
+/* 관리자에게 문의 모달 */
+.ca-lead {
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #3a3e45;
+}
+.ca-info {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 14px 16px;
+  background: #f6f7f9;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.ca-info dt {
+  color: var(--muted);
+}
+.ca-info dd {
+  margin: 0;
+  color: var(--ink-2);
+  display: flex;
+  flex-direction: column;
+}
+.ca-info .code {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.st-key-ca-mail {
+  border: 1px solid var(--accent-line);
+  background: #fff8f2;
+  border-radius: 6px;
+  padding: 12px 14px;
+  justify-content: space-between;
+}
+.ca-mail {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.ca-mail .lb {
+  color: #a5501b;
+  font-size: 12px;
+}
+.ca-mail b {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* 회의록 안 전송 실패 안내: 빨간 띠 한 줄에 안내 + 버튼(다시 보내기 · 관리자에게 문의) */
+[class*="st-key-export-f"] {
+  flex-wrap: nowrap !important;
+  background: #fdecea;
+  border-radius: 4px;
+  padding: 6px 10px 6px 0;
+}
+[class*="st-key-export-f"] .notice {
+  background: transparent;
+}
+[class*="st-key-export-f"] .stElementContainer:has(.notice) {
+  flex: 1 1 0% !important;
+}
+
+/* 결과 전달 띠: 안내는 왼쪽을 다 쓰고, 버튼들은 오른쪽에 나란히 */
+[class*="st-key-dvb-"] {
+  flex-wrap: nowrap !important;
+}
+[class*="st-key-dvb-"] > .stElementContainer:has(.dv-banner) {
+  flex: 1 1 0% !important;
+}
+
+/* 결과 전달: 참석자 목록 아래 「외부 도구 전송」 */
+.st-key-panel-rc .dv-sub-h {
+  margin-top: 18px;
+}
+.dv-rc .dv-mark {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+/* 비용 관리: 연도 · 월 고르기 */
+.st-key-adm-month-pick .stElementContainer {
+  width: 140px !important;
+  flex: none !important;
+}
+.adm-trend .mo small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+/* 비용 관리: 같은 줄 네모 높이 맞추기 (예산 설정 = 월별 사용 금액 · 기능별 = 팀별) */
+.st-key-adm-row-trend [data-testid="stHorizontalBlock"],
+.st-key-adm-row-share [data-testid="stHorizontalBlock"] {
+  align-items: stretch !important;
+}
+.st-key-adm-row-trend
+  [data-testid="stColumn"]
+  > [data-testid="stVerticalBlock"],
+.st-key-adm-row-share
+  [data-testid="stColumn"]
+  > [data-testid="stVerticalBlock"] {
+  height: 100%;
+}
+.st-key-adm-row-trend
+  [data-testid="stColumn"]
+  [data-testid="stLayoutWrapper"]:has(> [class*="st-key-card-default-"]),
+.st-key-adm-row-share
+  [data-testid="stColumn"]
+  [data-testid="stLayoutWrapper"]:has(> [class*="st-key-card-default-"]) {
+  flex: 1 1 auto !important;
+  height: 100%;
+}
+.st-key-adm-row-trend [class*="st-key-card-default-"],
+.st-key-adm-row-share [class*="st-key-card-default-"] {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* 구성원 관리: 구성원 추가 줄 */
+.st-key-adm-add {
+  background: #ffffff;
+  border: 1px solid var(--accent-line);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+.adm-add-h {
+  font-size: 15px;
+  margin-right: 8px;
+}
+/* 「추가」 버튼: 칸 이름 높이만큼 내려 입력칸과 줄맞춤 */
+.st-key-adm-add .st-key-b-primary-adm_add_ok {
+  margin-top: 30px;
+}
+/* 조직 선택(팀): 검색 선택칸 + 「조직도」 버튼 */
+.st-key-adm-add-team {
+  flex-wrap: nowrap !important;
+}
+.st-key-adm-add-team > .stElementContainer:has(.stSelectbox) {
+  flex: 1 1 0% !important;
+  min-width: 0;
+}
+.st-key-adm-add-team > [class*="st-key-b-"] {
+  flex: none !important;
+}
+.org-path {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+/* 직무 · 최근 사용 칩 */
+.st-key-adm-recent-jobs {
+  flex-wrap: wrap !important;
+  margin-top: 2px;
+}
+.adm-recent-lb {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.st-key-adm-recent-jobs [class*="st-key-b-chip-"] button {
+  min-height: 0 !important;
+  height: 24px;
+  padding: 0 10px !important;
+  font-size: 12px;
+  border-radius: 999px;
+}
+
+/* 새 알림 지켜보기 전용 숨은 영역 (js-host 와 같이 자리를 차지하지 않음) */
+.st-key-live-host,
+[data-testid="stLayoutWrapper"]:has(> .st-key-live-host) {
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+/* 구성원 목록: 팀 선택칸 앞에 돋보기 (팀이 많아도 이름으로 찾기) */
+[class*="st-key-adm-teamsel-"] [data-testid="stSelectbox"] {
+  position: relative;
+}
+[class*="st-key-adm-teamsel-"] [data-testid="stSelectbox"]::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  background: no-repeat center / 14px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2380858E' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+}
+[class*="st-key-adm-teamsel-"] input {
+  padding-left: 28px !important;
+}
+
+/* 조직 선택 모달: 본부 › 부 › 팀 트리 */
+.st-key-org-body {
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+}
+[class*="st-key-orgrow-"] {
+  border-radius: 4px;
+}
+[class*="st-key-orgrow-"] [class*="st-key-b-ghost-"] button {
+  justify-content: flex-start !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+[class*="st-key-orgrow-"] [class*="st-key-b-ghost-orgdir"] button {
+  font-weight: 700;
+}
+[class*="st-key-orgrow-1-"] {
+  padding-left: 22px;
+}
+[class*="st-key-orgrow-2-"] {
+  padding-left: 44px;
+}
+[class*="st-key-orgrow-"][class*="-on-"] {
+  background: var(--accent-soft);
+}
+[class*="st-key-orgrow-"][class*="-on-"]
+  [class*="st-key-b-ghost-orgteam"]
+  button {
+  color: #a5501b;
+  font-weight: 700;
+}
+[class*="st-key-orgrow-"]
+  [class*="st-key-b-ghost-orgteam"]
+  [data-testid="stIconMaterial"] {
+  color: var(--accent);
+}
+[class*="st-key-orgrow-"] [class*="st-key-b-ghost-orgfav"] {
+  flex: none !important;
+}
+[class*="st-key-orgrow-"]
+  [class*="st-key-b-ghost-orgfav"]
+  [data-testid="stIconMaterial"] {
+  color: #e8a500;
+}
+.st-key-org-body .org-path {
+  padding-left: 40px;
+  margin: -4px 0 4px;
+}
+.org-picked {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: #fff8f2;
+  font-size: 14px;
+}
+.org-picked span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.org-picked b {
+  color: var(--ink);
+}
+.org-picked em {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 조직 선택 모달: 트리 줄은 왼쪽 정렬 + 단계별 들여쓰기 */
+[class*="st-key-orgrow-"] [class*="st-key-b-ghost-"] {
+  width: 100%;
+}
+[class*="st-key-orgrow-"] [class*="st-key-b-ghost-"] button > div,
+[class*="st-key-orgrow-"]
+  [class*="st-key-b-ghost-"]
+  button
+  [data-testid="stMarkdownContainer"] {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  width: 100%;
+}
+[class*="st-key-orgrow-"][class*="-on-"] [class*="st-key-b-ghost-orgfav"],
+[class*="st-key-orgrow-"][class*="-off-"] [class*="st-key-b-ghost-orgfav"] {
+  width: auto;
+}
+
+/* =========================================================
+   구성원 관리 · 사진과 같은 모양 (팝오버 편집 · 조직도 · 직무 검색)
+   ========================================================= */
+/* 목록: 팀 · 직무 팝오버 버튼 = 입력칸 모양 */
+[class*="st-key-tpop_"] [data-testid="stPopoverButton"],
+[class*="st-key-jpop_"] [data-testid="stPopoverButton"] {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 10px !important;
+  background: #ffffff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  font-weight: 400 !important;
+  color: var(--ink) !important;
+}
+[class*="st-key-tpop_"] [data-testid="stPopoverButton"] > div,
+[class*="st-key-jpop_"] [data-testid="stPopoverButton"] > div {
+  width: 100%;
+  justify-content: space-between;
+}
+[class*="st-key-tpop_"] [data-testid="stPopoverButton"] > div > div:first-child,
+[class*="st-key-jpop_"]
+  [data-testid="stPopoverButton"]
+  > div
+  > div:first-child {
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+}
+[class*="st-key-tpop_"]
+  [data-testid="stPopoverButton"]
+  > div
+  > div:first-child
+  > span,
+[class*="st-key-jpop_"]
+  [data-testid="stPopoverButton"]
+  > div
+  > div:first-child
+  > span {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+}
+[class*="st-key-tpop_"] [data-testid="stIconMaterial"] {
+  color: #80858e;
+  font-size: 18px;
+}
+/* 직무: 연필은 오른쪽 · ⌄ 없음 */
+[class*="st-key-jpop_"]
+  [data-testid="stPopoverButton"]
+  > div
+  > div[aria-hidden="true"] {
+  display: none;
+}
+[class*="st-key-jpop_"]
+  [data-testid="stPopoverButton"]
+  > div
+  > div:first-child
+  > span {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+[class*="st-key-jpop_"] [data-testid="stIconMaterial"] {
+  color: #80858e;
+  font-size: 16px;
+}
+[class*="st-key-tpop_"] [data-testid="stPopoverButton"][aria-expanded="true"],
+[class*="st-key-jpop_"] [data-testid="stPopoverButton"][aria-expanded="true"] {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(243, 115, 33, 0.12);
+}
+[class*="st-key-tpop_"] [data-testid="stMarkdownContainer"] p,
+[class*="st-key-jpop_"] [data-testid="stMarkdownContainer"] p {
+  font-size: 14px;
+}
+
+/* 팝오버 안: 검색 + 목록 (선택된 것은 주황 배경 · 오른쪽 ✓) */
+[data-testid="stPopoverBody"]:has([class*="st-key-tlist-"]),
+[data-testid="stPopoverBody"]:has([class*="st-key-jlist-"]) {
+  min-width: 240px;
+}
+.pop-cap {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 2px 4px 4px;
+}
+.pop-path {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 12px 4px;
+  margin-top: -4px;
+}
+[class*="st-key-popopt-"] {
+  border-radius: 4px;
+}
+[class*="st-key-popopt-on-"] {
+  background: var(--accent-soft);
+}
+[class*="st-key-popopt-"] [class*="st-key-b-ghost-"] button,
+[class*="st-key-jlist-"] [class*="st-key-b-ghost-jnew"] button {
+  justify-content: flex-start !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  font-size: 14px;
+  font-weight: 400;
+}
+[class*="st-key-popopt-"] [class*="st-key-b-ghost-"] button > div {
+  width: 100%;
+  justify-content: flex-start;
+}
+/* 지금 값: 오른쪽 끝에 주황 ✓ */
+[class*="st-key-popopt-on-"] [class*="st-key-b-ghost-"] button {
+  position: relative;
+  padding-right: 32px !important;
+}
+[class*="st-key-popopt-on-"] [class*="st-key-b-ghost-"] button::after {
+  content: "✓";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  font-weight: 700;
+}
+[class*="st-key-popopt-on-"] button {
+  font-weight: 600 !important;
+  color: #a5501b !important;
+}
+
+/* 구성원 추가: 조직 선택 · 직무 = 돋보기가 있는 네모 (주황 테두리) */
+.adm-flabel {
+  display: block;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 0.25rem;
+  color: var(--ink);
+}
+.st-key-adm-searchbox-team,
+.st-key-adm-searchbox-job {
+  position: relative;
+  border: 1px solid var(--accent-line);
+  border-radius: 6px;
+  background: #ffffff;
+  min-height: 40px;
+  padding: 0 4px 0 30px;
+  box-sizing: border-box;
+  flex-wrap: nowrap !important;
+}
+.st-key-adm-searchbox-team:focus-within,
+.st-key-adm-searchbox-job:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(243, 115, 33, 0.12);
+}
+.st-key-adm-searchbox-team::before,
+.st-key-adm-searchbox-job::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 15px;
+  height: 15px;
+  transform: translateY(-50%);
+  background: no-repeat center / 15px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2380858E' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.st-key-adm-searchbox-team [role="group"],
+.st-key-adm-searchbox-job [role="group"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.st-key-adm-searchbox-team button[aria-label="Open"],
+.st-key-adm-searchbox-job button[aria-label="Open"] {
+  display: none;
+}
+.st-key-adm-searchbox-team > .stElementContainer:has(.stSelectbox) {
+  flex: 1 1 0% !important;
+  min-width: 0;
+}
+.st-key-adm-searchbox-team > [class*="st-key-b-"] {
+  flex: none !important;
+}
+.st-key-adm-searchbox-team [class*="st-key-b-accentline-adm_org_open"] button {
+  min-height: 0 !important;
+  height: 28px;
+  padding: 0 10px !important;
+  font-size: 12px;
+  background: #fff8f2 !important;
+}
+.st-key-adm-recent-jobs {
+  flex-wrap: wrap !important;
+  margin-top: 8px;
+  row-gap: 6px !important;
+}
+.st-key-adm-recent-jobs [class*="st-key-b-chip-"] button {
+  min-height: 0 !important;
+  height: 26px;
+  padding: 0 12px !important;
+  font-size: 12px;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+}
+.st-key-adm-add .st-key-b-primary-adm_add_ok {
+  margin-top: 30px;
+}
+.st-key-adm-add .st-key-b-primary-adm_add_ok button {
+  white-space: nowrap;
+  width: 100%;
+}
+
+/* 조직 선택: 화면 오른쪽에 붙는 패널 */
+[data-testid="stDialog"]:has(.st-key-org-body) section[role="dialog"] {
+  position: fixed !important;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  margin: 0 !important;
+  width: 420px !important;
+  max-width: calc(100vw - 32px);
+  max-height: none !important;
+  overflow-y: auto;
+  border-radius: 10px;
+}
+[data-testid="stDialog"]:has(.st-key-org-body)
+  h2
+  [data-testid="stIconMaterial"] {
+  color: var(--accent);
+}
+.org-lead {
+  font-size: 13px !important;
+  color: var(--muted) !important;
+}
+.st-key-org-body {
+  border: none !important;
+  border-top: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+}
+.st-key-org-tabs [class*="st-key-grp-tab-"] {
+  width: 100%;
+}
+.st-key-org-tabs [class*="st-key-grp-tab-"] > div {
+  flex: 1 1 0% !important;
+}
+.st-key-org-tabs [class*="st-key-grp-tab-"] button {
+  width: 100%;
+  justify-content: center;
+}
+[class*="st-key-orgrow-"] {
+  flex-wrap: nowrap !important;
+}
+[class*="st-key-orgrow-"] > .stElementContainer:has([class*="orgteam"]),
+[class*="st-key-orgrow-"] > [class*="st-key-b-ghost-orgteam"],
+[class*="st-key-orgrow-"] > [class*="st-key-b-ghost-orgdir"] {
+  flex: 1 1 0% !important;
+  min-width: 0;
+}
+[class*="st-key-orgrow-"] button {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+[class*="st-key-orgrow-"] [class*="st-key-b-ghost-orgtw"] button {
+  width: 28px;
+  min-width: 28px;
+  padding: 0 !important;
+  justify-content: center !important;
+}
+[class*="st-key-orgrow-"]
+  [class*="st-key-b-ghost-orgtw"]
+  [data-testid="stIconMaterial"] {
+  color: #80858e;
+}
+[class*="st-key-orgrow-"]
+  [class*="st-key-b-ghost-orgdir"]
+  [data-testid="stIconMaterial"] {
+  color: #80858e;
+}
+[class*="st-key-orgrow-"]:has([class*="orgdir"])
+  [class*="st-key-b-ghost-orgdir"]
+  button:has([data-testid="stIconMaterial"]) {
+  gap: 6px;
+}
+.org-gap {
+  display: inline-block;
+  width: 28px;
+  flex: none;
+}
+[class*="st-key-orgrow-1-"] {
+  padding-left: 20px !important;
+}
+[class*="st-key-orgrow-2-"] {
+  padding-left: 40px !important;
+}
+[data-testid="stDialog"]:has(.st-key-org-body) section[role="dialog"] {
+  background: #ffffff !important;
+  padding: 24px 24px 20px !important;
+  box-shadow: 0 12px 40px rgba(16, 24, 40, 0.18);
+  display: flex;
+  flex-direction: column;
+}
+/* 팝오버 목록: 테두리 없이 · 간격 좁게 */
+[class*="st-key-tlist-"],
+[class*="st-key-jlist-"] {
+  border: none !important;
+  padding: 0 !important;
+}
+[data-testid="stPopoverBody"]:has([class*="st-key-tlist-"])
+  [data-testid="stVerticalBlock"],
+[data-testid="stPopoverBody"]:has([class*="st-key-jlist-"])
+  [data-testid="stVerticalBlock"] {
+  gap: 0.4rem;
+}
+[class*="st-key-orgrow-"] > .stElementContainer:has(.org-gap) {
+  width: 28px !important;
+  flex: none !important;
+}
+
+/* =========================================================
+   사람 고르기 (조직도) — 새 회의록 · 폴더 멤버 · 담당자 지정 · 회의 공유 공용
+   ========================================================= */
+[class*="st-key-pp-body-"] {
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+}
+[class*="st-key-pp-tabs-"] [class*="st-key-grp-tab-"] {
+  width: 100%;
+}
+[class*="st-key-pp-tabs-"] [class*="st-key-grp-tab-"] > div {
+  flex: 1 1 0% !important;
+}
+[class*="st-key-pp-tabs-"] [class*="st-key-grp-tab-"] button {
+  width: 100%;
+  justify-content: center;
+}
+[class*="st-key-pprow-"] {
+  flex-wrap: nowrap !important;
+  border-radius: 4px;
+}
+[class*="st-key-pprow-"] > [class*="st-key-b-ghost-pp_"],
+[class*="st-key-pprow-"] > [class*="st-key-b-ghost-ppteam"],
+[class*="st-key-pprow-"] > [class*="st-key-b-ghost-ppdir"] {
+  flex: 1 1 0% !important;
+  min-width: 0;
+}
+[class*="st-key-pprow-"] button {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  min-height: 34px !important;
+  padding: 0 8px !important;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+[class*="st-key-pprow-"] button > div {
+  justify-content: flex-start;
+}
+[class*="st-key-pprow-"] [class*="st-key-b-ghost-pptw"] button {
+  width: 28px;
+  min-width: 28px;
+  padding: 0 !important;
+  justify-content: center !important;
+}
+[class*="st-key-pprow-"]
+  [class*="st-key-b-ghost-pptw"]
+  [data-testid="stIconMaterial"],
+[class*="st-key-pprow-"]
+  [class*="st-key-b-ghost-ppdir"]
+  [data-testid="stIconMaterial"],
+[class*="st-key-pprow-"]
+  [class*="st-key-b-ghost-ppteam"]
+  [data-testid="stIconMaterial"] {
+  color: #80858e;
+}
+[class*="st-key-pprow-"] [class*="st-key-b-ghost-ppdir"] button,
+[class*="st-key-pprow-"] [class*="st-key-b-ghost-ppteam"] button {
+  font-weight: 700;
+}
+/* 사람 줄: 체크박스(주황) · 고르면 주황 배경 · 오른쪽 ☆ */
+[class*="st-key-pprow-"]
+  [class*="st-key-b-ghost-pp_"]
+  [data-testid="stIconMaterial"] {
+  color: var(--accent);
+}
+[class*="st-key-pprow-"][class*="-on-"] {
+  background: var(--accent-soft);
+}
+[class*="st-key-pprow-"][class*="-on-"] [class*="st-key-b-ghost-pp_"] button {
+  color: #a5501b;
+  font-weight: 700;
+}
+[class*="st-key-pprow-"][class*="-lock-"]
+  [class*="st-key-b-ghost-pp_"]
+  [data-testid="stIconMaterial"] {
+  color: #c3c7cd;
+}
+[class*="st-key-pprow-"] [class*="st-key-b-ghost-ppfav"] {
+  flex: none !important;
+}
+[class*="st-key-pprow-"] [class*="st-key-b-ghost-ppfav"] button {
+  width: 30px;
+  min-width: 30px;
+  padding: 0 !important;
+  justify-content: center !important;
+}
+[class*="st-key-pprow-"]
+  [class*="st-key-b-ghost-ppfav"]
+  [data-testid="stIconMaterial"] {
+  color: #e8a500;
+}
+.pp-lock {
+  font-size: 12px;
+  color: var(--muted);
+  background: #f0f1f3;
+  border-radius: 3px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+.pp-path {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 0 4px 38px;
+  margin-top: -4px;
+}
+/* 단계별 들여쓰기 (본부 › 부 › 팀 › 사람) */
+[class*="st-key-pprow-1-"] {
+  padding-left: 20px;
+}
+[class*="st-key-pprow-2-"] {
+  padding-left: 40px;
+}
+[class*="st-key-pprow-3-"] {
+  padding-left: 60px;
+}
+[class*="st-key-pprow-4-"] {
+  padding-left: 80px;
+}
+[class*="st-key-pprow-"] > .stElementContainer:has(.pp-lock) {
+  flex: none !important;
+  width: auto !important;
+}
+
+/* 폴더 멤버: 「멤버 추가」는 새 회의록 참석자 고르기처럼 흰 바탕 (회색 상자 없이) */
+.st-key-mem-add {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* 최근 · 즐겨찾기 · 전체 조직 탭: 세 칸을 같은 폭으로 · 글씨는 가운데 */
+[class*="st-key-pp-tabs-"] [class*="st-key-grp-tab-"] [class*="st-key-b-tab"],
+[class*="st-key-pp-tabs-"]
+  [class*="st-key-grp-tab-"]
+  [class*="st-key-b-tab"]
+  .stElementContainer,
+.st-key-org-tabs [class*="st-key-grp-tab-"] [class*="st-key-b-tab"],
+.st-key-org-tabs
+  [class*="st-key-grp-tab-"]
+  [class*="st-key-b-tab"]
+  .stElementContainer {
+  width: 100% !important;
+}
+[class*="st-key-pp-tabs-"] [class*="st-key-grp-tab-"] button > div,
+.st-key-org-tabs [class*="st-key-grp-tab-"] button > div {
+  width: 100%;
+  justify-content: center !important;
+}
+[class*="st-key-pp-tabs-"] [class*="st-key-grp-tab-"] button p,
+.st-key-org-tabs [class*="st-key-grp-tab-"] button p {
+  text-align: center !important;
 }

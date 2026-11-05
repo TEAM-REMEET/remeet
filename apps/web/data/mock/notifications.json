@@ -27,9 +27,9 @@
   {
     "id": "n3",
     "kind": "integration",
-    "text": "Jira 인증이 만료됐어요. 다시 연결해 주세요.",
+    "text": "「PG사 선정 — 수수료 비교」 결과를 Slack으로 보내지 못했어요.",
     "when": "어제",
-    "meeting": null,
+    "meeting": "m2",
     "unread": false
   },
   {

@@ -123,14 +123,12 @@ def _period_card(s: AppState, t: str, p: arc.Period) -> None:
     ids = list(p.meeting_ids)
     fids, members, _, is_host = _period_owner(s, p)
     left = sum(1 for i in ids if sel.my_todo_status(s, i) == "left")
-    names = [sel.folders(s)[k].name for k in fids]
-    projects = names[0] + (f" 외 {len(names) - 1}개" if len(names) > 1 else "")
     with st.container(key=f"topic-per-{t}-{p.key}"):
         markup(
             '<div class="topic-card">'
             f'<div class="head"><span class="nm">{icon("folder", 18, "#F37321", 1.9)}{esc(p.label)}</span>'
             f'{tag("내가 만든 폴더" if is_host else "멤버", "host" if is_host else "att")}</div>'
-            f'<span class="meta">회의록 {len(ids)}개 · 멤버 {len(members)}명 · {esc(projects)}</span>'
+            f'<span class="meta">회의록 {len(ids)}개 · 멤버 {len(members)}명</span>'
             f'<span class="last">{esc(_latest(ids))}</span>'
             + (f'<span>{tag(f"내 할 일 남은 회의 {left}", "mine")}</span>' if left else "")
             + "</div>"

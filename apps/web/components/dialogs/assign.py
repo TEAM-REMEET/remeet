@@ -9,6 +9,8 @@ import streamlit as st
 
 from data import repository as repo
 from data.models import Candidate
+from components.org_people import org_people_picker
+from state import selectors as sel
 from state import actions
 from state.store import get_state
 from ui.buttons import button, button_group
@@ -24,7 +26,7 @@ def _bars(c: Candidate) -> list[tuple[str, int]]:
 def _pick_button(name: str, key: str, *, stretch: bool = False) -> None:
     """고르기 / 다시 누르면 빼기 (여러 명). 처음엔 흰 바탕, 고르면 주황 바탕."""
     chosen = name in get_state().assign_draft
-    button("선택됨" if chosen else "선택", key=key, variant="primary" if chosen else "secondary",
+    button("✓ 선택됨" if chosen else "선택", key=key, variant="primary" if chosen else "secondary",
            on_click=actions.toggle_assignee, args=(name,), width="stretch" if stretch else "content")
 
 
@@ -65,26 +67,25 @@ def _candidate_row(c: Candidate, cfg: dict, top_rank: int | None) -> None:
 
 
 def _team_picker(cands: list[Candidate], cfg: dict) -> None:
-    """추천 밖에서 고르기: 팀을 고르면 그 팀 구성원과 점수가 나옵니다."""
+    """추천 밖에서 고르기: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기. 이름 옆에 점수 · 진행 중 업무."""
     s = get_state()
-    teams = repo.teams()
-    by_team = repo.team_candidates()
-    top_rank = {c.id: i + 1 for i, c in enumerate(cands[:3])}
-    default_team = next((tid for tid, t in teams.items() if t.name == cands[0].team), next(iter(teams)))
-    team_id = s.assign_team if s.assign_team in teams else default_team
+    by_name = {c.name: c for team in repo.team_candidates().values() for c in team}
+    top_rank = {c.name: i + 1 for i, c in enumerate(cands[:3])}
+    people = repo.people()
+    name_to_pid = {p.name: pid for pid, p in people.items()}
+
+    def sub(pid: str) -> str:
+        c = by_name.get(people[pid].name)
+        if not c:
+            return sel.person_role(pid)
+        rank = f" · 추천 {top_rank[c.name]}순위" if c.name in top_rank else ""
+        return f"{c.role} · 진행 중 {c.tasks}건 · {c.score}점{rank}"
 
     with st.container(key="card-default-more", gap="small"):
         markup('<h3 style="font-size:15px;font-weight:700">팀에서 직접 고르기</h3>'
-               '<p class="hint">팀을 고르면 구성원과 점수(스킬 · 부서·역할 · 업무 여유)가 나와요. 진행 중 업무는 건수만 보여요.</p>')
-        button_group([(tid, f"{t.name} {len(by_team[tid])}") for tid, t in teams.items()], team_id,
-                     lambda v: actions.update(assign_team=v), key="assign_team")
-        members = sorted(by_team[team_id], key=lambda c: c.score, reverse=True)  # 종합 점수 높은 순
-        markup(f'<b style="font-size:14px">{esc(teams[team_id].name)}</b> <span class="hint">구성원 {len(members)}명</span>')
-        for c in members:
-            _candidate_row(c, cfg, top_rank.get(c.id))
-        if not members:
-            markup('<p class="hint" style="padding:20px 0;text-align:center;font-size:14px">이 팀에는 고를 수 있는 사람이 없어요.</p>')
-
+               '<p class="hint">이름 · 팀으로 찾거나 조직도를 펼쳐 고르세요. 이름 옆에 직무 · 진행 중 업무 · 점수가 나와요.</p>')
+        org_people_picker("assign", chosen=[name_to_pid[n] for n in s.assign_draft if n in name_to_pid],
+                          on_pick=actions.toggle_assignee_pid, sub=sub, height=320)
 
 
 @st.dialog("담당자 지정", width="large", on_dismiss=actions.close_modal)

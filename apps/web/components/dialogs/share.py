@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from components.org_people import org_people_picker
+from config import CURRENT_USER_ID as ME
 from data import repository as repo
 from state import actions
 from state import selectors as sel
@@ -27,34 +29,12 @@ def _rev() -> str:
 
 
 def _pick_people() -> None:
-    """팀 고르기 → 팀원 버튼 (선택된 사람은 주황 테두리)."""
+    """받는 사람: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기에서 이름을 눌러 고르기 · 다시 누르면 해제."""
     s = get_state()
-    teams = repo.teams()
-    team_id = s.share_team if s.share_team in teams else next(iter(teams))
-    chosen = set(s.share_recipients)
-
     with st.container(key="share-add", gap="small"):
-        markup('<b style="font-size:13px">받는 사람</b> <span class="hint">팀을 고르고 이름을 누르면 선택돼요 · 다시 누르면 해제</span>')
-        # 팀 칩: 그 팀에서 고른 사람 수를 함께 표시
-        options = []
-        for tid, t in teams.items():
-            n = sum(1 for mb in t.members if mb.id in chosen)
-            options.append((tid, f"{t.name} {n}" if n else t.name))
-        button_group(options, team_id, lambda v: actions.update(share_team=v), key="share_team")
-
-        team = teams[team_id]
-        widget_key = f"share_pick_{team_id}_{s.share_nonce}_{_rev()}"
-        st.pills(
-            f"{team.name} 팀원",
-            options=[mb.id for mb in team.members],
-            format_func=lambda pid: next(f"{mb.name} · {mb.role}" for mb in team.members if mb.id == pid),
-            selection_mode="multi",
-            default=[mb.id for mb in team.members if mb.id in chosen],  # 다른 팀 갔다 와도 선택 유지
-            key=widget_key,
-            label_visibility="collapsed",
-            on_change=actions.set_share_team_selection,
-            args=(team_id, widget_key),
-        )
+        markup('<b style="font-size:13px">받는 사람</b> <span class="hint">이름 · 팀으로 찾거나 조직도를 펼쳐 이름을 누르세요 · 다시 누르면 해제</span>')
+        org_people_picker("share", chosen=list(s.share_recipients), on_pick=actions.toggle_share_recipient, height=240,
+                          locked={ME: "나"})
 
 
 def _absent_members() -> list[str]:

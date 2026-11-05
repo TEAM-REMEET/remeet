@@ -17,6 +17,9 @@ _KIND_ICON = {
     "shared": ":material/inbox:",
     "integration": ":material/power:",
     "member": ":material/group_add:",  # 폴더 멤버로 추가됨
+    "fail": ":material/error:",  # 관리자: 사용자 전송 실패 (기술 이슈)
+    "delivered": ":material/task_alt:",  # 사용자: 관리자가 해결해 전달 완료
+    "budget": ":material/payments:",  # 관리자: 예산 알림
 }
 
 
@@ -32,14 +35,17 @@ def _crumbs() -> None:
 
 def _notifications() -> None:
     s = get_state()
-    unread = sum(1 for n in repo.notifications() if sel.is_unread(s, n.id))
+    items = sel.notifications(s)
+    unread = sum(1 for n in items if sel.is_unread(s, n.id))
     with st.container(key="bell-wrap", width="content", gap=None):
         if sel.show_bell_dot(s):
             markup('<span class="bell-dot" aria-label="새 알림"></span>')
         with st.popover("", icon=":material/notifications:", help="알림", key=f"bell_{s.screen}_{s.meeting_id}",
                         on_change=actions.open_bell):
             markup(f'<b style="font-size:15px">알림</b> <span class="hint">읽지 않음 {unread}개</span>')
-            for n in repo.notifications():
+            if not items:
+                markup('<p class="hint" style="margin:8px 0 0">아직 알림이 없어요.</p>')
+            for n in items:
                 new = sel.is_unread(s, n.id)
                 text = f"**{md_escape(n.text)}**" if new else md_escape(n.text)
                 button(f"{text}  \n:gray[{n.when}]", key=f"noti_{n.id}", variant="noti" if new else "notiread",
@@ -50,4 +56,6 @@ def render_topbar() -> None:
     with st.container(key="topbar", horizontal=True, vertical_alignment="center", gap="small"):
         _crumbs()
         _notifications()
+        if get_state().is_admin:  # 관리자: 새 회의록 버튼 없음
+            return
         button("새 회의록", key="topbar_new", variant="primary", icon=":material/add:", on_click=actions.open_new_note)

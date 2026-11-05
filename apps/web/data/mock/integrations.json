@@ -7,7 +7,8 @@
       "name": "Slack",
       "desc": "채널에 회의 결과를 공유합니다",
       "target": "사내 워크스페이스",
-      "phase2": false
+      "phase2": false,
+      "last_sync": "오늘 10:42"
     },
     {
       "id": "mail",
@@ -15,7 +16,8 @@
       "name": "이메일",
       "desc": "참석자에게 회의 결과를 메일로 보냅니다",
       "target": "사내 메일 서버",
-      "phase2": false
+      "phase2": false,
+      "last_sync": "오늘 10:40"
     },
     {
       "id": "cal",
@@ -23,7 +25,8 @@
       "name": "캘린더",
       "desc": "다음 회의 일정을 등록합니다",
       "target": "팀 공용 캘린더",
-      "phase2": false
+      "phase2": false,
+      "last_sync": "오늘 09:15"
     },
     {
       "id": "jira",
@@ -31,7 +34,8 @@
       "name": "Jira",
       "desc": "액션 아이템을 이슈로 만듭니다",
       "target": "ONB · SEC 프로젝트",
-      "phase2": false
+      "phase2": false,
+      "last_sync": "10/20 15:12"
     },
     {
       "id": "notion",
@@ -39,7 +43,8 @@
       "name": "Notion",
       "desc": "회의록 페이지를 만듭니다",
       "target": "팀 위키",
-      "phase2": false
+      "phase2": false,
+      "last_sync": "어제 18:03"
     },
     {
       "id": "teams",
@@ -47,7 +52,8 @@
       "name": "Microsoft Teams",
       "desc": "팀 채널에 회의 결과를 공유합니다",
       "target": "",
-      "phase2": true
+      "phase2": true,
+      "last_sync": ""
     },
     {
       "id": "conf",
@@ -55,7 +61,8 @@
       "name": "Confluence",
       "desc": "회의록 페이지를 만듭니다",
       "target": "",
-      "phase2": true
+      "phase2": true,
+      "last_sync": ""
     }
   ],
   "initial_status": {
@@ -67,33 +74,15 @@
     "teams": "off",
     "conf": "off"
   },
-  "ai_toggles": [
+  "failures": [
     {
-      "key": "wiki",
-      "label": "개인 위키 포함",
-      "desc": "내 위키의 항목과 흐름을 AI가 읽을 수 있어요.",
-      "default": true
-    },
-    {
-      "key": "raw",
-      "label": "원문 포함",
-      "desc": "끄면 AI는 요약·결정·액션 아이템만 읽어요.",
-      "default": false
-    },
-    {
-      "key": "write",
-      "label": "쓰기 권한",
-      "desc": "내 할 일 완료 처리만 허용해요. 회의록 수정·공유·담당자 지정은 할 수 없어요.",
-      "default": false
+      "id": "f2",
+      "tool": "slack",
+      "meeting": "m2",
+      "kind": "simple",
+      "reason": "일시적인 네트워크 오류로 전송이 끊겼어요.",
+      "code": "timeout (30초)",
+      "when": "10/29 14:40"
     }
-  ],
-  "ai_default_folders": {
-    "rel": true,
-    "cs": true,
-    "q4": true,
-    "des": false
-  },
-  "failed_exports": {
-    "jira": ["m3"]
-  }
+  ]
 }
