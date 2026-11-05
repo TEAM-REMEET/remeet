@@ -1,6 +1,6 @@
 {
   "meeting_id": "TS3003d",
-  "created_at": "2026-11-05T00:55:35",
+  "created_at": "2026-11-05T18:20:01",
   "config": {
     "model": "gpt-6-luna",
     "reasoning_effort": "high",
@@ -9291,8 +9291,8 @@
       "agenda_id": "TS3003d_a1",
       "agenda_number": 1,
       "agenda_title": "리모컨 설계·원가",
-      "decision_count": 2,
-      "unresolved_count": 3,
+      "decision_count": 1,
+      "unresolved_count": 2,
       "action_count": 0
     },
     {
@@ -9306,7 +9306,7 @@
     {
       "agenda_id": "TS3003d_a3",
       "agenda_number": 3,
-      "agenda_title": "프로젝트 운영 평가",
+      "agenda_title": "프로젝트 회고",
       "decision_count": 0,
       "unresolved_count": 0,
       "action_count": 0
@@ -9317,22 +9317,19 @@
       "agenda_title": "기타",
       "decision_count": 0,
       "unresolved_count": 0,
-      "action_count": 2
+      "action_count": 1
     }
   ],
   "meeting_results": {
     "decision_item_ids": [
-      "TS3003d_a1_d3",
-      "TS3003d_a1_d6"
+      "TS3003d_a1_d4"
     ],
     "action_item_ids": [
-      "TS3003d_a4_d1",
-      "TS3003d_a4_d2"
+      "TS3003d_a4_d1"
     ],
     "unresolved_item_ids": [
       "TS3003d_a1_un1",
       "TS3003d_a1_un2",
-      "TS3003d_a1_un3",
       "TS3003d_a2_un1"
     ],
     "next_topic_item_ids": []
@@ -9343,15 +9340,15 @@
       "agenda_number": 1,
       "agenda_title": "리모컨 설계·원가",
       "evidence_range": [
-        32,
-        964
+        29,
+        932
       ],
       "subtopics": [
         {
           "subtopic_id": "TS3003d_a1_st1",
           "agenda_id": "TS3003d_a1",
           "order": 1,
-          "title": "버튼 구성",
+          "title": "외관 사양",
           "item_ids": [
             "TS3003d_a1_d1"
           ]
@@ -9360,7 +9357,7 @@
           "subtopic_id": "TS3003d_a1_st2",
           "agenda_id": "TS3003d_a1",
           "order": 2,
-          "title": "원가 한도",
+          "title": "버튼 축소",
           "item_ids": [
             "TS3003d_a1_d2",
             "TS3003d_a1_d3"
@@ -9370,20 +9367,18 @@
           "subtopic_id": "TS3003d_a1_st3",
           "agenda_id": "TS3003d_a1",
           "order": 3,
-          "title": "스크롤 조작",
+          "title": "곡면·LCD",
           "item_ids": [
-            "TS3003d_a1_d4",
-            "TS3003d_a1_d5"
+            "TS3003d_a1_d4"
           ]
         },
         {
           "subtopic_id": "TS3003d_a1_st4",
           "agenda_id": "TS3003d_a1",
           "order": 4,
-          "title": "외관·시장",
+          "title": "원가 상한",
           "item_ids": [
-            "TS3003d_a1_d6",
-            "TS3003d_a1_d7"
+            "TS3003d_a1_d5"
           ]
         }
       ],
@@ -9393,71 +9388,26 @@
           "agenda_id": "TS3003d_a1",
           "section": "discussion_background",
           "order": 1,
-          "text": "프로토타입에는 전원·음소거·볼륨·채널·도움말 버튼과 숫자키, 문자 방송·자막 기능, 로고가 포함됐으며 사용자 반응은 테스트가 필요하다고 공유됨. 버튼은 같은 크기의 둥근 형태에 알아보기 쉽도록 표시를 넣고, LCD가 있어 LED는 사용하지 않으며, 케이스와 다른 색의 고무 버튼을 쓰기로 함.",
+          "text": "시제품에는 전원·음소거·볼륨·채널·숫자 버튼과 문자방송·자막 버튼이 포함됐고, 도움말 버튼을 누른 채 다른 버튼을 누르면 LCD에 도움말을 표시하는 구상이 제시됨.",
           "evidence_utterance_indices": [
             43,
             44,
             45,
             46,
-            47,
             48,
             49,
             50,
-            51,
-            52,
-            125,
-            128,
-            132,
-            137,
-            138,
-            142,
-            145
+            52
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [
             {
-              "stage": "revise_2",
+              "stage": "revise_1",
               "field": "text",
-              "before": "프로토타입에는 전원·음소거·볼륨·채널·도움말 버튼과 숫자키, 문자 방송·자막 기능, 로고가 포함됐으며 사용자 반응은 테스트가 필요하다고 공유됨.",
-              "after": "프로토타입에는 전원·음소거·볼륨·채널·도움말 버튼과 숫자키, 문자 방송·자막 기능, 로고가 포함됐으며 사용자 반응은 테스트가 필요하다고 공유됨. 버튼은 같은 크기의 둥근 형태에 알아보기 쉽도록 표시를 넣고, LCD가 있어 LED는 사용하지 않으며, 케이스와 다른 색의 고무 버튼을 쓰기로 함.",
-              "reason": "프로토타입의 버튼 형태와 표시, LED 미사용, 고무 버튼의 색상 대비에 관한 세부 사항을 추가함."
-            },
-            {
-              "stage": "revise_2",
-              "field": "evidence_utterance_indices",
-              "before": [
-                43,
-                44,
-                45,
-                46,
-                47,
-                48,
-                49,
-                50,
-                51,
-                52
-              ],
-              "after": [
-                43,
-                44,
-                45,
-                46,
-                47,
-                48,
-                49,
-                50,
-                51,
-                52,
-                125,
-                128,
-                132,
-                137,
-                138,
-                142,
-                145
-              ],
-              "reason": "프로토타입의 버튼 형태와 표시, LED 미사용, 고무 버튼의 색상 대비에 관한 세부 사항을 추가함."
+              "before": "시제품에는 전원·음소거·볼륨·채널·숫자 버튼과 문자방송·자막 버튼이 포함됐고, 도움말은 버튼 조작 시 LCD에 표시하는 구상이 제시됨.",
+              "after": "시제품에는 전원·음소거·볼륨·채널·숫자 버튼과 문자방송·자막 버튼이 포함됐고, 도움말 버튼을 누른 채 다른 버튼을 누르면 LCD에 도움말을 표시하는 구상이 제시됨.",
+              "reason": "도움말 버튼을 사용하는 구체적인 조작 조건을 반영함."
             }
           ]
         },
@@ -9466,13 +9416,12 @@
           "agenda_id": "TS3003d_a1",
           "section": "discussion_background",
           "order": 2,
-          "text": "이전 회의에서 크고 단순한 버튼 구성을 논의했으며, 리모컨 한 대당 생산원가를 12.5유로 이내로 맞춰야 한다는 조건이 있었음.",
+          "text": "리모컨 한 대의 생산비 상한은 12.5유로로 제시됨.",
           "evidence_utterance_indices": [
-            32,
-            33,
-            70,
-            72,
-            73
+            29,
+            30,
+            31,
+            32
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -9485,29 +9434,29 @@
           "agenda_id": "TS3003d_a1",
           "section": "major_discussions",
           "order": 1,
-          "text": "음소거 버튼은 볼륨 내리기를 두 번 눌러 대체할 수 있다는 의견이 나왔으나, 도움말 기능을 길게 누르기 방식으로 숨기면 고령 사용자가 알아채기 어렵다는 우려가 있어 버튼 삭제 여부는 정해지지 않음.",
+          "text": "버튼은 같은 크기의 둥근 형태에 기능을 알아볼 수 있는 표시를 넣고, 케이스와 다른 색의 고무 재질로 하며 LCD가 있어 LED는 필요하지 않다는 사양이 공유됨.",
           "evidence_utterance_indices": [
-            84,
-            85,
-            86,
-            88,
-            90,
-            91,
-            98,
-            99,
-            205
+            123,
+            125,
+            128,
+            132,
+            134,
+            137,
+            138,
+            142,
+            145
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "subtopic_id": "TS3003d_a1_st1",
-          "subtopic": "버튼 구성",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "subtopic": "외관 사양",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -9515,33 +9464,110 @@
           "agenda_id": "TS3003d_a1",
           "section": "major_discussions",
           "order": 2,
-          "text": "버튼이 주요 비용 항목이며 LCD와 이를 구동하는 고급형 칩도 비용이 크고, 단일 곡면은 평면보다 1유로 더 들며 플라스틱 케이스가 가장 저렴하다고 공유됨; 제시된 원가에는 거치대가 포함되지 않음.",
+          "text": "원가를 줄이기 위해 도움말·음소거 버튼을 길게 누르는 조작으로 대체해 제거하고 1유로를 절약하는 방안이 제안됨. 숫자 버튼은 LCD에 숫자를 표시하는 스크롤 휠로 대체하거나 볼륨·채널 조작에도 휠을 활용하는 안이 제시됨. 고령층에게 사용법을 광고와 LCD로 안내하고, 휠을 옛 라디오 다이얼처럼 돌출시켜 익숙하게 보이게 하는 방안도 제안됨.",
           "evidence_utterance_indices": [
-            167,
-            168,
-            170,
-            171,
-            179,
-            181,
-            182,
-            183,
-            184,
-            276,
-            280,
-            285,
-            288
+            84,
+            85,
+            205,
+            208,
+            345,
+            346,
+            360,
+            362,
+            363,
+            372,
+            373,
+            435,
+            436,
+            437,
+            438,
+            439,
+            452,
+            453,
+            455,
+            548,
+            549,
+            552,
+            554,
+            556,
+            558
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
+          "status": "REVIEW_REQUIRED",
+          "review_reasons": [
+            "검증 미통과(중요 항목 누락): 버튼 수를 줄이는 방안으로 문자방송과 자막 버튼을 하나로 합치는 논의가 있었지만 요약에 빠져 있습니다. 두 기능을 합칠 수 있는지와 문자방송에서 888페이지를 조작하는 방식까지 검토했으나 채택 여부는 정해지지 않았습니다."
+          ],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "text",
+              "before": "원가를 줄이기 위해 음소거 기능을 볼륨 조작으로 대신하고, 숫자 버튼은 LCD에 숫자를 표시하는 스크롤 휠로 대체하거나 볼륨·채널 조작에도 휠을 활용하는 안이 제시됨.",
+              "after": "원가를 줄이기 위해 음소거 기능을 볼륨 조작으로 대신하고, 숫자 버튼은 LCD에 숫자를 표시하는 스크롤 휠로 대체하거나 볼륨·채널 조작에도 휠을 활용하는 안이 제시됨. 고령층에게 사용법을 광고와 LCD로 안내하고, 휠을 옛 라디오 다이얼처럼 돌출시켜 익숙하게 보이게 하는 방안도 제안됨.",
+              "reason": "스크롤 휠에 대한 고령층의 낯섦을 줄이기 위해 논의된 사용 안내 및 휠 형태 제안을 추가함."
+            },
+            {
+              "stage": "revise_1",
+              "field": "evidence_utterance_indices",
+              "before": [
+                84,
+                85,
+                205,
+                208,
+                345,
+                346,
+                360,
+                362,
+                363,
+                372,
+                373,
+                452,
+                453,
+                455
+              ],
+              "after": [
+                84,
+                85,
+                205,
+                208,
+                345,
+                346,
+                360,
+                362,
+                363,
+                372,
+                373,
+                435,
+                436,
+                437,
+                438,
+                439,
+                452,
+                453,
+                455,
+                548,
+                549,
+                552,
+                554,
+                556,
+                558
+              ],
+              "reason": "스크롤 휠에 대한 고령층의 낯섦을 줄이기 위해 논의된 사용 안내 및 휠 형태 제안을 추가함."
+            },
+            {
+              "stage": "revise_2",
+              "field": "text",
+              "before": "원가를 줄이기 위해 음소거 기능을 볼륨 조작으로 대신하고, 숫자 버튼은 LCD에 숫자를 표시하는 스크롤 휠로 대체하거나 볼륨·채널 조작에도 휠을 활용하는 안이 제시됨. 고령층에게 사용법을 광고와 LCD로 안내하고, 휠을 옛 라디오 다이얼처럼 돌출시켜 익숙하게 보이게 하는 방안도 제안됨.",
+              "after": "원가를 줄이기 위해 도움말·음소거 버튼을 길게 누르는 조작으로 대체해 제거하고 1유로를 절약하는 방안이 제안됨. 숫자 버튼은 LCD에 숫자를 표시하는 스크롤 휠로 대체하거나 볼륨·채널 조작에도 휠을 활용하는 안이 제시됨. 고령층에게 사용법을 광고와 LCD로 안내하고, 휠을 옛 라디오 다이얼처럼 돌출시켜 익숙하게 보이게 하는 방안도 제안됨.",
+              "reason": "도움말·음소거 버튼을 길게 누르는 조작으로 대체해 제거하고 1유로를 절감하는 제안을 추가함."
+            }
+          ],
           "subtopic_id": "TS3003d_a1_st2",
-          "subtopic": "원가 한도",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "subtopic": "버튼 축소",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -9549,28 +9575,27 @@
           "agenda_id": "TS3003d_a1",
           "section": "major_discussions",
           "order": 3,
-          "text": "추가 개발 예산이 없으므로 리모컨 한 대당 생산원가 12.5유로 상한을 지키기로 함.",
+          "text": "스크롤 휠과 숫자 버튼이 적은 리모컨은 고령 사용자가 익숙하지 않아 사용성이 떨어질 수 있다는 우려가 제기됨.",
           "evidence_utterance_indices": [
-            307,
-            308,
-            309,
-            310,
-            311,
-            318,
-            319,
-            320
+            298,
+            300,
+            305,
+            428,
+            429,
+            432,
+            434
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "subtopic_id": "TS3003d_a1_st2",
-          "subtopic": "원가 한도",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "subtopic": "버튼 축소",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -9578,38 +9603,31 @@
           "agenda_id": "TS3003d_a1",
           "section": "major_discussions",
           "order": 4,
-          "text": "숫자키 대신 스크롤 휠을 사용하고 볼륨·채널 조작에도 활용하는 5버튼 구성이 비용 절감안으로 제안됐으며, 채널을 선택한 뒤 0.5초간 조작이 없으면 이동하는 방식도 논의됐으나 최종 조작 방식은 확정되지 않음.",
+          "text": "평면형보다 1유로 더 들더라도 LCD를 돋보이게 하고 도움말 기능을 살릴 수 있도록 단일 곡면 디자인을 유지하기로 함.",
           "evidence_utterance_indices": [
-            345,
-            346,
-            349,
-            360,
-            363,
-            365,
-            367,
-            372,
-            373,
-            374,
-            450,
-            453,
-            455,
-            456,
-            457,
-            458,
-            459,
-            470
+            170,
+            171,
+            174,
+            177,
+            276,
+            280,
+            282,
+            521,
+            522,
+            524,
+            527
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "subtopic_id": "TS3003d_a1_st3",
-          "subtopic": "스크롤 조작",
+          "subtopic": "곡면·LCD",
           "discussion_tag": "제안",
-          "decision_tag": "보류",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "decision_tag": "결정",
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -9617,153 +9635,28 @@
           "agenda_id": "TS3003d_a1",
           "section": "major_discussions",
           "order": 5,
-          "text": "스크롤 휠은 고령 사용자가 낯설어할 수 있고 문자 방송의 888페이지 같은 기능을 쓰기 어렵다는 우려가 제기됨; 옛날 라디오의 채널 조절기처럼 돌출된 형태로 만들면 알아보기 쉬울 수 있다는 의견도 나옴.",
+          "text": "초기 버튼 구성으로는 12.5유로 상한을 맞추기 어렵고 예산 증액도 불가하므로 원가 절감이 필요하다고 확인됨.",
           "evidence_utterance_indices": [
-            375,
-            428,
-            429,
-            432,
-            434,
-            548,
-            549,
-            554,
-            556,
-            566,
-            568
+            152,
+            183,
+            184,
+            187,
+            275,
+            318,
+            319,
+            320
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003d_a1_st3",
-          "subtopic": "스크롤 조작",
-          "discussion_tag": "반대·우려",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003d_a1_d6",
-          "agenda_id": "TS3003d_a1",
-          "section": "major_discussions",
-          "order": 6,
-          "text": "평면 디자인으로 바꾸면 1유로를 절감할 수 있지만, LCD 화면을 돋보이게 하기 위해 단일 곡면 디자인을 유지하는 방향으로 의견이 모임.",
-          "evidence_utterance_indices": [
-            170,
-            171,
-            387,
-            501,
-            521,
-            522,
-            523
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "text",
-              "before": "LCD 화면을 돋보이게 하기 위해 단일 곡면 디자인을 유지하는 방향으로 의견이 모임.",
-              "after": "평면 디자인으로 바꾸면 1유로를 절감할 수 있지만, LCD 화면을 돋보이게 하기 위해 단일 곡면 디자인을 유지하는 방향으로 의견이 모임.",
-              "reason": "단일 곡면이 평면보다 1유로 더 들고 평면 디자인은 비용 절감안으로 논의됐으나 LCD 화면을 돋보이게 하려고 단일 곡면을 유지하는 흐름을 반영함."
-            },
-            {
-              "stage": "revise_1",
-              "field": "evidence_utterance_indices",
-              "before": [
-                501,
-                521,
-                522,
-                523,
-                527
-              ],
-              "after": [
-                170,
-                171,
-                387,
-                501,
-                521,
-                522,
-                523
-              ],
-              "reason": "단일 곡면이 평면보다 1유로 더 들고 평면 디자인은 비용 절감안으로 논의됐으나 LCD 화면을 돋보이게 하려고 단일 곡면을 유지하는 흐름을 반영함."
-            }
-          ],
           "subtopic_id": "TS3003d_a1_st4",
-          "subtopic": "외관·시장",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003d_a1_d7",
-          "agenda_id": "TS3003d_a1",
-          "section": "major_discussions",
-          "order": 7,
-          "text": "교체식 앞면 커버를 활용해 젊은 층에도 제품을 시험적으로 제안하거나 여러 시장을 겨냥하고, 인터넷에 접속해 사용자가 자신만의 것을 얻도록 하자는 아이디어가 나왔으나 대상 시장은 정해지지 않음.",
-          "evidence_utterance_indices": [
-            805,
-            807,
-            948,
-            952,
-            953,
-            954,
-            960,
-            963,
-            964
-          ],
-          "status": "REVIEW_REQUIRED",
-          "review_reasons": [
-            "검증 미통과(중요 항목 누락): 대상 시장을 바꾸거나 넓히자는 논의의 배경으로, 현재 디자인이 고령층 대상에 잘 맞지 않고 익숙하지 않아 판매에 상당한 마케팅이 필요하다는 우려가 제기됐지만 d7에는 반영되지 않았습니다."
-          ],
-          "history": [
-            {
-              "stage": "revise_2",
-              "field": "text",
-              "before": "교체식 앞면 커버를 활용해 젊은 층에도 제품을 시험적으로 제안하거나 여러 시장을 겨냥하자는 아이디어가 나왔으나 대상 시장은 정해지지 않음.",
-              "after": "교체식 앞면 커버를 활용해 젊은 층에도 제품을 시험적으로 제안하거나 여러 시장을 겨냥하고, 인터넷에 접속해 사용자가 자신만의 것을 얻도록 하자는 아이디어가 나왔으나 대상 시장은 정해지지 않음.",
-              "reason": "젊은 사용자 대상 아이디어에 인터넷 접속을 통한 개인화 방안을 추가함."
-            },
-            {
-              "stage": "revise_2",
-              "field": "evidence_utterance_indices",
-              "before": [
-                948,
-                952,
-                953,
-                954,
-                960,
-                963,
-                964
-              ],
-              "after": [
-                805,
-                807,
-                948,
-                952,
-                953,
-                954,
-                960,
-                963,
-                964
-              ],
-              "reason": "젊은 사용자 대상 아이디어에 인터넷 접속을 통한 개인화 방안을 추가함."
-            }
-          ],
-          "subtopic_id": "TS3003d_a1_st4",
-          "subtopic": "외관·시장",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "subtopic": "원가 상한",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         }
       ],
@@ -9773,71 +9666,41 @@
           "agenda_id": "TS3003d_a1",
           "section": "unresolved_issues",
           "order": 1,
-          "text": "숫자키를 스크롤 휠로 대체할지, 볼륨·채널 기능을 휠과 어떻게 조합할지 등 최종 버튼 구성과 조작 방식이 정해지지 않음.",
+          "text": "숫자 버튼을 스크롤 휠로 대체하는 안의 최종 채택 여부와 고령 사용자의 사용성은 확정되지 않음.",
           "evidence_utterance_indices": [
-            407,
-            411,
-            420,
-            426,
+            345,
+            346,
+            360,
+            373,
             428,
-            432,
             434,
-            450,
-            453,
-            455,
-            470
+            435
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "tag": "세부 미정"
+          "tag": null
         },
         {
           "item_id": "TS3003d_a1_un2",
           "agenda_id": "TS3003d_a1",
           "section": "unresolved_issues",
           "order": 2,
-          "text": "배터리 2개 산정이 맞는지와 거치대 비용을 포함한 실제 생산원가가 12.5유로 이내인지 확인되지 않음.",
+          "text": "거치대 비용은 원가 산정에 포함되지 않았으며, 거치대까지 포함한 제품의 총 원가가 12.5유로 이내인지 확인이 필요함.",
           "evidence_utterance_indices": [
-            157,
-            158,
-            160,
-            165,
             285,
             288,
             289,
-            307,
-            318,
-            319,
-            921
+            917,
+            920,
+            921,
+            926,
+            932
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "tag": "확인 필요"
-        },
-        {
-          "item_id": "TS3003d_a1_un3",
-          "agenda_id": "TS3003d_a1",
-          "section": "unresolved_issues",
-          "order": 3,
-          "text": "고령층을 주 대상으로 유지할지, 젊은 층까지 대상으로 넓힐지와 교체식 커버를 활용할지 결정되지 않음.",
-          "evidence_utterance_indices": [
-            537,
-            541,
-            543,
-            546,
-            948,
-            952,
-            953,
-            954,
-            960,
-            963
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "tag": "세부 미정"
         }
       ],
       "next_meeting_topics": []
@@ -9847,15 +9710,15 @@
       "agenda_number": 2,
       "agenda_title": "제품 평가",
       "evidence_range": [
-        52,
-        921
+        537,
+        963
       ],
       "subtopics": [
         {
           "subtopic_id": "TS3003d_a2_st1",
           "agenda_id": "TS3003d_a2",
           "order": 1,
-          "title": "평가 결과",
+          "title": "평가 점수",
           "item_ids": [
             "TS3003d_a2_d1"
           ]
@@ -9868,6 +9731,15 @@
           "item_ids": [
             "TS3003d_a2_d2"
           ]
+        },
+        {
+          "subtopic_id": "TS3003d_a2_st3",
+          "agenda_id": "TS3003d_a2",
+          "order": 3,
+          "title": "시장 대상",
+          "item_ids": [
+            "TS3003d_a2_d3"
+          ]
         }
       ],
       "discussion_background": [
@@ -9876,11 +9748,10 @@
           "agenda_id": "TS3003d_a2",
           "section": "discussion_background",
           "order": 1,
-          "text": "문헌 조사와 기존 요구 사항을 바탕으로 외관, 혁신성, 사용 편의성·학습 용이성, 기능, 비용, 대상 그룹 적합성, 회사 인지도 기준을 마련해 1~7점으로 평가함.",
+          "text": "문헌 조사와 기존 요구 사항을 바탕으로 외관, 혁신성, 사용 편의성, 기능, 비용, 대상 그룹 적합성, 회사 인지도 기준을 마련함.",
           "evidence_utterance_indices": [
             607,
             609,
-            610,
             611,
             612,
             613,
@@ -9890,8 +9761,7 @@
             617,
             618,
             619,
-            620,
-            638
+            620
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -9904,107 +9774,116 @@
           "agenda_id": "TS3003d_a2",
           "section": "major_discussions",
           "order": 1,
-          "text": "제품 평가는 총 49점 중 41점, 약 84%로 집계됐으며 외관 6점, 혁신성 7점, 사용 편의성 4점, 기능성 7점으로 평가됨; 생산 비용은 당시 한도 내로 판단됐으나 거치대 미제작을 전제로 한다는 조건이 언급됐고, 회사 로고와 탈부착식 앞면 커버 등을 근거로 회사 인지도가 높다고 평가됨.",
+          "text": "외관은 6점, 혁신성은 7점, 사용 편의성은 4점, 기능성은 7점, 대상 그룹 적합성은 최종 3점으로 평가됐으며 전체 점수는 41/49점(약 84%)으로 집계됨. 비용은 거치대를 제외하면 한도 안으로 평가됐고, 회사 로고와 교체형 앞면 커버 등을 근거로 회사 인지도도 높다고 평가됨.",
           "evidence_utterance_indices": [
-            639,
+            638,
             640,
-            643,
             645,
             653,
-            654,
             661,
             668,
-            671,
             672,
             675,
-            681,
             688,
-            689,
             698,
             699,
             701,
             702,
+            703,
+            720,
+            722,
+            723,
+            725,
             728,
-            729,
             732,
             735,
             736,
             738,
             760,
             766,
-            921
+            767,
+            917,
+            920,
+            921,
+            932
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
+          "status": "REVIEW_REQUIRED",
+          "review_reasons": [
+            "검증 미통과(중요 항목 누락): 리모컨의 주요 불편으로 외관이 못생김, 기능성이 낮음, 분실 문제가 제시됐고 이를 해결했는지 평가했지만 해당 평가 결과가 빠져 있습니다. 프릭은 해결된 것 같다고 답했습니다."
+          ],
           "history": [
             {
               "stage": "revise_1",
               "field": "text",
-              "before": "제품 평가는 총 49점 중 41점, 약 84%로 집계됐으며 외관 6점, 혁신성 7점, 사용 편의성 4점, 기능성 7점으로 평가됨.",
-              "after": "제품 평가는 총 49점 중 41점, 약 84%로 집계됐으며 외관 6점, 혁신성 7점, 사용 편의성 4점, 기능성 7점으로 평가됨; 생산 비용은 당시 한도 내로 판단됐으나 거치대 미제작을 전제로 한다는 조건이 언급됐고, 회사 로고와 탈부착식 앞면 커버 등을 근거로 회사 인지도가 높다고 평가됨.",
-              "reason": "평가에서 생산 비용이 한도 내로 판단된 점과 회사 인지도에 대한 긍정 평가를 근거에 맞게 추가함."
+              "before": "외관은 6점, 혁신성은 7점, 사용 편의성은 4점, 기능성은 7점, 대상 그룹 적합성은 최종 3점으로 평가됐으며 전체 점수는 41/49점(약 84%)으로 집계됨.",
+              "after": "외관은 6점, 혁신성은 7점, 사용 편의성은 4점, 기능성은 7점, 대상 그룹 적합성은 최종 3점으로 평가됐으며 전체 점수는 41/49점(약 84%)으로 집계됨. 비용은 거치대를 제외하면 한도 안으로 평가됐고, 회사 로고와 교체형 앞면 커버 등을 근거로 회사 인지도도 높다고 평가됨.",
+              "reason": "비용 및 회사 인지도 평가 결과와 평가에 적용된 조건·근거를 보완함."
             },
             {
               "stage": "revise_1",
               "field": "evidence_utterance_indices",
               "before": [
-                639,
+                638,
                 640,
-                643,
                 645,
                 653,
-                654,
                 661,
                 668,
-                671,
                 672,
                 675,
-                681,
                 688,
-                689,
+                703,
+                720,
+                722,
+                723,
+                725,
                 760,
-                766
+                766,
+                767
               ],
               "after": [
-                639,
+                638,
                 640,
-                643,
                 645,
                 653,
-                654,
                 661,
                 668,
-                671,
                 672,
                 675,
-                681,
                 688,
-                689,
                 698,
                 699,
                 701,
                 702,
+                703,
+                720,
+                722,
+                723,
+                725,
                 728,
-                729,
                 732,
                 735,
                 736,
                 738,
                 760,
                 766,
-                921
+                767,
+                917,
+                920,
+                921,
+                932
               ],
-              "reason": "평가에서 생산 비용이 한도 내로 판단된 점과 회사 인지도에 대한 긍정 평가를 근거에 맞게 추가함."
+              "reason": "비용 및 회사 인지도 평가 결과와 평가에 적용된 조건·근거를 보완함."
             }
           ],
           "subtopic_id": "TS3003d_a2_st1",
-          "subtopic": "평가 결과",
+          "subtopic": "평가 점수",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -10012,18 +9891,17 @@
           "agenda_id": "TS3003d_a2",
           "section": "major_discussions",
           "order": 2,
-          "text": "대상 그룹 적합성은 3점으로 정리됐지만, 디자인이 지나치게 화려하고 라디오식 버튼이 고령층에게 익숙하지 않을 수 있다는 우려가 제기됐으며 실제 사용 테스트가 필요하다는 의견이 나옴.",
+          "text": "스크롤 휠과 화려한 디자인이 고령층에게 익숙하지 않을 수 있어 대상 그룹에 잘 맞지 않으며, 판매하려면 많은 마케팅이 필요하다는 우려가 제기됨.",
           "evidence_utterance_indices": [
-            703,
-            704,
-            708,
-            711,
+            537,
+            539,
+            541,
+            543,
+            546,
+            566,
+            568,
             714,
-            717,
-            720,
-            722,
-            723,
-            725
+            717
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -10032,10 +9910,40 @@
           "subtopic": "대상 적합성",
           "discussion_tag": "반대·우려",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003d_a2_d3",
+          "agenda_id": "TS3003d_a2",
+          "section": "major_discussions",
+          "order": 3,
+          "text": "젊은 사용자와 인터넷 접속 기능을 고려하거나, 교체형 앞면 커버를 활용해 모든 연령층 또는 젊은 층을 대상으로 시험 판매하는 방안이 제안됐으나 방향은 정해지지 않음.",
+          "evidence_utterance_indices": [
+            805,
+            807,
+            948,
+            952,
+            953,
+            954,
+            956,
+            960,
+            963
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003d_a2_st3",
+          "subtopic": "시장 대상",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         }
       ],
@@ -10045,17 +9953,20 @@
           "agenda_id": "TS3003d_a2",
           "section": "unresolved_issues",
           "order": 1,
-          "text": "고령층이 리모컨의 버튼과 스크롤 조작을 실제로 쉽게 익히고 사용할 수 있는지 테스트 결과가 확인되지 않음.",
+          "text": "고령층을 중심으로 한 기존 대상 그룹을 유지할지, 젊은 층까지 넓힐지와 커버를 바꾼 시장 테스트 여부가 정해지지 않음.",
           "evidence_utterance_indices": [
-            52,
-            711,
-            714,
-            717
+            948,
+            952,
+            953,
+            954,
+            956,
+            960,
+            963
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "tag": "확인 필요"
+          "tag": null
         }
       ],
       "next_meeting_topics": []
@@ -10063,9 +9974,9 @@
     {
       "agenda_id": "TS3003d_a3",
       "agenda_number": 3,
-      "agenda_title": "프로젝트 운영 평가",
+      "agenda_title": "프로젝트 회고",
       "evidence_range": [
-        629,
+        626,
         909
       ],
       "subtopics": [
@@ -10113,11 +10024,10 @@
           "agenda_id": "TS3003d_a3",
           "section": "major_discussions",
           "order": 1,
-          "text": "참여자들은 프로젝트 단계와 역할이 명확했고 협업도 원활했으며, 과제가 구조화돼 단계별로 진행하기 쉬웠다고 평가함.",
+          "text": "프로젝트 단계와 역할이 명확했고 팀워크와 단계별 과제 구조도 원활했다는 평가가 나옴.",
           "evidence_utterance_indices": [
             780,
             781,
-            782,
             812,
             813,
             814,
@@ -10135,10 +10045,10 @@
           "subtopic": "진행·협업",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -10146,28 +10056,30 @@
           "agenda_id": "TS3003d_a3",
           "section": "major_discussions",
           "order": 2,
-          "text": "재무 자료를 디자인 단계에서 더 일찍 제공했어야 하며, 늦은 비용 정보가 창의성을 제한했다는 의견이 나옴.",
+          "text": "재무 자료를 디자인 단계보다 일찍 받았어야 했으며, 늦은 비용 정보가 창의적인 설계 선택을 제한했다는 의견이 제기됨.",
           "evidence_utterance_indices": [
             784,
             786,
             787,
             788,
+            794,
             797,
             798,
             800,
-            801
+            801,
+            803
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "subtopic_id": "TS3003d_a3_st2",
           "subtopic": "재무 정보",
-          "discussion_tag": "제안",
+          "discussion_tag": "반대·우려",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -10175,14 +10087,17 @@
           "agenda_id": "TS3003d_a3",
           "section": "major_discussions",
           "order": 3,
-          "text": "스마트보드에 그림을 그리기 어렵고 데이터 다운로드도 실패했으며, 플립차트가 더 쉽고 빠를 수 있다는 의견이 나옴; 반면 디지털 자료는 저장·공유에 편리하다고 언급됨.",
+          "text": "지난 회의록이 없어 평가 준비에 어려움이 있었고, 디지털 펜의 데이터 업로드도 소프트웨어 다운로드 오류로 실패했다는 점이 확인됨. 스마트보드 그림 작업과 파일 다운로드·열람에 어려움이 있었고, 플립차트는 더 쉽고 빠르다는 의견이 나왔으나 디지털 자료는 저장·공유에 유리하다는 점도 언급됨.",
           "evidence_utterance_indices": [
+            626,
+            627,
             629,
             633,
             635,
             832,
             833,
             841,
+            842,
             843,
             845,
             849,
@@ -10194,15 +10109,61 @@
           ],
           "status": "ACTIVE",
           "review_reasons": [],
-          "history": [],
+          "history": [
+            {
+              "stage": "revise_2",
+              "field": "text",
+              "before": "스마트보드 그림 작업과 파일 다운로드·열람에 어려움이 있었고, 플립차트는 더 쉽고 빠르다는 의견이 나왔으나 디지털 자료는 저장·공유에 유리하다는 점도 언급됨.",
+              "after": "지난 회의록이 없어 평가 준비에 어려움이 있었고, 디지털 펜의 데이터 업로드도 소프트웨어 다운로드 오류로 실패했다는 점이 확인됨. 스마트보드 그림 작업과 파일 다운로드·열람에 어려움이 있었고, 플립차트는 더 쉽고 빠르다는 의견이 나왔으나 디지털 자료는 저장·공유에 유리하다는 점도 언급됨.",
+              "reason": "지난 회의록 미확보로 평가가 어려웠던 점과 디지털 펜 데이터 업로드 실패의 원인을 회의 도구 논의에 추가함."
+            },
+            {
+              "stage": "revise_2",
+              "field": "evidence_utterance_indices",
+              "before": [
+                832,
+                833,
+                841,
+                842,
+                843,
+                845,
+                849,
+                853,
+                857,
+                862,
+                865,
+                869
+              ],
+              "after": [
+                626,
+                627,
+                629,
+                633,
+                635,
+                832,
+                833,
+                841,
+                842,
+                843,
+                845,
+                849,
+                853,
+                857,
+                862,
+                865,
+                869
+              ],
+              "reason": "지난 회의록 미확보로 평가가 어려웠던 점과 디지털 펜 데이터 업로드 실패의 원인을 회의 도구 논의에 추가함."
+            }
+          ],
           "subtopic_id": "TS3003d_a3_st3",
           "subtopic": "회의 도구",
-          "discussion_tag": "반대·우려",
+          "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -10210,9 +10171,9 @@
           "agenda_id": "TS3003d_a3",
           "section": "major_discussions",
           "order": 4,
-          "text": "다음에는 각자가 컴퓨터에 점수를 입력하고 평균을 계산하는 방식이 더 편리하다는 아이디어가 제안됨.",
+          "text": "점수 평가 시 각자 컴퓨터에 점수를 입력하고 평균을 자동 계산하는 방식이 더 편리하다는 제안이 나옴.",
           "evidence_utterance_indices": [
-            891,
+            893,
             894,
             896,
             900,
@@ -10227,10 +10188,10 @@
           "subtopic": "평가 방식",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         }
       ],
@@ -10243,17 +10204,16 @@
       "agenda_title": "기타",
       "evidence_range": [
         1006,
-        1016
+        1009
       ],
       "subtopics": [
         {
           "subtopic_id": "TS3003d_a4_st1",
           "agenda_id": "TS3003d_a4",
           "order": 1,
-          "title": "발표·설문",
+          "title": "발표 준비",
           "item_ids": [
-            "TS3003d_a4_d1",
-            "TS3003d_a4_d2"
+            "TS3003d_a4_d1"
           ]
         }
       ],
@@ -10264,46 +10224,31 @@
           "agenda_id": "TS3003d_a4",
           "section": "major_discussions",
           "order": 1,
-          "text": "바트가 최종 발표 자료를 준비해 약 10분 뒤 프로젝트 요약과 함께 공유하기로 함.",
+          "text": "약 10분 후 최종 발표 자료와 프로젝트 요약을 보여주기로 함.",
           "evidence_utterance_indices": [
             1006,
+            1008,
             1009
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "subtopic_id": "TS3003d_a4_st1",
-          "subtopic": "발표·설문",
+          "subtopic": "발표 준비",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "assignee": "바트",
-          "assignee_user_id": "u1",
-          "assignee_name": "바트",
-          "assignee_job": "프로젝트 매니저",
-          "due": null
-        },
-        {
-          "item_id": "TS3003d_a4_d2",
-          "agenda_id": "TS3003d_a4",
-          "section": "major_discussions",
-          "order": 2,
-          "text": "참여자들이 각자 방에서 추가 설문지를 작성하기로 함.",
-          "evidence_utterance_indices": [
-            1013,
-            1014,
-            1016
+          "assignees": [
+            "바트"
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "subtopic_id": "TS3003d_a4_st1",
-          "subtopic": "발표·설문",
-          "discussion_tag": "액션",
-          "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignee_user_ids": [
+            "u1"
+          ],
+          "assignee_names": [
+            "바트"
+          ],
+          "assignee_jobs": [
+            "프로젝트 매니저"
+          ],
           "due": null
         }
       ],
@@ -10323,60 +10268,97 @@
           {
             "issue_id": "v1_i1",
             "round": 1,
-            "issue_type": "결정 고려사항 누락",
+            "issue_type": "세부 정보 누락",
             "item_ids": [
-              "TS3003d_a1_d6"
+              "TS3003d_a1_bg1"
             ],
             "agenda_id": "TS3003d_a1",
-            "description": "단일 곡면을 유지하기로 한 결정의 고려사항으로 LCD를 돋보이게 하려는 이유는 적었지만, 평면 디자인보다 단일 곡면이 1유로 더 들고 평면으로 바꾸면 1유로를 절감할 수 있다는 비용 논의가 빠졌습니다.",
+            "description": "도움말 기능이 LCD에 표시된다는 점은 적었지만, 도움말 버튼을 누른 채 다른 버튼을 눌러야 안내가 표시되는 조작 조건이 빠졌습니다.",
             "evidence_utterance_indices": [
-              170,
-              171,
-              387,
-              501,
-              521,
-              522,
-              523
+              48,
+              49
             ],
-            "suggestion": "단일 곡면이 1유로 더 비싸다는 점과 비용 절감안으로 평면 디자인이 논의됐지만, LCD를 돋보이게 하기 위해 단일 곡면을 유지하기로 한 흐름을 반영하세요.",
+            "suggestion": "도움말 버튼을 누른 상태에서 다른 버튼을 누르면 LCD에 해당 버튼의 도움말이 표시된다고 구체화하세요.",
             "note": null
           },
           {
             "issue_id": "v1_i2",
+            "round": 1,
+            "issue_type": "중요 항목 누락",
+            "item_ids": [
+              "TS3003d_a1_d2",
+              "TS3003d_a1_d3"
+            ],
+            "agenda_id": "TS3003d_a1",
+            "description": "고령 사용자가 스크롤 휠을 낯설어할 수 있다는 우려에 대한 대응으로, 사용법을 광고로 안내하고 LCD에 조작법을 제공하는 방안과 휠을 옛 라디오 다이얼처럼 돌출시켜 익숙하게 보이게 하는 제안이 논의됐지만 요약에 없습니다.",
+            "evidence_utterance_indices": [
+              428,
+              435,
+              436,
+              437,
+              438,
+              439,
+              548,
+              549,
+              552,
+              554,
+              556,
+              558
+            ],
+            "suggestion": "버튼 축소 논의에 광고·LCD를 통한 사용 안내와 라디오 다이얼처럼 휠을 돌출시키는 제안을 추가하고, 아직 확정되지 않은 제안임을 표시하세요.",
+            "note": null
+          },
+          {
+            "issue_id": "v1_i3",
             "round": 1,
             "issue_type": "세부 정보 누락",
             "item_ids": [
               "TS3003d_a2_d1"
             ],
             "agenda_id": "TS3003d_a2",
-            "description": "제품 평가 결과에서 비용이 한도 안이라는 평가와 회사 인지도 항목에 대한 긍정 평가가 빠졌습니다. 두 항목도 평가에서 다뤄졌으므로 총점과 일부 항목 점수만으로는 평가 결과가 온전히 드러나지 않습니다.",
+            "description": "7개 평가 기준 중 비용과 회사 인지도에 대한 평가 결과가 요약에 빠졌습니다. 비용은 거치대를 제외하면 한도 안이라는 조건이 있었고, 회사 로고와 교체형 앞면 커버 등을 근거로 인지도가 높다는 의견이 나왔습니다.",
             "evidence_utterance_indices": [
               698,
               699,
+              700,
               701,
               702,
               728,
-              729,
               732,
               735,
               736,
-              738
+              738,
+              921,
+              932
             ],
-            "suggestion": "평가 결과에 비용 한도에 대한 판단과 로고·앞면 케이스 등을 근거로 한 회사 인지도 평가를 추가하세요. 전사문에 명시되지 않은 개별 점수는 임의로 붙이지 마세요.",
+            "suggestion": "평가 결과에 비용 기준은 거치대 제외 조건에서 한도 내로 평가됐다는 점과, 회사 인지도는 로고·교체형 앞면 커버 등을 근거로 긍정적으로 평가됐다는 점을 추가하세요.",
             "note": null
           }
         ],
         "revision": [
           {
             "op": "update",
-            "target_id": "TS3003d_a1_d6",
+            "target_id": "TS3003d_a1_bg1",
+            "changed_fields": [
+              "text"
+            ],
+            "reason": "도움말 버튼을 사용하는 구체적인 조작 조건을 반영함.",
+            "resolves_issue_ids": [
+              "v1_i1"
+            ],
+            "applied": true,
+            "note": null
+          },
+          {
+            "op": "update",
+            "target_id": "TS3003d_a1_d2",
             "changed_fields": [
               "text",
               "evidence_utterance_indices"
             ],
-            "reason": "단일 곡면이 평면보다 1유로 더 들고 평면 디자인은 비용 절감안으로 논의됐으나 LCD 화면을 돋보이게 하려고 단일 곡면을 유지하는 흐름을 반영함.",
+            "reason": "스크롤 휠에 대한 고령층의 낯섦을 줄이기 위해 논의된 사용 안내 및 휠 형태 제안을 추가함.",
             "resolves_issue_ids": [
-              "v1_i1"
+              "v1_i2"
             ],
             "applied": true,
             "note": null
@@ -10388,9 +10370,9 @@
               "text",
               "evidence_utterance_indices"
             ],
-            "reason": "평가에서 생산 비용이 한도 내로 판단된 점과 회사 인지도에 대한 긍정 평가를 근거에 맞게 추가함.",
+            "reason": "비용 및 회사 인지도 평가 결과와 평가에 적용된 조건·근거를 보완함.",
             "resolves_issue_ids": [
-              "v1_i2"
+              "v1_i3"
             ],
             "applied": true,
             "note": null
@@ -10404,21 +10386,17 @@
           {
             "issue_id": "v2_i1",
             "round": 2,
-            "issue_type": "세부 정보 누락",
+            "issue_type": "중요 항목 누락",
             "item_ids": [
-              "TS3003d_a1_bg1"
+              "TS3003d_a1_d2"
             ],
             "agenda_id": "TS3003d_a1",
-            "description": "프로토타입 기능은 정리했지만, 버튼을 같은 크기의 둥근 형태로 하고 표시를 넣는다는 점, LCD가 있어 LED가 필요 없다는 점, 케이스와 다른 색의 고무 버튼을 쓰기로 한 디자인 세부 사항이 빠졌습니다.",
+            "description": "원가 절감 방안으로 음소거뿐 아니라 도움말 버튼도 길게 누르는 조작으로 대체해 제거하자는 제안과, 그 경우 1유로를 절약할 수 있다는 내용이 요약에서 빠졌습니다.",
             "evidence_utterance_indices": [
-              125,
-              132,
-              137,
-              138,
-              142,
-              145
+              205,
+              208
             ],
-            "suggestion": "TS3003d_a1_bg1에 버튼 형태·표시, LED 미사용, 고무 버튼의 색상 대비를 추가하세요.",
+            "suggestion": "버튼 축소 항목에 도움말·음소거 버튼을 길게 누르는 조작으로 대체하는 제안과 예상 절감액 1유로를 추가하세요.",
             "note": null
           },
           {
@@ -10426,27 +10404,29 @@
             "round": 2,
             "issue_type": "중요 항목 누락",
             "item_ids": [
-              "TS3003d_a1_d7"
+              "TS3003d_a3_d3"
             ],
-            "agenda_id": "TS3003d_a1",
-            "description": "젊은 사용자를 겨냥하자는 논의는 요약했지만, 인터넷에 접속해 사용자가 자신만의 것을 얻을 수 있게 하자는 아이디어가 빠졌습니다.",
+            "agenda_id": "TS3003d_a3",
+            "description": "지난 회의록이 없어 평가 준비가 어려웠다는 점과, 디지털 펜의 데이터 업로드가 실패한 원인이 소프트웨어 다운로드 오류였다는 내용이 빠졌습니다.",
             "evidence_utterance_indices": [
-              805,
-              807
+              626,
+              627,
+              629,
+              633,
+              635
             ],
-            "suggestion": "TS3003d_a1_d7에 인터넷 접속을 통한 개인화 아이디어를 추가하세요.",
+            "suggestion": "회의 도구·정보 공유 항목에 지난 회의록 미확보로 평가가 어려웠던 점과 디지털 펜의 데이터 업로드 실패 및 원인을 추가하세요.",
             "note": null
           }
         ],
         "revision": [
           {
             "op": "update",
-            "target_id": "TS3003d_a1_bg1",
+            "target_id": "TS3003d_a1_d2",
             "changed_fields": [
-              "text",
-              "evidence_utterance_indices"
+              "text"
             ],
-            "reason": "프로토타입의 버튼 형태와 표시, LED 미사용, 고무 버튼의 색상 대비에 관한 세부 사항을 추가함.",
+            "reason": "도움말·음소거 버튼을 길게 누르는 조작으로 대체해 제거하고 1유로를 절감하는 제안을 추가함.",
             "resolves_issue_ids": [
               "v2_i1"
             ],
@@ -10455,12 +10435,12 @@
           },
           {
             "op": "update",
-            "target_id": "TS3003d_a1_d7",
+            "target_id": "TS3003d_a3_d3",
             "changed_fields": [
               "text",
               "evidence_utterance_indices"
             ],
-            "reason": "젊은 사용자 대상 아이디어에 인터넷 접속을 통한 개인화 방안을 추가함.",
+            "reason": "지난 회의록 미확보로 평가가 어려웠던 점과 디지털 펜 데이터 업로드 실패의 원인을 회의 도구 논의에 추가함.",
             "resolves_issue_ids": [
               "v2_i2"
             ],
@@ -10478,18 +10458,76 @@
             "round": 3,
             "issue_type": "중요 항목 누락",
             "item_ids": [
-              "TS3003d_a1_d7"
+              "TS3003d_a1_d2"
             ],
             "agenda_id": "TS3003d_a1",
-            "description": "대상 시장을 바꾸거나 넓히자는 논의의 배경으로, 현재 디자인이 고령층 대상에 잘 맞지 않고 익숙하지 않아 판매에 상당한 마케팅이 필요하다는 우려가 제기됐지만 d7에는 반영되지 않았습니다.",
+            "description": "버튼 수를 줄이는 방안으로 문자방송과 자막 버튼을 하나로 합치는 논의가 있었지만 요약에 빠져 있습니다. 두 기능을 합칠 수 있는지와 문자방송에서 888페이지를 조작하는 방식까지 검토했으나 채택 여부는 정해지지 않았습니다.",
             "evidence_utterance_indices": [
-              537,
-              539,
-              541,
-              543,
-              546
+              407,
+              411,
+              414,
+              419,
+              420,
+              426
             ],
-            "suggestion": "TS3003d_a1_d7에 고령층이 익숙한 형태를 선호하며 현재 디자인을 판매하려면 설득과 마케팅이 많이 필요하다는 우려를 추가하세요.",
+            "suggestion": "d2에 문자방송·자막 버튼 통합안을 미결 제안으로 추가하고, 필요하면 미해결 이슈에도 반영하세요.",
+            "note": null
+          },
+          {
+            "issue_id": "v3_i2",
+            "round": 3,
+            "issue_type": "세부 정보 누락",
+            "item_ids": [
+              "TS3003d_a1_d2"
+            ],
+            "agenda_id": "TS3003d_a1",
+            "description": "스크롤 휠로 숫자를 선택하는 방안의 작동 방식 중, 0.5초 동안 휠을 움직이지 않으면 해당 채널로 전환된다는 핵심 세부 사항이 요약문에 없습니다.",
+            "evidence_utterance_indices": [
+              372,
+              373,
+              374
+            ],
+            "suggestion": "d2에 휠 조작을 멈춘 뒤 0.5초가 지나면 선택한 채널로 전환하는 방식을 추가하세요.",
+            "note": null
+          },
+          {
+            "issue_id": "v3_i3",
+            "round": 3,
+            "issue_type": "중요 항목 누락",
+            "item_ids": [
+              "TS3003d_a2_d1"
+            ],
+            "agenda_id": "TS3003d_a2",
+            "description": "리모컨의 주요 불편으로 외관이 못생김, 기능성이 낮음, 분실 문제가 제시됐고 이를 해결했는지 평가했지만 해당 평가 결과가 빠져 있습니다. 프릭은 해결된 것 같다고 답했습니다.",
+            "evidence_utterance_indices": [
+              691,
+              694,
+              695,
+              697
+            ],
+            "suggestion": "d1에 외관·기능성·분실 문제를 해결했는지 평가했고 해결된 것으로 보인다는 의견이 나왔음을 추가하세요.",
+            "note": null
+          },
+          {
+            "issue_id": "v3_i4",
+            "round": 3,
+            "issue_type": "중복 요약",
+            "item_ids": [
+              "TS3003d_a2_d3",
+              "TS3003d_a2_un1"
+            ],
+            "agenda_id": "TS3003d_a2",
+            "description": "d3에서 대상 시장 방향이 정해지지 않았다고 이미 밝혔고, un1에서도 고령층 중심을 유지할지 젊은 층으로 넓힐지와 시장 테스트 여부가 미정이라고 반복하고 있습니다.",
+            "evidence_utterance_indices": [
+              948,
+              952,
+              953,
+              954,
+              956,
+              960,
+              963
+            ],
+            "suggestion": "d3에는 제안된 시장 확대·테스트 방안만 남기고, 미결 상태와 미정인 선택지는 un1에 정리하세요.",
             "note": null
           }
         ],
@@ -10497,8 +10535,9 @@
       }
     ],
     "remaining_issue_ids": [
-      "v3_i1"
+      "v3_i1",
+      "v3_i3"
     ],
-    "message": "검증 3회 후에도 문제 1건이 해결되지 않음 (검토 필요 항목 1개)"
+    "message": "검증 3회 후에도 문제 2건이 해결되지 않음 (검토 필요 항목 2개)"
   }
 }

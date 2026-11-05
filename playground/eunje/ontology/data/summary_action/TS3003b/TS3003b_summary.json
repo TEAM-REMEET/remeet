@@ -1,6 +1,6 @@
 {
   "meeting_id": "TS3003b",
-  "created_at": "2026-11-05T00:35:54",
+  "created_at": "2026-11-05T17:33:41",
   "config": {
     "model": "gpt-6-luna",
     "reasoning_effort": "high",
@@ -6491,38 +6491,30 @@
     {
       "agenda_id": "TS3003b_a1",
       "agenda_number": 1,
-      "agenda_title": "시장 조사·타깃",
-      "decision_count": 0,
+      "agenda_title": "고객층·제품 방향",
+      "decision_count": 1,
       "unresolved_count": 1,
-      "action_count": 0
+      "action_count": 1
     },
     {
       "agenda_id": "TS3003b_a2",
       "agenda_number": 2,
-      "agenda_title": "조작·부가 기능",
-      "decision_count": 0,
-      "unresolved_count": 1,
-      "action_count": 0
+      "agenda_title": "TV 조작·부가 기능",
+      "decision_count": 2,
+      "unresolved_count": 2,
+      "action_count": 1
     },
     {
       "agenda_id": "TS3003b_a3",
       "agenda_number": 3,
-      "agenda_title": "인터페이스·구조 설계",
-      "decision_count": 1,
-      "unresolved_count": 1,
-      "action_count": 3
+      "agenda_title": "작동 구조·소재",
+      "decision_count": 0,
+      "unresolved_count": 0,
+      "action_count": 1
     },
     {
       "agenda_id": "TS3003b_a4",
       "agenda_number": 4,
-      "agenda_title": "제품 범위·문자방송",
-      "decision_count": 1,
-      "unresolved_count": 1,
-      "action_count": 0
-    },
-    {
-      "agenda_id": "TS3003b_a5",
-      "agenda_number": 5,
       "agenda_title": "기타",
       "decision_count": 0,
       "unresolved_count": 0,
@@ -6531,20 +6523,20 @@
   ],
   "meeting_results": {
     "decision_item_ids": [
-      "TS3003b_a3_d7",
-      "TS3003b_a4_d2"
+      "TS3003b_a1_d1",
+      "TS3003b_a2_d1",
+      "TS3003b_a2_d10"
     ],
     "action_item_ids": [
-      "TS3003b_a3_d4",
-      "TS3003b_a3_d5",
-      "TS3003b_a3_d6",
-      "TS3003b_a5_d1"
+      "TS3003b_a1_d2",
+      "TS3003b_a2_d9",
+      "TS3003b_a3_d3",
+      "TS3003b_a4_d1"
     ],
     "unresolved_item_ids": [
       "TS3003b_a1_un1",
       "TS3003b_a2_un1",
-      "TS3003b_a3_un1",
-      "TS3003b_a4_un1"
+      "TS3003b_a2_un2"
     ],
     "next_topic_item_ids": []
   },
@@ -6552,17 +6544,17 @@
     {
       "agenda_id": "TS3003b_a1",
       "agenda_number": 1,
-      "agenda_title": "시장 조사·타깃",
+      "agenda_title": "고객층·제품 방향",
       "evidence_range": [
         54,
-        664
+        705
       ],
       "subtopics": [
         {
           "subtopic_id": "TS3003b_a1_st1",
           "agenda_id": "TS3003b_a1",
           "order": 1,
-          "title": "사용 행태·불편",
+          "title": "주요 고객층",
           "item_ids": [
             "TS3003b_a1_d1"
           ]
@@ -6571,7 +6563,7 @@
           "subtopic_id": "TS3003b_a1_st2",
           "agenda_id": "TS3003b_a1",
           "order": 2,
-          "title": "기능 중요도",
+          "title": "트렌드 관찰",
           "item_ids": [
             "TS3003b_a1_d2"
           ]
@@ -6580,10 +6572,9 @@
           "subtopic_id": "TS3003b_a1_st3",
           "agenda_id": "TS3003b_a1",
           "order": 3,
-          "title": "대상 연령",
+          "title": "인체공학",
           "item_ids": [
-            "TS3003b_a1_d3",
-            "TS3003b_a1_d4"
+            "TS3003b_a1_d3"
           ]
         }
       ],
@@ -6593,14 +6584,36 @@
           "agenda_id": "TS3003b_a1",
           "section": "discussion_background",
           "order": 1,
-          "text": "사용성 연구실에서 100명을 대상으로 리모컨 조작 관찰과 설문을 진행하고, 시장 구성도 조사함.",
+          "text": "사용성 조사에는 100명이 참여했으며, 응답자의 75%는 기존 리모컨이 못생겼다고 답했고 80%는 멋진 디자인에 더 지불할 의향을 보임. 약 4분의 1은 리모컨으로 RSI가 생긴다고 생각했고 34%는 새 리모컨 조작법을 익히기 어렵다고 답함.",
           "evidence_utterance_indices": [
             54,
             55,
-            56,
-            57,
             58,
-            59
+            62,
+            64,
+            65,
+            100,
+            102
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        },
+        {
+          "item_id": "TS3003b_a1_bg2",
+          "agenda_id": "TS3003b_a1",
+          "section": "discussion_background",
+          "order": 2,
+          "text": "시장 조사에서는 16~46세가 60%, 46~65세가 40%를 차지했고, 마케팅 담당자는 젊은 층이 가장 큰 시장이라고 판단함. 프로젝트 요구사항으로는 TV 전용 제품과 40세 이상 고객층이 제시됐으며, 젊은 층을 위한 별도 제품도 개발 예정임.",
+          "evidence_utterance_indices": [
+            86,
+            92,
+            95,
+            96,
+            97,
+            300,
+            311,
+            312
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -6613,28 +6626,95 @@
           "agenda_id": "TS3003b_a1",
           "section": "major_discussions",
           "order": 1,
-          "text": "응답자의 75%가 리모컨을 못생겼다고 답했고 80%는 멋진 디자인에 더 지불할 의향이 있었으며, 절반은 버튼의 약 10%만 사용하고 절반은 리모컨을 자주 잃어버린다고 답함. 약 4분의 1은 RSI를, 34%는 새 리모컨 조작법을 익히기 어렵다고 생각함.",
+          "text": "마케팅 측은 16~45세가 더 큰 시장이며 디자인에 민감하다고 봤지만, 별도 젊은 층 제품이 예정된 점과 노인용 휴대전화 사례가 논의된 뒤 60~80세를 대상으로 한 혁신적인 리모컨을 추진하는 방향으로 정리됨. 제품의 디자인과 작동 방식에 회사 이미지가 드러나야 한다는 요구도 제시됨.",
           "evidence_utterance_indices": [
-            62,
-            64,
-            65,
-            67,
-            68,
-            69,
-            100,
-            102
+            96,
+            97,
+            311,
+            312,
+            319,
+            320,
+            343,
+            364,
+            368,
+            380,
+            385,
+            397,
+            398,
+            642,
+            644,
+            652,
+            657,
+            658,
+            662,
+            697
           ],
           "status": "ACTIVE",
           "review_reasons": [],
-          "history": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "text",
+              "before": "마케팅 측은 16~45세가 더 큰 시장이며 디자인에 민감하다고 봤지만, 별도 젊은 층 제품이 예정된 점과 노인용 휴대전화 사례가 논의된 뒤 60~80세를 대상으로 한 혁신적인 리모컨을 추진하는 방향으로 정리됨.",
+              "after": "마케팅 측은 16~45세가 더 큰 시장이며 디자인에 민감하다고 봤지만, 별도 젊은 층 제품이 예정된 점과 노인용 휴대전화 사례가 논의된 뒤 60~80세를 대상으로 한 혁신적인 리모컨을 추진하는 방향으로 정리됨. 제품의 디자인과 작동 방식에 회사 이미지가 드러나야 한다는 요구도 제시됨.",
+              "reason": "제품 방향 항목에 디자인과 작동 방식으로 회사 이미지를 드러내야 한다는 요구를 추가했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "evidence_utterance_indices",
+              "before": [
+                96,
+                97,
+                311,
+                312,
+                343,
+                364,
+                368,
+                380,
+                385,
+                397,
+                398,
+                642,
+                644,
+                652,
+                657,
+                658,
+                662,
+                697
+              ],
+              "after": [
+                96,
+                97,
+                311,
+                312,
+                319,
+                320,
+                343,
+                364,
+                368,
+                380,
+                385,
+                397,
+                398,
+                642,
+                644,
+                652,
+                657,
+                658,
+                662,
+                697
+              ],
+              "reason": "제품 방향 항목에 디자인과 작동 방식으로 회사 이미지를 드러내야 한다는 요구를 추가했습니다."
+            }
+          ],
           "subtopic_id": "TS3003b_a1_st1",
-          "subtopic": "사용 행태·불편",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "subtopic": "주요 고객층",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -6642,25 +6722,31 @@
           "agenda_id": "TS3003b_a1",
           "section": "major_discussions",
           "order": 2,
-          "text": "채널·볼륨 선택은 중요도 10점, 전원은 9점, 문자 방송은 6.5점이었고, 채널 선택은 시간당 168회 사용되는 것으로 조사됨.",
+          "text": "대상 그룹과 요구사항, 현재 트렌드를 고려해 다음 회의를 위한 트렌드 관찰을 진행하기로 함.",
           "evidence_utterance_indices": [
-            73,
-            74,
-            75,
-            76,
-            83
+            701,
+            703,
+            705
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "subtopic_id": "TS3003b_a1_st2",
-          "subtopic": "기능 중요도",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "subtopic": "트렌드 관찰",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "assignees": [
+            "리처드"
+          ],
+          "assignee_user_ids": [
+            "u2"
+          ],
+          "assignee_names": [
+            "리처드"
+          ],
+          "assignee_jobs": [
+            "UI 디자이너"
+          ],
           "due": null
         },
         {
@@ -6668,69 +6754,31 @@
           "agenda_id": "TS3003b_a1",
           "section": "major_discussions",
           "order": 3,
-          "text": "시장의 60%는 16~46세, 40%는 46~65세로 조사됐으며, 젊은 층은 디자인과 기능에 까다롭고 고연령층은 기능에 덜 관심을 보이나 돈을 더 쉽게 쓰는 경향이 있다고 공유됨.",
+          "text": "응답자의 약 4분의 1이 리모컨으로 RSI가 생긴다고 생각해, 이 우려를 디자인에 반영해야 한다는 의견이 제시됨.",
           "evidence_utterance_indices": [
-            86,
-            87,
-            88,
-            90,
-            92,
-            93,
-            94
+            100,
+            101,
+            103
           ],
           "status": "ACTIVE",
           "review_reasons": [],
-          "history": [],
-          "subtopic_id": "TS3003b_a1_st3",
-          "subtopic": "대상 연령",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a1_d4",
-          "agenda_id": "TS3003b_a1",
-          "section": "major_discussions",
-          "order": 4,
-          "text": "조사상 큰 시장인 16~45세를 겨냥해 멋진 디자인을 만들자는 제안이 있었으나, 별도의 젊은 층 제품을 개발할 예정이므로 이번 제품은 40세 이상을 대상으로 하자는 요구가 제시됨. 이후 60~80세 노년층에 집중하는 방안도 나왔지만 구체 연령대는 확정되지 않음.",
-          "evidence_utterance_indices": [
-            95,
-            96,
-            97,
-            98,
-            99,
-            311,
-            312,
-            343,
-            356,
-            357,
-            372,
-            380,
-            385,
-            397,
-            398,
-            642,
-            643,
-            644,
-            658,
-            662,
-            664
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "item",
+              "before": null,
+              "after": "TS3003b_a1_d3",
+              "reason": "RSI 우려를 디자인에 반영해야 한다는 논의를 별도 항목으로 추가했습니다."
+            }
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
           "subtopic_id": "TS3003b_a1_st3",
-          "subtopic": "대상 연령",
+          "subtopic": "인체공학",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         }
       ],
@@ -6740,14 +6788,13 @@
           "agenda_id": "TS3003b_a1",
           "section": "unresolved_issues",
           "order": 1,
-          "text": "이번 제품의 구체적인 대상 연령대가 40세 이상인지, 60~80세 노년층인지 추가 확인이 필요함.",
+          "text": "60~80세 고객층이 원하는 부가 기능과 해당 시장의 가능성을 추가로 확인할 필요가 있음.",
           "evidence_utterance_indices": [
-            642,
-            643,
-            644,
-            658,
-            662,
-            664
+            565,
+            567,
+            654,
+            657,
+            662
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -6760,28 +6807,30 @@
     {
       "agenda_id": "TS3003b_a2",
       "agenda_number": 2,
-      "agenda_title": "조작·부가 기능",
+      "agenda_title": "TV 조작·부가 기능",
       "evidence_range": [
-        105,
-        591
+        68,
+        705
       ],
       "subtopics": [
         {
           "subtopic_id": "TS3003b_a2_st1",
           "agenda_id": "TS3003b_a2",
           "order": 1,
-          "title": "버튼 구성",
+          "title": "문자 방송",
           "item_ids": [
-            "TS3003b_a2_d1"
+            "TS3003b_a2_d1",
+            "TS3003b_a2_d2"
           ]
         },
         {
           "subtopic_id": "TS3003b_a2_st2",
           "agenda_id": "TS3003b_a2",
           "order": 2,
-          "title": "채널 입력",
+          "title": "버튼 배치",
           "item_ids": [
-            "TS3003b_a2_d2"
+            "TS3003b_a2_d3",
+            "TS3003b_a2_d4"
           ]
         },
         {
@@ -6790,109 +6839,76 @@
           "order": 3,
           "title": "분실 방지",
           "item_ids": [
-            "TS3003b_a2_d3"
+            "TS3003b_a2_d5"
+          ]
+        },
+        {
+          "subtopic_id": "TS3003b_a2_st4",
+          "agenda_id": "TS3003b_a2",
+          "order": 4,
+          "title": "화면 기능",
+          "item_ids": [
+            "TS3003b_a2_d7",
+            "TS3003b_a2_d8",
+            "TS3003b_a2_d9",
+            "TS3003b_a2_d10"
           ]
         }
       ],
-      "discussion_background": [],
+      "discussion_background": [
+        {
+          "item_id": "TS3003b_a2_bg1",
+          "agenda_id": "TS3003b_a2",
+          "section": "discussion_background",
+          "order": 1,
+          "text": "조사에서 채널 선택과 볼륨 조절은 각각 중요도 10점, 전원은 9점, 문자 방송은 6.5점이었으며 채널 선택은 시간당 168회 사용되는 것으로 보고됨. 응답자의 절반은 리모컨 버튼의 약 10%만 사용한다고 답함.",
+          "evidence_utterance_indices": [
+            68,
+            73,
+            74,
+            75,
+            76,
+            83
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
       "major_discussions": [
         {
           "item_id": "TS3003b_a2_d1",
           "agenda_id": "TS3003b_a2",
           "section": "major_discussions",
           "order": 1,
-          "text": "자주 쓰는 채널·볼륨 버튼을 강조하고 버튼 수를 줄이자는 의견이 있었으며, 해당 버튼은 튼튼하게 만들어 쉽게 고장 나지 않도록 해야 한다는 요구도 제시됨. 다만 TV 전용 리모컨은 원래 버튼이 많지 않아 버튼 수를 줄이는 것만으로는 차별화가 제한적이라는 의견도 나옴.",
+          "text": "인터넷 보급을 이유로 문자 방송을 제외하자는 안이 있었으나, 조사에서 중요 기능으로 꼽혔고 청각 장애인의 자막 이용에도 필요하다는 점을 고려해 유지하기로 함.",
           "evidence_utterance_indices": [
-            105,
-            106,
-            107,
-            108,
-            109,
-            110,
-            111,
-            442,
-            444,
-            452,
-            453,
-            505,
-            506,
-            507,
-            508,
-            516,
-            518,
-            520,
-            525,
-            535,
-            541
+            306,
+            307,
+            308,
+            330,
+            335,
+            337,
+            338,
+            415,
+            417,
+            423,
+            427,
+            428,
+            430,
+            431
           ],
           "status": "ACTIVE",
           "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "text",
-              "before": "자주 쓰는 채널·볼륨 버튼을 강조하고 버튼 수를 줄이자는 의견이 있었으나, TV 전용 리모컨은 원래 버튼이 많지 않아 버튼 수를 줄이는 것만으로는 차별화가 제한적이라는 의견도 나옴.",
-              "after": "자주 쓰는 채널·볼륨 버튼을 강조하고 버튼 수를 줄이자는 의견이 있었으며, 해당 버튼은 튼튼하게 만들어 쉽게 고장 나지 않도록 해야 한다는 요구도 제시됨. 다만 TV 전용 리모컨은 원래 버튼이 많지 않아 버튼 수를 줄이는 것만으로는 차별화가 제한적이라는 의견도 나옴.",
-              "reason": "자주 쓰이는 채널·볼륨 버튼의 내구성 요구를 누락해 보완했습니다."
-            },
-            {
-              "stage": "revise_1",
-              "field": "evidence_utterance_indices",
-              "before": [
-                105,
-                106,
-                107,
-                108,
-                109,
-                442,
-                444,
-                452,
-                453,
-                505,
-                506,
-                507,
-                508,
-                516,
-                518,
-                520,
-                525,
-                535,
-                541
-              ],
-              "after": [
-                105,
-                106,
-                107,
-                108,
-                109,
-                110,
-                111,
-                442,
-                444,
-                452,
-                453,
-                505,
-                506,
-                507,
-                508,
-                516,
-                518,
-                520,
-                525,
-                535,
-                541
-              ],
-              "reason": "자주 쓰이는 채널·볼륨 버튼의 내구성 요구를 누락해 보완했습니다."
-            }
-          ],
+          "history": [],
           "subtopic_id": "TS3003b_a2_st1",
-          "subtopic": "버튼 구성",
+          "subtopic": "문자 방송",
           "discussion_tag": "제안",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "decision_tag": "결정",
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -6900,33 +6916,26 @@
           "agenda_id": "TS3003b_a2",
           "section": "major_discussions",
           "order": 2,
-          "text": "숫자 버튼 대신 스크롤이나 조이스틱으로 채널을 고르는 방안이 제안됐으나, TV가 채널을 빠르게 넘기는 기능을 지원해야 하고 고연령층에게 익숙하지 않을 수 있어 기본 배치를 유지하자는 의견이 나옴.",
+          "text": "자막을 쉽게 켤 수 있도록 큰 자막용 버튼을 리모컨에 추가하는 방안이 제안됨.",
           "evidence_utterance_indices": [
-            466,
-            470,
-            473,
-            477,
-            478,
-            486,
-            487,
-            488,
-            492,
-            493,
-            495
+            431,
+            432,
+            433,
+            435,
+            437,
+            438
           ],
-          "status": "REVIEW_REQUIRED",
-          "review_reasons": [
-            "검증 미통과(결정 상태 오류): 스크롤 방식은 고연령층에게 익숙하지 않으므로 기본 배치를 유지하자는 브라운의 의견에 바트가 동의했고, 이어 숫자 버튼을 유지하는 취지로 확인했습니다. 따라서 숫자 버튼 유지 여부를 미결로 기록한 것은 논의 결과와 맞지 않습니다."
-          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003b_a2_st2",
-          "subtopic": "채널 입력",
+          "subtopic_id": "TS3003b_a2_st1",
+          "subtopic": "문자 방송",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -6934,8 +6943,159 @@
           "agenda_id": "TS3003b_a2",
           "section": "major_discussions",
           "order": 3,
-          "text": "버튼을 누르면 리모컨이 소리를 내 위치를 찾게 하고, 거치대에 충전 기능을 넣는 방안이 제안됨. 화려하지 않은 거치대는 예산 내에서 가능할 수 있다는 의견이 있었으나 채택 여부는 정해지지 않음.",
+          "text": "버튼 수를 줄이고 채널·볼륨 등 자주 쓰는 조작을 단순하게 배치하며, 연령대와 관계없이 사용하기 쉽도록 실제 버튼을 크고 단순하게 만들고 자주 쓰는 버튼은 튼튼하게 해 쉽게 고장 나지 않도록 하자는 의견과 숫자 버튼 대신 스크롤이나 조이스틱을 쓰는 방안이 제시됨.",
           "evidence_utterance_indices": [
+            105,
+            106,
+            108,
+            109,
+            110,
+            111,
+            208,
+            209,
+            212,
+            214,
+            442,
+            444,
+            447,
+            477,
+            478
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "text",
+              "before": "버튼 수를 줄이고 채널·볼륨 등 자주 쓰는 조작을 단순하게 배치하자는 의견과, 숫자 버튼 대신 스크롤이나 조이스틱을 쓰는 방안이 제시됨.",
+              "after": "버튼 수를 줄이고 채널·볼륨 등 자주 쓰는 조작을 단순하게 배치하며, 연령대와 관계없이 사용하기 쉽도록 실제 버튼을 크고 단순하게 만들자는 의견과 숫자 버튼 대신 스크롤이나 조이스틱을 쓰는 방안이 제시됨.",
+              "reason": "버튼을 크고 단순하게 만들자는 제안을 기존 버튼 구성 논의에 반영했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "evidence_utterance_indices",
+              "before": [
+                105,
+                106,
+                108,
+                442,
+                444,
+                447,
+                477,
+                478
+              ],
+              "after": [
+                105,
+                106,
+                108,
+                208,
+                209,
+                212,
+                214,
+                442,
+                444,
+                447,
+                477,
+                478
+              ],
+              "reason": "버튼을 크고 단순하게 만들자는 제안을 기존 버튼 구성 논의에 반영했습니다."
+            },
+            {
+              "stage": "revise_2",
+              "field": "text",
+              "before": "버튼 수를 줄이고 채널·볼륨 등 자주 쓰는 조작을 단순하게 배치하며, 연령대와 관계없이 사용하기 쉽도록 실제 버튼을 크고 단순하게 만들자는 의견과 숫자 버튼 대신 스크롤이나 조이스틱을 쓰는 방안이 제시됨.",
+              "after": "버튼 수를 줄이고 채널·볼륨 등 자주 쓰는 조작을 단순하게 배치하며, 연령대와 관계없이 사용하기 쉽도록 실제 버튼을 크고 단순하게 만들고 자주 쓰는 버튼은 튼튼하게 해 쉽게 고장 나지 않도록 하자는 의견과 숫자 버튼 대신 스크롤이나 조이스틱을 쓰는 방안이 제시됨.",
+              "reason": "자주 쓰는 채널·음량 버튼을 강조하는 의견에 버튼의 내구성 요구가 빠져 있어 보완함."
+            },
+            {
+              "stage": "revise_2",
+              "field": "evidence_utterance_indices",
+              "before": [
+                105,
+                106,
+                108,
+                208,
+                209,
+                212,
+                214,
+                442,
+                444,
+                447,
+                477,
+                478
+              ],
+              "after": [
+                105,
+                106,
+                108,
+                109,
+                110,
+                111,
+                208,
+                209,
+                212,
+                214,
+                442,
+                444,
+                447,
+                477,
+                478
+              ],
+              "reason": "자주 쓰는 채널·음량 버튼을 강조하는 의견에 버튼의 내구성 요구가 빠져 있어 보완함."
+            }
+          ],
+          "subtopic_id": "TS3003b_a2_st2",
+          "subtopic": "버튼 배치",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d4",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 4,
+          "text": "TV 전용 리모컨은 이미 버튼이 적어 수를 줄여도 차별화가 크지 않다는 의견이 있었고, 스크롤은 고령층에 익숙하지 않거나 TV가 필요한 탐색 기능을 지원하지 않을 수 있어 익숙한 기본 배치를 유지하자는 의견도 제기됨.",
+          "evidence_utterance_indices": [
+            486,
+            487,
+            488,
+            492,
+            493,
+            495,
+            505,
+            506,
+            507,
+            508,
+            516,
+            518,
+            520
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a2_st2",
+          "subtopic": "버튼 배치",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d5",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 5,
+          "text": "리모컨을 자주 잃어버리는 문제를 줄이기 위해 버튼을 누르면 리모컨에서 소리가 나는 거치대가 제안됐으며, 거치대에 충전 기능을 넣는 안도 제시됨. 단순하고 작게 만들면 예산에 맞을 수 있다는 의견이 나옴.",
+          "evidence_utterance_indices": [
+            69,
             112,
             116,
             117,
@@ -6946,15 +7106,12 @@
             543,
             544,
             547,
-            553,
-            569,
             572,
             574,
             576,
-            583,
+            584,
             586,
             587,
-            589,
             590,
             591
           ],
@@ -6965,10 +7122,295 @@
           "subtopic": "분실 방지",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d6",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 6,
+          "text": "여러 기기를 조작하는 초기 구상으로 기기별 기능을 표시하는 터치스크린이 제안됐으나, 제품은 TV 전용으로 요구됐고 이에 리처드는 디스플레이가 필요 없을 수 있다고 언급함.",
+          "evidence_utterance_indices": [
+            185,
+            189,
+            192,
+            193,
+            198,
+            300,
+            301,
+            303,
+            464,
+            465
+          ],
+          "status": "DELETED",
+          "review_reasons": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "text",
+              "before": "기기별 조작 기능을 표시하는 터치스크린이 제안됨. 리처드는 단색 화면은 20유로 이하 제품도 있다고 설명함.",
+              "after": "여러 기기를 조작하는 초기 구상으로 기기별 기능을 표시하는 터치스크린이 제안됐으나, 제품은 TV 전용으로 요구됐고 이에 리처드는 디스플레이가 필요 없을 수 있다고 언급함.",
+              "reason": "터치스크린 아이디어를 초기 다기기 구상으로 정리하고 TV 전용 요구 이후 유효한 제안으로 남지 않도록 삭제했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "evidence_utterance_indices",
+              "before": [
+                185,
+                189,
+                190,
+                192,
+                193,
+                198,
+                223,
+                226,
+                228,
+                230,
+                231,
+                233
+              ],
+              "after": [
+                185,
+                189,
+                192,
+                193,
+                198,
+                300,
+                301,
+                303,
+                464,
+                465
+              ],
+              "reason": "터치스크린 아이디어를 초기 다기기 구상으로 정리하고 TV 전용 요구 이후 유효한 제안으로 남지 않도록 삭제했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "status",
+              "before": "ACTIVE",
+              "after": "DELETED",
+              "reason": "TV 전용 제품 요구 이후 추진되지 않은 초기 다기기 터치스크린 구상을 유효한 논의 항목에서 삭제했습니다."
+            }
+          ],
+          "subtopic_id": "TS3003b_a2_st4",
+          "subtopic": "화면 기능",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d7",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 7,
+          "text": "터치스크린은 12.5유로를 크게 넘길 수 있고 쉽게 깨지거나 흠집이 날 수 있다는 우려가 제기됐으나, 단색 터치스크린은 20유로 이하일 수도 있다는 반론이 제시됨.",
+          "evidence_utterance_indices": [
+            223,
+            226,
+            228,
+            230,
+            231,
+            233,
+            240,
+            242,
+            243
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [
+            {
+              "stage": "revise_2",
+              "field": "text",
+              "before": "터치스크린은 12.5유로를 크게 넘길 수 있고 쉽게 깨지거나 흠집이 날 수 있다는 우려가 제기됨.",
+              "after": "터치스크린은 12.5유로를 크게 넘길 수 있고 쉽게 깨지거나 흠집이 날 수 있다는 우려가 제기됐으나, 단색 터치스크린은 20유로 이하일 수도 있다는 반론이 제시됨.",
+              "reason": "터치스크린의 비용 논의에서 단색 제품은 20유로 이하일 수 있다는 반론을 추가해 양쪽 의견을 반영함."
+            },
+            {
+              "stage": "revise_2",
+              "field": "evidence_utterance_indices",
+              "before": [
+                223,
+                240,
+                242,
+                243
+              ],
+              "after": [
+                223,
+                226,
+                228,
+                230,
+                231,
+                233,
+                240,
+                242,
+                243
+              ],
+              "reason": "터치스크린의 비용 논의에서 단색 제품은 20유로 이하일 수 있다는 반론을 추가해 양쪽 의견을 반영함."
+            }
+          ],
+          "subtopic_id": "TS3003b_a2_st4",
+          "subtopic": "화면 기능",
+          "discussion_tag": "반대·우려",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d8",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 8,
+          "text": "고령 사용자가 버튼 기능을 익히기 쉽도록 버튼 설명을 표시하는 작은 일반 LCD 화면이 제안됐으나, 비용에 맞을지는 미정임.",
+          "evidence_utterance_indices": [
+            604,
+            605,
+            607,
+            608,
+            609,
+            611,
+            615,
+            617,
+            625,
+            627
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "decision_tag",
+              "before": "결정",
+              "after": null,
+              "reason": "작은 LCD는 제안 단계이며 비용 적합성이 미정인 점을 반영해 결정 태그를 제거했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "text",
+              "before": "고령 사용자가 버튼 기능을 익히기 쉽도록 버튼 설명을 보여주는 작은 일반 LCD 화면이 제안됐고, 언어 선택 버튼을 넣기보다 시장별 언어에 맞춘 제품을 제공하는 방향으로 정리됨.",
+              "after": "고령 사용자가 버튼 기능을 익히기 쉽도록 버튼 설명을 표시하는 작은 일반 LCD 화면이 제안됐으나, 비용에 맞을지는 미정임.",
+              "reason": "작은 LCD는 제안 단계이며 비용 적합성이 미정인 점을 반영해 결정 태그를 제거했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "evidence_utterance_indices",
+              "before": [
+                604,
+                605,
+                607,
+                608,
+                609,
+                611,
+                615,
+                617,
+                679,
+                681,
+                683,
+                688,
+                690,
+                693,
+                694
+              ],
+              "after": [
+                604,
+                605,
+                607,
+                608,
+                609,
+                611,
+                615,
+                617,
+                625,
+                627
+              ],
+              "reason": "작은 LCD는 제안 단계이며 비용 적합성이 미정인 점을 반영해 결정 태그를 제거했습니다."
+            }
+          ],
+          "subtopic_id": "TS3003b_a2_st4",
+          "subtopic": "화면 기능",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d9",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 9,
+          "text": "다음 회의를 위한 사용자 인터페이스 콘셉트를 준비하기로 함.",
+          "evidence_utterance_indices": [
+            701,
+            702,
+            705
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "subtopic_id": "TS3003b_a2_st4",
+          "subtopic": "화면 기능",
+          "discussion_tag": "액션",
+          "decision_tag": "결정",
+          "assignees": [
+            "리처드"
+          ],
+          "assignee_user_ids": [
+            "u2"
+          ],
+          "assignee_names": [
+            "리처드"
+          ],
+          "assignee_jobs": [
+            "UI 디자이너"
+          ],
+          "due": null
+        },
+        {
+          "item_id": "TS3003b_a2_d10",
+          "agenda_id": "TS3003b_a2",
+          "section": "major_discussions",
+          "order": 10,
+          "text": "언어 선택 버튼을 넣기보다 시장별 언어에 맞춰 제품을 제공하는 방향으로 정리됨.",
+          "evidence_utterance_indices": [
+            679,
+            681,
+            683,
+            688,
+            690,
+            693,
+            694
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "item",
+              "before": null,
+              "after": "TS3003b_a2_d10",
+              "reason": "작은 LCD 화면 제안과 구분해 시장별 언어에 맞춘 제품 제공 방향을 별도 결정 항목으로 기록했습니다."
+            }
+          ],
+          "subtopic_id": "TS3003b_a2_st4",
+          "subtopic": "화면 기능",
+          "discussion_tag": "제안",
+          "decision_tag": "결정",
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         }
       ],
@@ -6978,19 +7420,41 @@
           "agenda_id": "TS3003b_a2",
           "section": "unresolved_issues",
           "order": 1,
-          "text": "숫자 버튼을 유지할지, 스크롤·조이스틱 방식으로 대체할지 결론이 나지 않음.",
+          "text": "숫자 버튼을 포함한 버튼 구성과 스크롤 방식의 채택 여부가 정해지지 않음.",
           "evidence_utterance_indices": [
             466,
+            470,
+            473,
             477,
-            478,
             486,
-            492,
-            495
+            493,
+            495,
+            500,
+            501,
+            505
           ],
-          "status": "REVIEW_REQUIRED",
-          "review_reasons": [
-            "검증 미통과(결정 상태 오류): 스크롤 방식은 고연령층에게 익숙하지 않으므로 기본 배치를 유지하자는 브라운의 의견에 바트가 동의했고, 이어 숫자 버튼을 유지하는 취지로 확인했습니다. 따라서 숫자 버튼 유지 여부를 미결로 기록한 것은 논의 결과와 맞지 않습니다."
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": [],
+          "tag": "세부 미정"
+        },
+        {
+          "item_id": "TS3003b_a2_un2",
+          "agenda_id": "TS3003b_a2",
+          "section": "unresolved_issues",
+          "order": 2,
+          "text": "거치대와 화면 중 어떤 부가 기능을 우선할지, 작은 LCD 화면이 비용에 맞을지 정해지지 않음.",
+          "evidence_utterance_indices": [
+            598,
+            603,
+            607,
+            625,
+            627,
+            628,
+            629
           ],
+          "status": "ACTIVE",
+          "review_reasons": [],
           "history": [],
           "tag": null
         }
@@ -7000,29 +7464,28 @@
     {
       "agenda_id": "TS3003b_a3",
       "agenda_number": 3,
-      "agenda_title": "인터페이스·구조 설계",
+      "agenda_title": "작동 구조·소재",
       "evidence_range": [
-        185,
-        706
+        261,
+        705
       ],
       "subtopics": [
         {
           "subtopic_id": "TS3003b_a3_st1",
           "agenda_id": "TS3003b_a3",
           "order": 1,
-          "title": "디스플레이",
+          "title": "기본 작동",
           "item_ids": [
-            "TS3003b_a3_d1",
-            "TS3003b_a3_d2"
+            "TS3003b_a3_d1"
           ]
         },
         {
           "subtopic_id": "TS3003b_a3_st2",
           "agenda_id": "TS3003b_a3",
           "order": 2,
-          "title": "내부 구조",
+          "title": "소재·구조",
           "item_ids": [
-            "TS3003b_a3_d3"
+            "TS3003b_a3_d2"
           ]
         },
         {
@@ -7031,34 +7494,7 @@
           "order": 3,
           "title": "부품 콘셉트",
           "item_ids": [
-            "TS3003b_a3_d4"
-          ]
-        },
-        {
-          "subtopic_id": "TS3003b_a3_st4",
-          "agenda_id": "TS3003b_a3",
-          "order": 4,
-          "title": "UI 콘셉트",
-          "item_ids": [
-            "TS3003b_a3_d5"
-          ]
-        },
-        {
-          "subtopic_id": "TS3003b_a3_st5",
-          "agenda_id": "TS3003b_a3",
-          "order": 5,
-          "title": "트렌드 관찰",
-          "item_ids": [
-            "TS3003b_a3_d6"
-          ]
-        },
-        {
-          "subtopic_id": "TS3003b_a3_st6",
-          "agenda_id": "TS3003b_a3",
-          "order": 6,
-          "title": "언어 지원",
-          "item_ids": [
-            "TS3003b_a3_d7"
+            "TS3003b_a3_d3"
           ]
         }
       ],
@@ -7069,39 +7505,29 @@
           "agenda_id": "TS3003b_a3",
           "section": "major_discussions",
           "order": 1,
-          "text": "기기별 조작 버튼을 터치스크린에 표시하는 다기기 리모컨이 제안됐고, 실제 버튼은 크고 단순하게 하자는 의견이 나옴. 터치스크린은 12.5유로를 넘을 수 있다는 우려와 단색 화면은 20유로 이하일 수 있다는 의견이 맞섰으며, 깨짐·흠집 우려도 제기됨.",
+          "text": "버튼 입력을 판별한 뒤 적외선 LED로 TV에 신호를 보내 해당 기능을 작동시키는 단순한 구조로 설명됨.",
           "evidence_utterance_indices": [
-            185,
-            190,
-            192,
-            193,
-            198,
-            200,
-            207,
-            209,
-            212,
-            214,
-            223,
-            226,
-            228,
-            230,
-            231,
-            240,
-            242,
-            243,
-            247
+            261,
+            262,
+            263,
+            264,
+            267,
+            268,
+            269,
+            270,
+            271
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
           "subtopic_id": "TS3003b_a3_st1",
-          "subtopic": "디스플레이",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "subtopic": "기본 작동",
+          "discussion_tag": "정보",
+          "decision_tag": "공유",
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -7109,52 +7535,8 @@
           "agenda_id": "TS3003b_a3",
           "section": "major_discussions",
           "order": 2,
-          "text": "새 리모컨을 익히기 어려운 고연령층을 위해 버튼 기능을 설명하는 소형 LCD를 넣자는 제안이 있었고, 여러 언어를 지원할 수 있다는 의견도 나옴. 비용과 거치대 중 어느 기능을 선택할지는 정해지지 않음.",
+          "text": "첨단 소재가 제품별 비용을 높일 수 있으므로 기본 플라스틱과 단순하고 튼튼한 내부 구조로 비용을 억제하고, 디자인과 사용자 인터페이스에 집중하자는 안이 제안됨.",
           "evidence_utterance_indices": [
-            598,
-            603,
-            604,
-            605,
-            606,
-            607,
-            608,
-            609,
-            611,
-            617,
-            625,
-            627,
-            679,
-            681,
-            683
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "subtopic_id": "TS3003b_a3_st1",
-          "subtopic": "디스플레이",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a3_d3",
-          "agenda_id": "TS3003b_a3",
-          "section": "major_discussions",
-          "order": 3,
-          "text": "적외선 신호를 보내는 단순한 구조와 기본 플라스틱 소재를 사용해 제품별 비용을 억제하고, 첨단 소재보다 디자인과 사용자 인터페이스에 투자하자는 의견이 제시됨.",
-          "evidence_utterance_indices": [
-            261,
-            262,
-            263,
-            266,
-            267,
-            268,
-            269,
-            270,
             280,
             281,
             282,
@@ -7162,31 +7544,49 @@
             284,
             285,
             286,
-            288
+            288,
+            634,
+            635,
+            636,
+            637
           ],
           "status": "ACTIVE",
           "review_reasons": [],
-          "history": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "decision_tag",
+              "before": "결정",
+              "after": null,
+              "reason": "기본 플라스틱과 단순한 내부 구조, 디자인·UI 집중은 명시적으로 합의된 결정이 아니라 제안으로 수정했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "text",
+              "before": "첨단 소재는 제품별 비용을 높일 수 있으므로 내부 구조는 단순하고 튼튼하게 만들고, 기본 플라스틱을 사용해 비용을 억제하는 대신 디자인과 사용자 인터페이스에 집중하기로 함.",
+              "after": "첨단 소재가 제품별 비용을 높일 수 있으므로 기본 플라스틱과 단순하고 튼튼한 내부 구조로 비용을 억제하고, 디자인과 사용자 인터페이스에 집중하자는 안이 제안됨.",
+              "reason": "기본 플라스틱과 단순한 내부 구조, 디자인·UI 집중은 명시적으로 합의된 결정이 아니라 제안으로 수정했습니다."
+            }
+          ],
           "subtopic_id": "TS3003b_a3_st2",
-          "subtopic": "내부 구조",
+          "subtopic": "소재·구조",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
-          "item_id": "TS3003b_a3_d4",
+          "item_id": "TS3003b_a3_d3",
           "agenda_id": "TS3003b_a3",
           "section": "major_discussions",
-          "order": 4,
-          "text": "다음 회의를 위해 부품 콘셉트를 준비하기로 함.",
+          "order": 3,
+          "text": "다음 회의를 위한 부품 콘셉트를 준비하기로 함.",
           "evidence_utterance_indices": [
             701,
-            705,
-            706
+            705
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -7195,149 +7595,40 @@
           "subtopic": "부품 콘셉트",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "assignee": "브라운",
-          "assignee_user_id": "u3",
-          "assignee_name": "브라운",
-          "assignee_job": "산업 디자이너",
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a3_d5",
-          "agenda_id": "TS3003b_a3",
-          "section": "major_discussions",
-          "order": 5,
-          "text": "다음 회의를 위해 사용자 인터페이스 콘셉트를 준비하기로 함.",
-          "evidence_utterance_indices": [
-            702,
-            705,
-            706
+          "assignees": [
+            "브라운"
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "subtopic_id": "TS3003b_a3_st4",
-          "subtopic": "UI 콘셉트",
-          "discussion_tag": "액션",
-          "decision_tag": "결정",
-          "assignee": "리처드",
-          "assignee_user_id": "u2",
-          "assignee_name": "리처드",
-          "assignee_job": "UI 디자이너",
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a3_d6",
-          "agenda_id": "TS3003b_a3",
-          "section": "major_discussions",
-          "order": 6,
-          "text": "다음 회의를 위해 관련 트렌드를 관찰하기로 함.",
-          "evidence_utterance_indices": [
-            703,
-            704,
-            705,
-            706
+          "assignee_user_ids": [
+            "u3"
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "subtopic_id": "TS3003b_a3_st5",
-          "subtopic": "트렌드 관찰",
-          "discussion_tag": "액션",
-          "decision_tag": "결정",
-          "assignee": "리처드",
-          "assignee_user_id": "u2",
-          "assignee_name": "리처드",
-          "assignee_job": "UI 디자이너",
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a3_d7",
-          "agenda_id": "TS3003b_a3",
-          "section": "major_discussions",
-          "order": 7,
-          "text": "언어 지원은 별도 언어 버튼을 두기보다 시장별로 맞춰 출시하는 방향에 동의함.",
-          "evidence_utterance_indices": [
-            679,
-            681,
-            683,
-            688,
-            690,
-            693,
-            694,
-            695
+          "assignee_names": [
+            "브라운"
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_2",
-              "field": "item",
-              "before": null,
-              "after": "TS3003b_a3_d7",
-              "reason": "별도 언어 버튼 대신 시장별로 맞춰 출시하는 데 동의한 방향을 누락 없이 기록했습니다."
-            }
+          "assignee_jobs": [
+            "산업 디자이너"
           ],
-          "subtopic_id": "TS3003b_a3_st6",
-          "subtopic": "언어 지원",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
           "due": null
         }
       ],
-      "unresolved_issues": [
-        {
-          "item_id": "TS3003b_a3_un1",
-          "agenda_id": "TS3003b_a3",
-          "section": "unresolved_issues",
-          "order": 1,
-          "text": "터치스크린 또는 소형 LCD의 비용·내구성과 거치대 중 우선할 기능이 정해지지 않음.",
-          "evidence_utterance_indices": [
-            223,
-            231,
-            240,
-            243,
-            598,
-            603,
-            625,
-            627
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "tag": "세부 미정"
-        }
-      ],
+      "unresolved_issues": [],
       "next_meeting_topics": []
     },
     {
       "agenda_id": "TS3003b_a4",
       "agenda_number": 4,
-      "agenda_title": "제품 범위·문자방송",
+      "agenda_title": "기타",
       "evidence_range": [
-        74,
-        438
+        700,
+        700
       ],
       "subtopics": [
         {
           "subtopic_id": "TS3003b_a4_st1",
           "agenda_id": "TS3003b_a4",
           "order": 1,
-          "title": "제품 범위",
+          "title": "회의록 업로드",
           "item_ids": [
             "TS3003b_a4_d1"
-          ]
-        },
-        {
-          "subtopic_id": "TS3003b_a4_st2",
-          "agenda_id": "TS3003b_a4",
-          "order": 2,
-          "title": "문자방송",
-          "item_ids": [
-            "TS3003b_a4_d2"
           ]
         }
       ],
@@ -7348,329 +7639,29 @@
           "agenda_id": "TS3003b_a4",
           "section": "major_discussions",
           "order": 1,
-          "text": "기능 과다로 제품이 복잡해지거나 출시가 늦어지지 않도록 TV 전용 리모컨으로 설계하고, 디자인과 작동 방식에 회사 이미지를 반영하라는 요구가 제시됨.",
-          "evidence_utterance_indices": [
-            300,
-            301,
-            303,
-            305,
-            319,
-            320
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "evidence_utterance_indices",
-              "before": [
-                300,
-                301,
-                303,
-                305,
-                309,
-                310,
-                319,
-                320
-              ],
-              "after": [
-                300,
-                301,
-                303,
-                305,
-                319,
-                320
-              ],
-              "reason": "TV 전용 설계와 회사 이미지 반영 요구를 직접 뒷받침하지 않는 발화를 근거에서 제외했습니다."
-            }
-          ],
-          "subtopic_id": "TS3003b_a4_st1",
-          "subtopic": "제품 범위",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a4_d2",
-          "agenda_id": "TS3003b_a4",
-          "section": "major_discussions",
-          "order": 2,
-          "text": "인터넷 확산을 이유로 문자 방송을 제외하자는 제안이 있었으나, 40세 이상은 앞으로 20년 안에도 인터넷 TV를 보유할 가능성이 매우 낮고 문자 방송은 조사에서 중요한 기능으로 평가됐으며 청각 장애인의 자막 이용에도 필요하다는 의견이 제기되어 문자 방송을 유지하기로 함. 자막을 쉽게 켤 수 있도록 큰 자막용 버튼을 추가하는 방안도 제안됨.",
-          "evidence_utterance_indices": [
-            74,
-            76,
-            306,
-            307,
-            308,
-            333,
-            334,
-            335,
-            337,
-            338,
-            415,
-            417,
-            423,
-            427,
-            428,
-            429,
-            430,
-            431,
-            432,
-            433,
-            435,
-            436,
-            437,
-            438
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "decision_tag",
-              "before": null,
-              "after": "결정",
-              "reason": "문자 방송을 제외하자는 제안부터 반대 의견과 유지 결정, 자막용 버튼 제안까지의 흐름을 한 항목에 통합하고 잘못 연결된 근거를 제외했습니다."
-            },
-            {
-              "stage": "revise_1",
-              "field": "text",
-              "before": "인터넷이 보급되면 문자 방송이 과거 기능이 될 것이라는 이유로 제외하자는 제안이 나옴.",
-              "after": "인터넷 확산을 이유로 문자 방송을 제외하자는 제안이 있었으나, 40세 이상은 앞으로 20년 안에도 인터넷 TV를 보유할 가능성이 매우 낮고 문자 방송은 조사에서 중요한 기능으로 평가됐으며 청각 장애인의 자막 이용에도 필요하다는 의견이 제기되어 문자 방송을 유지하기로 함. 자막을 쉽게 켤 수 있도록 큰 자막용 버튼을 추가하는 방안도 제안됨.",
-              "reason": "문자 방송을 제외하자는 제안부터 반대 의견과 유지 결정, 자막용 버튼 제안까지의 흐름을 한 항목에 통합하고 잘못 연결된 근거를 제외했습니다."
-            },
-            {
-              "stage": "revise_1",
-              "field": "evidence_utterance_indices",
-              "before": [
-                306,
-                307,
-                308,
-                330,
-                331,
-                332
-              ],
-              "after": [
-                74,
-                76,
-                306,
-                307,
-                308,
-                333,
-                334,
-                335,
-                337,
-                338,
-                415,
-                417,
-                423,
-                427,
-                428,
-                429,
-                430,
-                431,
-                432,
-                433,
-                435,
-                436,
-                437,
-                438
-              ],
-              "reason": "문자 방송을 제외하자는 제안부터 반대 의견과 유지 결정, 자막용 버튼 제안까지의 흐름을 한 항목에 통합하고 잘못 연결된 근거를 제외했습니다."
-            }
-          ],
-          "subtopic_id": "TS3003b_a4_st2",
-          "subtopic": "문자방송",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a4_d3",
-          "agenda_id": "TS3003b_a4",
-          "section": "major_discussions",
-          "order": 3,
-          "text": "40세 이상 사용자는 앞으로 20년 안에도 인터넷 TV를 보유할 가능성이 매우 낮고, 문자 방송은 조사에서 중요한 기능으로 평가됐으며 청각 장애인의 자막 이용에도 필요하다는 반대 의견이 제기됨.",
-          "evidence_utterance_indices": [
-            333,
-            334,
-            335,
-            337,
-            338,
-            415,
-            417,
-            423
-          ],
-          "status": "DELETED",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "text",
-              "before": "40세 이상 사용자는 가까운 시일 내 인터넷 TV를 보유할 가능성이 낮고, 문자 방송은 조사에서 중요 기능으로 평가됐으며 청각 장애인의 자막 이용에도 필요하다는 반대 의견이 제기됨.",
-              "after": "40세 이상 사용자는 앞으로 20년 안에도 인터넷 TV를 보유할 가능성이 매우 낮고, 문자 방송은 조사에서 중요한 기능으로 평가됐으며 청각 장애인의 자막 이용에도 필요하다는 반대 의견이 제기됨.",
-              "reason": "인터넷 TV 보유 가능성이 낮다는 의견의 기간을 원문에 맞게 구체화했습니다."
-            },
-            {
-              "stage": "revise_2",
-              "field": "status",
-              "before": "ACTIVE",
-              "after": "DELETED",
-              "reason": "문자 방송을 유지하기로 한 결정 항목에 반대 의견과 근거가 이미 포함되어 있어 중복 항목을 삭제했습니다."
-            }
-          ],
-          "subtopic_id": "TS3003b_a4_st2",
-          "subtopic": "문자방송",
-          "discussion_tag": "반대·우려",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a4_d4",
-          "agenda_id": "TS3003b_a4",
-          "section": "major_discussions",
-          "order": 4,
-          "text": "자막 접근성과 기능 중요도를 고려해 문자 방송을 유지하기로 함.",
-          "evidence_utterance_indices": [
-            74,
-            76,
-            427,
-            428,
-            429,
-            430,
-            431
-          ],
-          "status": "DELETED",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "status",
-              "before": "ACTIVE",
-              "after": "DELETED",
-              "reason": "문자 방송 제외 제안과 유지 결정 및 자막용 버튼 제안을 통합 항목에 반영해 중복 항목을 삭제했습니다."
-            }
-          ],
-          "subtopic_id": "TS3003b_a4_st2",
-          "subtopic": "문자방송",
-          "discussion_tag": "제안",
-          "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        },
-        {
-          "item_id": "TS3003b_a4_d5",
-          "agenda_id": "TS3003b_a4",
-          "section": "major_discussions",
-          "order": 5,
-          "text": "자막을 쉽게 켤 수 있도록 큰 자막용 버튼을 추가하는 방안도 제안됨.",
-          "evidence_utterance_indices": [
-            432,
-            433,
-            435,
-            436,
-            437,
-            438
-          ],
-          "status": "DELETED",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "status",
-              "before": "ACTIVE",
-              "after": "DELETED",
-              "reason": "자막용 버튼 제안을 통합 항목에 반영해 중복 항목을 삭제했습니다."
-            }
-          ],
-          "subtopic_id": "TS3003b_a4_st2",
-          "subtopic": "문자방송",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        }
-      ],
-      "unresolved_issues": [
-        {
-          "item_id": "TS3003b_a4_un1",
-          "agenda_id": "TS3003b_a4",
-          "section": "unresolved_issues",
-          "order": 1,
-          "text": "문자 방송은 유지하기로 했으나 큰 자막용 버튼을 별도로 넣을지는 정해지지 않음.",
-          "evidence_utterance_indices": [
-            430,
-            432,
-            433,
-            438
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "tag": "세부 미정"
-        }
-      ],
-      "next_meeting_topics": []
-    },
-    {
-      "agenda_id": "TS3003b_a5",
-      "agenda_number": 5,
-      "agenda_title": "기타",
-      "evidence_range": [
-        700,
-        700
-      ],
-      "subtopics": [
-        {
-          "subtopic_id": "TS3003b_a5_st1",
-          "agenda_id": "TS3003b_a5",
-          "order": 1,
-          "title": "회의록 공유",
-          "item_ids": [
-            "TS3003b_a5_d1"
-          ]
-        }
-      ],
-      "discussion_background": [],
-      "major_discussions": [
-        {
-          "item_id": "TS3003b_a5_d1",
-          "agenda_id": "TS3003b_a5",
-          "section": "major_discussions",
-          "order": 1,
-          "text": "회의록을 프로젝트 문서 폴더에 올리기로 함.",
+          "text": "회의록을 프로젝트 문서 폴더에 업로드하기로 함.",
           "evidence_utterance_indices": [
             700
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003b_a5_st1",
-          "subtopic": "회의록 공유",
+          "subtopic_id": "TS3003b_a4_st1",
+          "subtopic": "회의록 업로드",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "assignee": "바트",
-          "assignee_user_id": "u1",
-          "assignee_name": "바트",
-          "assignee_job": "프로젝트 매니저",
+          "assignees": [
+            "바트"
+          ],
+          "assignee_user_ids": [
+            "u1"
+          ],
+          "assignee_names": [
+            "바트"
+          ],
+          "assignee_jobs": [
+            "프로젝트 매니저"
+          ],
           "due": null
         }
       ],
@@ -7690,97 +7681,181 @@
           {
             "issue_id": "v1_i1",
             "round": 1,
-            "issue_type": "중요 항목 누락",
+            "issue_type": "결정 상태 오류",
             "item_ids": [
-              "TS3003b_a2_d1"
+              "TS3003b_a2_d8"
             ],
             "agenda_id": "TS3003b_a2",
-            "description": "채널·볼륨 등 자주 쓰는 버튼을 강조하자는 내용은 요약했지만, 해당 버튼을 튼튼하게 만들어 쉽게 고장 나지 않게 해야 한다는 설계 요구가 빠졌습니다.",
+            "description": "작은 LCD 화면은 버튼 기능을 설명하자는 제안으로 나왔고 비용 적합성도 미정인데, 항목 전체에 [결정]이 붙어 확정된 것처럼 기록됐습니다. 반면 시장별 언어에 맞춘 제품 제공은 별도의 방향으로 정리됐습니다.",
             "evidence_utterance_indices": [
-              108,
-              109,
-              110,
-              111
+              607,
+              608,
+              617,
+              625,
+              627,
+              679,
+              681,
+              683,
+              688,
+              690,
+              693,
+              694
             ],
-            "suggestion": "TS3003b_a2_d1에 자주 쓰는 채널·볼륨 버튼의 내구성을 높여야 한다는 내용을 추가하세요.",
+            "suggestion": "LCD 화면은 [제안][null]로 기록하고, 시장별 언어 적용 방향은 별도 항목으로 분리해 결정 여부를 표시하세요.",
             "note": null
           },
           {
             "issue_id": "v1_i2",
             "round": 1,
-            "issue_type": "세부 정보 누락",
+            "issue_type": "결정 상태 오류",
             "item_ids": [
-              "TS3003b_a4_d3"
+              "TS3003b_a3_d2"
             ],
-            "agenda_id": "TS3003b_a4",
-            "description": "인터넷 TV를 보유할 가능성이 낮다는 반대 의견의 기간이 ‘가까운 시일 내’로 축약되어, 원문의 ‘앞으로 20년 안에’라는 구체적인 시간 범위가 빠졌습니다.",
+            "agenda_id": "TS3003b_a3",
+            "description": "기본 플라스틱과 단순하고 튼튼한 구조, 디자인·UI에 집중하자는 내용은 브라운의 제안입니다. 바트가 기본 소재를 좋은 생각이라고 했지만, 해당 내용을 모두 채택하기로 명시적으로 합의한 발화는 확인되지 않습니다.",
             "evidence_utterance_indices": [
-              333,
-              334
+              280,
+              281,
+              282,
+              283,
+              284,
+              288,
+              634,
+              635,
+              636,
+              637
             ],
-            "suggestion": "해당 문장을 ‘앞으로 20년 안에도 인터넷 TV를 보유할 가능성이 매우 낮다’는 취지로 구체화하세요.",
+            "suggestion": "명시적 합의가 확인되는 범위만 결정으로 남기고, 나머지는 decision_tag를 null로 바꾸어 제안으로 기록하세요.",
             "note": null
           },
           {
             "issue_id": "v1_i3",
             "round": 1,
-            "issue_type": "가짜 근거",
+            "issue_type": "논의 흐름 단절",
             "item_ids": [
-              "TS3003b_a4_d1"
+              "TS3003b_a2_d6"
             ],
-            "agenda_id": "TS3003b_a4",
-            "description": "[309, 310]은 인터넷 기능이 TV에서도 가능할 수 있다는 발언으로, 요약문에 적힌 TV 전용 설계 및 회사 이미지 반영 요구를 직접 뒷받침하지 않습니다.",
+            "agenda_id": "TS3003b_a2",
+            "description": "기기별 기능을 표시하는 터치스크린은 여러 기기를 조작하는 초기 구상에서 제안됐지만, 이후 제품은 TV 전용으로 요구됐고 리처드도 그 경우 화면이 필요 없을 수 있다고 말했습니다. 요약은 이 후속 논의를 반영하지 않아 초기 구상을 계속 유효한 제안처럼 남겼습니다.",
             "evidence_utterance_indices": [
-              309,
-              310
+              185,
+              189,
+              192,
+              193,
+              198,
+              300,
+              301,
+              303,
+              464,
+              465
             ],
-            "suggestion": "TS3003b_a4_d1의 근거에서 [309, 310]을 제외하세요.",
+            "suggestion": "d6을 삭제하거나 TV 전용 요구 이후 추진되지 않은 초기안으로 표시하고, 이후 제안된 버튼 설명용 소형 LCD는 별도로 기록하세요.",
             "note": null
           },
           {
             "issue_id": "v1_i4",
             "round": 1,
-            "issue_type": "논의 흐름 단절",
+            "issue_type": "중요 항목 누락",
             "item_ids": [
-              "TS3003b_a4_d2",
-              "TS3003b_a4_d3",
-              "TS3003b_a4_d4",
-              "TS3003b_a4_d5"
+              "TS3003b_a2_d3"
             ],
-            "agenda_id": "TS3003b_a4",
-            "description": "문자 방송 제외 제안, 이에 대한 반대 근거, 유지 결정, 큰 자막용 버튼 제안이 같은 ‘문자방송’ 소주제에서 여러 항목으로 나뉘어 논의가 결론에 이르는 흐름이 분산되어 있습니다.",
+            "agenda_id": "TS3003b_a2",
+            "description": "리처드는 연령대와 관계없이 사용하기 쉽도록 실제 버튼을 크고 단순하게 만들자고 제안했지만, 버튼 배치 항목에는 버튼 크기에 관한 핵심 요구가 빠져 있습니다.",
             "evidence_utterance_indices": [
-              306,
-              307,
-              308,
-              333,
-              334,
-              335,
-              337,
-              338,
-              415,
-              423,
-              427,
-              428,
-              430,
-              431,
-              432,
-              433,
-              438
+              208,
+              209,
+              212,
+              214
             ],
-            "suggestion": "문자 방송 제외 제안부터 반대 의견과 유지 결정까지를 하나의 주요 논의 항목으로 통합해 흐름을 드러내고, 큰 자막용 버튼 제안도 같은 소주제 안에서 이어지도록 정리하세요.",
+            "suggestion": "d3에 고령자와 젊은 사용자 모두를 고려해 버튼을 크고 단순하게 하자는 제안을 추가하세요.",
+            "note": null
+          },
+          {
+            "issue_id": "v1_i5",
+            "round": 1,
+            "issue_type": "중요 항목 누락",
+            "item_ids": [
+              "TS3003b_a1_d1"
+            ],
+            "agenda_id": "TS3003b_a1",
+            "description": "제품의 디자인과 작동 방식에 회사 이미지가 드러나야 한다는 요구가 제시됐지만, 제품 방향 항목에 반영되지 않았습니다.",
+            "evidence_utterance_indices": [
+              319,
+              320
+            ],
+            "suggestion": "d1에 디자인과 작동 방식으로 회사 이미지를 드러내야 한다는 요구를 추가하세요.",
+            "note": null
+          },
+          {
+            "issue_id": "v1_i6",
+            "round": 1,
+            "issue_type": "중요 항목 누락",
+            "item_ids": [
+              "TS3003b_a1_bg1"
+            ],
+            "agenda_id": "TS3003b_a1",
+            "description": "요약은 RSI 관련 응답 비율을 적었지만, 응답자의 약 4분의 1이 리모컨으로 RSI가 생긴다고 생각했으며 이 점을 디자인에 반영해야 한다는 논의는 담지 않았습니다.",
+            "evidence_utterance_indices": [
+              100,
+              101,
+              103
+            ],
+            "suggestion": "사용성 조사 결과를 단순 수치로만 두지 말고, RSI 우려를 디자인에서 고려해야 한다는 내용을 주요 논의에 추가하세요.",
             "note": null
           }
         ],
         "revision": [
           {
             "op": "update",
-            "target_id": "TS3003b_a2_d1",
+            "target_id": "TS3003b_a1_d1",
             "changed_fields": [
               "text",
               "evidence_utterance_indices"
             ],
-            "reason": "자주 쓰이는 채널·볼륨 버튼의 내구성 요구를 누락해 보완했습니다.",
+            "reason": "제품 방향 항목에 디자인과 작동 방식으로 회사 이미지를 드러내야 한다는 요구를 추가했습니다.",
+            "resolves_issue_ids": [
+              "v1_i5"
+            ],
+            "applied": true,
+            "note": null
+          },
+          {
+            "op": "update",
+            "target_id": "TS3003b_a2_d3",
+            "changed_fields": [
+              "text",
+              "evidence_utterance_indices"
+            ],
+            "reason": "버튼을 크고 단순하게 만들자는 제안을 기존 버튼 구성 논의에 반영했습니다.",
+            "resolves_issue_ids": [
+              "v1_i4"
+            ],
+            "applied": true,
+            "note": null
+          },
+          {
+            "op": "update",
+            "target_id": "TS3003b_a2_d6",
+            "changed_fields": [
+              "text",
+              "evidence_utterance_indices"
+            ],
+            "reason": "터치스크린 아이디어를 초기 다기기 구상으로 정리하고 TV 전용 요구 이후 유효한 제안으로 남지 않도록 삭제했습니다.",
+            "resolves_issue_ids": [
+              "v1_i3"
+            ],
+            "applied": true,
+            "note": null
+          },
+          {
+            "op": "update",
+            "target_id": "TS3003b_a2_d8",
+            "changed_fields": [
+              "decision_tag",
+              "text",
+              "evidence_utterance_indices"
+            ],
+            "reason": "작은 LCD는 제안 단계이며 비용 적합성이 미정인 점을 반영해 결정 태그를 제거했습니다.",
             "resolves_issue_ids": [
               "v1_i1"
             ],
@@ -7789,11 +7864,12 @@
           },
           {
             "op": "update",
-            "target_id": "TS3003b_a4_d3",
+            "target_id": "TS3003b_a3_d2",
             "changed_fields": [
+              "decision_tag",
               "text"
             ],
-            "reason": "인터넷 TV 보유 가능성이 낮다는 의견의 기간을 원문에 맞게 구체화했습니다.",
+            "reason": "기본 플라스틱과 단순한 내부 구조, 디자인·UI 집중은 명시적으로 합의된 결정이 아니라 제안으로 수정했습니다.",
             "resolves_issue_ids": [
               "v1_i2"
             ],
@@ -7801,55 +7877,36 @@
             "note": null
           },
           {
-            "op": "update",
-            "target_id": "TS3003b_a4_d2",
-            "changed_fields": [
-              "decision_tag",
-              "text",
-              "evidence_utterance_indices"
-            ],
-            "reason": "문자 방송을 제외하자는 제안부터 반대 의견과 유지 결정, 자막용 버튼 제안까지의 흐름을 한 항목에 통합하고 잘못 연결된 근거를 제외했습니다.",
+            "op": "add",
+            "target_id": "TS3003b_a1_d3",
+            "changed_fields": [],
+            "reason": "RSI 우려를 디자인에 반영해야 한다는 논의를 별도 항목으로 추가했습니다.",
             "resolves_issue_ids": [
-              "v1_i4"
+              "v1_i6"
             ],
             "applied": true,
             "note": null
           },
           {
-            "op": "update",
-            "target_id": "TS3003b_a4_d1",
-            "changed_fields": [
-              "evidence_utterance_indices"
+            "op": "add",
+            "target_id": "TS3003b_a2_d10",
+            "changed_fields": [],
+            "reason": "작은 LCD 화면 제안과 구분해 시장별 언어에 맞춘 제품 제공 방향을 별도 결정 항목으로 기록했습니다.",
+            "resolves_issue_ids": [
+              "v1_i1"
             ],
-            "reason": "TV 전용 설계와 회사 이미지 반영 요구를 직접 뒷받침하지 않는 발화를 근거에서 제외했습니다.",
+            "applied": true,
+            "note": null
+          },
+          {
+            "op": "delete",
+            "target_id": "TS3003b_a2_d6",
+            "changed_fields": [
+              "status"
+            ],
+            "reason": "TV 전용 제품 요구 이후 추진되지 않은 초기 다기기 터치스크린 구상을 유효한 논의 항목에서 삭제했습니다.",
             "resolves_issue_ids": [
               "v1_i3"
-            ],
-            "applied": true,
-            "note": null
-          },
-          {
-            "op": "delete",
-            "target_id": "TS3003b_a4_d4",
-            "changed_fields": [
-              "status"
-            ],
-            "reason": "문자 방송 제외 제안과 유지 결정 및 자막용 버튼 제안을 통합 항목에 반영해 중복 항목을 삭제했습니다.",
-            "resolves_issue_ids": [
-              "v1_i4"
-            ],
-            "applied": true,
-            "note": null
-          },
-          {
-            "op": "delete",
-            "target_id": "TS3003b_a4_d5",
-            "changed_fields": [
-              "status"
-            ],
-            "reason": "자막용 버튼 제안을 통합 항목에 반영해 중복 항목을 삭제했습니다.",
-            "resolves_issue_ids": [
-              "v1_i4"
             ],
             "applied": true,
             "note": null
@@ -7865,55 +7922,71 @@
             "round": 2,
             "issue_type": "중요 항목 누락",
             "item_ids": [
-              "TS3003b_a3_d2"
+              "TS3003b_a2_d3"
             ],
-            "agenda_id": "TS3003b_a3",
-            "description": "여러 언어를 지원할 수 있다는 의견만 요약되어 있고, 언어 버튼을 두기보다 시장별로 맞춰 출시하는 편이 낫다는 방향에 동의한 내용이 빠졌습니다.",
+            "agenda_id": "TS3003b_a2",
+            "description": "자주 쓰는 채널·음량 버튼을 강조하자는 의견은 요약했지만, 해당 버튼은 튼튼해야 하고 쉽게 고장 나면 안 된다는 요구가 빠졌습니다.",
             "evidence_utterance_indices": [
-              679,
-              681,
-              683,
-              688,
-              690,
-              693,
-              694,
-              695
+              108,
+              109,
+              110,
+              111
             ],
-            "suggestion": "시장별 맞춤 출시 방향을 별도 결정 항목으로 추가하거나 TS3003b_a3_d2에 반영하고, 합의된 내용에 결정 태그를 붙이세요.",
+            "suggestion": "TS3003b_a2_d3에 자주 쓰는 버튼은 튼튼해야 한다는 요구를 추가하세요.",
             "note": null
           },
           {
             "issue_id": "v2_i2",
             "round": 2,
-            "issue_type": "중복 요약",
+            "issue_type": "중요 항목 누락",
             "item_ids": [
-              "TS3003b_a4_d2",
-              "TS3003b_a4_d3"
+              "TS3003b_a2_d7"
             ],
-            "agenda_id": "TS3003b_a4",
-            "description": "TS3003b_a4_d3의 반대 의견과 근거가 TS3003b_a4_d2에 이미 포함되어 있어 문자 방송 유지 논의가 중복 요약되었습니다.",
+            "agenda_id": "TS3003b_a2",
+            "description": "터치스크린의 가격 우려와 파손·흠집 우려는 담았지만, 리처드가 단색 터치스크린은 20유로 이하일 수도 있다고 반박한 내용이 빠져 논의의 균형이 달라집니다.",
             "evidence_utterance_indices": [
-              333,
-              334,
-              335,
-              337,
-              338,
-              415,
-              417,
-              423,
-              430,
-              431
+              223,
+              226,
+              228,
+              230,
+              231,
+              233
             ],
-            "suggestion": "TS3003b_a4_d3를 삭제하고, 반대 의견과 결정 근거는 TS3003b_a4_d2에만 남기세요.",
+            "suggestion": "TS3003b_a2_d7에 단색 터치스크린은 20유로 이하일 수 있다는 반론을 함께 기록하세요.",
+            "note": null
+          },
+          {
+            "issue_id": "v2_i3",
+            "round": 2,
+            "issue_type": "결정 고려사항 누락",
+            "item_ids": [
+              "TS3003b_a1_d1"
+            ],
+            "agenda_id": "TS3003b_a1",
+            "description": "고객층을 정하는 과정에서 46~65세가 시장의 40%이며 기능에는 덜 관심을 두지만 돈을 더 쉽게 쓴다는 점, 반대로 이 시장은 작고 작동만 하면 만족한다는 우려가 논의됐으나 결정 항목에는 반영되지 않았습니다.",
+            "evidence_utterance_indices": [
+              92,
+              93,
+              94,
+              343,
+              364,
+              367,
+              376,
+              377
+            ],
+            "suggestion": "TS3003b_a1_d1에 고령층 시장의 구매 성향과 시장 규모·기능 기대에 대한 반대 의견을 결정 고려사항으로 보완하세요.",
             "note": null
           }
         ],
         "revision": [
           {
-            "op": "add",
-            "target_id": "TS3003b_a3_d7",
-            "changed_fields": [],
-            "reason": "별도 언어 버튼 대신 시장별로 맞춰 출시하는 데 동의한 방향을 누락 없이 기록했습니다.",
+            "op": "update",
+            "target_id": "TS3003b_a2_d3",
+            "changed_fields": [
+              "text",
+              "evidence_utterance_indices"
+            ],
+            "reason": "자주 쓰는 채널·음량 버튼을 강조하는 의견에 버튼의 내구성 요구가 빠져 있어 보완함.",
             "resolves_issue_ids": [
               "v2_i1"
             ],
@@ -7921,12 +7994,13 @@
             "note": null
           },
           {
-            "op": "delete",
-            "target_id": "TS3003b_a4_d3",
+            "op": "update",
+            "target_id": "TS3003b_a2_d7",
             "changed_fields": [
-              "status"
+              "text",
+              "evidence_utterance_indices"
             ],
-            "reason": "문자 방송을 유지하기로 한 결정 항목에 반대 의견과 근거가 이미 포함되어 있어 중복 항목을 삭제했습니다.",
+            "reason": "터치스크린의 비용 논의에서 단색 제품은 20유로 이하일 수 있다는 반론을 추가해 양쪽 의견을 반영함.",
             "resolves_issue_ids": [
               "v2_i2"
             ],
@@ -7942,21 +8016,37 @@
           {
             "issue_id": "v3_i1",
             "round": 3,
-            "issue_type": "결정 상태 오류",
-            "item_ids": [
-              "TS3003b_a2_d2",
-              "TS3003b_a2_un1"
-            ],
+            "issue_type": "액션 판단 오류",
+            "item_ids": [],
             "agenda_id": "TS3003b_a2",
-            "description": "스크롤 방식은 고연령층에게 익숙하지 않으므로 기본 배치를 유지하자는 브라운의 의견에 바트가 동의했고, 이어 숫자 버튼을 유지하는 취지로 확인했습니다. 따라서 숫자 버튼 유지 여부를 미결로 기록한 것은 논의 결과와 맞지 않습니다.",
+            "description": "고령층이 원하는 부가 기능을 조사해야 한다는 제안에 바트가 동의했지만, 해당 조사 업무가 액션으로 기록되지 않았습니다.",
             "evidence_utterance_indices": [
-              492,
-              493,
-              494,
-              495,
-              498
+              567,
+              568
             ],
-            "suggestion": "TS3003b_a2_d2에 숫자 버튼을 유지하기로 한 결론을 반영하고 decision_tag를 '결정'으로 표시한 뒤, TS3003b_a2_un1은 삭제하세요.",
+            "suggestion": "안건 TS3003b_a2에 고령층이 원하는 부가 기능을 조사하는 [액션][결정] 항목을 추가하고, 담당자와 기한은 확인되지 않으므로 각각 빈 배열과 null로 둡니다.",
+            "note": null
+          },
+          {
+            "issue_id": "v3_i2",
+            "round": 3,
+            "issue_type": "결정 고려사항 누락",
+            "item_ids": [
+              "TS3003b_a1_d1"
+            ],
+            "agenda_id": "TS3003b_a1",
+            "description": "60~80세를 대상으로 추진하는 방향을 정리하면서, 프릭이 제기한 고령층 시장은 작고 이들이 리모컨의 차별화에 큰 관심이 없을 수 있다는 반대 근거가 빠졌습니다. 이는 대상 고객층을 정하는 논의의 핵심 고려사항입니다.",
+            "evidence_utterance_indices": [
+              343,
+              364,
+              366,
+              367,
+              376,
+              377,
+              380,
+              385
+            ],
+            "suggestion": "고령층 시장의 규모와 리모컨 디자인·차별화에 대한 관심이 낮을 수 있다는 우려, 그리고 노인용 휴대전화 사례를 근거로 한 반론을 결정 항목에 함께 반영합니다.",
             "note": null
           }
         ],
@@ -7966,6 +8056,6 @@
     "remaining_issue_ids": [
       "v3_i1"
     ],
-    "message": "검증 3회 후에도 문제 1건이 해결되지 않음 (검토 필요 항목 2개)"
+    "message": "검증 3회 후에도 문제 1건이 해결되지 않음 (검토 필요 항목 0개)"
   }
 }

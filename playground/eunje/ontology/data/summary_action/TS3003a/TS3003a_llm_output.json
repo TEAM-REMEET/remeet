@@ -1,26 +1,15 @@
 {
   "agendas": [
     {
-      "agenda_title": "제품 목표와 역할",
-      "discussion_background": [
-        {
-          "text": "Real Reaction은 전자제품에 패션과 기능성을 결합하고 디자인에 공을 들이는 회사로 소개됨.",
-          "evidence_utterance_indices": [
-            43,
-            44,
-            45,
-            46,
-            47
-          ]
-        }
-      ],
+      "agenda_title": "프로젝트 계획",
+      "discussion_background": [],
       "major_discussions": [
         {
           "subtopic": "제품 목표",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "text": "신규 리모컨은 독창적이고 트렌디하며 사용하기 쉬운 제품을 목표로 한다고 공유됨.",
-          "assignee": null,
+          "text": "독창적이고 트렌디하며 사용하기 쉬운 신형 리모컨을 개발하는 것이 목표로 제시됨.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
             81,
@@ -29,16 +18,16 @@
           ]
         },
         {
-          "subtopic": "담당 역할",
+          "subtopic": "진행 체계",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "text": "산업 디자이너는 작동·부품·외관 설계를, UI 디자이너는 기술 기능과 UI 콘셉트·디자인을, 마케팅 담당자는 사용자 요구사항·트렌드·제품 평가를 맡는다고 공유됨.",
-          "assignee": null,
+          "text": "기능 설계, 콘셉트 설계, 상세 설계의 3단계로 진행하며, 산업 디자이너는 작동·부품·외관 설계, UI 디자이너는 기술 기능 및 UI 설계, 마케팅 담당자는 사용자 요구사항·트렌드 관찰·제품 평가를 맡는다고 공유됨.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
-            84,
-            86,
-            87,
+            91,
+            92,
+            93,
             96,
             97,
             98,
@@ -46,32 +35,11 @@
           ]
         },
         {
-          "subtopic": "설계 단계",
+          "subtopic": "시장·비용",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "text": "프로젝트는 기능 설계와 개별 작업·회의를 거쳐 콘셉트 설계 및 상세 설계로 진행된다고 공유됨.",
-          "assignee": null,
-          "due": null,
-          "evidence_utterance_indices": [
-            91,
-            92,
-            93
-          ]
-        }
-      ],
-      "unresolved_issues": [],
-      "next_meeting_topics": []
-    },
-    {
-      "agenda_title": "사업 목표·제약",
-      "discussion_background": [],
-      "major_discussions": [
-        {
-          "subtopic": "사업 조건",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "text": "판매 가격은 25유로, 목표 수익은 5천만 유로이며 국제 시장을 겨냥하고 생산비는 최대 12.5유로로 제한된다고 공유됨.",
-          "assignee": null,
+          "text": "국제 시장을 겨냥하며 판매 가격은 25유로, 목표 수익은 5천만 유로, 생산 비용 상한은 12.5유로로 제시됨.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
             322,
@@ -90,51 +58,58 @@
     },
     {
       "agenda_title": "리모컨 기능 아이디어",
-      "discussion_background": [],
-      "major_discussions": [
+      "discussion_background": [
         {
-          "subtopic": "통합 제어",
-          "discussion_tag": "제안",
-          "decision_tag": null,
-          "text": "TV·비디오·DVD 등 여러 기기를 리모컨 하나로 조작하면 편리하다는 제안이 나왔으며, 최대 8개 기기를 설정하고 적외선으로 다른 층의 기기를 조작하는 사례도 공유됨.",
-          "assignee": null,
-          "due": null,
+          "text": "한 가정에서 TV·비디오·DVD용 리모컨을 여러 개 사용하고 있었으며, 기존 리모컨 사례로 약 8개 기기를 조작하고 다른 층에서도 제어하는 방식이 소개됨.",
           "evidence_utterance_indices": [
             381,
             382,
-            384,
             387,
             388,
             389,
             391,
             392,
             393,
-            397,
+            397
+          ]
+        }
+      ],
+      "major_discussions": [
+        {
+          "subtopic": "기기 통합",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "text": "TV·비디오·DVD 등 여러 기기를 하나의 리모컨으로 조작하고 적외선으로 다른 층에서도 제어하는 방안이 제안됨.",
+          "assignees": [],
+          "due": null,
+          "evidence_utterance_indices": [
+            384,
             404,
-            408
+            417
           ]
         },
         {
-          "subtopic": "통합 제어",
+          "subtopic": "기기 통합",
           "discussion_tag": "반대·우려",
           "decision_tag": null,
-          "text": "적외선 기능을 추가하면 생산비 한도를 넘을 수 있다는 우려가 제기됨.",
-          "assignee": null,
+          "text": "적외선 기능의 비용이 생산 비용 상한인 12.5유로를 넘을지 불확실하다는 우려가 제기됨.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
-            417,
+            329,
+            330,
             418
           ]
         },
         {
-          "subtopic": "통합 제어",
+          "subtopic": "기기 통합",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "text": "적외선으로 여러 기기를 제어하는 방안의 생산비 영향을 확인하기로 함.",
-          "assignee": null,
+          "text": "적외선 기능의 생산 비용이 허용 한도 내인지 확인하기로 함.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
-            417,
+            418,
             419
           ]
         },
@@ -142,14 +117,15 @@
           "subtopic": "내구성",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "text": "리모컨을 자주 떨어뜨리는 점을 고려해 충격에 강하게 만들고 방수 기능도 고려하자는 제안이 나옴.",
-          "assignee": null,
+          "text": "자주 떨어뜨리는 상황을 고려해 충격에 강하고 방수되는 리모컨이 제안됨.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
             427,
-            428,
             431,
             432,
+            433,
+            435,
             438
           ]
         },
@@ -157,25 +133,24 @@
           "subtopic": "배터리 표시",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "text": "배터리 잔량을 확인할 수 있도록 배터리 상태 표시 기능을 넣자는 제안이 나왔으며, 작은 LED가 아이디어로 언급됨.",
-          "assignee": null,
+          "text": "배터리 잔량을 확인할 수 있도록 표시 기능을 넣고 작은 LED로 구현하는 방안이 제안됨.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
-            444,
             445,
             446,
             448,
             450,
             456,
-            458
+            457
           ]
         },
         {
           "subtopic": "배터리 표시",
           "discussion_tag": "반대·우려",
           "decision_tag": null,
-          "text": "배터리 표시 기능이 생산비를 크게 높일 수 있다는 우려가 제기됨.",
-          "assignee": null,
+          "text": "배터리 표시 기능이 생산 비용을 높일 수 있어 비용 검토가 필요하다는 우려가 제기됨.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
             451,
@@ -186,8 +161,8 @@
           "subtopic": "배터리 표시",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "text": "배터리 잔량 표시 기능의 생산비 영향을 검토하기로 함.",
-          "assignee": null,
+          "text": "배터리 잔량 표시 기능의 비용 영향을 검토하기로 함.",
+          "assignees": [],
           "due": null,
           "evidence_utterance_indices": [
             451,
@@ -197,26 +172,15 @@
       ],
       "unresolved_issues": [
         {
-          "tag": "확인 필요",
-          "text": "적외선 통합 제어와 배터리 잔량 표시 기능이 생산비 한도에 부합하는지 확인이 필요함.",
-          "evidence_utterance_indices": [
-            417,
-            418,
-            419,
-            451,
-            452
-          ]
-        },
-        {
           "tag": null,
-          "text": "다기기 통합 제어, 충격·방수 기능, 배터리 잔량 표시 중 실제 제품에 채택할 기능은 정해지지 않음.",
+          "text": "기기 통합·적외선 제어, 충격·방수, 배터리 잔량 표시 기능을 실제 제품에 반영할지는 결정되지 않음.",
           "evidence_utterance_indices": [
             384,
-            404,
+            417,
             427,
             432,
             445,
-            450
+            452
           ]
         }
       ],
@@ -231,7 +195,9 @@
           "discussion_tag": "액션",
           "decision_tag": "결정",
           "text": "이번 회의 회의록을 프로젝트 폴더에 올리기로 함.",
-          "assignee": "바트",
+          "assignees": [
+            "바트"
+          ],
           "due": null,
           "evidence_utterance_indices": [
             441,

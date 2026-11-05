@@ -1,6 +1,6 @@
 {
   "meeting_id": "TS3003a",
-  "created_at": "2026-11-04T23:56:44",
+  "created_at": "2026-11-05T18:14:56",
   "config": {
     "model": "gpt-6-luna",
     "reasoning_effort": "high",
@@ -4421,7 +4421,7 @@
     {
       "agenda_id": "TS3003a_a1",
       "agenda_number": 1,
-      "agenda_title": "제품 목표와 역할",
+      "agenda_title": "프로젝트 계획",
       "decision_count": 0,
       "unresolved_count": 0,
       "action_count": 0
@@ -4429,22 +4429,14 @@
     {
       "agenda_id": "TS3003a_a2",
       "agenda_number": 2,
-      "agenda_title": "사업 목표·제약",
+      "agenda_title": "리모컨 기능 아이디어",
       "decision_count": 0,
-      "unresolved_count": 0,
-      "action_count": 0
+      "unresolved_count": 1,
+      "action_count": 2
     },
     {
       "agenda_id": "TS3003a_a3",
       "agenda_number": 3,
-      "agenda_title": "리모컨 기능 아이디어",
-      "decision_count": 0,
-      "unresolved_count": 2,
-      "action_count": 2
-    },
-    {
-      "agenda_id": "TS3003a_a4",
-      "agenda_number": 4,
       "agenda_title": "기타",
       "decision_count": 0,
       "unresolved_count": 0,
@@ -4454,13 +4446,12 @@
   "meeting_results": {
     "decision_item_ids": [],
     "action_item_ids": [
-      "TS3003a_a3_d3",
-      "TS3003a_a3_d7",
-      "TS3003a_a4_d1"
+      "TS3003a_a2_d3",
+      "TS3003a_a2_d7",
+      "TS3003a_a3_d1"
     ],
     "unresolved_item_ids": [
-      "TS3003a_a3_un1",
-      "TS3003a_a3_un2"
+      "TS3003a_a2_un1"
     ],
     "next_topic_item_ids": []
   },
@@ -4468,10 +4459,10 @@
     {
       "agenda_id": "TS3003a_a1",
       "agenda_number": 1,
-      "agenda_title": "제품 목표와 역할",
+      "agenda_title": "프로젝트 계획",
       "evidence_range": [
-        43,
-        99
+        81,
+        334
       ],
       "subtopics": [
         {
@@ -4487,7 +4478,7 @@
           "subtopic_id": "TS3003a_a1_st2",
           "agenda_id": "TS3003a_a1",
           "order": 2,
-          "title": "담당 역할",
+          "title": "진행 체계",
           "item_ids": [
             "TS3003a_a1_d2"
           ]
@@ -4496,38 +4487,20 @@
           "subtopic_id": "TS3003a_a1_st3",
           "agenda_id": "TS3003a_a1",
           "order": 3,
-          "title": "설계 단계",
+          "title": "시장·비용",
           "item_ids": [
             "TS3003a_a1_d3"
           ]
         }
       ],
-      "discussion_background": [
-        {
-          "item_id": "TS3003a_a1_bg1",
-          "agenda_id": "TS3003a_a1",
-          "section": "discussion_background",
-          "order": 1,
-          "text": "Real Reaction은 전자제품에 패션과 기능성을 결합하고 디자인에 공을 들이는 회사로 소개됨.",
-          "evidence_utterance_indices": [
-            43,
-            44,
-            45,
-            46,
-            47
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": []
-        }
-      ],
+      "discussion_background": [],
       "major_discussions": [
         {
           "item_id": "TS3003a_a1_d1",
           "agenda_id": "TS3003a_a1",
           "section": "major_discussions",
           "order": 1,
-          "text": "신규 리모컨은 독창적이고 트렌디하며 사용하기 쉬운 제품을 목표로 한다고 공유됨.",
+          "text": "독창적이고 트렌디하며 사용하기 쉬운 신형 리모컨을 개발하는 것이 목표로 제시됨.",
           "evidence_utterance_indices": [
             81,
             82,
@@ -4540,10 +4513,10 @@
           "subtopic": "제품 목표",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -4551,35 +4524,29 @@
           "agenda_id": "TS3003a_a1",
           "section": "major_discussions",
           "order": 2,
-          "text": "산업 디자이너는 작동·부품 설계와 외관·느낌 디자인 일부를, UI 디자이너는 기술 기능과 UI 콘셉트·디자인을, 마케팅 담당자는 사용자 요구사항·트렌드·제품 평가를 맡는다고 공유됨.",
+          "text": "기능 설계, 콘셉트 설계, 상세 설계의 3단계로 진행하며, 산업 디자이너는 작동·부품·외관 설계, UI 디자이너는 기술 기능 및 UI 설계, 마케팅 담당자는 사용자 요구사항·트렌드 관찰·제품 평가를 맡는다고 공유됨.",
           "evidence_utterance_indices": [
-            84,
-            86,
-            87,
+            91,
+            92,
+            93,
             96,
             97,
             98,
             99
           ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_2",
-              "field": "text",
-              "before": "산업 디자이너는 작동·부품·외관 설계를, UI 디자이너는 기술 기능과 UI 콘셉트·디자인을, 마케팅 담당자는 사용자 요구사항·트렌드·제품 평가를 맡는다고 공유됨.",
-              "after": "산업 디자이너는 작동·부품 설계와 외관·느낌 디자인 일부를, UI 디자이너는 기술 기능과 UI 콘셉트·디자인을, 마케팅 담당자는 사용자 요구사항·트렌드·제품 평가를 맡는다고 공유됨.",
-              "reason": "산업 디자이너가 외관·느낌 디자인을 일부 맡는다는 역할 범위를 반영해 표현을 한정함."
-            }
+          "status": "REVIEW_REQUIRED",
+          "review_reasons": [
+            "검증 미통과(과장 및 왜곡): 산업 디자이너의 외관·느낌 디자인과 마케팅 담당자의 제품 평가는 각각 일부 맡는다고 설명했지만, 요약에서는 범위 제한 없이 담당 업무로 표현했습니다."
           ],
+          "history": [],
           "subtopic_id": "TS3003a_a1_st2",
-          "subtopic": "담당 역할",
+          "subtopic": "진행 체계",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
@@ -4587,23 +4554,65 @@
           "agenda_id": "TS3003a_a1",
           "section": "major_discussions",
           "order": 3,
-          "text": "프로젝트는 기능 설계와 개별 작업·회의를 거쳐 콘셉트 설계 및 상세 설계로 진행된다고 공유됨.",
+          "text": "국제 시장을 겨냥해 다양한 사용자·문화·트렌드를 고려하며, 판매 가격은 25유로, 목표 수익은 5천만 유로, 생산 비용 상한은 12.5유로로 제시됨; 비용 제약상 리모컨 안에 작은 TV 같은 기능은 넣지 않기로 함.",
           "evidence_utterance_indices": [
-            91,
-            92,
-            93
+            322,
+            323,
+            324,
+            326,
+            327,
+            329,
+            330,
+            331,
+            332,
+            334
           ],
           "status": "ACTIVE",
           "review_reasons": [],
-          "history": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "text",
+              "before": "국제 시장을 겨냥하며 판매 가격은 25유로, 목표 수익은 5천만 유로, 생산 비용 상한은 12.5유로로 제시됨.",
+              "after": "국제 시장을 겨냥해 다양한 사용자·문화·트렌드를 고려하며, 판매 가격은 25유로, 목표 수익은 5천만 유로, 생산 비용 상한은 12.5유로로 제시됨; 비용 제약상 리모컨 안에 작은 TV 같은 기능은 넣지 않기로 함.",
+              "reason": "시장과 비용 조건에 다양한 사용자·문화·트렌드 고려 사항 및 작은 TV를 넣지 않는 제약을 추가했습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "evidence_utterance_indices",
+              "before": [
+                322,
+                323,
+                324,
+                326,
+                327,
+                329,
+                330,
+                334
+              ],
+              "after": [
+                322,
+                323,
+                324,
+                326,
+                327,
+                329,
+                330,
+                331,
+                332,
+                334
+              ],
+              "reason": "시장과 비용 조건에 다양한 사용자·문화·트렌드 고려 사항 및 작은 TV를 넣지 않는 제약을 추가했습니다."
+            }
+          ],
           "subtopic_id": "TS3003a_a1_st3",
-          "subtopic": "설계 단계",
+          "subtopic": "시장·비용",
           "discussion_tag": "정보",
           "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         }
       ],
@@ -4613,127 +4622,84 @@
     {
       "agenda_id": "TS3003a_a2",
       "agenda_number": 2,
-      "agenda_title": "사업 목표·제약",
-      "evidence_range": [
-        322,
-        334
-      ],
-      "subtopics": [
-        {
-          "subtopic_id": "TS3003a_a2_st1",
-          "agenda_id": "TS3003a_a2",
-          "order": 1,
-          "title": "사업 조건",
-          "item_ids": [
-            "TS3003a_a2_d1"
-          ]
-        }
-      ],
-      "discussion_background": [],
-      "major_discussions": [
-        {
-          "item_id": "TS3003a_a2_d1",
-          "agenda_id": "TS3003a_a2",
-          "section": "major_discussions",
-          "order": 1,
-          "text": "판매 가격은 25유로, 목표 수익은 5천만 유로이며 국제 시장을 겨냥해 다양한 사용자·문화·트렌드에 초점을 맞춰야 하고, 생산비는 최대 12.5유로로 제한된다고 공유됨.",
-          "evidence_utterance_indices": [
-            322,
-            323,
-            324,
-            326,
-            327,
-            329,
-            330,
-            334
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [
-            {
-              "stage": "revise_1",
-              "field": "text",
-              "before": "판매 가격은 25유로, 목표 수익은 5천만 유로이며 국제 시장을 겨냥하고 생산비는 최대 12.5유로로 제한된다고 공유됨.",
-              "after": "판매 가격은 25유로, 목표 수익은 5천만 유로이며 국제 시장을 겨냥해 다양한 사용자·문화·트렌드에 초점을 맞춰야 하고, 생산비는 최대 12.5유로로 제한된다고 공유됨.",
-              "reason": "국제 시장 진출 시 고려할 다양한 사용자·문화·트렌드가 빠져 있어 사업 조건에 반영함."
-            }
-          ],
-          "subtopic_id": "TS3003a_a2_st1",
-          "subtopic": "사업 조건",
-          "discussion_tag": "정보",
-          "decision_tag": "공유",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
-          "due": null
-        }
-      ],
-      "unresolved_issues": [],
-      "next_meeting_topics": []
-    },
-    {
-      "agenda_id": "TS3003a_a3",
-      "agenda_number": 3,
       "agenda_title": "리모컨 기능 아이디어",
       "evidence_range": [
-        381,
-        458
+        329,
+        457
       ],
       "subtopics": [
         {
-          "subtopic_id": "TS3003a_a3_st1",
-          "agenda_id": "TS3003a_a3",
+          "subtopic_id": "TS3003a_a2_st1",
+          "agenda_id": "TS3003a_a2",
           "order": 1,
-          "title": "통합 제어",
+          "title": "기기 통합",
           "item_ids": [
-            "TS3003a_a3_d1",
-            "TS3003a_a3_d2",
-            "TS3003a_a3_d3"
+            "TS3003a_a2_d1",
+            "TS3003a_a2_d2",
+            "TS3003a_a2_d3"
           ]
         },
         {
-          "subtopic_id": "TS3003a_a3_st2",
-          "agenda_id": "TS3003a_a3",
+          "subtopic_id": "TS3003a_a2_st2",
+          "agenda_id": "TS3003a_a2",
           "order": 2,
           "title": "내구성",
           "item_ids": [
-            "TS3003a_a3_d4"
+            "TS3003a_a2_d4"
           ]
         },
         {
-          "subtopic_id": "TS3003a_a3_st3",
-          "agenda_id": "TS3003a_a3",
+          "subtopic_id": "TS3003a_a2_st3",
+          "agenda_id": "TS3003a_a2",
           "order": 3,
           "title": "배터리 표시",
           "item_ids": [
-            "TS3003a_a3_d5",
-            "TS3003a_a3_d6",
-            "TS3003a_a3_d7"
+            "TS3003a_a2_d5",
+            "TS3003a_a2_d6",
+            "TS3003a_a2_d7"
           ]
+        },
+        {
+          "subtopic_id": "TS3003a_a2_st4",
+          "agenda_id": "TS3003a_a2",
+          "order": 4,
+          "title": "적외선 활용",
+          "item_ids": []
         }
       ],
-      "discussion_background": [],
-      "major_discussions": [
+      "discussion_background": [
         {
-          "item_id": "TS3003a_a3_d1",
-          "agenda_id": "TS3003a_a3",
-          "section": "major_discussions",
+          "item_id": "TS3003a_a2_bg1",
+          "agenda_id": "TS3003a_a2",
+          "section": "discussion_background",
           "order": 1,
-          "text": "TV·비디오·DVD 등 여러 기기를 리모컨 하나로 조작하면 편리하다는 제안이 나왔으며, 약 8개 기기를 프로그래밍할 수 있고 적외선으로 다른 층의 기기를 조작하는 사례도 공유됨.",
+          "text": "한 가정에서 TV·비디오·DVD용 리모컨을 여러 개 사용하고 있었으며, 기존 리모컨 사례로 약 8개 기기를 조작하고 다른 층에서도 제어하는 방식이 소개됨.",
           "evidence_utterance_indices": [
             381,
             382,
-            384,
             387,
             388,
             389,
             391,
             392,
             393,
-            397,
-            404,
-            408
+            397
+          ],
+          "status": "ACTIVE",
+          "review_reasons": [],
+          "history": []
+        }
+      ],
+      "major_discussions": [
+        {
+          "item_id": "TS3003a_a2_d1",
+          "agenda_id": "TS3003a_a2",
+          "section": "major_discussions",
+          "order": 1,
+          "text": "TV·비디오·DVD 등 여러 기기를 하나의 리모컨으로 조작하는 방안이 제안됨.",
+          "evidence_utterance_indices": [
+            384,
+            404
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -4741,51 +4707,68 @@
             {
               "stage": "revise_1",
               "field": "text",
-              "before": "TV·비디오·DVD 등 여러 기기를 리모컨 하나로 조작하면 편리하다는 제안이 나왔으며, 최대 8개 기기를 설정하고 적외선으로 다른 층의 기기를 조작하는 사례도 공유됨.",
-              "after": "TV·비디오·DVD 등 여러 기기를 리모컨 하나로 조작하면 편리하다는 제안이 나왔으며, 약 8개 기기를 프로그래밍할 수 있고 적외선으로 다른 층의 기기를 조작하는 사례도 공유됨.",
-              "reason": "약 8개 기기를 프로그래밍할 수 있다는 원문을 상한으로 단정하지 않도록 표현을 수정함."
+              "before": "TV·비디오·DVD 등 여러 기기를 하나의 리모컨으로 조작하고 적외선으로 다른 층에서도 제어하는 방안이 제안됨.",
+              "after": "TV·비디오·DVD 등 여러 기기를 하나의 리모컨으로 조작하는 방안이 제안됨.",
+              "reason": "기존 리모컨 사례의 다른 층 제어를 신제품 제안과 구분하고, 여러 기기를 하나의 리모컨으로 조작하는 제안만 남겼습니다."
+            },
+            {
+              "stage": "revise_1",
+              "field": "evidence_utterance_indices",
+              "before": [
+                384,
+                404,
+                417
+              ],
+              "after": [
+                384,
+                404
+              ],
+              "reason": "기존 리모컨 사례의 다른 층 제어를 신제품 제안과 구분하고, 여러 기기를 하나의 리모컨으로 조작하는 제안만 남겼습니다."
             }
           ],
-          "subtopic_id": "TS3003a_a3_st1",
-          "subtopic": "통합 제어",
+          "subtopic_id": "TS3003a_a2_st1",
+          "subtopic": "기기 통합",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
-          "item_id": "TS3003a_a3_d2",
-          "agenda_id": "TS3003a_a3",
+          "item_id": "TS3003a_a2_d2",
+          "agenda_id": "TS3003a_a2",
           "section": "major_discussions",
           "order": 2,
-          "text": "적외선 기능을 추가하면 생산비 한도를 넘을 수 있다는 우려가 제기됨.",
+          "text": "적외선 기능의 비용이 생산 비용 상한인 12.5유로를 넘을지 불확실하다는 우려가 제기됨.",
           "evidence_utterance_indices": [
-            417,
+            329,
+            330,
             418
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003a_a3_st1",
-          "subtopic": "통합 제어",
+          "subtopic_id": "TS3003a_a2_st1",
+          "subtopic": "기기 통합",
           "discussion_tag": "반대·우려",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
-          "item_id": "TS3003a_a3_d3",
-          "agenda_id": "TS3003a_a3",
+          "item_id": "TS3003a_a2_d3",
+          "agenda_id": "TS3003a_a2",
           "section": "major_discussions",
           "order": 3,
-          "text": "적외선으로 여러 기기를 제어하는 방안의 생산비 영향을 확인하기로 함.",
+          "text": "적외선으로 구현할 수 있는 기능이 있는지와 그 기능의 생산 비용이 허용 한도 내인지 확인하기로 함.",
           "evidence_utterance_indices": [
+            329,
+            330,
             417,
             418,
             419
@@ -4795,89 +4778,98 @@
           "history": [
             {
               "stage": "revise_2",
+              "field": "text",
+              "before": "적외선 기능의 생산 비용이 허용 한도 내인지 확인하기로 함.",
+              "after": "적외선으로 구현할 수 있는 기능이 있는지와 그 기능의 생산 비용이 허용 한도 내인지 확인하기로 함.",
+              "reason": "적외선 기능의 구현 가능성을 알아보는 내용과 비용 한도를 확인하는 내용을 하나의 후속 조사로 합쳤습니다."
+            },
+            {
+              "stage": "revise_2",
               "field": "evidence_utterance_indices",
               "before": [
-                417,
+                418,
                 419
               ],
               "after": [
+                329,
+                330,
                 417,
                 418,
                 419
               ],
-              "reason": "생산비 한도를 넘을 가능성을 언급한 발화도 액션의 근거에 포함함."
+              "reason": "적외선 기능의 구현 가능성을 알아보는 내용과 비용 한도를 확인하는 내용을 하나의 후속 조사로 합쳤습니다."
             }
           ],
-          "subtopic_id": "TS3003a_a3_st1",
-          "subtopic": "통합 제어",
+          "subtopic_id": "TS3003a_a2_st1",
+          "subtopic": "기기 통합",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
-          "item_id": "TS3003a_a3_d4",
-          "agenda_id": "TS3003a_a3",
+          "item_id": "TS3003a_a2_d4",
+          "agenda_id": "TS3003a_a2",
           "section": "major_discussions",
           "order": 4,
-          "text": "리모컨을 자주 떨어뜨리는 점을 고려해 충격에 강하게 만들고 방수 기능도 고려하자는 제안이 나옴.",
+          "text": "자주 떨어뜨리는 상황을 고려해 충격에 강하고 방수되는 리모컨이 제안됨.",
           "evidence_utterance_indices": [
             427,
-            428,
             431,
             432,
+            433,
+            435,
             438
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003a_a3_st2",
+          "subtopic_id": "TS3003a_a2_st2",
           "subtopic": "내구성",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
-          "item_id": "TS3003a_a3_d5",
-          "agenda_id": "TS3003a_a3",
+          "item_id": "TS3003a_a2_d5",
+          "agenda_id": "TS3003a_a2",
           "section": "major_discussions",
           "order": 5,
-          "text": "배터리 잔량을 확인할 수 있도록 배터리 상태 표시 기능을 넣자는 제안이 나왔으며, 작은 LED가 아이디어로 언급됨.",
+          "text": "배터리 잔량을 확인할 수 있도록 표시 기능을 넣고 작은 LED로 구현하는 방안이 제안됨.",
           "evidence_utterance_indices": [
-            444,
             445,
             446,
             448,
             450,
             456,
-            458
+            457
           ],
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003a_a3_st3",
+          "subtopic_id": "TS3003a_a2_st3",
           "subtopic": "배터리 표시",
           "discussion_tag": "제안",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
-          "item_id": "TS3003a_a3_d6",
-          "agenda_id": "TS3003a_a3",
+          "item_id": "TS3003a_a2_d6",
+          "agenda_id": "TS3003a_a2",
           "section": "major_discussions",
           "order": 6,
-          "text": "배터리 표시 기능이 생산비를 크게 높일 수 있다는 우려가 제기됨.",
+          "text": "배터리 표시 기능이 생산 비용을 높일 수 있어 비용 검토가 필요하다는 우려가 제기됨.",
           "evidence_utterance_indices": [
             451,
             452
@@ -4885,22 +4877,22 @@
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003a_a3_st3",
+          "subtopic_id": "TS3003a_a2_st3",
           "subtopic": "배터리 표시",
           "discussion_tag": "반대·우려",
           "decision_tag": null,
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         },
         {
-          "item_id": "TS3003a_a3_d7",
-          "agenda_id": "TS3003a_a3",
+          "item_id": "TS3003a_a2_d7",
+          "agenda_id": "TS3003a_a2",
           "section": "major_discussions",
           "order": 7,
-          "text": "배터리 잔량 표시 기능의 생산비 영향을 검토하기로 함.",
+          "text": "배터리 잔량 표시 기능의 비용 영향을 검토하기로 함.",
           "evidence_utterance_indices": [
             451,
             452
@@ -4908,49 +4900,68 @@
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003a_a3_st3",
+          "subtopic_id": "TS3003a_a2_st3",
           "subtopic": "배터리 표시",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "assignee": null,
-          "assignee_user_id": null,
-          "assignee_name": null,
-          "assignee_job": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
+          "due": null
+        },
+        {
+          "item_id": "TS3003a_a2_d8",
+          "agenda_id": "TS3003a_a2",
+          "section": "major_discussions",
+          "order": 8,
+          "text": "적외선으로 구현할 수 있는 기능이 있는지 알아보는 방안이 제안됨.",
+          "evidence_utterance_indices": [
+            417
+          ],
+          "status": "DELETED",
+          "review_reasons": [],
+          "history": [
+            {
+              "stage": "revise_1",
+              "field": "item",
+              "before": null,
+              "after": "TS3003a_a2_d8",
+              "reason": "신제품에 적외선을 활용할 수 있는 기능이 있는지 알아보자는 내용을 다기기 통합 제안과 구분해 추가했습니다."
+            },
+            {
+              "stage": "revise_2",
+              "field": "status",
+              "before": "ACTIVE",
+              "after": "DELETED",
+              "reason": "적외선 기능을 알아보는 내용은 d3의 통합 조사에 포함했으므로 별도 항목을 삭제했습니다."
+            }
+          ],
+          "subtopic_id": "TS3003a_a2_st4",
+          "subtopic": "적외선 활용",
+          "discussion_tag": "제안",
+          "decision_tag": null,
+          "assignees": [],
+          "assignee_user_ids": [],
+          "assignee_names": [],
+          "assignee_jobs": [],
           "due": null
         }
       ],
       "unresolved_issues": [
         {
-          "item_id": "TS3003a_a3_un1",
-          "agenda_id": "TS3003a_a3",
+          "item_id": "TS3003a_a2_un1",
+          "agenda_id": "TS3003a_a2",
           "section": "unresolved_issues",
           "order": 1,
-          "text": "적외선 통합 제어와 배터리 잔량 표시 기능이 생산비 한도에 부합하는지 확인이 필요함.",
-          "evidence_utterance_indices": [
-            417,
-            418,
-            419,
-            451,
-            452
-          ],
-          "status": "ACTIVE",
-          "review_reasons": [],
-          "history": [],
-          "tag": "확인 필요"
-        },
-        {
-          "item_id": "TS3003a_a3_un2",
-          "agenda_id": "TS3003a_a3",
-          "section": "unresolved_issues",
-          "order": 2,
-          "text": "다기기 통합 제어, 충격·방수 기능, 배터리 잔량 표시 중 실제 제품에 채택할 기능은 정해지지 않음.",
+          "text": "기기 통합·적외선 제어, 충격·방수, 배터리 잔량 표시 기능을 실제 제품에 반영할지는 결정되지 않음.",
           "evidence_utterance_indices": [
             384,
-            404,
+            417,
             427,
             432,
             445,
-            450
+            452
           ],
           "status": "ACTIVE",
           "review_reasons": [],
@@ -4961,8 +4972,8 @@
       "next_meeting_topics": []
     },
     {
-      "agenda_id": "TS3003a_a4",
-      "agenda_number": 4,
+      "agenda_id": "TS3003a_a3",
+      "agenda_number": 3,
       "agenda_title": "기타",
       "evidence_range": [
         441,
@@ -4970,20 +4981,20 @@
       ],
       "subtopics": [
         {
-          "subtopic_id": "TS3003a_a4_st1",
-          "agenda_id": "TS3003a_a4",
+          "subtopic_id": "TS3003a_a3_st1",
+          "agenda_id": "TS3003a_a3",
           "order": 1,
           "title": "회의록 업로드",
           "item_ids": [
-            "TS3003a_a4_d1"
+            "TS3003a_a3_d1"
           ]
         }
       ],
       "discussion_background": [],
       "major_discussions": [
         {
-          "item_id": "TS3003a_a4_d1",
-          "agenda_id": "TS3003a_a4",
+          "item_id": "TS3003a_a3_d1",
+          "agenda_id": "TS3003a_a3",
           "section": "major_discussions",
           "order": 1,
           "text": "이번 회의 회의록을 프로젝트 폴더에 올리기로 함.",
@@ -4994,14 +5005,22 @@
           "status": "ACTIVE",
           "review_reasons": [],
           "history": [],
-          "subtopic_id": "TS3003a_a4_st1",
+          "subtopic_id": "TS3003a_a3_st1",
           "subtopic": "회의록 업로드",
           "discussion_tag": "액션",
           "decision_tag": "결정",
-          "assignee": "바트",
-          "assignee_user_id": "u1",
-          "assignee_name": "바트",
-          "assignee_job": "프로젝트 매니저",
+          "assignees": [
+            "바트"
+          ],
+          "assignee_user_ids": [
+            "u1"
+          ],
+          "assignee_names": [
+            "바트"
+          ],
+          "assignee_jobs": [
+            "프로젝트 매니저"
+          ],
           "due": null
         }
       ],
@@ -5011,7 +5030,7 @@
   ],
   "postprocess_log": [],
   "verification": {
-    "status": "PASSED",
+    "status": "REVIEW_REQUIRED",
     "max_rounds": 3,
     "rounds": [
       {
@@ -5021,33 +5040,42 @@
           {
             "issue_id": "v1_i1",
             "round": 1,
-            "issue_type": "세부 정보 누락",
+            "issue_type": "과장 및 왜곡",
             "item_ids": [
               "TS3003a_a2_d1"
             ],
             "agenda_id": "TS3003a_a2",
-            "description": "국제 시장을 겨냥한다는 내용은 있지만, 다양한 사용자·문화·트렌드에도 초점을 맞춰야 한다는 구체적인 고려사항이 빠졌습니다.",
+            "description": "다른 층에서도 제어하는 기능은 바트가 기존 리모컨 사용 사례로 설명했으며, 신제품에 적용하기로 제안한 내용은 아닙니다. 신제품에 대해서는 적외선으로 가능한 기능이 있는지 알아보자는 수준입니다.",
             "evidence_utterance_indices": [
-              326,
-              327,
-              334
+              384,
+              387,
+              391,
+              392,
+              393,
+              397,
+              404,
+              417
             ],
-            "suggestion": "TS3003a_a2_d1에 국제 시장을 고려해 다양한 사용자, 문화, 트렌드에 초점을 맞춰야 한다는 내용을 추가하세요.",
+            "suggestion": "제안문에서 ‘다른 층에서도 제어’를 빼고, 여러 기기를 하나의 리모컨으로 조작하는 제안과 적외선 기능의 활용 가능성을 알아보자는 내용을 구분해 적으세요.",
             "note": null
           },
           {
             "issue_id": "v1_i2",
             "round": 1,
-            "issue_type": "과장 및 왜곡",
+            "issue_type": "세부 정보 누락",
             "item_ids": [
-              "TS3003a_a3_d1"
+              "TS3003a_a1_d3"
             ],
-            "agenda_id": "TS3003a_a3",
-            "description": "원문은 리모컨이 기기 약 8개를 프로그래밍할 수 있다고 했는데, 요약은 최대 8개로 상한이 정해진 것처럼 표현했습니다.",
+            "agenda_id": "TS3003a_a1",
+            "description": "가격·수익·생산 비용과 국제 시장 목표는 요약했지만, 다양한 사용자·문화·트렌드를 고려해야 한다는 점과 생산 비용 제약상 리모컨 안에 작은 TV 같은 것을 넣지 않겠다는 구체적 제약이 빠졌습니다.",
             "evidence_utterance_indices": [
-              388
+              327,
+              329,
+              330,
+              331,
+              332
             ],
-            "suggestion": "‘최대 8개’ 대신 ‘약 8개 기기를 프로그래밍할 수 있는 사례’처럼 수정하세요.",
+            "suggestion": "시장·비용 항목에 다양한 사용자·문화·트렌드 고려 사항과 작은 TV 같은 기능은 넣지 않는다는 제약을 추가하세요.",
             "note": null
           }
         ],
@@ -5056,9 +5084,10 @@
             "op": "update",
             "target_id": "TS3003a_a2_d1",
             "changed_fields": [
-              "text"
+              "text",
+              "evidence_utterance_indices"
             ],
-            "reason": "국제 시장 진출 시 고려할 다양한 사용자·문화·트렌드가 빠져 있어 사업 조건에 반영함.",
+            "reason": "기존 리모컨 사례의 다른 층 제어를 신제품 제안과 구분하고, 여러 기기를 하나의 리모컨으로 조작하는 제안만 남겼습니다.",
             "resolves_issue_ids": [
               "v1_i1"
             ],
@@ -5067,13 +5096,25 @@
           },
           {
             "op": "update",
-            "target_id": "TS3003a_a3_d1",
+            "target_id": "TS3003a_a1_d3",
             "changed_fields": [
-              "text"
+              "text",
+              "evidence_utterance_indices"
             ],
-            "reason": "약 8개 기기를 프로그래밍할 수 있다는 원문을 상한으로 단정하지 않도록 표현을 수정함.",
+            "reason": "시장과 비용 조건에 다양한 사용자·문화·트렌드 고려 사항 및 작은 TV를 넣지 않는 제약을 추가했습니다.",
             "resolves_issue_ids": [
               "v1_i2"
+            ],
+            "applied": true,
+            "note": null
+          },
+          {
+            "op": "add",
+            "target_id": "TS3003a_a2_d8",
+            "changed_fields": [],
+            "reason": "신제품에 적외선을 활용할 수 있는 기능이 있는지 알아보자는 내용을 다기기 통합 제안과 구분해 추가했습니다.",
+            "resolves_issue_ids": [
+              "v1_i1"
             ],
             "applied": true,
             "note": null
@@ -5087,43 +5128,31 @@
           {
             "issue_id": "v2_i1",
             "round": 2,
-            "issue_type": "과장 및 왜곡",
+            "issue_type": "액션 분리 · 병합 오류",
             "item_ids": [
-              "TS3003a_a1_d2"
+              "TS3003a_a2_d3",
+              "TS3003a_a2_d8"
             ],
-            "agenda_id": "TS3003a_a1",
-            "description": "산업 디자이너의 외관·느낌 디자인 역할은 ‘조금’ 맡는다고 소개됐는데, 요약에는 외관 설계를 맡는다고만 적혀 역할 범위가 더 크게 표현됐습니다.",
+            "agenda_id": "TS3003a_a2",
+            "description": "적외선으로 구현할 수 있는 기능을 알아보는 내용(d8)과 생산 비용 한도 내인지 확인하는 내용(d3)이 같은 후속 조사로 나뉘어 있습니다. 특히 419번 발화에서 알아보기로 한 실행 의도가 확인됩니다.",
             "evidence_utterance_indices": [
-              96
-            ],
-            "suggestion": "외관·느낌 디자인은 일부 맡는다고 역할 범위를 한정해 표현하세요.",
-            "note": null
-          },
-          {
-            "issue_id": "v2_i2",
-            "round": 2,
-            "issue_type": "근거 연결 오류",
-            "item_ids": [
-              "TS3003a_a3_d3"
-            ],
-            "agenda_id": "TS3003a_a3",
-            "description": "생산비 영향을 확인하는 액션의 근거에서 생산비 초과 가능성을 언급한 발화 418이 빠져 있습니다. 발화 419의 ‘그건’이 무엇을 확인할지 가리키는지 근거만으로 분명하지 않습니다.",
-            "evidence_utterance_indices": [
+              417,
               418,
               419
             ],
-            "suggestion": "TS3003a_a3_d3의 근거에 418번 발화를 추가하세요.",
+            "suggestion": "두 항목을 하나의 [액션][결정] 항목으로 정리해 적외선 기능의 구현 가능성과 비용을 함께 확인하는 조사로 기록하고, 별도 제안 항목인 d8은 제거하세요.",
             "note": null
           }
         ],
         "revision": [
           {
             "op": "update",
-            "target_id": "TS3003a_a1_d2",
+            "target_id": "TS3003a_a2_d3",
             "changed_fields": [
-              "text"
+              "text",
+              "evidence_utterance_indices"
             ],
-            "reason": "산업 디자이너가 외관·느낌 디자인을 일부 맡는다는 역할 범위를 반영해 표현을 한정함.",
+            "reason": "적외선 기능의 구현 가능성을 알아보는 내용과 비용 한도를 확인하는 내용을 하나의 후속 조사로 합쳤습니다.",
             "resolves_issue_ids": [
               "v2_i1"
             ],
@@ -5131,14 +5160,14 @@
             "note": null
           },
           {
-            "op": "update",
-            "target_id": "TS3003a_a3_d3",
+            "op": "delete",
+            "target_id": "TS3003a_a2_d8",
             "changed_fields": [
-              "evidence_utterance_indices"
+              "status"
             ],
-            "reason": "생산비 한도를 넘을 가능성을 언급한 발화도 액션의 근거에 포함함.",
+            "reason": "적외선 기능을 알아보는 내용은 d3의 통합 조사에 포함했으므로 별도 항목을 삭제했습니다.",
             "resolves_issue_ids": [
-              "v2_i2"
+              "v2_i1"
             ],
             "applied": true,
             "note": null
@@ -5147,12 +5176,31 @@
       },
       {
         "round": 3,
-        "passed": true,
-        "issues": [],
+        "passed": false,
+        "issues": [
+          {
+            "issue_id": "v3_i1",
+            "round": 3,
+            "issue_type": "과장 및 왜곡",
+            "item_ids": [
+              "TS3003a_a1_d2"
+            ],
+            "agenda_id": "TS3003a_a1",
+            "description": "산업 디자이너의 외관·느낌 디자인과 마케팅 담당자의 제품 평가는 각각 일부 맡는다고 설명했지만, 요약에서는 범위 제한 없이 담당 업무로 표현했습니다.",
+            "evidence_utterance_indices": [
+              96,
+              98
+            ],
+            "suggestion": "두 업무가 일부 참여 범위임을 반영해, 예를 들어 '외관·느낌 디자인을 일부 맡고 제품 평가에도 일부 참여한다'고 수정하세요.",
+            "note": null
+          }
+        ],
         "revision": []
       }
     ],
-    "remaining_issue_ids": [],
-    "message": "검증 3회차 통과"
+    "remaining_issue_ids": [
+      "v3_i1"
+    ],
+    "message": "검증 3회 후에도 문제 1건이 해결되지 않음 (검토 필요 항목 1개)"
   }
 }
