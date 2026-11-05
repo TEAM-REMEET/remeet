@@ -9,10 +9,10 @@ build_summary: LLM 출력(LLMMeetingSummary, ID 없음) → MeetingSummary
        - 유효한 근거가 하나도 없으면 status=REVIEW_REQUIRED
     ② 태그 검사 (주요 논의)
        - 액션: decision_tag를 '결정'으로 고정
-       - 액션이 아닌 항목: assignee · due를 null로 (값이 있었으면 기록)
-       - assignee · due의 빈 문자열 · '-'는 null
+       - 액션이 아닌 항목: assignees를 빈 배열로, due를 null로 (값이 있었으면 기록)
+       - assignees의 빈 문자열 · '-'와 중복은 제외, due의 빈 문자열 · '-'는 null
        - 액션의 due가 날짜 형식(config.DUE_FORMATS)이 아니면 null (기록)
-       - 담당자를 참여자와 대조해 user_id · 성명 · 직무로 나눠 저장 (대조 실패면 status=REVIEW_REQUIRED)
+       - 담당자마다 참여자와 대조해 user_id · 성명 · 직무를 배열로 저장 (대조 실패가 있으면 status=REVIEW_REQUIRED)
     ③ ID 부여
        - 안건: {회의 ID}_a{n} / 소주제: {안건 ID}_st{n} / 항목: {안건 ID}_{bg|d|un|next}{n}
        - 문장이 빈 항목 · 항목이 없는 안건은 만들지 않음 (기록)
@@ -40,8 +40,8 @@ from schemas import (ACTION_DECISION, ACTION_TAG, SECTIONS, Agenda, AgendaIndexE
 
 STAGE = "postprocess"
 ASSIGNEE_REVIEW_PREFIX = "담당자 확인 필요"
-_NAME_FIELDS = {"text", "agenda_title", "subtopic", "title", "assignee", "before", "after", "reason", "description",
-                "suggestion", "note", "message"}     # LLM이 쓴 이름이 남을 수 있는 필드 (전사문 · 회의 정보 · ID 제외)
+_NAME_FIELDS = {"text", "agenda_title", "subtopic", "title", "assignees", "before", "after", "reason", "description",
+                "suggestion", "note", "message", "review_reasons"}     # LLM이 쓴 이름이 남을 수 있는 필드 (전사문 · 회의 정보 · ID 제외)
 
 
 # ── 입력 ──────────────────────────────────────────────
@@ -117,12 +117,14 @@ def _normalize_due(due: str | None, item_id: str, history: list[ItemRevision], l
     return None
 
 
-def normalize_discussion(discussion_tag: str, decision: str | None, assignee: str | None, due: str | None,
+def normalize_discussion(discussion_tag: str, decision: str | None, assignees: list[str], due: str | None,
                          item_id: str, history: list[ItemRevision], log: list[PostprocessLog],
-                         stage: str = STAGE) -> tuple[str | None, str | None, str | None]:
-    # 주요 논의 태그 규칙 → (decision_tag, assignee, due)
-    #   액션: decision_tag '결정' 고정 / 액션이 아닌 항목: assignee · due null / 빈 값('-', '없음' …)은 null
-    assignee, due = _empty_to_none(assignee), _empty_to_none(due)
+                         stage: str = STAGE) -> tuple[str | None, list[str], str | None]:
+    # 주요 논의 태그 규칙 → (decision_tag, assignees, due)
+    #   액션: decision_tag '결정' 고정 / 액션이 아닌 항목: assignees 빈 배열 · due null
+    #   빈 값('-', '없음' …): assignees에서 제외, due는 null / assignees의 같은 표기는 하나만 남김
+    assignees = list(dict.fromkeys(name for value in assignees if (name := _empty_to_none(value))))
+    due = _empty_to_none(due)
     if discussion_tag == ACTION_TAG:
         if decision != ACTION_DECISION:
             msg = f"액션의 결정사항 태그 {decision!r} → '{ACTION_DECISION}'"
@@ -130,25 +132,35 @@ def normalize_discussion(discussion_tag: str, decision: str | None, assignee: st
                                         after=ACTION_DECISION, reason=msg))
             log.append(PostprocessLog(item_id=item_id, message=msg))
             decision = ACTION_DECISION
-        return decision, assignee, _normalize_due(due, item_id, history, log, stage)
-    for field, value in (("assignee", assignee), ("due", due)):
-        if value is not None:
-            msg = f"액션이 아닌 항목의 {field} {value!r} → null"
-            history.append(ItemRevision(stage=stage, field=field, before=value, after=None, reason=msg))
+        return decision, assignees, _normalize_due(due, item_id, history, log, stage)
+    for field, value, empty, label in (("assignees", assignees, [], "빈 배열"), ("due", due, None, "null")):
+        if value:
+            msg = f"액션이 아닌 항목의 {field} {value!r} → {label}"
+            history.append(ItemRevision(stage=stage, field=field, before=value, after=empty, reason=msg))
             log.append(PostprocessLog(item_id=item_id, message=msg))
-    return decision, None, None
+    return decision, [], None
 
 
-def assignee_fields(assignee: str | None, participants: list[Person], item_id: str,
+def assignee_fields(assignees: list[str], participants: list[Person], item_id: str,
                     log: list[PostprocessLog]) -> tuple[dict, list[str]]:
-    # 담당자 → ({assignee_user_id, assignee_name, assignee_job}, REVIEW_REQUIRED 사유) — 생성 후처리 · 재수정 적용에서 공용
-    person, problem = resolve_assignee(assignee, participants)
+    # 담당자 목록 → ({assignees, assignee_user_ids, assignee_names, assignee_jobs}, REVIEW_REQUIRED 사유) — 생성 후처리 · 재수정 적용에서 공용
+    #   네 배열은 같은 순서 · 같은 길이 (대조되지 않은 담당자의 user_id · 성명 · 직무는 null)
+    fields = {"assignees": [], "assignee_user_ids": [], "assignee_names": [], "assignee_jobs": []}
     reasons = []
-    if problem:
-        reasons.append(f"{ASSIGNEE_REVIEW_PREFIX}: {problem} ({assignee})")
-        log.append(PostprocessLog(item_id=item_id, message=f"{reasons[0]} → REVIEW_REQUIRED"))
-    return {"assignee_user_id": person.user_id if person else None, "assignee_name": person.name if person else None,
-            "assignee_job": person.job if person else None}, reasons
+    for assignee in assignees:
+        person, problem = resolve_assignee(assignee, participants)
+        if person and person.user_id in fields["assignee_user_ids"]:     # 표기만 다른 같은 사람
+            log.append(PostprocessLog(item_id=item_id, message=f"같은 담당자 중복 제외 ({assignee})"))
+            continue
+        if problem:
+            reason = f"{ASSIGNEE_REVIEW_PREFIX}: {problem} ({assignee})"
+            reasons.append(reason)
+            log.append(PostprocessLog(item_id=item_id, message=f"{reason} → REVIEW_REQUIRED"))
+        fields["assignees"].append(assignee)
+        fields["assignee_user_ids"].append(person.user_id if person else None)
+        fields["assignee_names"].append(person.name if person else None)
+        fields["assignee_jobs"].append(person.job if person else None)
+    return fields, reasons
 
 
 def _empty_to_none(value: str | None) -> str | None:
@@ -197,14 +209,14 @@ def build_agenda(llm_agenda, agenda_id: str, number: int, valid: set[int], log: 
                                         agenda_id=agenda_id, order=len(subtopics) + 1, title=title, item_ids=[])
         subtopics[title].item_ids.append(item_id)
 
-        decision, assignee, due = normalize_discussion(it.discussion_tag, it.decision_tag, it.assignee, it.due,
-                                                       item_id, base["history"], log)
-        person, reasons = assignee_fields(assignee, participants, item_id, log)
+        decision, assignees, due = normalize_discussion(it.discussion_tag, it.decision_tag, it.assignees, it.due,
+                                                        item_id, base["history"], log)
+        person, reasons = assignee_fields(assignees, participants, item_id, log)
         if reasons:
             base.update(review_reasons=base["review_reasons"] + reasons, status="REVIEW_REQUIRED")
         sections["major_discussions"].append(DiscussionItem(
             **base, subtopic_id=subtopics[title].subtopic_id, subtopic=title, discussion_tag=it.discussion_tag,
-            decision_tag=decision, assignee=assignee, due=due, **person))
+            decision_tag=decision, due=due, **person))
 
     for it in llm_agenda.unresolved_issues:
         if skip_empty("unresolved_issues", it.text):
@@ -287,14 +299,19 @@ def merge_misc_agendas(llm_agendas: list[LLMAgenda], log: list[PostprocessLog]) 
 
 
 # ── LLM 입력 이름 → 사용자 표시 이름 ────────────────────
+def _restore_value(value, restore):
+    # 문자열 또는 문자열 배열(assignees · review_reasons · 수정 이력의 before / after)의 이름을 되돌림
+    if isinstance(value, list):
+        return [restore(v) if isinstance(v, str) else v for v in value]
+    return restore(value) if isinstance(value, str) else value
+
+
 def _restore_fields(value, restore) -> None:
     if isinstance(value, BaseModel):
         for field in type(value).model_fields:
             current = getattr(value, field)
-            if field in _NAME_FIELDS and isinstance(current, str):
-                setattr(value, field, restore(current))
-            elif field == "review_reasons":
-                setattr(value, field, [restore(reason) for reason in current])
+            if field in _NAME_FIELDS:
+                setattr(value, field, _restore_value(current, restore))
             else:
                 _restore_fields(current, restore)
     elif isinstance(value, list):
@@ -311,8 +328,9 @@ def restore_names(summary: MeetingSummary) -> MeetingSummary:
     shown = {p.user_id: p.display_name for p in participants}
     for agenda in summary.agendas:
         for item in agenda.major_discussions:
-            if item.assignee_user_id:       # 표기가 달라도 대조된 담당자는 표시 이름으로 통일
-                item.assignee = shown[item.assignee_user_id]
+            # 표기가 달라도 대조된 담당자는 표시 이름으로 통일
+            item.assignees = [shown[user_id] if user_id else name
+                              for user_id, name in zip(item.assignee_user_ids, item.assignees)]
     return summary
 
 

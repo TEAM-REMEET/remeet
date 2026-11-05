@@ -96,7 +96,7 @@ class LLMDiscussionItem(_LLMModel):
     discussion_tag: DiscussionTag
     decision_tag: DecisionTag | None    # 결정과 연관 없으면 null / 액션은 '결정'
     text: str
-    assignee: str | None                # 액션만 (확인되지 않으면 null)
+    assignees: list[str]                # 액션만 (여러 명이면 모두, 확인되지 않으면 빈 배열)
     due: str | None                     # 액션만 (YYYY-MM-DD 또는 YYYY-MM-DD HH:MM, 날짜가 특정되지 않으면 null)
     evidence_utterance_indices: list[int]
 
@@ -263,8 +263,8 @@ class ItemRevision(BaseModel):
     """항목 수정 이력 (검증 · 수정 단계 추가 시 사용)"""
     stage: str                          # postprocess / content_revise / readability_revise ...
     field: str                          # 바뀐 필드 이름
-    before: str | list[int] | None
-    after: str | list[int] | None
+    before: str | list[int] | list[str | None] | None
+    after: str | list[int] | list[str | None] | None
     reason: str
 
 
@@ -290,10 +290,11 @@ class DiscussionItem(BaseItem):
     subtopic: str
     discussion_tag: DiscussionTag
     decision_tag: DecisionTag | None
-    assignee: str | None                # 액션만 — 사용자 표시 이름 (그래프 진행 중에는 LLM 입력 이름, finalize에서 되돌림)
-    assignee_user_id: str | None = None # 담당자 user_id (assignee를 참여자와 대조, 특정 안 되면 null)
-    assignee_name: str | None = None    # 담당자 성명
-    assignee_job: str | None = None     # 담당자 직무
+    # 담당자 — 네 배열은 같은 순서 · 같은 길이 (참여자와 대조되지 않은 담당자의 user_id · 성명 · 직무는 null)
+    assignees: list[str]                        # 액션만 — 사용자 표시 이름 (그래프 진행 중에는 LLM 입력 이름, finalize에서 되돌림)
+    assignee_user_ids: list[str | None] = []    # 담당자 user_id
+    assignee_names: list[str | None] = []       # 담당자 성명
+    assignee_jobs: list[str | None] = []        # 담당자 직무
     due: str | None                     # 액션만 (YYYY-MM-DD 또는 YYYY-MM-DD HH:MM, 날짜가 특정되지 않으면 null)
 
     @property
@@ -401,8 +402,8 @@ class RevisionChange(BaseModel):
 
 class VerificationRound(BaseModel):
     round: int                          # 검증 회차 (1부터)
-    passed: bool
-    issues: list[VerificationIssue]
+    passed: bool                        # 처리할 문제(재수정 · 검토 대상)가 없음 — 기록만 남긴 개선 문제는 issues에 있을 수 있음
+    issues: list[VerificationIssue]     # 이 회차에서 발견한 문제 전체
     revision: list[RevisionChange] = []     # 이 검증 결과로 한 재수정 (마지막 회차 · 통과 회차는 빈 배열)
 
 
