@@ -5,16 +5,33 @@
 
 nginx가 /api/ 경로를 그대로 넘기므로 모든 라우트는 /api 아래에 둔다.
 API 문서: /api/docs
+라우터는 routes/ 아래에 파일 하나씩 두고, 여기에는 include_router 한 줄만 추가한다.
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
+from followup.adapters.neo4j.driver import close_driver
+from followup.entrypoints.api.routes import auth, people
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    yield
+    close_driver()
+
 
 app = FastAPI(
     title="RE:MEET API",
     docs_url="/api/docs",
     redoc_url=None,
     openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
+
+app.include_router(auth.router)
+app.include_router(people.router)
 
 
 @app.get("/api/health")

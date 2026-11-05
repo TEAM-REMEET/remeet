@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from config import YEAR
 from data import repository as repo
 from data.models import Folder, Meeting, Person
@@ -20,7 +20,8 @@ TYPE_ORDER = ("weekly", "monthly", "normal")
 
 # ---------------------------------------------------------------- 사람
 def person(pid: str) -> Person:
-    return repo.people()[pid]
+    """없는 사람(예: 목업 회의가 가리키는 옛 목업 id)은 「알 수 없음」으로 보여 줘요."""
+    return repo.people().get(pid) or Person(pid, "알 수 없음", "알 수 없음", "")
 
 
 def name_of(pid: str) -> str:
@@ -32,7 +33,7 @@ def speaker_id(short_name: str) -> str | None:
 
 
 def me() -> Person:
-    return person(ME)
+    return person(me_id())
 
 
 def all_people_ids() -> list[str]:
@@ -62,7 +63,7 @@ def folders(state: AppState) -> dict[str, Folder]:
     """지금 존재하는 폴더 (새로 만든 폴더 포함, 삭제한 폴더 제외)."""
     out = dict(repo.base_folders())
     for nf in state.new_folders:
-        out[nf.id] = Folder(nf.id, nf.name, nf.type, ME, (ME,), (), is_new=True)
+        out[nf.id] = Folder(nf.id, nf.name, nf.type, me_id(), (me_id(),), (), is_new=True)
     if state.branched and "rel" in out:
         notes = list(out["rel"].notes)
         notes.insert(1, "m9")
@@ -91,13 +92,13 @@ def is_period_folder(fid: str) -> bool:
 def folder_ids_of_type(state: AppState, mtype: str) -> list[str]:
     """내가 멤버인 프로젝트 폴더만 (회의 종류별). 주차별·월별·일별 전용 폴더는 빼요."""
     return [k for k, f in folders(state).items()
-            if f.type == mtype and not is_period_folder(k) and ME in members_of(state, k)]
+            if f.type == mtype and not is_period_folder(k) and me_id() in members_of(state, k)]
 
 
 def period_container_ids(state: AppState, mtype: str) -> list[str]:
     """주차별 · 월별 · 일별 회의를 담는 폴더 (내가 멤버인 것)."""
     return [k for k, f in folders(state).items()
-            if f.type == mtype and is_period_folder(k) and ME in members_of(state, k)]
+            if f.type == mtype and is_period_folder(k) and me_id() in members_of(state, k)]
 
 
 def all_my_folder_ids(state: AppState) -> list[str]:
@@ -111,13 +112,13 @@ def can_see(state: AppState, mid: str) -> bool:
     if mid in state.new_meetings:  # 내가 새로 만든 회의록은 항상 보임
         return True
     m = repo.meeting(mid)
-    return m.host == ME or ME in m.people or ME in state.absent_shares.get(mid, [])
+    return m.host == me_id() or me_id() in m.people or me_id() in state.absent_shares.get(mid, [])
 
 
 def is_absent_shared(state: AppState, mid: str) -> bool:
     """미참석(조퇴·불참)했는데 주관자가 공유해 줘서 보이는 회의."""
     m = repo.meeting(mid)
-    return m.host != ME and ME not in m.people and ME in state.absent_shares.get(mid, [])
+    return m.host != me_id() and me_id() not in m.people and me_id() in state.absent_shares.get(mid, [])
 
 
 def folder_note_ids(state: AppState, fid: str) -> list[str]:
@@ -129,16 +130,16 @@ def folder_ids_by_owner(state: AppState, mtype: str, owner: str) -> list[str]:
     """회의 종류의 내 폴더를 전체 / 내가 만든 폴더(mine) / 멤버(member)로 거르기."""
     fids = folder_ids_of_type(state, mtype)
     if owner == "mine":
-        return [k for k in fids if folders(state)[k].host == ME]
+        return [k for k in fids if folders(state)[k].host == me_id()]
     if owner == "member":
-        return [k for k in fids if folders(state)[k].host != ME]
+        return [k for k in fids if folders(state)[k].host != me_id()]
     return fids
 
 
 def visible_note_ids(state: AppState) -> list[str]:
     ids: list[str] = []
     for k in folders(state):
-        if ME in members_of(state, k):
+        if me_id() in members_of(state, k):
             ids.extend(folder_note_ids(state, k))
     return ids
 
@@ -164,9 +165,9 @@ def my_role(m: Meeting) -> str:
     """host(주관) | att(참석) | shared(공유받음) | member(미참석 폴더 멤버)"""
     if m.shared:
         return "shared"
-    if m.host == ME:
+    if m.host == me_id():
         return "host"
-    return "att" if ME in m.people else "member"
+    return "att" if me_id() in m.people else "member"
 
 
 ROLE_TAGS = {
@@ -178,7 +179,7 @@ ROLE_TAGS = {
 
 
 def mine_count(mid: str) -> int:
-    return sum(1 for t in repo.meeting(mid).todos if t.owner == ME)
+    return sum(1 for t in repo.meeting(mid).todos if t.owner == me_id())
 
 
 def my_todo_keys(state: AppState, mid: str) -> list[str]:
@@ -187,7 +188,7 @@ def my_todo_keys(state: AppState, mid: str) -> list[str]:
     keys = []
     for i, t in enumerate(repo.meeting(mid).todos):
         key = todo_key(mid, i)
-        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else t.owner == ME
+        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else t.owner == me_id()
         if owner_is_me:
             keys.append(key)
     return keys
@@ -302,7 +303,7 @@ def _fail_sub(state: AppState, mid: str) -> str:
 def meeting_row(state: AppState, mid: str) -> MeetingRow:
     m = repo.meeting(mid)
     st = status_of(state, mid)
-    is_host = m.host == ME
+    is_host = m.host == me_id()
     month, day = m.date.split("/")
     dotted = m.date.replace("/", ".")
     sub_by_status = {
@@ -456,31 +457,30 @@ class AdminMember:
     email: str
     team: str
     job: str
-    role: str  # admin | member
-    status: str  # active | invited | inactive
+    role: str  # admin | member (웹 권한)
+    status: str  # active | inactive
     last: str  # 최근 접속
     is_self: bool = False
+    position: str = ""  # senior | mid | junior
+    skills: tuple[str, ...] = ()  # 「스킬 이름 Lv.n」
+
+
+def admin_profile(state: AppState) -> dict:
+    """로그인한 관리 계정 (사이드바 카드 · 구성원 목록 맨 위)."""
+    return {"name": state.user_name, "email": state.user_email, "team": "관리 계정"}
 
 
 def admin_members(state: AppState) -> list[AdminMember]:
-    """구성원 관리 목록: 관리자 계정 → 조직 구성원(팀 순, 새로 추가한 사람 포함).
-
-    팀 · 직무 · 권한 · 상태는 서버 공용 값(관리자가 바꾼 값)을 씀 → 사용자 화면에도 그대로 반영.
-    """
-    cfg = repo.admin()
-    o = repo.org()
-    me = cfg["admin"]
+    """구성원 관리 목록: 관리자 계정 → 조직 구성원 (Neo4j, 팀 순)."""
+    me = admin_profile(state)
     rows = [AdminMember(ADMIN_SELF, me["name"], me["email"], me["team"], "시스템 관리", "admin", "active", "지금 접속 중", True)]
-    extra = cfg["members"]
-    for team, pids in sorted(team_groups(), key=lambda g: g[0]):
-        for pid in pids:
-            p = repo.people()[pid]
-            x = extra.get(pid) or o["added"].get(pid, {})
-            status = o["status"].get(pid) or ("invited" if x.get("invited") else "inactive" if x.get("inactive") else "active")
-            role = o["roles"].get(pid) or ("admin" if x.get("admin") or x.get("role") == "admin" else "member")
-            last = x.get("last", "") if pid in extra else "방금 추가됨"
-            rows.append(AdminMember(pid, p.name, x.get("email", f"{pid}@democompany.kr"), p.team,
-                                    person_role(pid) or "-", role, status, last))
+    people = sorted(repo.people_rows(), key=lambda r: r["team"] or "")
+    for r in people:
+        rows.append(AdminMember(r["user_id"], r["name"], r["email"] or "-", r["team"] or "-", r["job"] or "-",
+                                r["permission"], "active" if r["is_active"] is not False else "inactive",
+                                "-",  # shortcut: 접속 기록이 없어 "-", 로그인 작업 때 채움
+                                position=r["position"] or "",
+                                skills=tuple(f"{k['name']} Lv.{k['level']}" for k in r["skills"])))
     return rows
 
 

@@ -226,7 +226,7 @@ class _Tree:
 def _admin_sidebar() -> None:
     """관리자 계정: 관리 메뉴 3개 + 관리자 카드."""
     s = get_state()
-    me = repo.admin()["admin"]
+    me = sel.admin_profile(s)
     with st.sidebar, st.container(key="sidebar"):
         with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 비용 관리로
             markup(f'<div class="sb-logo">{brand_logo(20)}<span class="sb-admin-tag">관리자</span></div>')

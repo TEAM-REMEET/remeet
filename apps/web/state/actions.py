@@ -10,8 +10,9 @@ import time
 
 import streamlit as st
 
-from config import CURRENT_USER_ID as ME
-from config import ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_EMAIL, DEMO_PASSWORD
+from state.store import me_id
+from data import api
+from components import member_fields as mf
 from data import repository as repo
 from state import router
 from utils.files import ALLOWED_LABEL, is_allowed, read_text
@@ -41,23 +42,25 @@ def toggle(attr: str) -> None:
 
 # ---------------------------------------------------------------- 인증
 def login(email: str, password: str) -> bool:
-    email = email.strip()
-    if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
-        admin_demo_login()
-        return True
-    ok = email == DEMO_EMAIL and password == DEMO_PASSWORD
-    _set(logged_in=ok, login_error=not ok, is_admin=False, screen="compose", not_found="")
-    return ok
+    """이메일 · 비밀번호 → 백엔드 확인 (Neo4j). 관리자면 관리자 화면, 아니면 새 회의록 화면으로."""
+    try:
+        res = repo.login(email.strip(), password)
+    except api.ApiError as e:
+        _set(logged_in=False, login_error=str(e))
+        return False
+    start_session(res["token"], res["user"])
+    return True
 
 
-def demo_login() -> None:
-    _set(logged_in=True, login_error=False, is_admin=False, screen="compose", not_found="")
-
-
-def admin_demo_login() -> None:
-    """관리자 계정: 관리자 화면(비용 관리)으로 시작."""
-    _set(logged_in=True, login_error=False, is_admin=True, screen="adm_cost", not_found="")
-    router.request("adm_cost")
+def start_session(token: str, user: dict, restore: bool = False) -> None:
+    """로그인 성공 → 그 사람으로 첫 화면 시작. restore: 새로고침 후 쿠키로 되살림 (보던 주소 그대로)."""
+    admin = user["permission"] == "admin"
+    _set(logged_in=True, login_error="", is_admin=admin, token=token, user_id=user["user_id"],
+         user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], cookie_written=restore)
+    if not restore:
+        screen = "adm_cost" if admin else "compose"
+        _set(screen=screen, not_found="")
+        router.request(screen)
 
 
 def logout() -> None:
@@ -183,9 +186,9 @@ def open_new_note() -> None:
             p = archive.period(s, mtype, s.archive_period)
             if p:  # 기간 폴더에서 왔으면 그 기간 폴더를 미리 골라 둠
                 go("compose", nn_type=mtype, nn_group="period", nn_period=p.key, nn_topic=topic, nn_name="",
-                   nn_host=ME, nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
+                   nn_host=me_id(), nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
                 return
-    go("compose", nn_type=mtype, nn_group="project", nn_period="", nn_topic=topic, nn_name="", nn_host=ME,
+    go("compose", nn_type=mtype, nn_group="project", nn_period="", nn_topic=topic, nn_name="", nn_host=me_id(),
        nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
 
 
@@ -212,7 +215,7 @@ def compose_example(kind: str) -> None:
 def compose_reset() -> None:
     """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
     s = get_state()
-    _set(compose_nonce=s.compose_nonce + 1, nn_host=ME, nn_people=[], nn_name="", **_wizard_reset())
+    _set(compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[], nn_name="", **_wizard_reset())
 
 
 def compose_sync(nonce: int) -> None:
@@ -292,7 +295,7 @@ def open_speaker_picker(label: str) -> None:
     """2단계: 발화자 표기(참석자1 · A)를 실제 사람과 연결하는 모달 (팀 → 팀원)."""
     s = get_state()
     cur = s.nn_speaker_map.get(label, "")
-    first = cur or s.nn_host or ME
+    first = cur or s.nn_host or me_id()
     open_modal("cp_speaker", pick_label=label, pick_draft=[cur] if cur else [], pick_team=sel.person(first).team,
                pick_nonce=s.pick_nonce + 1)
 
@@ -341,7 +344,7 @@ def compose_finish() -> None:
     title = s.nn_title
     open_meeting(mid)
     _set(toast=f"「{title}」 회의록을 만들었어요. 내용을 검토한 뒤 확정해 주세요.",
-         compose_nonce=s.compose_nonce + 1, nn_host=ME, nn_people=[], nn_name="", **_wizard_reset())
+         compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[], nn_name="", **_wizard_reset())
     s.tree_open |= {"root", f"t:{s.nn_type}", f"g:{s.nn_type}:project"}
 
 
@@ -367,7 +370,7 @@ def submit_compose(nonce: int) -> None:
         s.nn_error = " · ".join(missing) + "을(를) 입력해 주세요."
         return
     what = f"「{title}」"
-    reset = dict(nn_name="", nn_error="", nn_host=ME, nn_people=[], compose_nonce=nonce + 1)  # 입력칸 비우기
+    reset = dict(nn_name="", nn_error="", nn_host=me_id(), nn_people=[], compose_nonce=nonce + 1)  # 입력칸 비우기
     if s.nn_group == "period":
         from state import archive
 
@@ -400,7 +403,7 @@ def open_picker(kind: str) -> None:
     """kind: cp_folder(폴더) | cp_host(주관자) | cp_people(참석자) — 지금 값을 임시 선택으로 복사해 모달 열기."""
     s = get_state()
     draft = [s.nn_host] if kind == "cp_host" else list(s.nn_people)
-    first = draft[0] if draft else ME
+    first = draft[0] if draft else me_id()
     open_modal(kind, pick_draft=draft, pick_team=sel.person(first).team, pick_folder=s.nn_topic,
                pick_name=s.nn_name, pick_type=s.nn_type, pick_group=s.nn_group, pick_period=s.nn_period,
                pick_query="", pick_nonce=s.pick_nonce + 1)
@@ -842,58 +845,49 @@ def adm_set_team(team: str) -> None:
     _set(adm_team=team)
 
 
-def set_member_role(pid: str, role: str) -> None:
+def open_member_edit(pid: str) -> None:
+    """목록 · 「수정」: 그 구성원의 수정 팝업 열기 (입력칸은 지금 값으로 새로)."""
     s = get_state()
-    repo.org()["roles"][pid] = role
-    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
-    name = sel.admin_member(s, pid).name
-    s.toast = f"{name} 님의 권한을 「{'관리자' if role == 'admin' else '구성원'}」(으)로 바꿨어요."
+    _set(modal="member_edit", adm_edit_pid=pid, adm_edit_error="", adm_edit_nonce=s.adm_edit_nonce + 1)
 
 
-def _set_team(pid: str, team: str) -> None:
+def save_member_edit(prefix: str) -> bool:
+    """수정 팝업 · 「저장」: 바뀐 항목만 백엔드(Neo4j)에 저장. 실패하면 팝업에 이유를 보여 주고 False."""
     s = get_state()
-    repo.org()["edits"].setdefault(pid, {})["team"] = team
-    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
-    s.toast = f"{sel.admin_member(s, pid).name} 님의 팀을 「{team}」(으)로 바꿨어요."
-
-
-def _set_job(pid: str, job: str) -> None:
-    s = get_state()
-    repo.org()["edits"].setdefault(pid, {})["job"] = job
-    repo.org_changed()
-    _remember_job(job)
-    s.toast = f"{sel.admin_member(s, pid).name} 님의 직무를 「{job}」(으)로 바꿨어요."
-
-
-def member_pick_team(pid: str, team: str) -> None:
-    """목록 · 팀 팝오버에서 고름 → 바꾸고 팝오버 닫기."""
-    _set_team(pid, team)
-    st.session_state[f"tpop_{pid}"] = False
-
-
-def member_pick_job(pid: str, job: str) -> None:
-    """목록 · 직무 팝오버에서 고름(또는 직접 입력) → 바꾸고 팝오버 닫기."""
-    job = job.strip()
-    if job:
-        _set_job(pid, job)
-    st.session_state[f"jpop_{pid}"] = False
-
-
-def toggle_member_status(pid: str) -> None:
-    s = get_state()
-    m = sel.admin_member(s, pid)
-    new = "active" if m.status == "inactive" else "inactive"
-    repo.org()["status"][pid] = new
-    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
-    s.toast = f"{m.name} 님을 {'다시 활성화했어요' if new == 'active' else '비활성화했어요. 더 이상 로그인할 수 없어요'}."
-
-
-def cancel_invite(pid: str) -> None:
-    s = get_state()
-    m = sel.admin_member(s, pid)
-    repo.org()["status"][pid] = "removed"
-    repo.org_changed()  # 열려 있는 사용자 화면도 바로 새로 그림
-    s.toast = f"{m.email} 초대를 취소했어요."
+    row = next(r for r in repo.people_rows() if r["user_id"] == s.adm_edit_pid)
+    v = lambda k: st.session_state.get(f"{prefix}_{k}")  # noqa: E731
+    team, job = v("team"), (v("job") or "").strip()
+    if not team or repo.team_id_of(team) is None:
+        s.adm_edit_error = "팀을 골라 주세요."
+        return False
+    if not job:
+        s.adm_edit_error = "직무를 골라 주세요."
+        return False
+    if not v("position"):
+        s.adm_edit_error = "직급을 골라 주세요."
+        return False
+    skills, err = mf.read_skills(prefix)
+    if err:
+        s.adm_edit_error = err
+        return False
+    new = {"team_id": repo.team_id_of(team), "job": job, "position": v("position"), "permission": v("permission"),
+           "is_active": bool(v("active")), "skills": skills}
+    old = {"team_id": row["team_id"], "job": row["job"], "position": row["position"], "permission": row["permission"],
+           "is_active": row["is_active"] is not False,
+           "skills": [{"skill_id": k["skill_id"], "level": k["level"]} for k in row["skills"]]}
+    key = lambda xs: sorted((x["skill_id"], x["level"]) for x in xs)  # noqa: E731
+    changes = {k: new[k] for k in new if (key(new[k]) != key(old[k]) if k == "skills" else new[k] != old[k])}
+    if changes:
+        try:
+            repo.update_person(row["user_id"], changes, s.token)
+        except api.ApiError as e:
+            s.adm_edit_error = f"저장하지 못했어요: {e}"
+            return False
+        if "job" in changes:
+            _remember_job(job)
+    _set(modal=None, adm_edit_error="",
+         toast=f"{row['name']} 님의 정보를 저장했어요." if changes else "바뀐 내용이 없어요.")
+    return True
 
 
 def _remember_job(job: str) -> None:
@@ -909,13 +903,9 @@ def add_set_job(nonce: int, job: str) -> None:
 
 # ---------------------------------------------------------------- 조직 선택 모달 (구성원 추가 · 팀)
 def open_org_picker(target: str) -> None:
-    """조직 선택 패널 열기. target: "add"(구성원 추가 줄) | 사람 id(목록의 팀 바꾸기)."""
+    """조직 선택 패널 열기 (구성원 추가 줄의 팀 칸)."""
     s = get_state()
-    if target == "add":
-        cur = st.session_state.get(f"add_team_{s.adm_nonce}") or ""
-    else:
-        cur = repo.people()[target].team if target in repo.people() else ""
-        st.session_state[f"tpop_{target}"] = False  # 팀 팝오버는 닫고 패널로
+    cur = st.session_state.get(f"add_team_{s.adm_nonce}") or ""
     _set(modal="org_picker", adm_org_target=target, adm_org_pick=cur, adm_org_query="", adm_org_tab="all",
          adm_org_open=set(sel.team_ancestors(cur)) or {"제품본부", "프로덕트부"}, adm_org_nonce=s.adm_org_nonce + 1)
 
@@ -943,11 +933,9 @@ def org_fav(team: str) -> None:
 
 
 def org_done() -> None:
-    """「선택 완료」: 구성원 추가 줄의 팀 칸(다음에 그릴 때) 또는 그 사람의 팀에 넣고 패널 닫기."""
+    """「선택 완료」: 구성원 추가 줄의 팀 칸(다음에 그릴 때)에 넣고 패널 닫기."""
     s = get_state()
-    if s.adm_org_pick and s.adm_org_target != "add":
-        _set_team(s.adm_org_target, s.adm_org_pick)
-    elif s.adm_org_pick:
+    if s.adm_org_pick:
         s.adm_team_pending = s.adm_org_pick
     if s.adm_org_pick:
         s.adm_org_recent = [s.adm_org_pick] + [x for x in s.adm_org_recent if x != s.adm_org_pick][:4]
@@ -961,27 +949,36 @@ def toggle_add_member() -> None:
 
 
 def adm_add_member(nonce: int) -> None:
-    """구성원 바로 추가 (초대 메일 없이) → 바로 「활성」 · 사용자 화면에 바로 반영."""
+    """구성원 바로 추가 (초대 메일 없이) → 백엔드(Neo4j)에 바로 저장 · 바로 「활성」."""
     s = get_state()
     g = lambda k: (st.session_state.get(f"add_{k}_{nonce}") or "").strip()  # noqa: E731
     name, email, team, job = g("name"), g("email"), g("team"), g("job")
+    position = st.session_state.get(f"add_{nonce}_position")
     role = "admin" if st.session_state.get(f"add_role_{nonce}") == "admin" else "member"
+    skills, skill_err = mf.read_skills(f"add_{nonce}")
     if not name:
         s.adm_invite_error = "이름을 적어 주세요."
     elif "@" not in email or "." not in email.split("@")[-1]:
         s.adm_invite_error = "이메일 주소를 확인해 주세요."
-    elif any(m.email == email for m in sel.admin_members(s)):
-        s.adm_invite_error = "이미 등록된 이메일이에요."
-    elif not team:
+    elif not team or repo.team_id_of(team) is None:
         s.adm_invite_error = "팀을 골라 주세요."
+    elif not job:
+        s.adm_invite_error = "직무를 골라 주세요."
+    elif not position:
+        s.adm_invite_error = "직급을 골라 주세요. 담당자 추천이 직급별로 후보를 뽑아요."
+    elif skill_err:
+        s.adm_invite_error = skill_err
     else:
-        o = repo.org()
-        pid = f"new-{len(o['added']) + 1}"
-        o["added"][pid] = {"name": name, "email": email, "team": team, "job": job or "사원", "role": role}
-        repo.org_changed()
-        _remember_job(job or "사원")
+        body = {"name": name, "email": email, "team_id": repo.team_id_of(team), "job": job, "position": position,
+                "permission": role, "skills": skills}
+        try:
+            row = repo.create_person(body, s.token)
+        except api.ApiError as e:
+            s.adm_invite_error = str(e)
+            return
+        _remember_job(job)
         _set(adm_adding=False, adm_invite_error="", adm_nonce=s.adm_nonce + 1,
-             toast=f"{name} 님을 {team} 구성원으로 추가했어요. 이제 회의 참석자 · 담당자로 고를 수 있어요.")
+             toast=f"{row['name']} 님을 {team} 구성원으로 추가했어요 ({row['user_id']}).")
 
 
 # ---------------------------------------------------------------- 알림

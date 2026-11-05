@@ -104,12 +104,11 @@ from __future__ import annotations
 import streamlit as st
 
 from components.landing import render_landing
-from config import ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_EMAIL, DEMO_PASSWORD
 from state import actions
 from state.store import get_state
-from ui.buttons import button
 from ui.html import markup
 from ui.icons import brand_logo, icon
+from utils.text import esc
 
 # 히어로의 가치 3줄
 _VALUES = (
@@ -150,18 +149,6 @@ def _hero() -> None:
     )
 
 
-def _fill_demo() -> None:
-    st.session_state["login_email"] = DEMO_EMAIL
-    st.session_state["login_pw"] = DEMO_PASSWORD
-    get_state().login_error = False
-
-
-def _fill_admin() -> None:
-    st.session_state["login_email"] = ADMIN_EMAIL
-    st.session_state["login_pw"] = ADMIN_PASSWORD
-    get_state().login_error = False
-
-
 def _submit() -> None:
     actions.login(st.session_state.get("login_email", ""), st.session_state.get("login_pw", ""))
 
@@ -171,21 +158,11 @@ def _form() -> None:
     with st.form("login", border=False, enter_to_submit=True):
         st.text_input("이메일", key="login_email", placeholder="name@company.com", autocomplete="username")
         st.text_input("비밀번호", key="login_pw", type="password", placeholder="비밀번호", autocomplete="current-password")
-        if get_state().login_error:
-            markup('<p class="login-err" role="alert">이메일 또는 비밀번호가 맞지 않아요. 아래 데모 계정을 써 보세요.</p>')
+        err = get_state().login_error
+        if err:
+            markup(f'<p class="login-err" role="alert">{esc(err)}</p>')
         st.form_submit_button("로그인", on_click=_submit, width="stretch")
-    markup('<div class="login-or"><span></span>또는<span></span></div>')
-    with st.container(gap="small"):
-        button("데모 계정으로 바로 시작", key="demo_start", variant="secondary", on_click=actions.demo_login, width="stretch")
-        button("관리자 계정으로 시작", key="demo_admin_start", variant="secondary", on_click=actions.admin_demo_login,
-               icon=":material/admin_panel_settings:", width="stretch")
-    with st.container(gap="small"):
-        with st.container(key="demo-box", horizontal=True, vertical_alignment="center"):
-            markup(f'<span class="demo-info"><b>데모 계정</b><span>{DEMO_EMAIL} · {DEMO_PASSWORD}</span></span>')
-            button("자동 입력", key="demo_fill", variant="mini", on_click=_fill_demo)
-        with st.container(key="demo-box-admin", horizontal=True, vertical_alignment="center"):
-            markup(f'<span class="demo-info"><b>관리자 계정</b><span>{ADMIN_EMAIL} · {ADMIN_PASSWORD}</span></span>')
-            button("자동 입력", key="admin_fill", variant="mini", on_click=_fill_admin)
+    markup('<p class="hint">계정이 없으면 관리자에게 요청해 주세요.</p>')
 
 
 def render() -> None:

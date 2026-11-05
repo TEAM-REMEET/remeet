@@ -16,6 +16,8 @@ from components.sidebar import render_sidebar
 from components.toast import render_toast
 from components.topbar import render_topbar
 from config import APP_ICON, APP_TITLE, LOGIN_COOKIE
+from data import api
+from data import repository as repo
 from state import actions, delivery, router
 from state.store import get_state
 from ui.theme import inject_css
@@ -36,11 +38,13 @@ def main() -> None:
     # 새 알림 지켜보기 전용 숨은 영역 (몇 초마다 다시 그려지는 영역이라 js-host 와 따로 둬서 위치가 바뀌지 않게)
     live_host = st.container(key="live-host")
 
-    # 새로고침하면 Streamlit 세션이 새로 시작되므로, 데모 로그인은 쿠키로 유지
+    # 새로고침하면 Streamlit 세션이 새로 시작되므로, 쿠키의 출입증(토큰)으로 로그인을 되살림
     cookie = st.context.cookies.get(LOGIN_COOKIE)
-    if not state.logged_in and not state.logged_out and cookie in ("1", "admin"):
-        state.logged_in = True
-        state.is_admin = cookie == "admin"  # 관리자 계정으로 로그인했었음
+    if not state.logged_in and not state.logged_out and cookie:
+        try:
+            actions.start_session(cookie, repo.me(cookie), restore=True)
+        except api.ApiError:
+            pass  # 만료 · 위조 · 백엔드 꺼짐 → 로그인 화면
 
     # URL 라우팅: 화면마다 st.Page 하나. 메뉴는 직접 만든 사이드바를 쓰므로 기본 메뉴는 숨김
     pages = router.build_pages(ROUTES)
@@ -56,7 +60,7 @@ def main() -> None:
     router.sync_from_url(current.url_path)  # URL → 상태 (뒤로가기 포함)
     router.guard(current.url_path)  # 관리자는 관리자 화면만, 사용자는 관리자 화면 못 봄
     if not state.cookie_written:  # 로그인 후 한 번만 쿠키 기록 (화면 이동이 끝난 뒤라야 스크립트가 실행됨)
-        browser.set_cookie(LOGIN_COOKIE, "admin" if state.is_admin else "1")
+        browser.set_cookie(LOGIN_COOKIE, state.token)
         state.cookie_written = True
 
     render_sidebar()

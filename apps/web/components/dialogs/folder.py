@@ -8,7 +8,7 @@ import streamlit as st
 
 from components.member_pills import ordered_host_first
 from components.org_people import org_people_picker
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import selectors as sel
@@ -39,7 +39,7 @@ def members_dialog() -> None:
                      key="mem_scope")
     f = fs[fid]
     members = sel.members_of(s, fid)
-    is_host = f.host == ME
+    is_host = f.host == me_id()
     markup(f'<h3 style="font-size:16px;font-weight:700">「{esc(f.name)}」 멤버 {len(members)}명</h3>'
            '<p class="hint" style="font-size:13px;color:#5F646D">멤버는 이 폴더에서 자기가 주관·참석한 회의록을 볼 수 있어요. 빠진 회차(조퇴·불참)는 주관자가 공유해 주면 보여요.</p>')
 
@@ -50,7 +50,7 @@ def members_dialog() -> None:
             host = pid == f.host
             with st.container(key=f"memrow-{pid}", horizontal=True, vertical_alignment="center", gap="small"):
                 markup(f'<div class="plist-row" style="border:none;padding:0">{avatar(p.initial, size=34, host=host)}'
-                       f'<span class="who"><b>{esc(p.name)}{" (나)" if pid == ME else ""}</b><span>{esc(p.team)}</span></span>'
+                       f'<span class="who"><b>{esc(p.name)}{" (나)" if pid == me_id() else ""}</b><span>{esc(p.team)}</span></span>'
                        f'<span class="tag tag-{"host" if host else "att"}">{"폴더 주관" if host else "멤버"}</span></div>')
                 if is_host and not host:
                     button("", key=f"mem_rm_{pid}", variant="ghost", icon=":material/close:", help="폴더에서 빼기",
@@ -76,7 +76,7 @@ def delete_folder_dialog() -> None:
     if target[0] == "period":
         _, mtype, key = target
         p = archive.period(s, mtype, key)
-        ids = [i for i in (p.meeting_ids if p else ()) if repo.meeting(i).host == ME]
+        ids = [i for i in (p.meeting_ids if p else ()) if repo.meeting(i).host == me_id()]
         markup(f'<h3 style="font-size:16px;font-weight:700">「{esc(archive.period_label(key))}」 폴더를 삭제할까요?</h3>'
                f'<p style="color:#3A3E45">이 기간에 내가 주관한 회의록 {len(ids)}개가 삭제되고, 참석자·공유받은 사람 모두 더 이상 볼 수 없어요. '
                "다른 사람이 주관한 회의는 그대로 남아요. 되돌릴 수 없어요.</p>")
