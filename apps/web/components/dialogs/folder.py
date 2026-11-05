@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import functools
+
 import streamlit as st
 
 from components.member_pills import ordered_host_first
+from components.org_people import org_people_picker
 from config import CURRENT_USER_ID as ME
 from data import repository as repo
 from state import actions
@@ -17,30 +20,11 @@ from utils.text import esc
 from utils.browser import scroll_to_bottom
 
 def _add_members(fid: str, members: list[str]) -> None:
-    """팀을 고르고 → 그 팀에서 아직 멤버가 아닌 사람을 골라 추가."""
-    s = get_state()
-    teams = repo.teams()
-    team_id = s.member_team if s.member_team in teams else next(iter(teams))
+    """조직도에서 사람을 찾아 누르면 바로 멤버로 추가 (이미 멤버인 사람은 「멤버」로 표시)."""
     with st.container(key="mem-add", gap="small"):
-        markup('<b style="font-size:13px">멤버 추가</b> <span class="hint">팀을 고르고 이름을 누르면 바로 멤버로 추가되고, 추가된 사람에게 알림이 가요</span>')
-        button_group([(tid, t.name) for tid, t in teams.items()], team_id,
-                     lambda v: actions.update(member_team=v), key="mem_team")
-        team = teams[team_id]
-        addable = [mb for mb in team.members if mb.id not in members]
-        if not addable:
-            markup(f'<p class="hint" style="font-size:13px">{esc(team.name)}은(는) 모두 이미 멤버예요.</p>')
-            return
-        widget_key = f"mem_pick_{fid}_{team_id}_{s.member_nonce}"
-        st.pills(
-            f"{team.name} 팀원",
-            options=[mb.id for mb in addable],
-            format_func=lambda pid: next(f"+ {mb.name} · {mb.role}" for mb in addable if mb.id == pid),
-            selection_mode="multi",
-            key=widget_key,
-            label_visibility="collapsed",
-            on_change=actions.add_picked_members,  # 누르는 즉시 추가 → 아래 목록에 바로 반영
-            args=(fid, widget_key),
-        )
+        markup('<div class="pick-section-head"><b>멤버 추가</b><span class="hint">이름을 누르면 바로 멤버로 추가되고, 추가된 사람에게 알림이 가요</span></div>')
+        org_people_picker("mem", chosen=[], locked={pid: "멤버" for pid in members},
+                          on_pick=functools.partial(actions.add_member_now, fid), height=160)
 
 
 @st.dialog("폴더 멤버", width="medium", on_dismiss=actions.close_modal)
@@ -58,11 +42,9 @@ def members_dialog() -> None:
     is_host = f.host == ME
     markup(f'<h3 style="font-size:16px;font-weight:700">「{esc(f.name)}」 멤버 {len(members)}명</h3>'
            '<p class="hint" style="font-size:13px;color:#5F646D">멤버는 이 폴더에서 자기가 주관·참석한 회의록을 볼 수 있어요. 빠진 회차(조퇴·불참)는 주관자가 공유해 주면 보여요.</p>')
-    if is_host:
-        _add_members(fid, members)
 
     # 멤버 목록: 모달 안에서 이 영역만 스크롤, 사람 사이 구분선
-    with st.container(height=300, border=False, key="mem-list", gap=None):
+    with st.container(height=170, border=False, key="mem-list", gap=None):
         for pid in ordered_host_first(f.host, members):
             p = sel.person(pid)
             host = pid == f.host
@@ -78,6 +60,7 @@ def members_dialog() -> None:
         s.member_just_added = False
     if is_host:
         markup('<p class="hint">뺀 사람은 이 폴더의 회의록과, 그 회의록에서 만들어진 위키 내용을 더 이상 볼 수 없어요.</p>')
+        _add_members(fid, members)  # 멤버 목록 아래에 「멤버 추가」
     with st.container(horizontal=True, horizontal_alignment="right"):
         if button("저장", key="mem_close", variant="dark"):
             actions.close_modal()

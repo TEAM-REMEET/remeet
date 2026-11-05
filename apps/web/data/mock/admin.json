@@ -1,0 +1,347 @@
+{
+  "admin": {
+    "name": "운영 관리자",
+    "team": "경영지원팀",
+    "email": "admin@hoeui.kr"
+  },
+  "budget": 500000,
+  "alert_at": 80,
+  "unit_note": "AI 분석 · 담당자 추천 · 위키 정리 · 외부 전송에 쓴 비용 (부가세 별도)",
+  "months": [
+    {
+      "key": "2025-01",
+      "year": 2025,
+      "month": 1,
+      "amount": 193400,
+      "notes": 55
+    },
+    {
+      "key": "2025-02",
+      "year": 2025,
+      "month": 2,
+      "amount": 206800,
+      "notes": 59
+    },
+    {
+      "key": "2025-03",
+      "year": 2025,
+      "month": 3,
+      "amount": 220200,
+      "notes": 63
+    },
+    {
+      "key": "2025-04",
+      "year": 2025,
+      "month": 4,
+      "amount": 233600,
+      "notes": 67
+    },
+    {
+      "key": "2025-05",
+      "year": 2025,
+      "month": 5,
+      "amount": 247000,
+      "notes": 71
+    },
+    {
+      "key": "2025-06",
+      "year": 2025,
+      "month": 6,
+      "amount": 260400,
+      "notes": 74
+    },
+    {
+      "key": "2025-07",
+      "year": 2025,
+      "month": 7,
+      "amount": 273800,
+      "notes": 78
+    },
+    {
+      "key": "2025-08",
+      "year": 2025,
+      "month": 8,
+      "amount": 287200,
+      "notes": 82
+    },
+    {
+      "key": "2025-09",
+      "year": 2025,
+      "month": 9,
+      "amount": 245700,
+      "notes": 70
+    },
+    {
+      "key": "2025-10",
+      "year": 2025,
+      "month": 10,
+      "amount": 259100,
+      "notes": 74
+    },
+    {
+      "key": "2025-11",
+      "year": 2025,
+      "month": 11,
+      "amount": 272500,
+      "notes": 78
+    },
+    {
+      "key": "2025-12",
+      "year": 2025,
+      "month": 12,
+      "amount": 285900,
+      "notes": 82
+    },
+    {
+      "key": "2026-01",
+      "year": 2026,
+      "month": 1,
+      "amount": 299300,
+      "notes": 86
+    },
+    {
+      "key": "2026-02",
+      "year": 2026,
+      "month": 2,
+      "amount": 312700,
+      "notes": 89
+    },
+    {
+      "key": "2026-03",
+      "year": 2026,
+      "month": 3,
+      "amount": 326100,
+      "notes": 93
+    },
+    {
+      "key": "2026-04",
+      "year": 2026,
+      "month": 4,
+      "amount": 339500,
+      "notes": 97
+    },
+    {
+      "key": "2026-05",
+      "year": 2026,
+      "month": 5,
+      "amount": 352900,
+      "notes": 101
+    },
+    {
+      "key": "2026-06",
+      "year": 2026,
+      "month": 6,
+      "amount": 312400,
+      "notes": 94
+    },
+    {
+      "key": "2026-07",
+      "year": 2026,
+      "month": 7,
+      "amount": 298900,
+      "notes": 90
+    },
+    {
+      "key": "2026-08",
+      "year": 2026,
+      "month": 8,
+      "amount": 341200,
+      "notes": 101
+    },
+    {
+      "key": "2026-09",
+      "year": 2026,
+      "month": 9,
+      "amount": 389700,
+      "notes": 112
+    },
+    {
+      "key": "2026-10",
+      "year": 2026,
+      "month": 10,
+      "amount": 452800,
+      "notes": 128
+    },
+    {
+      "key": "2026-11",
+      "year": 2026,
+      "month": 11,
+      "amount": 61300,
+      "notes": 17,
+      "running": true,
+      "days": 4,
+      "month_days": 30
+    }
+  ],
+  "teams": {
+    "서비스기획팀": 0.27,
+    "결제개발팀": 0.21,
+    "CS운영팀": 0.16,
+    "재무팀": 0.12,
+    "디자인팀": 0.09,
+    "QA팀": 0.07,
+    "마케팅팀": 0.05,
+    "UX디자인팀": 0.03
+  },
+  "features": {
+    "회의록 분석 (요약 · 안건 · 할 일)": 0.62,
+    "위키 정리": 0.17,
+    "담당자 추천": 0.14,
+    "외부 전송 (MCP)": 0.07
+  },
+  "members": {
+    "yun": {
+      "email": "seoyun.lee@democompany.kr",
+      "last": "오늘 10:12"
+    },
+    "doy": {
+      "email": "doyun.park@democompany.kr",
+      "last": "오늘 09:48"
+    },
+    "har": {
+      "email": "harin.choi@democompany.kr",
+      "last": "어제"
+    },
+    "jiw": {
+      "email": "jiwoo.han@democompany.kr",
+      "last": "오늘 08:57"
+    },
+    "min": {
+      "email": "minjae.jung@democompany.kr",
+      "last": "오늘 10:30",
+      "admin": true
+    },
+    "tae": {
+      "email": "taehyun.oh@democompany.kr",
+      "last": "11/02"
+    },
+    "dw": {
+      "email": "dongwook.choi@democompany.kr",
+      "last": "어제"
+    },
+    "fin": {
+      "email": "suhyun.kang@democompany.kr",
+      "last": "오늘 09:05"
+    },
+    "cs": {
+      "email": "gaeun.yoon@democompany.kr",
+      "last": "오늘 10:01"
+    },
+    "fin2": {
+      "email": "jihoon.oh@democompany.kr",
+      "last": "10/31"
+    },
+    "fin3": {
+      "email": "seoyoung.moon@democompany.kr",
+      "last": "어제"
+    },
+    "des2": {
+      "email": "doa.kim@democompany.kr",
+      "last": "10/29"
+    },
+    "cs3": {
+      "email": "seojun.park@democompany.kr",
+      "last": "9/18",
+      "inactive": true
+    },
+    "qa2": {
+      "email": "junho.lee@democompany.kr",
+      "last": "오늘 09:22"
+    },
+    "mkt1": {
+      "email": "mina.song@democompany.kr",
+      "last": "11/01"
+    },
+    "mkt2": {
+      "email": "narae.lee@democompany.kr",
+      "last": "",
+      "invited": true
+    },
+    "ux1": {
+      "email": "minji.kim@democompany.kr",
+      "last": "어제"
+    }
+  },
+  "org_tree": [
+    {
+      "name": "경영지원본부",
+      "children": [
+        {
+          "name": "경영지원팀"
+        },
+        {
+          "name": "재무팀"
+        }
+      ]
+    },
+    {
+      "name": "제품본부",
+      "children": [
+        {
+          "name": "프로덕트부",
+          "children": [
+            {
+              "name": "서비스기획팀"
+            },
+            {
+              "name": "UX디자인팀"
+            },
+            {
+              "name": "디자인팀"
+            }
+          ]
+        },
+        {
+          "name": "개발부",
+          "children": [
+            {
+              "name": "결제개발팀"
+            },
+            {
+              "name": "QA팀"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "마케팅본부",
+      "children": [
+        {
+          "name": "마케팅팀"
+        }
+      ]
+    },
+    {
+      "name": "CS본부",
+      "children": [
+        {
+          "name": "CS운영팀"
+        }
+      ]
+    }
+  ],
+  "jobs": [
+    "사원",
+    "매니저",
+    "팀장",
+    "기획자",
+    "PM",
+    "PO",
+    "개발자",
+    "프론트엔드 개발자",
+    "백엔드 개발자",
+    "데브옵스 엔지니어",
+    "QA 엔지니어",
+    "테스터",
+    "디자이너",
+    "프로덕트 디자이너",
+    "UX 리서처",
+    "마케터",
+    "카피라이터",
+    "CS 매니저",
+    "상담원",
+    "재무 담당",
+    "회계 담당"
+  ]
+}

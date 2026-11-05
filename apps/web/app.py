@@ -11,11 +11,12 @@ from __future__ import annotations
 import streamlit as st
 
 from components.dialogs import render_active_dialog
+from components.live import watch_notifications
 from components.sidebar import render_sidebar
 from components.toast import render_toast
 from components.topbar import render_topbar
 from config import APP_ICON, APP_TITLE, LOGIN_COOKIE
-from state import delivery, router
+from state import actions, delivery, router
 from state.store import get_state
 from ui.theme import inject_css
 from utils import browser
@@ -32,10 +33,14 @@ def main() -> None:
     js_host = st.container(key="js-host")  # 스크립트 전용 숨은 영역 (레이아웃에 영향 없음)
     js_host.html("<span></span>")  # 항상 내용이 있어야 영역이 생겼다 사라지지 않음
     browser.set_host(js_host)
+    # 새 알림 지켜보기 전용 숨은 영역 (몇 초마다 다시 그려지는 영역이라 js-host 와 따로 둬서 위치가 바뀌지 않게)
+    live_host = st.container(key="live-host")
 
     # 새로고침하면 Streamlit 세션이 새로 시작되므로, 데모 로그인은 쿠키로 유지
-    if not state.logged_in and not state.logged_out and st.context.cookies.get(LOGIN_COOKIE) == "1":
+    cookie = st.context.cookies.get(LOGIN_COOKIE)
+    if not state.logged_in and not state.logged_out and cookie in ("1", "admin"):
         state.logged_in = True
+        state.is_admin = cookie == "admin"  # 관리자 계정으로 로그인했었음
 
     # URL 라우팅: 화면마다 st.Page 하나. 메뉴는 직접 만든 사이드바를 쓰므로 기본 메뉴는 숨김
     pages = router.build_pages(ROUTES)
@@ -47,15 +52,19 @@ def main() -> None:
             browser.clear_cookie(LOGIN_COOKIE)
         login.render()
         return
-    if not state.cookie_written:  # 로그인 후 한 번만 쿠키 기록
-        browser.set_cookie(LOGIN_COOKIE, "1")
-        state.cookie_written = True
-
     router.apply_pending(pages)  # 버튼으로 예약된 이동 → URL 변경 (브라우저 기록에 남음)
     router.sync_from_url(current.url_path)  # URL → 상태 (뒤로가기 포함)
+    router.guard(current.url_path)  # 관리자는 관리자 화면만, 사용자는 관리자 화면 못 봄
+    if not state.cookie_written:  # 로그인 후 한 번만 쿠키 기록 (화면 이동이 끝난 뒤라야 스크립트가 실행됨)
+        browser.set_cookie(LOGIN_COOKIE, "admin" if state.is_admin else "1")
+        state.cookie_written = True
 
     render_sidebar()
     render_topbar()
+    with live_host:
+        watch_notifications()  # 다른 계정이 만든 새 알림 (관리자 ↔ 사용자) · 숨은 영역에서 몇 초마다 확인
+    if state.is_admin:
+        actions.check_budget_alert()  # 이번 달 예산 알림 기준을 넘으면 관리자 알림 (한 번만)
     with st.container(key="content", gap="medium"):
         render_toast()
         if state.not_found:

@@ -5,8 +5,9 @@
 지원하는 입력 형식 (한 회의록 안에서는 한 가지만)
   1) 발화자 없는 텍스트      이번 주에는 로그인 오류를 수정하겠습니다.
   2) [발화자] 형식           [참석자1]
-                             이번 주에는 로그인 오류를 수정하겠습니다.   (발화자 줄 다음 줄이 발언 · 한 줄에 같이 쓰면 오류)
+                             이번 주에는 로그인 오류를 수정하겠습니다.   (발화자 줄 바로 아랫줄이 발언 · 한 줄에 같이 쓰면 오류)
   3) 발화자: 형식            A: 이번 주에는 로그인 오류를 수정하겠습니다.
+세 형식 모두 발언마다 한 줄씩 띄워야 해요 (빈 줄이 없으면 오류).
 이 밖의 경우(형식을 섞어 씀 · 발화자 표기가 빠진 줄 · [발화자] 내용을 한 줄에 씀 · [발화자] 다음에 발언이 없음 · 닫히지 않은 [ ] 등)는 오류로 알려 줍니다.
 AI 가 붙인 「참석자1」, 「A」 같은 임시 발화자는 2단계에서 실제 사람과 연결합니다.
 """
@@ -26,15 +27,16 @@ FORMAT_LABEL = {"plain": "발화자 없는 텍스트", "bracket": "[발화자] �
 
 # 형식 버튼 아래 회색 안내글: 고른 형식에서 벗어나면 안 된다는 규칙
 FORMAT_RULE = {
-    "plain": "발화자 표기 없이 문장만 적어 주세요. [참석자1] · A: 같은 발화자 표기를 넣으면 안 돼요.",
-    "bracket": "[발화자]만 한 줄에 쓰고, 그다음 줄에 발언을 적어 주세요. [발화자]와 발언을 한 줄에 쓰면 안 돼요.",
-    "colon": "모든 줄을 「발화자: 발언」으로 적어 주세요. 발화자 표기가 빠진 줄이 있으면 안 돼요.",
+    "plain": "발화자 표기 없이 문장만 적고, 발언마다 한 줄씩 띄워 주세요. [참석자1] · A: 같은 발화자 표기를 넣으면 안 돼요.",
+    "bracket": "[발화자]만 한 줄에 쓰고 바로 아랫줄에 발언을 적은 뒤, 한 줄 띄우고 다음 [발화자]를 적어 주세요. "
+               "[발화자]와 발언을 한 줄에 쓰면 안 돼요.",
+    "colon": "모든 줄을 「발화자: 발언」으로 적고, 발언마다 한 줄씩 띄워 주세요. 발화자 표기가 빠진 줄이 있으면 안 돼요.",
 }
 
 EXAMPLES = {
-    "plain": (
-        "이번 주에는 로그인 오류를 먼저 수정하기로 했습니다.\n"
-        "디자인 시안은 금요일에 공유할 예정입니다.\n"
+    "plain": (  # 발언마다 한 줄씩 띄움 ([발화자] 형식과 같은 모양)
+        "이번 주에는 로그인 오류를 먼저 수정하기로 했습니다.\n\n"
+        "디자인 시안은 금요일에 공유할 예정입니다.\n\n"
         "수정이 끝나면 QA팀에 테스트를 요청하겠습니다."
     ),
     "bracket": (
@@ -42,9 +44,9 @@ EXAMPLES = {
         "[참석자2]\n디자인 시안은 금요일에 공유할게요.\n\n"
         "[참석자1]\n수정 후 테스트를 요청하겠습니다."
     ),
-    "colon": (
-        "A: 결제 오류 안내 문구는 이번 주 안에 확정하기로 해요.\n"
-        "B: 그럼 초안은 제가 수요일까지 공유할게요.\n"
+    "colon": (  # 발언마다 한 줄씩 띄움
+        "A: 결제 오류 안내 문구는 이번 주 안에 확정하기로 해요.\n\n"
+        "B: 그럼 초안은 제가 수요일까지 공유할게요.\n\n"
         "A: 좋아요. 고객 문의가 늘었는지도 확인해 주세요?"
     ),
 }
@@ -89,7 +91,7 @@ def _kind(line: str) -> tuple[str, str | None, str]:
 
 
 def _parse_bracket(kinds: list) -> Parsed:
-    """[발화자] 형식: [발화자]만 있는 줄 다음 줄(들)이 그 사람의 발언. 빈 줄은 블록 사이 구분용이라 무시.
+    """[발화자] 형식: [발화자]만 있는 줄 바로 다음 줄이 그 사람의 발언 (빈 줄 규칙은 _spacing).
 
     「[발화자] 내용」처럼 한 줄에 같이 쓰면 오류.
     """
@@ -120,12 +122,45 @@ def _parse_bracket(kinds: list) -> Parsed:
     return Parsed("bracket", tuple(lines), tuple(dict.fromkeys(ln.label for ln in lines)))
 
 
+_GAP_ERROR = "발언 사이에 빈 줄이 없어요. 발언마다 한 줄씩 띄워 주세요."
+
+
+def _spacing(parsed: Parsed, kinds: list) -> Parsed:
+    """빈 줄 규칙 (발언마다 한 줄씩 띄우기).
+
+    - 발화자 없는 텍스트 · 발화자: 형식: 발언과 발언 사이에 빈 줄이 있어야 함
+    - [발화자] 형식: [발화자] 바로 아랫줄에 발언 (사이에 빈 줄 X), 발언 다음엔 빈 줄을 띄우고 다음 [발화자]
+    """
+    if parsed.error:
+        return parsed
+    nos = [no for no, *_ in kinds]  # 글이 있는 줄 번호 (빈 줄은 번호가 비어 있음)
+    if parsed.format == "bracket":
+        for i, (no, k, label, _) in enumerate(kinds):
+            nxt = nos[i + 1] if i + 1 < len(nos) else None
+            if k == "B" and nxt is not None and nxt != no + 1:
+                return Parsed(None, error=f"[{label}] 바로 아랫줄에 발언을 적어 주세요. 사이에 빈 줄을 넣으면 안 돼요.",
+                              error_lines=(no,))
+            if k != "B" and nxt == no + 1:  # 발언 바로 다음 줄에 또 글이 있음
+                return Parsed(None, error=_GAP_ERROR, error_lines=(nxt,))
+        return parsed
+    bad = tuple(b for a, b in zip(nos, nos[1:]) if b == a + 1)
+    if bad:
+        return Parsed(None, error=_GAP_ERROR, error_lines=bad)
+    return parsed
+
+
 def parse(text: str) -> Parsed:
-    """입력 형식 검사. 지원하지 않는 형식이면 error 에 이유를 적어 돌려 줌."""
+    """입력 형식 검사. 지원하지 않는 형식이면 error 에 이유를 적어 돌려 줌 (빈 줄 규칙 포함)."""
+    kinds_all = [(i + 1, *_kind(ln.strip())) for i, ln in enumerate((text or "").splitlines()) if ln.strip()]
+    return _spacing(_parse(text), kinds_all)
+
+
+def _parse(text: str) -> Parsed:
+    """형식 판별 (발화자 표기 · 섞어 쓰기 등). 빈 줄 규칙은 parse() 에서."""
     raw = [(i + 1, ln.strip()) for i, ln in enumerate((text or "").splitlines())]
     raw = [(no, ln) for no, ln in raw if ln]
     if not raw:
-        return Parsed(None, error="회의 내용을 적거나 TXT · MD 파일을 첨부해 주세요.")
+        return Parsed(None, error="회의 내용을 적거나 TXT · MD · DOCX · HWPX 파일을 첨부해 주세요.")
     if sum(len(ln) for _, ln in raw) < 10:
         return Parsed(None, error="내용이 너무 짧아요. 회의에서 나눈 말을 한 문장 이상 적어 주세요.")
 

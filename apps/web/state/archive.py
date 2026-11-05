@@ -64,9 +64,19 @@ def meeting_ids_of_type(state: AppState, mtype: str, owner: str = "all") -> list
     owner: all | mine(내가 만든 폴더) | member(멤버로 들어간 폴더)
     """
     ids: list[str] = []
-    for fid in sel.folder_ids_by_owner(state, mtype, owner):
+    for fid in sel.folder_ids_by_owner(state, mtype, owner) + _period_containers(state, mtype, owner):
         ids.extend(sel.folder_note_ids(state, fid))
     return sel.by_date_desc(list(dict.fromkeys(ids)))
+
+
+def _period_containers(state: AppState, mtype: str, owner: str = "all") -> list[str]:
+    fs = sel.folders(state)
+    fids = sel.period_container_ids(state, mtype)
+    if owner == "mine":
+        return [k for k in fids if fs[k].host == ME]
+    if owner == "member":
+        return [k for k in fids if fs[k].host != ME]
+    return fids
 
 
 @dataclass(frozen=True)
@@ -77,9 +87,13 @@ class Period:
 
 
 def periods(state: AppState, mtype: str, owner: str = "all") -> list[Period]:
-    """이 회의 종류의 기간 묶음 (최근 기간 먼저, 안의 회의도 최근 순)."""
+    """이 회의 종류의 기간 묶음 (최근 기간 먼저, 안의 회의도 최근 순).
+
+    주차별 · 월별 · 일별로 저장한 회의만 들어가요. 프로젝트별 폴더의 회의와는 서로 겹치지 않아요.
+    """
     buckets: dict[str, list[str]] = {}
-    for mid in meeting_ids_of_type(state, mtype, owner):
+    ids = [i for k in _period_containers(state, mtype, owner) for i in sel.folder_note_ids(state, k)]
+    for mid in sel.by_date_desc(list(dict.fromkeys(ids))):
         buckets.setdefault(period_key(mtype, repo.meeting(mid).date), []).append(mid)
     return [Period(k, period_label(k), tuple(v)) for k, v in sorted(buckets.items(), key=lambda kv: kv[0], reverse=True)]
 
@@ -120,6 +134,12 @@ def node_of_location(state: AppState) -> tuple[str, list[str]]:
         if t and g == "period" and p:
             chain.append(f"p:{t}:{p}")
         return chain[-1], chain[:-1]
+    if state.screen == "note" and sel.is_period_folder(repo.meeting(state.meeting_id).topic or ""):
+        m = repo.meeting(state.meeting_id)
+        t = sel.folders(state)[m.topic].type if m.topic in sel.folders(state) else ""
+        if t:
+            node = f"p:{t}:{period_key(t, m.date)}"
+            return node, ["root", f"t:{t}", f"g:{t}:period", node]
     if state.screen in ("folder", "note"):
         fid = state.folder_id if state.screen == "folder" else repo.meeting(state.meeting_id).topic
         fs = sel.folders(state)

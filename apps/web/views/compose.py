@@ -1,6 +1,6 @@
 """새 회의록 작성 (로그인 후 첫 화면) — 3단계.
 
-  1) 회의 내용 입력: 기본 정보(제목 · 날짜 · 주관자 · 참석자 · 회의 종류·폴더) + 회의 내용(직접 쓰기 / TXT · MD 첨부)
+  1) 회의 내용 입력: 기본 정보(제목 · 날짜 · 주관자 · 참석자 · 회의 종류·폴더) + 회의 내용(직접 쓰기 / TXT · MD · DOCX · HWPX 첨부)
      · 지원하는 입력 형식: 발화자 없는 텍스트(기본) · [발화자] 형식 · 발화자: 형식 중 하나를 고름
        고른 형식의 규칙은 회색 안내글로, 예시는 입력칸의 회색 글씨(placeholder)로 보여 줌
      · 고른 형식에서 벗어나면 「발화자 확인 →」에서 다음 단계로 못 가요
@@ -28,11 +28,13 @@ from ui.buttons import button
 from ui.html import markup
 from ui.layout import page
 from ui.tags import tag
+from utils.files import ALLOWED_LABEL, read_text
 from utils.text import esc
 from views.meeting.insight_tabs import render_insights
 from views.meeting.raw_panel import render_raw_panel
 
-_FILE_TYPES = ["txt", "md"]  # 데모에서 내용을 읽을 수 있는 형식
+# 회의 내용으로 읽을 수 있는 형식: TXT · MD · DOCX · HWPX (utils/files.py)
+# 파일 고르는 창은 형식을 막지 않고, 「발화자 확인」 때 아니면 빨간 안내 + 다음 단계로 못 가게 함
 _NEW = "new"
 
 
@@ -96,7 +98,8 @@ def _current_text(s: AppState, n: int) -> str:
     """지금 입력칸에 있는 글 + 첨부 파일 내용 (형식 검사용)."""
     typed = st.session_state.get(f"cp_text_{n}_{s.cp_text_rev}", s.nn_text) or ""
     files = st.session_state.get(f"cp_files_{n}") or []
-    bodies = [f.getvalue().decode("utf-8", errors="replace") for f in files] if files else [b for _, b in s.nn_files]
+    bodies = [read_text(f.name, f.getvalue()) for f in files] if files else [b for _, b in s.nn_files]
+    bodies = [b for b in bodies if b]  # 지원하지 않는 형식 · 읽을 수 없는 파일은 빼고
     return "\n".join(x.strip() for x in [typed, *bodies] if x and x.strip())
 
 
@@ -166,9 +169,9 @@ def _content(s: AppState, n: int) -> None:
         )
     with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
         with st.container(key="cp-attach", width="content"):
-            st.file_uploader("파일 첨부", type=_FILE_TYPES, accept_multiple_files=True, key=f"cp_files_{n}",
+            st.file_uploader("파일 첨부", accept_multiple_files=True, key=f"cp_files_{n}",
                              label_visibility="collapsed")
-        markup('<span class="cp-types">TXT · MD</span>')
+        markup(f'<span class="cp-types">{ALLOWED_LABEL}</span>')
         markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
     if s.nn_files and not st.session_state.get(f"cp_files_{n}"):
         with st.container(horizontal=True, vertical_alignment="center", gap="small"):
