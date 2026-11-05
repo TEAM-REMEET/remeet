@@ -136,7 +136,7 @@ def normalize_meeting(
                         + _evidence(unresolved) + _evidence(next_topics))
                 ),
                 "actions": [
-                    {"id": i["item_id"], "task": i["text"], "owner": i.get("assignee"), "due": i.get("due")}
+                    {"id": i["item_id"], "task": i["text"], "owner": ", ".join(i.get("assignees") or []) or None, "due": i.get("due")}
                     for i in actions
                 ],
             }
