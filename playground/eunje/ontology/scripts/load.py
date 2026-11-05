@@ -424,7 +424,9 @@ TOPIC_JUDGE_SYSTEM = """너는 회의 안건을 프로젝트의 Topic(여러 회
 {"decision": "existing" 또는 "new", "topic_id": "기존이면 후보의 topic_id, 새 Topic이면 null", "reason": "한 문장"}"""
 
 
-LLM_MODEL = "gpt-6-luna"   # 모델은 고정하고 effort만 바꿔 가며 비교한다
+MISC_TITLE = "기타"  # 이 제목의 안건은 LLM 없이 항상 하나의 '기타' Topic으로 묶는다
+
+LLM_MODEL = "gpt-6-luna"  # 모델은 고정하고 effort만 바꿔 가며 비교한다
 LLM_EFFORT = "high"          # main()에서 --effort로 바꾼다
 
 
@@ -440,11 +442,24 @@ def link_topic(tx: Any, meeting: dict[str, Any], agenda: dict[str, Any]) -> tupl
 
     (topic_id, confidence, 이유)를 돌려준다. LLM은 믿을 만한 점수를 주지 않아서 기존 연결의 confidence는 비워 둔다.
     """
+    is_misc = agenda["title"].strip() == MISC_TITLE
+    if is_misc:
+        # '기타' 안건은 내용과 상관없이 프로젝트의 '기타' Topic 하나로 모은다 (LLM 판단 없음)
+        found = tx.run(
+            "MATCH (t:Topic {title: $title})-[:IN]->(:Project {project_id: $pid}) RETURN t.topic_id AS id LIMIT 1",
+            title=MISC_TITLE,
+            pid=meeting["project_id"],
+        ).single()
+        if found:
+            print(f"  [기타 고정] {agenda['title']} -> {MISC_TITLE}")
+            return found["id"], 1.0, "'기타' 안건은 '기타' Topic으로 고정"
+
     # Topic마다 최근에 연결된 안건 3개(제목·결정·next_topics)를 함께 보여 준다
     # shortcut: 프로젝트의 Topic을 전부 프롬프트에 넣는다. Topic이 50개를 넘으면 후보를 줄이는 단계를 추가한다.
     topics = tx.run(
         """
         MATCH (t:Topic)-[:IN]->(:Project {project_id: $pid})
+        WHERE t.title <> $misc
         OPTIONAL MATCH (t)<-[:ABOUT]-(ag:Agenda)<-[:HAS_AGENDA]-(mt:Meeting)
         WITH t, ag, mt ORDER BY mt.held_at DESC, mt.meeting_id DESC, ag.order DESC
         WITH t, collect({meeting: mt.meeting_id, title: ag.title, decisions: ag.decisions,
@@ -452,9 +467,12 @@ def link_topic(tx: Any, meeting: dict[str, Any], agenda: dict[str, Any]) -> tupl
         RETURN t.topic_id AS topic_id, t.title AS title, recent_agendas
         """,
         pid=meeting["project_id"],
+        misc=MISC_TITLE,
     ).data()
 
-    if topics:
+    if is_misc:
+        reason = "첫 '기타' 안건 → '기타' Topic 생성"
+    elif topics:
         decision = _ask_llm(agenda, topics)
         candidate = {t["topic_id"]: t for t in topics}
         # LLM 출력은 믿지 않고 검사한다: 후보에 없는 topic_id면 새 Topic으로 처리
@@ -475,7 +493,7 @@ def link_topic(tx: Any, meeting: dict[str, Any], agenda: dict[str, Any]) -> tupl
         """,
         pid=meeting["project_id"],
         tid=topic_id,
-        title=agenda["title"],
+        title=MISC_TITLE if is_misc else agenda["title"],
     )
     print(f"  [새 Topic] {agenda['title']}  ({reason})")
     return topic_id, 1.0, reason  # 새 Topic은 자기 자신과 연결이라 1.0
