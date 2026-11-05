@@ -128,7 +128,8 @@ def _discussions(agenda: dict[str, Any], items: list[dict[str, Any]]) -> list[di
                     {
                         "id": i["item_id"],              # 예) TS3003a_a1_d5
                         "description": i["text"],
-                        "owner_raw": i.get("assignee"),  # assign_explicit_owners()가 참석자와 맞춰 ASSIGNED_TO로 잇는다
+                        # assign_explicit_owners()가 참석자와 맞춰 ASSIGNED_TO로 잇는다 (빈 목록은 None → 추천)
+                        "owner_raw": ", ".join(i.get("assignees") or []) or None,
                         "due": i.get("due"),             # "다음 회의를 위해"처럼 날짜가 아닌 말이 많아 원문 그대로
                     }
                     for i in actions
@@ -336,6 +337,7 @@ FOLLOWS_UP_SYSTEM = """너는 이번 회의의 액션아이템이 같은 프로�
 - 후속 업무 = 이전 액션의 결과를 이어받아 다음 단계를 하거나, 같은 산출물을 보완·수정·확정하는 일.
   (예: 이전 "리모컨 버튼 배치 시안 작성" → 이번 "확정된 버튼 배치로 UI 상세 설계")
 - 주제만 비슷하고 이어받는 산출물이 없으면 후속 업무가 아니다.
+- 단, 회의마다 반복되는 같은 업무(예: 회의록 업로드)는 후속 업무로 보고, 후보 중 가장 최근 회의의 같은 업무를 선행으로 고른다.
 - 같은 topic_id의 후보를 먼저 본다. 다른 Topic의 후보는 이어지는 근거가 분명할 때만 고른다.
 - 선행 업무는 액션당 최대 1개. 확신이 없으면 null.
 
