@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from typing import Callable
 
 from openai import OpenAI
 from pydantic import BaseModel
@@ -25,6 +26,11 @@ _api_calls = 0      # 현재 회의에서 실제 API 호출 수 (run 시작 시 
 def reset_call_count() -> None:
     global _api_calls
     _api_calls = 0
+
+
+def api_call_count() -> int:
+    # 현재 회의에서 실제 API 호출 수 (캐시 사용 제외)
+    return _api_calls
 
 
 def get_client() -> OpenAI:
@@ -45,19 +51,22 @@ def cache_path(system: str, user: str, schema: type[BaseModel], tag: str, effort
 
 @traceable(name="call_structured")    # 캐시를 쓴 호출은 하위에 OpenAI 호출 기록이 없음
 def call_structured(system: str, user: str, schema: type[BaseModel], tag: str = "",
-                    effort: str | None = None) -> BaseModel:
+                    effort: str | None = None, cache_if: Callable[[BaseModel], bool] | None = None) -> BaseModel:
     # tag: 캐시 파일 이름 앞에 붙는 식별자 (ex. TS3003c_summary_action)
+    # cache_if: 이 조건을 만족하는 응답만 캐시에 저장 · 사용 (빈 응답을 재호출할 때 캐시에서 다시 읽지 않도록)
     model = cfg.model_name()
     effort = effort or cfg.REASONING_EFFORT
     path = cache_path(system, user, schema, tag, effort)
     if cfg.USE_LLM_CACHE and path.is_file():
-        print(f"[LLM] 캐시 사용: {path.name}")
-        return schema.model_validate_json(path.read_text(encoding="utf-8"))
+        cached = schema.model_validate_json(path.read_text(encoding="utf-8"))
+        if cache_if is None or cache_if(cached):
+            print(f"[LLM] 캐시 사용: {path.name}")
+            return cached
 
     global _api_calls
-    if _api_calls >= cfg.MAX_LLM_CALLS_PER_MEETING:
-        raise RuntimeError(f"LLM 호출 상한 초과 — 회의 하나당 최대 {cfg.MAX_LLM_CALLS_PER_MEETING}회 "
-                           f"(config.MAX_LLM_CALLS_PER_MEETING), 호출하지 않고 중단")
+    if _api_calls >= cfg.max_llm_calls():
+        raise RuntimeError(f"LLM 호출 상한 초과 — 회의 하나당 최대 {cfg.max_llm_calls()}회 "
+                           f"({cfg.llm_call_plan_text()}), 호출하지 않고 중단")
     _api_calls += 1     # 실패해도 센 횟수로 둠 (같은 실행에서 다시 호출하지 않음)
 
     kwargs = {} if cfg.LLM_TEMPERATURE is None else {"temperature": cfg.LLM_TEMPERATURE}
@@ -70,7 +79,7 @@ def call_structured(system: str, user: str, schema: type[BaseModel], tag: str = 
     if parsed is None:
         raise RuntimeError(f"구조화 출력 파싱 실패 ({tag or schema.__name__}) — 응답 거부 또는 형식 오류")
 
-    if cfg.USE_LLM_CACHE:
+    if cfg.USE_LLM_CACHE and (cache_if is None or cache_if(parsed)):
         cfg.LLM_CACHE_DIR.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
         tmp.write_text(parsed.model_dump_json(indent=1), encoding="utf-8")
