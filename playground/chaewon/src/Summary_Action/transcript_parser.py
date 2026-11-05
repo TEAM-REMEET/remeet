@@ -24,10 +24,12 @@
     동명이인 없음         김철수       김철수                 김철수
     다른 직무의 동명이인   홍길동       홍길동A (코드 부여)     홍길동(산업디자이너)
     같은 직무의 동명이인   홍길동A      홍길동A (실제 이름)     홍길동A
+    둘이 함께 있을 때      홍길동A · 홍길동B · 홍길동 → 홍길동은 다른 직무의 동명이인 (LLM 입력 홍길동C, 표시 홍길동(직무))
     코드가 부여한 A · B는 LLM 입력 전용이며 저장하지 않음 — 참여자 순서로 항상 같게 계산하고, 저장 전에 표시 이름으로 되돌림 (name_restorer)
 """
 
 import re
+from collections import Counter
 from collections.abc import Callable
 from datetime import datetime
 
@@ -77,7 +79,7 @@ def parse_participants(raw: str) -> list[Person]:
             continue
         parsed.append((name, job, user_id))
 
-    seen_ids, seen_people, counts = set(), set(), {}
+    seen_ids, seen_people = set(), set()
     for name, job, user_id in parsed:
         person_key = (normalize_label(name), normalize_label(job))
         if user_id in seen_ids:
@@ -86,23 +88,21 @@ def parse_participants(raw: str) -> list[Person]:
             errors.append(f"'{name}{sep}{job}'가 여러 명임 — 같은 직무의 동명이인은 이름을 '{name}A', '{name}B'처럼 구분해야 함")
         seen_ids.add(user_id)
         seen_people.add(person_key)
-        counts[normalize_label(name)] = counts.get(normalize_label(name), 0) + 1
     if errors:
         raise TranscriptFormatError(f"메타데이터 '참여자' 값 오류: {raw!r}", errors)
+    homonyms = _names_needing_job([name for name, _, _ in parsed])
     return [Person(user_id=user_id, name=name, job=job,
-                   display_name=f"{name}({job})" if counts[normalize_label(name)] > 1 else name)
+                   display_name=f"{name}({job})" if normalize_label(name) in homonyms else name)
             for name, job, user_id in parsed]
 
 
 def llm_names(participants: list[Person]) -> dict[str, str]:
     # {user_id: LLM 입력 이름} — 다른 직무의 동명이인만 코드가 A · B를 붙임 (참여자 순서, 실제 이름과 겹치는 글자는 건너뜀)
-    counts: dict[str, int] = {}
-    for p in participants:
-        counts[normalize_label(p.name)] = counts.get(normalize_label(p.name), 0) + 1
+    homonyms = _names_needing_job([p.name for p in participants])
     taken = {normalize_label(p.name) for p in participants}
     names = {}
     for p in participants:
-        if counts[normalize_label(p.name)] == 1:
+        if normalize_label(p.name) not in homonyms:
             names[p.user_id] = p.name
             continue
         letter = next((c for c in cfg.ALIAS_LETTERS if normalize_label(p.name + c) not in taken), None)
@@ -122,6 +122,14 @@ def format_llm_participants(participants: list[Person]) -> str:
 def _base_name(name: str) -> str:
     m = _SUFFIXED.fullmatch(name)
     return m.group(1) if m else name
+
+
+def _names_needing_job(names: list[str]) -> set[str]:
+    # 다른 직무의 동명이인으로 볼 이름 (공백 제거) — 이름이 그대로 여러 명이거나, A · B 없는 이름이 'A · B를 뗀 이름'과 겹칠 때
+    #   ['홍길동A', '홍길동B', '홍길동'] → {'홍길동'} / ['홍길동A', '홍길동B'] → 없음 (같은 직무의 동명이인은 이름으로 구분됨)
+    exact = Counter(normalize_label(name) for name in names)
+    base = Counter(normalize_label(_base_name(name)) for name in names)
+    return {key for key in exact if exact[key] > 1 or base[key] > 1}
 
 
 def _flexible(text: str) -> str:

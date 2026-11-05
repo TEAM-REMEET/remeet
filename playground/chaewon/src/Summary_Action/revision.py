@@ -87,10 +87,10 @@ def _update_fields(item: BaseItem, values: dict, edit, valid: set[int], stage: s
 
 def _discussion_values(edit, item_id: str, history: list[ItemRevision], log: list[PostprocessLog],
                        stage: str) -> dict:
-    decision, assignee, due = normalize_discussion(edit.discussion_tag, edit.decision_tag, edit.assignee, edit.due,
-                                                   item_id, history, log, stage)
+    decision, assignees, due = normalize_discussion(edit.discussion_tag, edit.decision_tag, edit.assignees, edit.due,
+                                                    item_id, history, log, stage)
     return {"subtopic": edit.subtopic.strip() or cfg.DEFAULT_SUBTOPIC, "discussion_tag": edit.discussion_tag,
-            "decision_tag": decision, "text": edit.text.strip(), "assignee": assignee, "due": due}
+            "decision_tag": decision, "text": edit.text.strip(), "assignees": assignees, "due": due}
 
 
 def rebuild_subtopics(agenda: Agenda) -> None:
@@ -165,7 +165,7 @@ def apply_revision(summary: MeetingSummary, rev: LLMRevision, round_no: int) -> 
     for e in rev.discussion_updates:
         if item := target(e.item_id, "major_discussions", e):
             values = _discussion_values(e, e.item_id, item.history, log, stage)
-            person, reasons = assignee_fields(values["assignee"], participants, e.item_id, log)
+            person, reasons = assignee_fields(values["assignees"], participants, e.item_id, log)
             values.update(person)
             item.review_reasons = [r for r in item.review_reasons if not r.startswith(ASSIGNEE_REVIEW_PREFIX)] + reasons
             fields = _update_fields(item, values, e, valid, stage, log)
@@ -208,10 +208,11 @@ def apply_revision(summary: MeetingSummary, rev: LLMRevision, round_no: int) -> 
     def discussion(base: dict, item_id: str, history: list[ItemRevision], e) -> DiscussionItem:
         values = _discussion_values(e, item_id, history, log, stage)
         values.pop("text")
-        person, reasons = assignee_fields(values["assignee"], participants, item_id, log)
+        person, reasons = assignee_fields(values["assignees"], participants, item_id, log)
+        values.update(person)
         if reasons:
             base.update(review_reasons=base["review_reasons"] + reasons, status="REVIEW_REQUIRED")
-        return DiscussionItem(**base, subtopic_id="", **values, **person)     # subtopic_id는 rebuild_subtopics에서 채움
+        return DiscussionItem(**base, subtopic_id="", **values)     # subtopic_id는 rebuild_subtopics에서 채움
 
     for e in rev.discussion_additions:
         add("major_discussions", e, lambda b, i, h, e=e: discussion(b, i, h, e))

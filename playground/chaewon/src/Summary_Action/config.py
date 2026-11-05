@@ -22,6 +22,7 @@
 
 import os
 from pathlib import Path
+from typing import get_args
 
 # ══════════════════════════════════════════════════════════════════════
 # 1. 경로
@@ -58,6 +59,10 @@ USE_LLM_CACHE = True                 # 같은 입력(모델 · 추론 강도 · 
 #                     └ MAX_VERIFY_ROUNDS번째 검증도 실패 → 남은 문제 항목에 '검토 필요' 표시 → 저장
 #   생성 후에는 반드시 1회 이상 검증함 (검증을 건너뛰는 경로 없음)
 MAX_VERIFY_ROUNDS = 3               # 검증 최대 횟수 (1~3) — 재수정은 최대 MAX_VERIFY_ROUNDS-1회 (무한 루프 방지)
+# 개선 유형: 1회차에만 재수정, 2회차부터는 검증 기록에만 남김 (통과를 막지 않고 '검토 필요'로 표시하지 않음)
+# 그 외 유형은 오류: 회차와 관계없이 재수정 대상이고, 마지막 검증까지 남으면 '검토 필요'
+IMPROVEMENT_ISSUE_TYPES = {"깊이 부족", "논의 흐름 단절", "세부 정보 누락", "결정 고려사항 누락", "중복 요약",
+                           "요약 범위 오류", "안건 구성 오류", "기타 안건 분류 오류"}
 
 # ══════════════════════════════════════════════════════════════════════
 # 3. LangSmith (키는 .env, 키가 없으면 기록 없이 동작)
@@ -89,7 +94,7 @@ SPEAKER_LIKE_LABEL_LEN = 10          # none 모드 경고 판정: '표기: …'�
 # ══════════════════════════════════════════════════════════════════════
 DEFAULT_SUBTOPIC = "기타"            # 주요 논의 소주제가 비었을 때
 MISC_AGENDA_TITLE = "기타"           # 핵심 안건이 아닌 논의 · 액션을 모으는 안건 제목 (회의당 하나, 목록 맨 뒤 — 프롬프트 문구와 같게 유지)
-EMPTY_VALUES = {"", "-", "null", "none", "없음"}   # assignee · due에서 null로 처리할 값 (소문자 비교)
+EMPTY_VALUES = {"", "-", "null", "none", "없음"}   # assignees에서 제외하고 due에서 null로 처리할 값 (소문자 비교)
 DUE_FORMATS = ("%Y-%m-%d", "%Y-%m-%d %H:%M")      # due로 인정하는 형식 (프롬프트 문구와 같게 유지) — 그 외 값은 null로 저장
 
 # ══════════════════════════════════════════════════════════════════════
@@ -150,6 +155,10 @@ def validate() -> None:
         errors.append(f"REASONING_EFFORT={REASONING_EFFORT!r} — {sorted(ALLOWED_EFFORTS)} 또는 None")
     if not isinstance(MAX_VERIFY_ROUNDS, int) or not 1 <= MAX_VERIFY_ROUNDS <= 3:
         errors.append(f"MAX_VERIFY_ROUNDS={MAX_VERIFY_ROUNDS!r} — 1~3 (LLM 반복은 최대 3회)")
+    from schemas import IssueType       # 여기서만 필요 (schemas는 config를 읽지 않음)
+    unknown = IMPROVEMENT_ISSUE_TYPES - set(get_args(IssueType))
+    if unknown:
+        errors.append(f"IMPROVEMENT_ISSUE_TYPES에 없는 유형: {sorted(unknown)} — schemas.IssueType의 이름과 같아야 함")
     for name, value in (("VERIFY_EFFORT", VERIFY_EFFORT), ("REVISE_EFFORT", REVISE_EFFORT)):
         if value is not None and value not in ALLOWED_EFFORTS:
             errors.append(f"{name}={value!r} — {sorted(ALLOWED_EFFORTS)} 또는 None")

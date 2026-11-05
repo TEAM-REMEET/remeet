@@ -17,6 +17,10 @@
       └─ 실패 · 회차 = MAX → mark_review ─────────────────────▶ finalize
                              남은 문제 항목에 REVIEW_REQUIRED + 사유, 회의록 상단 '검토 필요'
 
+문제 등급 (config.IMPROVEMENT_ISSUE_TYPES)
+    오류  회차와 관계없이 재수정 대상, 마지막 검증까지 남으면 '검토 필요'
+    개선  1회차에만 재수정, 이후에는 검증 기록에만 남김 (통과를 막지 않음) — 위 그림의 '실패'는 처리할 문제가 있다는 뜻
+
 반복 제한 (무한 루프 방지, 세 겹)
     1. route_after_verify: 검증 회차가 MAX_VERIFY_ROUNDS(1~3)에 도달하면 더 재수정하지 않음
     2. llm.call_structured: 회의 하나당 API 호출 상한 config.max_llm_calls() (기본 9 = 생성 1 + 생성 재호출 1 + 검증 3 + 재수정 2 + 여유 2)
@@ -53,7 +57,7 @@ class SummaryState(TypedDict, total=False):
     summary: MeetingSummary             # 후처리 · 재수정이 반영된 현재 요약
     generate_attempts: int              # 진행한 생성 호출 횟수
     round: int                          # 진행한 검증 횟수
-    issues: list[VerificationIssue]     # 마지막 검증 문제
+    issues: list[VerificationIssue]     # 마지막 검증에서 처리할 문제 (재수정 · 검토 필요 대상, 기록만 남기는 개선 제외)
     saved: list[str]
 
 
@@ -105,11 +109,16 @@ def node_verify(state: SummaryState) -> dict:
                           LLMVerification, tag=_tag(loaded, f"verify{round_no}"),
                           effort=cfg.VERIFY_EFFORT)
     issues = to_issues(llm, summary, round_no)
-    summary.verification.rounds.append(VerificationRound(round=round_no, passed=not issues, issues=issues))
-    print(f"[검증 {round_no}/{cfg.MAX_VERIFY_ROUNDS}] " + ("통과" if not issues else f"문제 {len(issues)}건"))
+    errors = [i for i in issues if i.issue_type not in cfg.IMPROVEMENT_ISSUE_TYPES]
+    # 처리할 문제: 재수정할 수 있는 1회차는 전부, 그 외에는 오류만 (개선은 기록만 남김)
+    targets = issues if round_no == 1 and round_no < cfg.MAX_VERIFY_ROUNDS else errors
+    summary.verification.rounds.append(VerificationRound(round=round_no, passed=not targets, issues=issues))
+    print(f"[검증 {round_no}/{cfg.MAX_VERIFY_ROUNDS}] " + ("통과" if not targets else "재수정 · 검토 대상 있음")
+          + f" (오류 {len(errors)}건 · 개선 {len(issues) - len(errors)}건)")
     for i in issues:
-        print(f"   - {i.issue_id} {i.issue_type}: {', '.join(i.item_ids) or i.agenda_id or '회의 전체'}")
-    return {"summary": summary, "round": round_no, "issues": issues}
+        grade = "오류" if i in errors else "개선" if i in targets else "개선 · 기록만"
+        print(f"   - {i.issue_id} [{grade}] {i.issue_type}: {', '.join(i.item_ids) or i.agenda_id or '회의 전체'}")
+    return {"summary": summary, "round": round_no, "issues": targets}
 
 
 def node_revise(state: SummaryState) -> dict:
