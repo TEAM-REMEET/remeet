@@ -29,6 +29,7 @@ def auth(permission: str) -> dict:
 
 
 ADMIN = auth("admin")
+MEMBER = auth("member")
 
 
 class CheckOrgTests(unittest.TestCase):
@@ -69,7 +70,7 @@ class PasswordTests(unittest.TestCase):
     def test_password_hash_never_leaves_the_api(self):
         self.assertNotIn("password_hash", people.READ_PEOPLE)
         with patch.object(people, "list_people", return_value=[{**PERSON, "password_hash": "scrypt$leak"}]):
-            self.assertNotIn("password_hash", TestClient(app).get("/api/people").text)
+            self.assertNotIn("password_hash", TestClient(app).get("/api/people", headers=MEMBER).text)
 
 
 class TokenTests(unittest.TestCase):
@@ -122,6 +123,18 @@ class AuthRouteTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/auth/me").status_code, 401)
         self.assertEqual(self.client.get("/api/auth/me", headers={"Authorization": "Bearer junk"}).status_code, 401)
 
+    def test_reads_need_login(self):
+        with patch.object(people, "list_people", return_value=[]), patch.object(people, "list_catalog", return_value=[]):
+            for path in ("/api/people", "/api/people/u1", "/api/teams", "/api/roles", "/api/skills"):
+                self.assertEqual(self.client.get(path).status_code, 401, path)
+            self.assertEqual(self.client.get("/api/teams", headers=MEMBER).status_code, 200)
+
+    def test_server_refuses_to_start_without_secrets(self):
+        with patch.object(settings, "AUTH_SECRET", ""), patch.object(settings, "NEO4J_PASSWORD", "x"):
+            self.assertEqual(settings.missing(), ["AUTH_SECRET"])
+            with self.assertRaises(RuntimeError), TestClient(app):
+                pass
+
     def test_people_writes_need_admin(self):
         with patch.object(people, "update_person") as update, patch.object(people, "create_person") as create:
             self.assertEqual(self.client.patch("/api/people/u1", json={"is_active": False}).status_code, 401)
@@ -138,13 +151,13 @@ class PeopleRouteTests(unittest.TestCase):
 
     def test_list(self):
         with patch.object(people, "list_people", return_value=[PERSON]):
-            response = self.client.get("/api/people")
+            response = self.client.get("/api/people", headers=MEMBER)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), [PERSON])
 
     def test_get_missing_is_404(self):
         with patch.object(people, "get_person", return_value=None):
-            self.assertEqual(self.client.get("/api/people/u999").status_code, 404)
+            self.assertEqual(self.client.get("/api/people/u999", headers=MEMBER).status_code, 404)
 
     NEW = {"name": "새사람", "email": "new@x.kr", "team_id": "t-pm", "job": "프로젝트 매니저", "position": "mid",
            "skills": [{"skill_id": "PM-01", "level": 3}]}

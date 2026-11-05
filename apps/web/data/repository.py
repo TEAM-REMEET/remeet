@@ -53,22 +53,35 @@ def _evidence(items: list[dict]) -> tuple[Evidence, ...]:
 
 # ---------------------------------------------------------------- people
 # ---------------------------------------------------------------- 구성원 (백엔드 → Neo4j)
+def _token() -> str:
+    """로그인한 사람의 출입증. state.store 를 import 하면 순환 import 라 세션 상태에서 바로 읽어요."""
+    return getattr(st.session_state.get("_app_state"), "token", "")
+
+
 # shortcut: 60초 캐시, 이 앱에서 바꾸면 바로 비우지만 다른 곳(DB 직접 수정)의 변경은 최대 60초 늦게 보임
 @st.cache_data(ttl=60, show_spinner=False)
+def _people_rows(token: str) -> list[dict]:
+    return api.call("GET", "/api/people", token=token)
+
+
 def people_rows() -> list[dict]:
     """구성원 전체 (GET /api/people): user_id · name · email · permission · position · is_active · team · job · skills."""
-    return api.call("GET", "/api/people")
+    return _people_rows(_token())
 
 
 @st.cache_data(ttl=60, show_spinner=False)
+def _catalog(kind: str, token: str) -> list[dict]:
+    return api.call("GET", f"/api/{kind}", token=token)
+
+
 def catalog(kind: str) -> list[dict]:
     """kind: teams | roles | skills"""
-    return api.call("GET", f"/api/{kind}")
+    return _catalog(kind, _token())
 
 
 def _people_changed() -> None:
-    people_rows.clear()
-    catalog.clear()  # 새 직무를 입력하면 직무 목록도 바뀜
+    _people_rows.clear()
+    _catalog.clear()  # 새 직무를 입력하면 직무 목록도 바뀜
     org_changed()  # 열려 있는 다른 화면도 새로 그림
 
 

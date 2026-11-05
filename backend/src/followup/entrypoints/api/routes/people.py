@@ -1,7 +1,6 @@
 """구성원 조회·추가·수정과 팀·직무·스킬 목록. 관리자 구성원 관리, 회의 참석자 선택에서 쓴다.
 
-추가 · 수정은 관리자 토큰이 있어야 한다.
-shortcut: 조회(GET)는 로그인 없이 열려 있음, 외부에 공개 배포하기 전에 current_user로 막는다.
+모든 API는 로그인 토큰이 있어야 하고, 추가 · 수정은 관리자 토큰이어야 한다 (nginx가 /api/를 외부에 공개하므로).
 """
 
 from typing import Literal
@@ -10,9 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from followup.adapters.neo4j import people
-from followup.entrypoints.api.routes.auth import require_admin
+from followup.entrypoints.api.routes.auth import current_user, require_admin
 
-router = APIRouter(prefix="/api", tags=["people"])
+router = APIRouter(prefix="/api", tags=["people"], dependencies=[Depends(current_user)])
 
 Position = Literal["senior", "mid", "junior"]
 Permission = Literal["admin", "member"]

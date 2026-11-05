@@ -18,3 +18,8 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 # 로그인 출입증(토큰) 서명 키. 길고 무작위인 값이어야 하고, 바뀌면 모든 사람이 다시 로그인해야 한다.
 AUTH_SECRET = os.getenv("AUTH_SECRET", "")
 AUTH_TOKEN_DAYS = 7
+
+
+def missing() -> list[str]:
+    """서버가 동작하는 데 꼭 필요한데 비어 있는 설정 이름."""
+    return [name for name in ("NEO4J_PASSWORD", "AUTH_SECRET") if not globals()[name]]

@@ -12,12 +12,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from followup import settings
 from followup.adapters.neo4j.driver import close_driver
 from followup.entrypoints.api.routes import auth, people
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # 설정이 빠졌으면 시작하지 않는다 → 컨테이너가 healthy가 안 되고 로그에 이유가 남음 (로그인 때 500보다 찾기 쉬움)
+    if settings.missing():
+        raise RuntimeError(f"필수 환경변수가 비어 있습니다: {', '.join(settings.missing())} (deploy/.env 확인)")
     yield
     close_driver()
 

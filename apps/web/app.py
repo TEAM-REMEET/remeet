@@ -19,7 +19,7 @@ from config import APP_ICON, APP_TITLE, LOGIN_COOKIE
 from data import api
 from data import repository as repo
 from state import actions, delivery, router
-from state.store import get_state
+from state.store import get_state, reset_state
 from ui.theme import inject_css
 from utils import browser
 from views import ROUTES, login, not_found
@@ -78,4 +78,10 @@ def main() -> None:
     render_active_dialog()
 
 
-main()
+try:
+    main()
+except api.ApiError as e:  # 화면을 그리다 백엔드 호출이 실패함
+    if e.status == 401:  # 로그인 만료 · 서명 키 변경 → 다시 로그인
+        reset_state(logged_out=True, login_error="로그인이 만료됐어요. 다시 로그인해 주세요.")
+        st.rerun()
+    st.error(f"데이터를 불러오지 못했어요: {e}")
