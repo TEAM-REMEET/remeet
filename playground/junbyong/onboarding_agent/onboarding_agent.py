@@ -99,7 +99,8 @@ HISTORY_EVIDENCE = """
       AND (size($meeting_ids) = 0 OR m.meeting_id IN $meeting_ids)
     OPTIONAL MATCH (a)-[:DECIDED]->(d:Decision)
     OPTIONAL MATCH (n:Decision)-[:SUPERSEDES]->(d)
-    WITH m, a, collect(DISTINCT d {.decision_id, .content, .status, .confidence, .verified_by, superseded_by: n {.decision_id, .content}}) AS decisions
+    WITH m, a, collect(DISTINCT d {.decision_id, .content, .status, .confidence, .verified_by,
+        decided_at: toString(d.decided_at), superseded_by: n {.decision_id, .content}}) AS decisions
     OPTIONAL MATCH (a)-[:HAS_DISCUSSION]->(dn:Discussion)
     OPTIONAL MATCH (dn)-[:PRODUCED]->(ai:ActionItem)
     RETURN a.agenda_id AS source_id, 'agenda' AS kind, a.agenda_id AS agenda_id,
@@ -256,6 +257,12 @@ def bigrams(text: str) -> set[str]:
     return {t[i:i + 2] for i in range(len(t) - 1)}
 
 
+def mentions(text: str, content: str | None) -> bool:
+    """문장이 그 내용을 말하는지: 내용의 2글자 조각 중 30% 이상이 문장에 있으면 말한 것으로 본다."""
+    b = bigrams(content)
+    return bool(b) and len(bigrams(text) & b) / len(b) >= 0.3
+
+
 def call_json(llm, prompt: str, payload: dict) -> dict:
     response = llm.bind(response_format={"type": "json_object"}).invoke(
         [("system", prompt), ("human", json.dumps(payload, ensure_ascii=False, default=str))])
@@ -379,11 +386,16 @@ def ground(s: AskState) -> dict:
         warnings.append(f"근거가 확인되지 않은 문장 {dropped}개를 뺐습니다.")
     used = list(dict.fromkeys(i for x in kept for i in x["source_ids"]))
 
-    decisions = {}  # decision_id → (결정, 근거 source_id)
-    for sid in used:
-        e = by_id[sid]
-        for d in ([e] if e["kind"] == "decision" else e.get("decisions") or []):
-            decisions.setdefault(d.get("decision_id") or d["source_id"], (d, sid))
+    # decision_id → (결정, 근거 source_id). 문장이 그 결정 내용을 실제로 말했을 때만 결정 이력·배지에 넣는다.
+    # 안건만 인용한 답("1차 회의 주제는 …")에 결정이 전부 딸려 나오거나, LLM이 같은 안건의 엉뚱한 결정 ID를
+    # 단 경우("가격은 25유로" ← "회의록을 올리기로 함")에 그 결정이 이력에 뜨지 않게 한다
+    decisions = {}
+    for x in kept:
+        for sid in x["source_ids"]:
+            e = by_id[sid]
+            for d in ([e] if e["kind"] == "decision" else e.get("decisions") or []):
+                if mentions(x["text"], d.get("content")):
+                    decisions.setdefault(d.get("decision_id") or d["source_id"], (d, sid))
     current = [d for d, _ in decisions.values() if d["status"] == "active"]
     history = [d for d, _ in decisions.values() if d["status"] == "superseded"]
     for d, sid in decisions.values():  # superseded 경고는 LLM이 아니라 코드가 붙인다
@@ -420,7 +432,9 @@ def ground(s: AskState) -> dict:
              "verified_by": "human" if all(x["verified_by"] == "human" for x in timeline) else "auto",
              } if timeline else None
     people = {p["user_id"]: p for p in s.get("people") or []}
-    contacts = [{**{k: people[c["user_id"]][k] for k in ("user_id", "name", "position", "roles")}, "why": c["why"]}
+    # 근거 안건에 할 일이 없는 사람(참석만 한 사람)을 LLM이 "담당"이라고 쓰면 "참석"으로 바로잡는다
+    contacts = [{**{k: people[c["user_id"]][k] for k in ("user_id", "name", "position", "roles")},
+                 "why": c["why"] if people[c["user_id"]].get("tasks") else c["why"].replace("담당", "참석")}
                 for c in s.get("contacts") or [] if c["user_id"] in people] if kept else []
     follow_ups = [f["text"] for f in s.get("follow_ups") or []
                   if f["source_ids"] and set(f["source_ids"]) <= by_id.keys()] if kept else []
@@ -467,8 +481,11 @@ def build_ask_graph(tools: dict, llm):
             if s["intent"] == "decision":
                 return {"evidence": tools["decision_evidence"](family or [t["topic_id"] for t in s["topics"]])}
             if s["intent"] == "history":
-                return {"evidence": tools["history_evidence"](s.get("date_from"), s.get("date_to"), family,
-                                                              s.get("meeting_ids") or [])}
+                # 회의를 지정했으면 주제로 좁히지 않고 그 회의 안건 전체를 본다 ("2차 회의에서 뭘 정했어요?"가
+                # 고른 주제와 겹치는 안건만 보던 문제). 회의 하나의 안건은 몇 개뿐이라 compose가 질문에 맞게 고른다
+                meeting_ids = s.get("meeting_ids") or []
+                return {"evidence": tools["history_evidence"](s.get("date_from"), s.get("date_to"),
+                                                              [] if meeting_ids else family, meeting_ids)}
             if s["intent"] == "action":  # 주제 없는 질문("지금 누가 뭘 하고 있어요?")은 전체 액션아이템에서 찾는다
                 # shortcut: 쿼리 LIMIT 20이라 액션아이템이 많아지면 일부만 보임, 그때 status·기간 필터 추가
                 return {"evidence": tools["action_evidence"](family or [t["topic_id"] for t in s["topics"]])}
@@ -548,7 +565,14 @@ def build_ask_graph(tools: dict, llm):
             mine, words = agendas(st), bigrams(st["text"])
             ranked = sorted((p for p in points if p["agenda_id"] in mine and p["utterances"]),
                             key=lambda p: -len(words & bigrams(p["point"])))
-            sentences.append({**st, "citations": (own + ranked)[:2]})
+            # 인용한 안건마다 가장 맞는 논의 1개씩은 꼭 넣고(안건이 빠지지 않게), 모자라면 다음 순위로 2개까지 채운다
+            picked, covered = list(own), {c["agenda_id"] for c in own}
+            for p in ranked:
+                if p["agenda_id"] not in covered:
+                    picked.append(p)
+                    covered.add(p["agenda_id"])
+            picked += [p for p in ranked if p not in picked][:max(0, 2 - len(picked))]
+            sentences.append({**st, "citations": picked})
         transcripts = {}
         for mid in sorted({c["meeting_id"] for st in sentences for c in st["citations"]}):
             nums = sorted({n for st in sentences for c in st["citations"] if c["meeting_id"] == mid for n in c["utterances"]})
@@ -715,7 +739,9 @@ def self_check() -> None:
                  "history_evidence": lambda f, t, ids, mids: calls.append(("history", f, t, ids, mids)) or [
                      {**a1, "source_id": "A1", "kind": "agenda", "decisions": [
                          {"decision_id": "A1-d1", "content": "보류", "status": "superseded",
-                          "superseded_by": {"decision_id": "A2-d1", "content": "재개"}}]}],
+                          "superseded_by": {"decision_id": "A2-d1", "content": "재개"}}]},
+                     {**a2, "source_id": "A2", "kind": "agenda", "decisions": [
+                         {"decision_id": "A2-d9", "content": "결제 수단을 추가하기로 함.", "status": "active"}]}],
                  "action_evidence": lambda ids: calls.append(("action", ids)) or [
                      {**a1, "source_id": "A3-t1", "kind": "action", "task": "원인 파악", "due": "2026-10-27",
                       "agenda_id": "A3", "meeting_id": "M2", "assignees": [],
@@ -736,11 +762,15 @@ def self_check() -> None:
                 "프로모션 누구한테 물어봐?": {"intent": "people", "topic_ids": ["T1"]},
                 "신입 스킬?": {"intent": "skill", "topic_ids": []},
                 "엉뚱한 주제로 고른 결정": {"intent": "decision", "topic_ids": ["T3"]},
-                "1차 회의에서 뭐 했어?": {"intent": "history", "topic_ids": [], "meeting_ids": ["M1", "NOPE"]}}
+                "1차 회의에서 뭐 했어?": {"intent": "history", "topic_ids": [], "meeting_ids": ["M1", "NOPE"]},
+                "1차 회의 주제?": {"intent": "history", "topic_ids": ["T3"], "meeting_ids": ["M1"]}}
     compose_calls = []
 
     def compose(p):
         compose_calls.append(p["question"])
+        if p["question"] == "1차 회의 주제?":  # 안건 2개를 인용하지만 결정 내용은 말하지 않는 답
+            return {"sentences": [{"text": "주제는 일정과 결제였어요.", "source_ids": ["A1", "A2"]}],
+                    "contacts": [{"user_id": "u1", "why": "PM · 안건 담당"}]}
         return {"sentences": [{"text": "프로모션은 재개됐어요.", "source_ids": ["A2-d1"]},
                               {"text": "지어낸 문장", "source_ids": ["BAD"]},
                               {"text": "근거 없는 문장", "source_ids": []}],
@@ -796,6 +826,12 @@ def self_check() -> None:
     assert calls[-1] == ("decision", ["T1", "T2", "T3"]), "주제 없는 결정 질문은 전체 Topic에서 찾는다"
     m1 = ask(graph, ask_tools, "1차 회의에서 뭐 했어?", "2026-11-03")
     assert calls[-1] == ("history", None, None, [], ["M1"]) and m1["slots"]["meeting_ids"] == ["M1"],         "없는 회의 ID는 버리고 회의로 조회"
+    tp = ask(graph, ask_tools, "1차 회의 주제?", "2026-11-03")
+    assert calls[-1] == ("history", None, None, [], ["M1"]), "회의를 지정하면 주제로 좁히지 않고 그 회의 전체를 본다"
+    assert tp["decision_timeline"] == [] and tp["badge"] is None and tp["current_decisions"] == [], \
+        "안건만 인용하고 결정 내용을 말하지 않으면 결정 이력·배지를 채우지 않는다"
+    assert {c["agenda_id"] for c in tp["sentences"][0]["citations"]} == {"A1", "A2"}, "인용한 안건마다 원문 근거 1개 이상"
+    assert tp["contacts"][0]["why"] == "PM · 안건 참석", "할 일 없는 사람을 '담당'이라고 쓰면 '참석'으로 고친다"
     print("self-check 통과: backfill 시간순·dry-run·SUPERSEDES·HITL·재실행 안전, Topic 계열 조회, "
           "근거 없는 문장 제거, superseded 경고, people/skill 경로, Topic 오분류 시 전체 재조회, 회의 지정·주제 없는 질문, no_evidence.")
 
