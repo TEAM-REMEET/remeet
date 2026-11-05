@@ -22,7 +22,7 @@ def _add_members(fid: str, members: list[str]) -> None:
     teams = repo.teams()
     team_id = s.member_team if s.member_team in teams else next(iter(teams))
     with st.container(key="mem-add", gap="small"):
-        markup('<b style="font-size:13px">멤버 추가</b> <span class="hint">팀을 고르고 이름을 누르면 바로 멤버로 추가돼요</span>')
+        markup('<b style="font-size:13px">멤버 추가</b> <span class="hint">팀을 고르고 이름을 누르면 바로 멤버로 추가되고, 추가된 사람에게 알림이 가요</span>')
         button_group([(tid, t.name) for tid, t in teams.items()], team_id,
                      lambda v: actions.update(member_team=v), key="mem_team")
         team = teams[team_id]

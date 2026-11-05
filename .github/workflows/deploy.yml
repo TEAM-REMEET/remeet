@@ -1,0 +1,142 @@
+# develop 브랜치에 머지되면 바뀐 서비스만 이미지로 빌드해 GHCR에 올리고, EC2에서 받아 재시작한다.
+#
+# 필요한 Secrets: EC2_HOST, EC2_USER, EC2_SSH_KEY
+# 처음 한 번은 Actions 탭에서 "Deploy to EC2" → Run workflow 로 수동 실행해 이미지를 모두 만들어 둔다.
+
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch: # 수동 실행 시 web·backend 모두 빌드
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: false # 배포 도중 끊기지 않게 순서대로 실행
+
+env:
+  REGISTRY: ghcr.io/team-remeet # GHCR 주소는 소문자여야 함
+
+jobs:
+  changes:
+    name: 변경된 폴더 확인
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.web == 'true' }}
+      backend: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.backend == 'true' }}
+      deploy: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.deploy == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+            backend:
+              - 'backend/**'
+            deploy:
+              - 'deploy/**'
+              - '.github/workflows/deploy.yml'
+
+  build-web:
+    name: 웹 이미지 빌드
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/remeet-web:latest
+            ${{ env.REGISTRY }}/remeet-web:${{ github.sha }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  build-backend:
+    name: 백엔드 이미지 빌드
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/remeet-backend:latest
+            ${{ env.REGISTRY }}/remeet-backend:${{ github.sha }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  deploy:
+    name: EC2 배포
+    needs: [changes, build-web, build-backend]
+    # 빌드가 건너뛰어져도(skipped) 실패만 아니면 배포. 관련 폴더가 하나도 안 바뀌었으면 배포 안 함
+    if: >-
+      !failure() && !cancelled() &&
+      (needs.changes.outputs.web == 'true' ||
+       needs.changes.outputs.backend == 'true' ||
+       needs.changes.outputs.deploy == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH로 접속해 최신 이미지 받아 재시작
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY: ${{ env.REGISTRY }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: GHCR_USER,GHCR_TOKEN,REGISTRY
+          command_timeout: 15m
+          script: |
+            set -e
+
+            # compose 파일·nginx 설정을 develop 최신으로 맞춤
+            cd ~/remeet
+            git fetch origin develop
+            git checkout -B develop origin/develop
+
+            cd deploy
+            export WEB_IMAGE="$REGISTRY/remeet-web:latest"
+            export BACKEND_IMAGE="$REGISTRY/remeet-backend:latest"
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            docker compose pull web backend
+            docker logout ghcr.io
+
+            docker compose up -d --no-build --remove-orphans
+            docker image prune -f
+
+            # 배포 확인: nginx를 거쳐 백엔드까지 응답하는지
+            for i in $(seq 1 30); do
+              if curl -fsS http://localhost/api/health; then
+                echo; echo "배포 성공"; exit 0
+              fi
+              sleep 3
+            done
+            echo "헬스체크 실패"; docker compose ps; docker compose logs --tail=50
+            exit 1

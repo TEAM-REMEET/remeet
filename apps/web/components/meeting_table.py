@@ -12,7 +12,7 @@ from ui.tags import tag
 from utils.text import esc
 
 COLUMNS = (2.3, 1.25, 1.0, 1.35, 1.1, 0.95)
-HEADERS = ("회의명", "회의 일시", "주관 · 참석자", "진행 상태", "액션 아이템", "관리")
+HEADERS = ("회의명", "회의 일시", "주관자", "진행 상태", "액션 아이템", "관리")
 
 _BUTTON_VARIANT = {
     "review": "accentline",
@@ -44,7 +44,8 @@ def _row(row: MeetingRow, key: str) -> None:
             markup(f'<div class="cell"><span class="main">{esc(row.date_str)}</span><span class="sub">{esc(row.time)}</span></div>')
         with c_host:
             me = '<span class="me">(나)</span>' if row.is_me else ""
-            markup(f'<div class="cell"><span class="main">{esc(row.host)}{me}</span><span class="sub">참석 {row.count}명</span></div>')
+            # 주관자 이름 (아래 줄은 참석 인원)
+            markup(f'<div class="cell"><span class="main">{esc(row.host)}{me}</span><span class="sub">참석자 {row.count}명</span></div>')
         with c_status:
             markup(f'<div class="cell status">{tag(row.status, row.status_tone)}<span class="sub">{esc(row.status_sub)}</span></div>')
         with c_act:
@@ -65,26 +66,24 @@ def meeting_table(rows: list[MeetingRow], *, key: str) -> None:
 _SECTION_DESC = {
     "left": "아직 끝내지 않은 내 할 일이 있어요",
     "done": "나에게 맡겨진 할 일을 모두 끝냈어요",
-    "none": "이 회의에서 나에게 맡겨진 할 일이 없어요",
 }
 _SECTION_EMPTY = {
     "left": "내 할 일이 남은 회의가 없어요.",
     "done": "내 할 일을 다 끝낸 회의가 없어요.",
-    "none": "나에게 할당된 할 일이 없는 회의가 없어요.",
 }
 
 
 def meeting_sections(state, ids: list[str], *, key: str) -> None:
     """내 할 일 상태별 판넬 3개 + 고른 판넬의 회의 표.
 
-    판넬(내 할 일이 남은 회의 / 다 끝낸 회의 / 할당된 할 일이 없는 회의)을 누르면 그 회의들만 표로 보여 줍니다.
-    처음 들어오면 회의가 있는 첫 판넬을 엽니다.
+    판넬(내 할 일이 남은 회의 / 다 끝낸 회의)을 누르면 그 회의들만 표로 보여 줍니다.
+    처음 들어오면 회의가 있는 첫 판넬을 엽니다. (나에게 맡겨진 할 일이 없는 회의는 판넬에 넣지 않아요)
     """
     from state import actions
     from state import selectors as sel  # selectors 가 MeetingRow 를 정의해서 함수 안에서 불러옴
 
     parts = {g: [i for i in ids if sel.my_todo_status(state, i) == g] for g, _ in sel.TODO_GROUPS}
-    # 직접 고른 판넬은 비어 있어도 그대로 (빈 안내 표시), 처음 들어오면 회의가 있는 첫 판넬
+    # 처음 들어오면 회의가 있는 첫 판넬 · 직접 고른 판넬은 비어 있어도 그대로 (빈 안내 표시)
     current = state.todo_group if state.todo_group in parts else next((g for g, _ in sel.TODO_GROUPS if parts[g]), "left")
 
     with st.container(key=f"tgpanels-{key}", horizontal=True, gap="small"):

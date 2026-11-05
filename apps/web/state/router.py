@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from urllib.parse import urlparse
 from dataclasses import dataclass
 
 import streamlit as st
@@ -9,10 +10,12 @@ from data import repository as repo
 from state import archive
 from state import selectors as sel
 from state.store import AppState, Delivery, get_state
+from utils.browser import hide_page_not_found
 
 # 고정 경로 화면: screen → (url_path, 탭 제목)
 STATIC = {
     "compose": ("", "새 회의록"),
+    "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),
     "recv": ("shared-received", "공유 받은 회의"),
     "mcp": ("integrations", "외부 연동"),
@@ -82,6 +85,22 @@ def build_pages(renderers: dict[str, Callable[[], None]]) -> dict[str, st.Page]:
     return pages
 
 
+def check_not_found(pages: dict[str, st.Page]) -> None:
+    """세션을 시작할 때 한 번: 들어온 주소가 우리 화면이 아니면 not_found 에 그 주소를 적어 둠.
+
+    Streamlit 은 모르는 주소면 첫 화면으로 바꿔 보여 주면서 「Page not found」 창을 띄우는데,
+    그 창은 숨기고(utils/browser.hide_page_not_found) 우리 404 화면을 보여 줍니다.
+    """
+    s = get_state()
+    if s.url_checked:
+        return
+    s.url_checked = True
+    path = urlparse(st.context.url or "").path.strip("/")
+    if path and path not in pages:
+        s.not_found = "/" + path
+        hide_page_not_found()
+
+
 def request(screen: str) -> None:
     """콜백 안에서 호출: 다음 실행 때 해당 화면으로 URL 이동."""
     s = get_state()
@@ -124,6 +143,8 @@ def sync_from_url(current_path: str) -> str:
         if s.last_route is not None and not s.nav_by_action:
             for k, v in _TRANSIENT.items():
                 setattr(s, k, list(v) if isinstance(v, list) else v)
+        if s.last_route is not None:
+            s.not_found = ""  # 다른 화면으로 옮기면 404 끝
         s.last_route = route.path
         # 사이드바 트리: 지금 화면까지 가는 폴더들을 펼침 (사용자가 접은 건 다음 이동 전까지 그대로)
         node, ancestors = archive.node_of_location(s)

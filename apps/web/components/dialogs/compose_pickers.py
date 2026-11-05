@@ -1,6 +1,7 @@
 """새 회의록 작성 화면의 선택 모달: 폴더 · 주관자 · 참석자.
 
-- 폴더: 지금 회의 종류의 내 폴더 중 하나 또는 「+ 새 폴더 만들기」(이름 입력)
+- 회의 종류 · 폴더: 회의 종류(월간·주간·일반) → 보기(월별·주차별·일별 / 프로젝트별) → 폴더
+  (최근 5개, 없으면 이름으로 검색) 또는 「+ 새 폴더 만들기」 (프로젝트는 이름, 기간은 날짜로)
 - 주관자: 팀을 고르면 그 팀 사람들이 나오고, 1명 선택
 - 참석자: 팀을 고르면 그 팀 사람들이 나오고, 여러 명 선택 (다른 팀으로 바꿔도 고른 사람은 유지)
 「선택」을 눌러야 작성 화면에 반영되고, 취소·X 로 닫으면 그대로입니다.
@@ -8,17 +9,22 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import streamlit as st
 
 from config import CURRENT_USER_ID as ME
 from data import repository as repo
 from state import actions
+from state import archive as arc
 from state import selectors as sel
 from state.store import get_state
 from ui.avatar import avatar
 from ui.buttons import button, button_group
 from ui.html import markup
-from utils.text import esc
+from utils.browser import ime_live
+from utils.dates import date_key
+from utils.text import esc, md_escape
 
 _NEW = "new"
 
@@ -33,47 +39,151 @@ def _footer(kind: str, label: str, *, disabled: bool = False) -> None:
             st.rerun()
 
 
-# ================================================================ 폴더
-@st.dialog("폴더 선택", width="medium", on_dismiss=actions.close_modal)
+# ================================================================ 회의 종류 · 폴더
+_RECENT = 5  # 검색어가 없을 때 보여 줄 최근 폴더 수
+
+
+def _project_options(s, mtype: str, query: str) -> list[str]:
+    """프로젝트 폴더: 최근 회의가 있었던 순 (새로 만든 폴더 먼저) · 검색어가 있으면 이름으로 거름."""
+    fids = sel.folder_ids_of_type(s, mtype)
+
+    def recent(fid: str) -> tuple:
+        notes = sel.folder_note_ids(s, fid)
+        return (sel.folders(s)[fid].is_new, date_key(repo.meeting(notes[0]).date) if notes else 0)
+
+    fids = sorted(fids, key=recent, reverse=True)
+    if query:
+        return [k for k in fids if query.lower() in sel.folders(s)[k].name.lower()]
+    return fids[:_RECENT]
+
+
+def _period_options(s, mtype: str, query: str) -> list[str]:
+    """기간 폴더(주차·월·날): 최근 순 · 검색어가 있으면 이름(예: 10월)으로 거름."""
+    keys = [p.key for p in arc.periods(s, mtype)]
+    if query:
+        return [k for k in keys if query.replace(" ", "") in arc.period_label(k).replace(" ", "")]
+    return keys[:_RECENT]
+
+
+def _new_period_key(s, mtype: str) -> str:
+    """새 기간 폴더: 모달의 날짜(없으면 오늘)가 속한 주·달·날."""
+    day = st.session_state.get(f"pick_pdate_{s.pick_nonce}") or date.today()
+    return arc.period_key(mtype, f"{day.month}/{day.day}")
+
+
+def _folder_button(s, t: str, g: str, opt: str, chosen_key: tuple, *, where: bool) -> None:
+    """폴더 한 줄. where=True 면 '주간 회의 › 프로젝트별' 처럼 어디 있는 폴더인지도 보여 줌 (검색 결과용)."""
+    types = repo.meeting_types()
+    if g == "project":
+        f = sel.folders(s)[opt]
+        label = f.name
+        meta = f"회의록 {len(sel.folder_note_ids(s, opt))}개 · 멤버 {len(sel.members_of(s, opt))}명" + (
+            " · 내가 만든 폴더" if f.host == ME else "")
+    else:
+        p = arc.period(s, t, opt)
+        label = arc.period_label(opt)
+        meta = f"회의록 {len(p.meeting_ids)}개" if p else ""
+    if where:
+        meta = f"{types[t].name} › {arc.PERIOD_LABEL[t] if g == 'period' else '프로젝트별'} · {meta}"
+    button(f"**{md_escape(label)}**  \n:gray[{meta}]", key=f"pf_{t}_{g}_{opt}",
+           variant="pickon" if (t, g, opt) == chosen_key else "pick", on_click=actions.pick_folder_result,
+           args=(t, g, opt), width="stretch", icon=":material/folder:")
+
+
+def _search_results(s, query: str, mtype: str, group: str, chosen: str) -> None:
+    """검색어가 있을 때: 회의 종류 · 보기와 상관없이 전체 폴더에서 이름으로 찾기."""
+    found = [(t, "project", k) for t in sel.TYPE_ORDER for k in _project_options(s, t, query)]
+    found += [(t, "period", k) for t in sel.TYPE_ORDER for k in _period_options(s, t, query)]
+    markup(f'<div class="pick-section-head"><b>{esc(f"「{query}」 검색 결과 {len(found)}개")}</b>'
+           '<span class="hint">모든 회의 종류에서 찾았어요 · 새 폴더는 검색어를 지우면 만들 수 있어요</span></div>')
+    with st.container(key="pick-folders", gap="small"):
+        if not found:
+            markup('<p class="hint" style="font-size:13px;padding:8px 2px">찾는 폴더가 없어요. 검색어를 지우고 새로 만들어 보세요.</p>')
+        for t, g, opt in found:
+            _folder_button(s, t, g, opt, (mtype, group, chosen), where=True)
+
+
+def _browse(s, mtype: str, group: str, chosen: str) -> None:
+    """검색어가 없을 때: 회의 종류 → 보기 → 최근 폴더 5개."""
+    types = repo.meeting_types()
+    with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+        markup('<span class="inline-label pick-step">회의 종류</span>')
+        button_group([(k, types[k].name) for k in ("monthly", "weekly", "normal")], mtype, actions.set_pick_type,
+                     key="pk_type", style="seg", gap=None)
+    with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+        markup('<span class="inline-label pick-step">폴더 보기</span>')
+        button_group([("period", arc.PERIOD_LABEL[mtype]), ("project", "프로젝트별")], group, actions.set_pick_group,
+                     key="pk_group", style="seg", gap=None)
+    options = _project_options(s, mtype, "") if group == "project" else _period_options(s, mtype, "")
+    markup(f'<div class="pick-section-head"><b>최근 폴더 {len(options)}개</b>'
+           '<span class="hint">찾는 폴더가 없으면 위에서 검색하거나 새로 만드세요</span></div>')
+    with st.container(key="pick-folders", gap="small"):
+        if not options:
+            markup('<p class="hint" style="font-size:13px;padding:8px 2px">아직 폴더가 없어요. 아래에서 새로 만들 수 있어요.</p>')
+        for opt in options:
+            _folder_button(s, mtype, group, opt, (mtype, group, chosen), where=False)
+
+
+@st.dialog("회의 종류 · 폴더 선택", width="medium", on_dismiss=actions.close_modal)
 def folder_picker_dialog() -> None:
     s = get_state()
-    mtype = repo.meeting_types()[s.nn_type]
+    types = repo.meeting_types()
+    mtype = s.pick_type if s.pick_type in types else "weekly"
+    group = s.pick_group if s.pick_group in arc.GROUPS else "project"
     folders = sel.folders(s)
-    topics = sel.folder_ids_of_type(s, s.nn_type)
-    chosen = s.pick_folder if s.pick_folder in topics else _NEW
 
-    markup(f'<p class="hint" style="font-size:13px;color:#5F646D">{esc(mtype.name)} 안의 내 폴더예요 · '
-           "회의 종류를 바꾸려면 작성 화면의 「회의 종류」에서 바꿔 주세요.</p>")
-    with st.container(key="pick-folders", gap="small"):
-        for fid in topics + [_NEW]:
-            on = fid == chosen
-            if fid == _NEW:
-                label, meta = "+ 새 폴더 만들기", "이 회의의 큰 주제로 폴더를 새로 만들어요"
-            else:
-                f = folders[fid]
-                meta = f"회의록 {len(sel.folder_note_ids(s, fid))}개 · 멤버 {len(sel.members_of(s, fid))}명" + (
-                    " · 내가 만든 폴더" if f.host == ME else "")
-                label = f.name
-            button(f"**{label}**  \n:gray[{meta}]", key=f"pf_{fid}", variant="pickon" if on else "pick",
-                   on_click=actions.update, kwargs={"pick_folder": fid}, width="stretch",
-                   icon=":material/create_new_folder:" if fid == _NEW else ":material/folder:")
-    if chosen == _NEW:
-        st.text_input("새 폴더 이름", key=f"pick_name_{s.pick_nonce}", value=s.pick_name,
-                      placeholder="이번 회의의 큰 주제 (예: 정산 자동화)",
-                      on_change=lambda: actions.update(pick_name=st.session_state[f"pick_name_{s.pick_nonce}"]))
-    if st.session_state.get("_pick_name_err") == s.pick_nonce:
-        markup('<span role="alert" style="font-size:13px;color:#B3261E">새 폴더 이름을 적어 주세요.</span>')
+    # 모달 크기 고정: 버튼(취소·선택)을 뺀 내용은 이 높이 안에서만 스크롤
+    with st.container(height=480, border=False, key="pick-folder-body", gap="small"):
+        # 0) 맨 위 검색: 회의 종류와 상관없이 전체 폴더(프로젝트 · 주차/월/일)에서 찾기
+        query = (st.text_input("폴더 찾기", key=f"pick_q_{s.pick_nonce}", label_visibility="collapsed",
+                               placeholder="전체 폴더에서 찾기 (예: 릴리즈, 10월)", icon=":material/search:",
+                               live=True) or "").strip()
+        ime_live("폴더 찾기")  # 한글도 치는 대로 바로
+        chosen = (s.pick_folder if s.pick_folder in folders or s.pick_folder == _NEW else "") if group == "project" \
+            else s.pick_period
+        if query:
+            _search_results(s, query, mtype, group, chosen)
+        else:
+            _browse(s, mtype, group, chosen)
+
+        # 4) 새 폴더 만들기 (고른 회의 종류 · 보기 안에) · 검색 중에는 숨김
+        new_on = chosen == _NEW and not query
+        where = f"{types[mtype].name} › {arc.PERIOD_LABEL[mtype] if group == 'period' else '프로젝트별'}"
+        if not query:
+            button(f"**+ 새 폴더 만들기**  \n:gray[{where} 안에 새로 만들어요]", key=f"pf_{group}_new",
+                   variant="pickon" if new_on else "pick", width="stretch", icon=":material/create_new_folder:",
+                   on_click=actions.update, kwargs={"pick_folder" if group == "project" else "pick_period": _NEW})
+        if new_on and group == "project":
+            st.text_input("새 폴더 이름", key=f"pick_name_{s.pick_nonce}", value=s.pick_name or query,
+                          placeholder="이번 회의의 큰 주제 (예: 정산 자동화)")
+        elif new_on:
+            st.date_input("이 날짜가 속한 기간으로 폴더를 만들어요", value=date.today(), key=f"pick_pdate_{s.pick_nonce}",
+                          format="YYYY/MM/DD")
+            key = _new_period_key(s, mtype)
+            same = arc.period(s, mtype, key) is not None
+            markup(f'<span class="cp-hint">「{esc(arc.period_label(key))}」 폴더'
+                   + ("는 이미 있어요 · 그 폴더에 올라가요" if same else "가 새로 만들어져요") + "</span>")
+
+    if st.session_state.get("_pick_folder_err") == s.pick_nonce:
+        markup('<span role="alert" style="font-size:13px;color:#B3261E">'
+               + ("새 폴더 이름을 적어 주세요." if new_on else "폴더를 골라 주세요.") + "</span>")
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
         if button("취소", key="cp_folder_cancel", variant="secondary"):
             actions.close_modal()
             st.rerun()
         if button("선택", key="cp_folder_ok", variant="primary"):
-            # 엔터 없이 바로 「선택」을 눌러도 적은 이름이 들어가도록 입력칸 값을 직접 읽음
-            s.pick_name = st.session_state.get(f"pick_name_{s.pick_nonce}", s.pick_name) or ""
-            if chosen == _NEW and not s.pick_name.strip():
-                st.session_state["_pick_name_err"] = s.pick_nonce  # 이번에 연 모달에서만 안내
+            s.pick_type, s.pick_group = mtype, group
+            if group == "project":
+                # 엔터 없이 바로 「선택」을 눌러도 적은 이름이 들어가도록 입력칸 값을 직접 읽음
+                s.pick_name = (st.session_state.get(f"pick_name_{s.pick_nonce}") or "") if new_on else ""
+                ok = bool(chosen) and chosen != _NEW or bool(new_on and s.pick_name.strip())
+                s.pick_folder = chosen
+            else:
+                s.pick_period = _new_period_key(s, mtype) if new_on else chosen
+                ok = bool(s.pick_period) and s.pick_period != _NEW
+            if not ok:
+                st.session_state["_pick_folder_err"] = s.pick_nonce  # 이번에 연 모달에서만 안내
                 st.rerun(scope="fragment")
-            s.pick_folder = chosen
             actions.confirm_pick("cp_folder")
             st.rerun()
 
@@ -130,7 +240,7 @@ def _people_picker(kind: str, *, single: bool) -> None:
     chosen = set(s.pick_draft)
 
     # 지금 고른 사람: 제목은 상자 위에 고정, 사람 칩만 상자 안에서 스크롤
-    title = "주관자" if single else f"선택한 참석자 {len(s.pick_draft)}명"
+    title = ("연결할 사람" if kind == "cp_speaker" else "주관자") if single else f"선택한 참석자 {len(s.pick_draft)}명"
     if s.pick_draft:
         chips = "".join(
             f'<span class="pick-chip">{avatar(sel.person(pid).initial, size=22, host=single)}'
@@ -149,7 +259,8 @@ def _people_picker(kind: str, *, single: bool) -> None:
     # 「팀」 글씨만 상자 밖 위에 두고, 팀 버튼 · 팀원은 한 상자 안에
     markup('<div class="pick-section-head"><b>팀</b><span class="hint">팀을 고르면 그 팀 사람들이 아래에 나와요</span></div>')
     ids = dict(groups)[team]
-    hint = "이름을 누르면 주관자로 골라져요" if single else "이름을 누르면 선택 · 다시 누르면 해제"
+    hint = ("이름을 누르면 이 발화자로 연결돼요" if kind == "cp_speaker" else "이름을 누르면 주관자로 골라져요") if single \
+        else "이름을 누르면 선택 · 다시 누르면 해제"
     # key 를 매번 바꾸지 않아야 누를 때 칩이 새로 만들어지지 않고 그 자리에서 바로 바뀜
     widget_key = f"{kind}_pick_{s.pick_nonce}_{team}"
     default = next((pid for pid in ids if pid in chosen), None) if single else [pid for pid in ids if pid in chosen]
@@ -187,3 +298,23 @@ def people_picker_dialog() -> None:
     n = len(get_state().pick_draft)
     _people_picker("cp_people", single=False)
     _footer("cp_people", f"{n}명 선택" if n else "선택 안 함")
+
+
+@st.dialog("발화자 연결", width="medium", on_dismiss=actions.close_modal)
+def speaker_picker_dialog() -> None:
+    """2단계: 임시 발화자(참석자1 · A)를 실제 사람과 연결. 팀을 고르면 팀원이 나와요. 모르면 미지정."""
+    s = get_state()
+    markup(f'<p class="hint" style="font-size:14px;color:#2B2F36">원문의 <b>「{esc(s.pick_label)}」</b>은(는) 누구인가요? '
+           "팀을 고르고 이름을 누르세요. 모르면 「미지정으로 두기」를 누르면 돼요.</p>")
+    _people_picker("cp_speaker", single=True)
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="cp_speaker_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        if button("미지정으로 두기", key="cp_speaker_none", variant="secondary"):
+            s.pick_draft = []
+            actions.confirm_pick("cp_speaker")
+            st.rerun()
+        if button("연결하기", key="cp_speaker_ok", variant="primary", disabled=not s.pick_draft):
+            actions.confirm_pick("cp_speaker")
+            st.rerun()

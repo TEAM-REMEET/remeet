@@ -12,7 +12,6 @@ from pathlib import Path
 
 from data.models import (
     Agenda,
-    AiToggle,
     BriefItem,
     Candidate,
     Discussion,
@@ -94,8 +93,28 @@ def _meeting(d: dict) -> Meeting:
 
 
 @lru_cache(maxsize=1)
-def meetings() -> dict[str, Meeting]:
+def _base_meetings() -> dict[str, Meeting]:
     return {d["id"]: _meeting(d) for d in _load("meetings")}
+
+
+def _session_meetings() -> dict[str, Meeting]:
+    """이 화면(세션)에서 「회의록 생성 완료」로 새로 만든 회의 (AppState.new_meetings). 목업이라 새로고침하면 사라짐."""
+    try:
+        import streamlit as st
+
+        state = st.session_state.get("_app_state")
+    except Exception:  # noqa: BLE001 - Streamlit 밖(테스트 등)에서 부를 때
+        return {}
+    out = dict(getattr(state, "new_meetings", {}) or {})
+    preview = getattr(state, "preview_meeting", None)  # 새 회의록 3단계 미리보기 (폴더에는 넣지 않음)
+    if preview is not None:
+        out[preview.id] = preview
+    return out
+
+
+def meetings() -> dict[str, Meeting]:
+    """목업 회의 + 새로 만든 회의."""
+    return {**_base_meetings(), **_session_meetings()}
 
 
 def meeting(mid: str) -> Meeting:
@@ -184,8 +203,8 @@ def integrations() -> dict:
         "organization": raw["organization"],
         "tools": [IntegrationTool(**t) for t in raw["tools"]],
         "initial_status": raw["initial_status"],
-        "ai_toggles": [AiToggle(**t) for t in raw["ai_toggles"]],
-        "ai_default_folders": raw["ai_default_folders"],
+        # 도구 id → 인증 만료로 보내지 못한 회의 id (예: Jira 이슈 생성 실패)
+        "failed_exports": raw.get("failed_exports", {}),
     }
 
 

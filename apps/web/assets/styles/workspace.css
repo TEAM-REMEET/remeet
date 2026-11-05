@@ -5,11 +5,11 @@
 
 /* ---------- 사이드바 회의록 트리 (VS Code 탐색기 느낌) ---------- */
 .st-key-navgroup-meetings {
-  gap: 0 !important;
+  gap: 3px !important; /* 트리 줄 사이 간격 */
 }
 [class*="st-key-b-tree"] button {
   width: 100%;
-  height: 28px !important;
+  height: 34px !important; /* 트리 줄 높이 (28 → 34) */
   min-height: 0 !important;
   padding: 0 34px 0 6px !important;
   border: none !important;
@@ -200,7 +200,7 @@
 /* ---------- 트리 화살표(twisty): 이름 버튼 왼쪽에 겹쳐 놓고, 누르면 바로 펼치기/접기 ---------- */
 [class*="st-key-b-twisty-"] {
   position: absolute !important;
-  top: 2px;
+  top: 5px; /* 줄 높이 34px 가운데 */
   left: 3px;
   width: 24px !important;
   z-index: 3;
@@ -499,16 +499,6 @@ hr.cp-divider {
 .st-key-page-compose [data-testid="stTextArea"] textarea {
   background: #ffffff !important;
 }
-.st-key-page-compose
-  [data-testid="stTextArea"]
-  [data-testid="stTextAreaRootElement"]:focus-within {
-  border-color: var(--accent) !important;
-}
-.st-key-page-compose [data-testid="stTextAreaRootElement"] {
-  border: 1px solid #d5d8dd !important;
-  border-radius: 10px !important;
-  background: #ffffff !important;
-}
 .st-key-cp-grid label p {
   font-size: 14px !important;
   color: var(--ink-2);
@@ -528,10 +518,11 @@ hr.cp-divider {
 }
 .st-key-cp-attach [data-testid="stFileUploaderDropzone"] > span > button,
 .st-key-cp-attach [data-testid="stFileChips"] > button {
-  height: 38px;
+  height: 46px !important; /* 첨부한 파일 네모와 같은 높이 */
+  min-height: 46px !important;
   padding: 0 16px !important;
   border: 1px solid #c9cdd3 !important;
-  border-radius: 19px !important;
+  border-radius: 4px !important; /* 다른 네모와 같은 둥글기 */
   background: #ffffff !important;
   color: var(--ink) !important;
 }
@@ -783,4 +774,809 @@ hr.cp-divider {
 /* 이름표와 칸 사이를 Streamlit 기본 입력칸(회의 종류 등)과 같은 높이로 맞춤 */
 .stElementContainer:has(.cp-flabel) {
   margin-bottom: -10px;
+}
+
+/* ---------- 회의 종류 · 폴더 선택 모달 ---------- */
+.pick-step {
+  display: inline-block;
+  width: 64px;
+}
+/* 모달 크기 고정: 내용 영역 높이 고정 + 넘치면 그 안에서 스크롤 (폴더 목록 자체는 높이 제한 없음) */
+.st-key-pick-folders {
+  flex: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+.st-key-pick-folder-body {
+  padding-right: 6px;
+}
+
+/* ---------- 회의록 보관함 검색 ---------- */
+.search-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 16px;
+}
+.search-head span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.st-key-search-folders {
+  flex-wrap: wrap !important;
+}
+
+/* ---------- 편집 모드: 추가한 안건 ---------- */
+.agadd-no {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.agadd-view {
+  font-size: 14px;
+}
+[class*="st-key-agadd-"] [data-testid="stTextInputRootElement"] {
+  border-radius: 4px !important;
+}
+/* 「+ 새 폴더 만들기」도 폴더 목록과 같은 테두리 상자로 */
+[class*="st-key-b-pick-pf_"] button,
+[class*="st-key-b-pickon-pf_"] button {
+  min-height: 56px;
+  padding: 8px 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+}
+[class*="st-key-b-pickon-pf_"] button {
+  border: 1.5px solid var(--accent) !important;
+}
+[class*="st-key-b-pick-pf_"][class*="_new"] button {
+  border-style: dashed !important;
+}
+
+/* 회의 상세: 외부 도구 전송 실패/재전송 안내 줄 (안내 + 버튼) */
+[class*="st-key-export-"] .stElementContainer:has(.notice) {
+  flex: 1 1 auto !important;
+}
+[class*="st-key-export-"] [class*="st-key-b-"] {
+  flex: none !important;
+}
+
+/* ---------- 원문 발화자 구분 ---------- */
+.st-key-spk-bar {
+  flex-wrap: wrap !important;
+  row-gap: 6px !important;
+}
+.st-key-spk-bar .stElementContainer:has(.inline-label) {
+  margin-right: 4px;
+}
+.spk-unknown {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px dashed #9ca1a9;
+  background: #f4f5f7;
+  color: #80858e;
+  font-size: 12px;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+.para .who .tag,
+.ratio-row .nm .tag {
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+
+/* ---------- 사이드바 로고: 누르면 새 회의록 (투명 버튼을 로고 위에 겹침) ---------- */
+.st-key-sb-logo-link {
+  position: relative;
+}
+.st-key-sb-logo-link [class*="st-key-b-ghost-logo_home"] {
+  position: absolute !important;
+  inset: 0;
+  z-index: 2;
+}
+.st-key-sb-logo-link [class*="st-key-b-ghost-logo_home"] button {
+  width: 100%;
+  height: 100% !important;
+  min-height: 0 !important;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ---------- 원문 발화자 (누르는 기능 없는 표시용) ---------- */
+.spk-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.spk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #ffffff;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.spk-chip .n {
+  font-size: 12px;
+  color: var(--muted);
+}
+.spk-chip.unknown {
+  border-style: dashed;
+}
+
+/* ---------- 검색 결과 페이지 ---------- */
+.st-key-search-list {
+  flex: none !important;
+  max-height: max(300px, calc(100vh - 340px));
+  overflow-y: auto;
+  padding-right: 4px;
+}
+/* 결과 카드: 테두리는 카드 칸에, 버튼은 카드 전체를 덮는 투명 버튼 (내용 높이에 맞춰 늘어남) */
+[class*="st-key-sres-"] {
+  position: relative;
+  gap: 0 !important;
+  flex: none !important;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+}
+[class*="st-key-sres-"]:hover {
+  border-color: var(--accent-line);
+  background: var(--bg-soft);
+}
+[class*="st-key-sres-"] > .stElementContainer:first-child {
+  pointer-events: none;
+}
+[class*="st-key-sres-"] [class*="st-key-b-secondary-sres_open_"] {
+  position: absolute !important;
+  inset: 0;
+  z-index: 2;
+}
+[class*="st-key-sres-"] [class*="st-key-b-secondary-sres_open_"] * {
+  height: 100% !important;
+  width: 100% !important;
+}
+[class*="st-key-sres-"] [class*="st-key-b-secondary-sres_open_"] button {
+  opacity: 0;
+  min-height: 0 !important;
+  cursor: pointer;
+}
+.sres {
+  display: flex;
+  gap: 12px;
+  padding: 14px 18px;
+  align-items: flex-start;
+}
+.sres > img {
+  margin-top: 2px;
+}
+.sres .tx {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.sres .tt {
+  font-size: 15px;
+  font-weight: 700;
+}
+.sres .meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+.sres .sn {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  background: #f8f9fa;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+.sres mark {
+  background: transparent;
+  color: var(--accent);
+  font-weight: 800;
+}
+.sres .tt mark {
+  color: var(--accent);
+}
+
+/* ---------- 회의 상세: 원문 / 발언 비율을 바꿔도 네모 높이 고정 ---------- */
+/* 바깥 줄(왼쪽·오른쪽 두 칸)만: 오른쪽(인사이트) 패널과 같은 높이 = 본문 높이 + 탭 줄 46px */
+.st-key-md-split
+  > [data-testid="stLayoutWrapper"]
+  > [data-testid="stHorizontalBlock"] {
+  height: calc(max(420px, calc(100vh - 350px)) + 46px) !important;
+  min-height: 0 !important;
+  flex: none !important;
+  overflow: hidden;
+}
+.st-key-md-split
+  > [data-testid="stLayoutWrapper"]
+  > [data-testid="stHorizontalBlock"]
+  > [data-testid="stColumn"],
+.st-key-md-split
+  > [data-testid="stLayoutWrapper"]
+  > [data-testid="stHorizontalBlock"]
+  > [data-testid="stColumn"]
+  > [data-testid="stVerticalBlock"],
+.st-key-md-split
+  > [data-testid="stLayoutWrapper"]
+  > [data-testid="stHorizontalBlock"]
+  > [data-testid="stColumn"]
+  > [data-testid="stVerticalBlock"]
+  > [data-testid="stLayoutWrapper"] {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+.st-key-md-left {
+  height: 100% !important;
+  overflow: hidden;
+}
+/* 원문 목록은 남은 높이를 모두 쓰고 그 안에서 스크롤 */
+.st-key-md-left > [data-testid="stLayoutWrapper"]:has(> .st-key-raw-scroll) {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+.st-key-md-left .st-key-raw-scroll {
+  height: 100% !important;
+  max-height: none !important;
+}
+
+/* ---------- 외부 연동: 「외부 도구」 네모가 화면 아래까지 꽉 차게 ---------- */
+.st-key-integ {
+  flex: none !important;
+  height: calc(100vh - 248px); /* 상단바 · 제목 · 아래 여백을 뺀 높이 */
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+.st-key-integ .st-key-integ-rows {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto;
+}
+.st-key-integ [data-testid="stLayoutWrapper"]:has(> .st-key-integ-rows) {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+}
+
+/* 사이드바: 로고와 「새 회의록」 사이 간격 */
+.st-key-sb-logo-link {
+  margin-bottom: 18px;
+}
+
+/* ---------- 새 회의록: 첨부한 파일 ---------- */
+/* 파일 첨부 버튼 · 첨부 파일들을 한 줄에 가로로 (넘치면 다음 줄) */
+.st-key-cp-attach-row {
+  flex-wrap: wrap !important;
+  row-gap: 8px !important;
+}
+.st-key-cp-attach,
+.st-key-cp-attach section,
+.st-key-cp-attach section > div {
+  max-width: 100% !important;
+}
+.st-key-cp-attach [data-testid="stFileChips"] {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.st-key-cp-attach [data-testid="stFileChips"] > div {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+/* 첨부한 파일 하나하나를 네모 안에 */
+.st-key-cp-attach [data-testid="stFileChip"] {
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  padding: 6px 10px 6px 6px !important;
+  height: 46px;
+  box-sizing: border-box;
+  gap: 8px;
+  align-items: center !important;
+}
+.st-key-cp-attach [data-testid="stFileChipName"] {
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 파일을 첨부한 뒤에도 「파일 첨부」 버튼 크기는 처음과 같게 · 맨 앞에 */
+.st-key-cp-attach [data-testid="stFileChips"] > button {
+  order: -1;
+  flex: none;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  width: auto !important;
+}
+.st-key-cp-attach [data-testid="stFileChips"] > button::before {
+  font-size: 14px !important;
+  line-height: 46px;
+}
+
+/* ---------- 새 회의록: 회의 적는 칸 = 우리가 만든 둥근 네모 + 테두리 없는 입력칸 ---------- */
+.st-key-cp-editor {
+  flex: none !important;
+  border: 1px solid #d5d8dd;
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: hidden;
+  padding: 4px 6px;
+}
+.st-key-cp-editor:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(243, 115, 33, 0.1);
+}
+.st-key-cp-editor [data-testid="stTextAreaRootElement"],
+.st-key-cp-editor textarea {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.st-key-cp-editor textarea {
+  resize: none;
+}
+/* 입력 형식 예시 = 회색 안내글: 수정 불가, 입력칸을 누르면 사라짐 */
+.st-key-cp-editor textarea::placeholder {
+  color: #9ca1a9 !important;
+  opacity: 1;
+}
+.st-key-cp-editor textarea:focus::placeholder {
+  color: transparent !important;
+}
+/* 회의 적는 칸과 파일 첨부 줄 사이 간격 줄이기 */
+.st-key-cp-attach-row {
+  margin-top: -14px; /* 회의 적는 칸과 12px 정도 */
+}
+/* 파일이 하나여도 「파일 첨부」 버튼 바로 옆에: 버튼과 파일 묶음은 한 줄, 파일들끼리만 줄바꿈 */
+.st-key-cp-attach [data-testid="stFileChips"] {
+  flex-wrap: nowrap !important;
+}
+.st-key-cp-attach [data-testid="stFileChips"] > div {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.st-key-cp-attach-row
+  > [data-testid="stLayoutWrapper"]:has(> .st-key-cp-attach) {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* ---------- 파일 첨부 줄: 버튼과 파일 네모의 높이 · 안쪽 여백 · 간격을 한곳에서 맞춤 ----------
+   높이를 바꾸려면 --attach-h, 안쪽 좌우 여백은 --attach-px, 네모 사이 간격은 --attach-gap 만 고치면 돼요. */
+.st-key-cp-attach-row {
+  --attach-h: 46px;
+  --attach-px: 12px;
+  --attach-gap: 8px;
+}
+.st-key-cp-attach [data-testid="stFileChips"],
+.st-key-cp-attach [data-testid="stFileChips"] > div {
+  gap: var(--attach-gap) !important;
+}
+.st-key-cp-attach [data-testid="stFileUploaderDropzone"] > span > button,
+.st-key-cp-attach [data-testid="stFileChips"] > button {
+  height: var(--attach-h) !important;
+  min-height: var(--attach-h) !important;
+  padding: 0 var(--attach-px) !important;
+}
+.st-key-cp-attach
+  [data-testid="stFileUploaderDropzone"]
+  > span
+  > button::before,
+.st-key-cp-attach [data-testid="stFileChips"] > button::before {
+  line-height: var(--attach-h) !important;
+}
+.st-key-cp-attach [data-testid="stFileChip"] {
+  height: var(--attach-h) !important;
+  padding: 0 var(--attach-px) !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+/* 파일 네모 안: 아이콘 · 이름 · ✕ 모두 세로 가운데 */
+.st-key-cp-attach [data-testid="stFileChip"] > *,
+.st-key-cp-attach [data-testid="stFileChipDeleteBtn"] {
+  align-self: center !important;
+  margin: 0 !important;
+}
+
+/* ---------- 담당자 지정 (여러 명): 아래 고정 줄 ---------- */
+.st-key-assign-foot {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.st-key-assign-foot .stElementContainer:has(.assign-chosen) {
+  flex: 1 1 auto !important;
+  min-width: 0;
+}
+.assign-chosen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.assign-chosen b {
+  margin-right: 4px;
+}
+.st-key-assign-foot {
+  flex-wrap: nowrap !important;
+}
+.st-key-assign-foot [class*="st-key-b-"] {
+  flex: none !important;
+}
+/* 담당자 모달: 아래 「맡기기」 줄 자리만큼 본문 높이를 줄임 */
+.st-key-assign-body {
+  height: min(560px, calc(100vh - 330px)) !important;
+}
+
+/* ---------- 원문 「미지정」: 다른 사람과 같은 칩 · 원문 안에서는 네모 없이 글자만 ---------- */
+.spk-chip.unknown {
+  border-style: solid;
+  color: var(--muted);
+}
+.who-unknown {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---------- 요약: 담당자를 정한 일 ---------- */
+[class*="st-key-asgrow-"] .stElementContainer:has([class*="st-key-b-mini"]),
+[class*="st-key-asgrow-"] [class*="st-key-b-mini"],
+[class*="st-key-asgrow-"] [class*="st-key-b-primary"] {
+  flex: none !important;
+}
+[class*="st-key-asgrow-"] > [data-testid="stLayoutWrapper"]:first-child {
+  flex: 1 1 auto !important;
+  min-width: 0;
+}
+.asg-change {
+  display: block;
+  font-size: 12px;
+  color: #80858e;
+  padding: 0 10px 4px;
+}
+/* 담당자 줄: 왼쪽(할 일 · 바뀐 내용)은 남은 폭, 오른쪽 버튼은 한 줄에 */
+[class*="st-key-asgrow-"] {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+}
+[class*="st-key-asgrow-"]
+  > [data-testid="stLayoutWrapper"]:not(:has([class*="-assign_"])) {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+}
+[class*="st-key-asgrow-"]
+  > [data-testid="stLayoutWrapper"]:has([class*="-assign_"]) {
+  flex: none !important;
+}
+
+/* ---------- 404 ---------- */
+.st-key-page-notfound {
+  padding-top: max(24px, calc(16vh - 60px));
+}
+.nf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+.nf-code {
+  font-size: 72px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  color: var(--accent);
+}
+.nf h1 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 6px 0 0;
+  padding: 0;
+}
+.nf p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-sub);
+}
+.nf-path {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+  background: #f1f2f4;
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.st-key-nf-actions {
+  margin-top: 8px;
+}
+
+/* =========================================================
+   새 회의록 3단계 (회의 내용 입력 → 발화자 확인 → 분석 및 결과)
+   ========================================================= */
+.wz-steps {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.wz-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.wz-step .dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  background: #e9ebee;
+  color: #5f646d;
+}
+.wz-step.on {
+  color: var(--ink);
+  font-weight: 800;
+}
+.wz-step.on .dot {
+  background: var(--accent);
+  color: #ffffff;
+}
+.wz-step.done .dot {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.wz-arrow {
+  color: #b9bdc4;
+}
+
+/* 단계 카드 */
+.st-key-wz-card,
+.st-key-wz-card-full {
+  flex: none !important;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 26px 28px;
+}
+/* 2단계(발화자 확인)는 화면 아래까지 꽉 차게 */
+.st-key-wz-card-full {
+  min-height: calc(100vh - 230px);
+}
+.wz-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.wz-head h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+  padding: 0;
+}
+.wz-badge {
+  font-size: 12px;
+  color: var(--text-sub);
+  background: #f1f2f4;
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+.cp-section .req {
+  color: var(--accent);
+}
+
+/* 안내 상자 */
+.wz-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 6px;
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.wz-box span {
+  font-size: 13px;
+}
+.wz-info {
+  background: #f6f7f9;
+  color: var(--ink-2);
+  border: 1px solid var(--line-soft);
+}
+.wz-ok {
+  background: #e7f5ec;
+  color: #1d6b43;
+}
+.wz-warn {
+  background: var(--accent-soft);
+  color: #8a4a12;
+}
+.wz-error {
+  background: #fdecea;
+  color: #7a1c16;
+}
+
+/* 지원하는 입력 형식 */
+.st-key-wz-formats {
+  flex: none !important;
+  background: #fff8f2;
+  border: 1px solid var(--accent-line);
+  border-radius: 6px;
+  padding: 14px 18px;
+}
+.wz-formats-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 14px;
+}
+.wz-formats-head b {
+  color: #a5501b;
+}
+.wz-formats-head span {
+  font-size: 13px;
+  color: var(--muted);
+}
+/* 고른 형식의 규칙 (회색 안내글) */
+.wz-format-rule {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #8b9097;
+}
+
+/* 2단계: 발화자 ↔ 사람 */
+.st-key-wz-matches {
+  flex: none !important;
+}
+[class*="st-key-wz-match-"] {
+  flex-wrap: nowrap !important;
+}
+[class*="st-key-wz-match-"] > .stElementContainer:first-child {
+  flex: 1 1 0% !important;
+}
+[class*="st-key-wz-match-"] > [data-testid="stElementContainer"]:has(.wz-to) {
+  flex: none !important;
+  width: auto !important;
+}
+[class*="st-key-wz-match-"] > .stElementContainer:last-child {
+  flex: 1 1 0% !important;
+}
+.wz-label {
+  background: #f6f7f9;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 0 16px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+.wz-label::before {
+  content: "👤";
+  margin-right: 10px;
+  font-size: 14px;
+}
+.wz-to {
+  color: var(--muted);
+  font-size: 16px;
+}
+[class*="st-key-wz-match-"] [data-testid="stSelectbox"] > div:last-child > div {
+  min-height: 46px;
+  border-radius: 4px !important;
+  border: 1px solid #d5d8dd !important;
+  background: #ffffff !important;
+}
+
+/* 3단계: 결과 */
+.wz-panel {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  min-height: 210px;
+  box-sizing: border-box;
+}
+.wz-panel h3,
+.wz-sec h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.wz-title {
+  font-size: 15px;
+}
+.wz-maprow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+.wz-chip {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-2);
+  background: #f1f2f4;
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+.wz-sec {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 18px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.wz-sec p {
+  margin: 0 0 4px;
+}
+.wz-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+.wz-row:last-child {
+  border-bottom: none;
+}
+.wz-row .tx {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.wz-row .tx span {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.st-key-b-secondary-cp_json button {
+  height: 38px;
+  padding: 0 16px !important;
+}
+/* 2단계: 이전/다음 버튼은 카드 맨 아래에 */
+.st-key-wz-card-full > [data-testid="stLayoutWrapper"]:has(> .st-key-wz-foot) {
+  margin-top: auto;
+}
+/* 2단계: 오른쪽 칸(누르면 발화자 연결 모달)이 왼쪽 표기 칸과 같은 너비 */
+[class*="st-key-wz-match-"]
+  > [data-testid="stLayoutWrapper"]:has([class*="st-key-b-field"]) {
+  flex: 1 1 0% !important;
+  min-width: 0;
 }

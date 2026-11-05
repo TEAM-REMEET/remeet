@@ -1,6 +1,43 @@
 [
-  {"id": "n1", "kind": "review", "text": "「주간 회의 — 10월 4주차」 정리가 끝났어요. 검토 후 확정해 주세요.", "when": "10분 전", "meeting": "m1", "unread": true},
-  {"id": "n2", "kind": "shared", "text": "윤가은 · CS운영팀 님이 「결제 오류 문의 응대 점검」을 공유했어요.", "when": "1시간 전", "meeting": "m12", "unread": true},
-  {"id": "n3", "kind": "integration", "text": "Jira 인증이 만료됐어요. 다시 연결해 주세요.", "when": "어제", "meeting": null, "unread": false},
-  {"id": "n4", "kind": "shared", "text": "강수현 · 재무팀 님이 「정산 정책 리뷰 — 11월 적용분」을 공유했어요.", "when": "10/30", "meeting": "m10", "unread": false}
+  {
+    "id": "n1",
+    "kind": "review",
+    "text": "「주간 회의 — 10월 4주차」 정리가 끝났어요. 검토 후 확정해 주세요.",
+    "when": "10분 전",
+    "meeting": "m1",
+    "unread": true
+  },
+  {
+    "id": "n5",
+    "kind": "member",
+    "text": "정민재 · 서비스기획팀 님이 「고객 안내 개선」 폴더에 나를 멤버로 추가했어요.",
+    "when": "30분 전",
+    "meeting": null,
+    "unread": true,
+    "folder": "cs"
+  },
+  {
+    "id": "n2",
+    "kind": "shared",
+    "text": "윤가은 · CS운영팀 님이 「결제 오류 문의 응대 점검」을 공유했어요.",
+    "when": "1시간 전",
+    "meeting": "m12",
+    "unread": true
+  },
+  {
+    "id": "n3",
+    "kind": "integration",
+    "text": "Jira 인증이 만료됐어요. 다시 연결해 주세요.",
+    "when": "어제",
+    "meeting": null,
+    "unread": false
+  },
+  {
+    "id": "n4",
+    "kind": "shared",
+    "text": "강수현 · 재무팀 님이 「정산 정책 리뷰 — 11월 적용분」을 공유했어요.",
+    "when": "10/30",
+    "meeting": "m10",
+    "unread": false
+  }
 ]

@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from components.member_pills import member_pills
+from data import repository as repo
 from data.models import Meeting
 from state import actions
 from state import selectors as sel
@@ -51,3 +52,28 @@ def render_header(s: AppState, m: Meeting) -> None:
         notice("편집 중이에요. 요약·안건을 고친 뒤 <b>확정하기</b>를 누르면 참석자에게 결과가 전달돼요.")
     if s.just_shared:
         notice(f"{esc(s.last_share_to)}에게 공유했어요. 「공유한 회의」에서 확인할 수 있어요.", "success")
+    _export_notices(s, m)
+
+
+def _export_notices(s: AppState, m: Meeting) -> None:
+    """외부 도구(Jira 등)로 보내다 인증 만료로 실패한 회의록에서만: 만료 안내 → 갱신 후 다시 보내기 → 완료."""
+    cfg = repo.integrations()
+    for tool in cfg["tools"]:
+        if m.id not in cfg["failed_exports"].get(tool.id, []):
+            continue
+        n = len(m.todos)
+        state = s.integrations.get(tool.id, "off")
+        if f"{tool.id}:{m.id}" in s.export_resent:
+            notice(f"액션 아이템 {n}건을 {esc(tool.name)}로 다시 보냈어요. ({esc(tool.target)})", "success")
+        elif state == "expired":
+            with st.container(key=f"export-{tool.id}", horizontal=True, vertical_alignment="center", gap="small"):
+                notice(f"{esc(tool.name)} 인증이 만료되어 이 회의의 액션 아이템 {n}건을 {esc(tool.name)}로 보내지 못했어요.",
+                       "danger")
+                button("외부 연동에서 다시 연결", key=f"export_go_{tool.id}", variant="secondary",
+                       on_click=actions.go, args=("mcp",))
+        elif state == "on":
+            with st.container(key=f"export-{tool.id}", horizontal=True, vertical_alignment="center", gap="small"):
+                notice(f"{esc(tool.name)} 인증을 갱신했어요. 다시 전송할 수 있어요.", "success")
+                if model.is_host(m):
+                    button(f"{tool.name}로 다시 보내기", key=f"export_resend_{tool.id}", variant="primary",
+                           on_click=actions.resend_export, args=(tool.id, m.id))
