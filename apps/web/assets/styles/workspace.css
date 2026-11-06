@@ -1807,32 +1807,138 @@ hr.cp-divider {
 }
 
 /* 구성원 관리 */
-.adm-sum {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.adm-sum span {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid var(--line);
-  font-size: 13px;
-  color: var(--muted);
-}
-.adm-sum b {
-  color: var(--ink);
-}
 .st-key-adm-filter .stElementContainer:has(.stTextInput) {
   flex: 1 1 0% !important;
   max-width: 420px;
 }
-.st-key-adm-filter .stElementContainer:has(.stSelectbox) {
+.adm-count {
+  font-size: 13px;
+  color: var(--muted);
+}
+/* 표 머리글: 누르면 정렬 (글자처럼 보이는 버튼, 정렬 중이면 주황 + 화살표) */
+[class*="st-key-adm-th-"] button {
+  min-height: 0 !important;
+  width: auto !important;
+  padding: 2px 6px !important;
+  margin-left: -6px;
+  border-radius: 4px;
+}
+[class*="st-key-adm-th-"] button p {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--muted) !important;
+  white-space: nowrap;
+  text-decoration: none !important;
+}
+[class*="st-key-adm-th-"] button:hover {
+  background: #eceef1 !important;
+}
+[class*="st-key-adm-th-on-"] button p {
+  color: var(--accent) !important;
+}
+/* 필터 줄 (노션 표처럼 표 위에 따로): 둥근 칩 + 「+ 필터」 */
+.st-key-adm-fbar {
+  flex-wrap: wrap;
+  justify-content: flex-start !important;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.st-key-adm-fbar > * {
   flex: none !important;
-  width: 200px !important;
+  width: auto !important;
+}
+.st-key-adm-fbar > .stElementContainer:has(.adm-fspacer) {
+  flex: 1 1 0% !important;  /* 초기화를 오른쪽 끝으로 */
+}
+[class*="st-key-adm-chip-"] .stElementContainer:has(.adm-chip-on),
+[class*="st-key-adm-chip-"] .stElementContainer:has(.adm-chip-off) {
+  display: none;
+}
+.adm-fhead {
+  font-size: 12px;
+  color: var(--muted);
+}
+.st-key-b-ghost-adm_reset button p {
+  color: var(--muted) !important;
+}
+/* 검색칸 옆 필터 아이콘 (가로줄 3개). 펼치면 진하게, 필터가 걸려 있으면 주황 점 */
+[class*="st-key-adm-ftoggle"] {
+  flex: none !important;
+  width: auto !important;
+}
+[class*="st-key-adm-ftoggle"] button {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 !important;
+  color: var(--ink-2, #3b3f46) !important;
+}
+[class*="st-key-adm-ftoggle"] button [data-testid="stIconMaterial"] {
+  font-size: 24px !important;
+}
+/* 「+ 필터」 메뉴: 항목 글자가 두세 글자라 좁게 */
+[data-testid="stPopoverBody"]:has([class*="st-key-b-ghost-adm_fadd_"]) {
+  min-width: 0 !important;
+  width: 140px !important;
+  padding: 6px !important;
+}
+[class*="st-key-b-ghost-adm_fadd_"] button > div {
+  justify-content: flex-start !important;
+  width: 100%;
+}
+/* 칩 값 고르기 메뉴도 내용 폭에 맞게 */
+[data-testid="stPopoverBody"]:has(.adm-fhead) {
+  min-width: 0 !important;
+  width: 260px !important;
+}
+[class*="st-key-b-ghost-adm_fadd_"] button {
+  justify-content: flex-start !important;
+  padding: 6px 10px !important;
+  min-height: 0 !important;
+}
+[class*="st-key-adm-ftoggle-on"] button {
+  background: #eceef1 !important;
+  color: var(--ink) !important;
+}
+[class*="st-key-adm-ftoggle"] button {
+  position: relative;
+}
+[class*="st-key-adm-ftoggle"][class*="-dot"] button::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+[class*="st-key-adm-chip-"] button,
+.st-key-adm-fadd button {
+  min-height: 0 !important;
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+  font-size: 13px;
+  white-space: nowrap;
+}
+[class*="st-key-adm-chip-"] button {
+  background: #ffffff !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink-2, #3b3f46) !important;
+}
+[class*="st-key-adm-chip-"]:has(.adm-chip-on) button {
+  background: #fff3eb !important;
+  border-color: #f8c9a8 !important;
+  color: #b4530f !important;
+}
+.st-key-adm-fadd button {
+  background: transparent !important;
+  border: 1px dashed var(--line) !important;
+  color: var(--muted) !important;
+}
+.st-key-adm-fadd button:hover {
+  color: var(--ink) !important;
+  border-color: var(--muted) !important;
 }
 .st-key-adm-table,
 .st-key-adm-fails .st-key-adm-fthead {

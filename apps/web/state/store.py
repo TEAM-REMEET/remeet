@@ -158,7 +158,10 @@ class AppState:
     adm_month: str = field(  # 비용 관리에서 보는 달 (처음엔 이번 달)
         default_factory=lambda: next(m["key"] for m in repo.admin()["months"] if m.get("running")))
     adm_query: str = ""  # 구성원 검색어
-    adm_team: str = ""  # 구성원 팀 필터 (빈 값이면 전체)
+    adm_sort: str = ""  # 구성원 표 정렬 컬럼 (빈 값이면 기본 순서)
+    adm_sort_desc: bool = False  # True면 내림차순
+    adm_filter_open: bool = False  # 필터 줄 펼침 (검색칸 옆 필터 아이콘)
+    adm_filters: dict = field(default_factory=dict)  # 컬럼 → 고른 값들 (없으면 전체)
     adm_adding: bool = False  # 구성원 관리 · 「구성원 추가」 입력 줄이 열려 있는지
     adm_invite_error: str = ""
     adm_recent_jobs: list[str] = field(default_factory=list)  # 「최근 사용」 직무

@@ -862,8 +862,41 @@ def adm_filter(query_key: str) -> None:
     get_state().adm_query = (st.session_state.get(query_key) or "").strip()
 
 
-def adm_set_team(team: str) -> None:
-    _set(adm_team=team)
+def adm_sort(col: str) -> None:
+    """표 머리글 클릭: 다른 컬럼이면 그 컬럼 내림차순(⌄), 같은 컬럼이면 오름(⌃) ↔ 내림(⌄)."""
+    s = get_state()
+    _set(adm_sort=col, adm_sort_desc=True if s.adm_sort != col else not s.adm_sort_desc)
+
+
+def adm_open_filter_bar() -> None:
+    """필터 아이콘: 필터 줄을 엶 (닫기는 「초기화」로)."""
+    _set(adm_filter_open=True)
+
+
+def adm_add_filter(col: str) -> None:
+    """「+ 필터」에서 항목 고름 → 필터 칩이 생기고 그 칩의 값 고르기 메뉴가 바로 열림."""
+    get_state().adm_filters.setdefault(col, [])
+    st.session_state["adm_fadd_pop"] = False  # 「+ 필터」 메뉴는 닫고
+    st.session_state[f"adm_chip_pop_{col}"] = True  # 방금 만든 칩 메뉴를 염
+
+
+def adm_remove_filter(col: str) -> None:
+    get_state().adm_filters.pop(col, None)
+
+
+def adm_set_filter(col: str, value: str) -> None:
+    """필터 칩 안 체크박스 하나를 켬 · 끔."""
+    picked = get_state().adm_filters.setdefault(col, [])
+    if value in picked:
+        picked.remove(value)
+    else:
+        picked.append(value)
+    st.session_state[f"adm_chip_pop_{col}"] = True  # 칩 글자가 바뀌어도 메뉴가 닫히지 않게 (여러 개 연달아 고름)
+
+
+def adm_reset_table() -> None:
+    """필터 줄 · 「초기화」: 필터와 정렬을 처음 상태로 되돌리고 필터 줄을 닫음 (검색어는 그대로)."""
+    _set(adm_sort="", adm_sort_desc=False, adm_filters={}, adm_filter_open=False)
 
 
 def open_member_edit(pid: str) -> None:

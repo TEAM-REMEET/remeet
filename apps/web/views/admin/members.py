@@ -27,20 +27,76 @@ _ROLE = {"admin": "관리자", "member": "구성원"}
 _COLS = [2.4, 1.3, 1.3, 0.8, 0.85, 0.75, 0.95, 0.9]
 
 
-def _summary(rows: list[AdminMember]) -> None:
-    n = len(rows)
-    admins = sum(m.role == "admin" for m in rows)
-    invited = sum(m.status == "invited" for m in rows)
-    inactive = sum(m.status == "inactive" for m in rows)
-    items = (("전체", n), ("관리자", admins), ("초대 중", invited), ("비활성", inactive))
-    markup('<div class="adm-sum">' + "".join(f"<span>{lb}<b>{v}</b></span>" for lb, v in items) + "</div>")
+# 표 머리글: (컬럼, 제목, 정렬 · 필터 가능). 최근 접속은 아직 기록이 없어 둘 다 안 됨
+_HEADS = (("name", "이름 · 이메일", True), ("team", "팀", True), ("job", "직무", True), ("position", "직급", True),
+          ("role", "권한", True), ("status", "상태", True), ("last", "최근 접속", False), ("", "", False))
+_FILTERS = {"team": "팀", "job": "직무", "position": "직급", "role": "권한", "status": "상태"}
+_POSITION_RANK = {"junior": 1, "mid": 2, "senior": 3}  # 직급은 글자 순이 아니라 주니어 → 시니어 순
+
+
+def _value(m: AdminMember, col: str) -> str:
+    """화면에 보이는 값 (필터 선택지 · 정렬 기준)."""
+    return {"name": m.name, "team": m.team, "job": m.job, "position": mf.POSITION.get(m.position, "-"),
+            "role": _ROLE[m.role], "status": _STATUS[m.status][0]}[col]
+
+
+def _sort_key(m: AdminMember, col: str):
+    return _POSITION_RANK.get(m.position, 0) if col == "position" else _value(m, col)
 
 
 def _filtered(s: AppState, rows: list[AdminMember]) -> list[AdminMember]:
     q = s.adm_query.lower()
-    return [m for m in rows
-            if (not s.adm_team or m.team == s.adm_team)
-            and (not q or q in m.name.lower() or q in m.email.lower() or q in m.team.lower())]
+    shown = [m for m in rows
+             if all(_value(m, col) in picked for col, picked in s.adm_filters.items() if picked)
+             and (not q or q in m.name.lower() or q in m.email.lower() or q in m.team.lower())]
+    if s.adm_sort:
+        shown.sort(key=lambda m: _sort_key(m, s.adm_sort), reverse=s.adm_sort_desc)
+        shown.sort(key=lambda m: not m.is_self)  # 내 관리 계정은 늘 맨 위 (stable sort라 순서 유지)
+    return shown
+
+
+def _head(s: AppState, col: str, title: str, sortable: bool) -> None:
+    """머리글 한 칸. 기본 ⌃(오름차순), 누르면 ⌄(내림차순)으로 바뀌며 정렬."""
+    if not sortable:
+        markup(f'<span class="adm-th">{title}</span>')
+        return
+    on = s.adm_sort == col
+    arrow = ":material/keyboard_arrow_down:" if on and s.adm_sort_desc else ":material/keyboard_arrow_up:"
+    with st.container(key=f"adm-th-{'on-' if on else ''}{col}", gap=None):
+        button(f"{title} {arrow}", key=f"adm_sort_{col}", variant="link", on_click=actions.adm_sort, args=(col,))
+
+
+def _options(rows: list[AdminMember], col: str) -> list[str]:
+    values = {_value(m, col) for m in rows}
+    if col == "position":  # 시니어 → 미드 → 주니어 순
+        return [v for v in (*[mf.POSITION[k] for k in ("senior", "mid", "junior")], "-") if v in values]
+    return sorted(values, key=lambda v: (v == "-", v))  # "-"(값 없음)은 맨 뒤
+
+
+def _filter_bar(s: AppState, rows: list[AdminMember]) -> None:
+    """노션 표처럼 표 위 필터 줄: [팀 ▾] [직무 ▾] [+ 필터] ······ 초기화"""
+    with st.container(key="adm-fbar", horizontal=True, vertical_alignment="center", gap="small"):
+        for col in list(s.adm_filters):
+            title, picked = _FILTERS[col], s.adm_filters[col]
+            label = title + (f": {picked[0]}" + (f" 외 {len(picked) - 1}" if len(picked) > 1 else "") if picked else "")
+            with st.container(key=f"adm-chip-{col}", gap=None):  # key가 바뀌면 메뉴가 닫혀서 고정, 색은 표시용 span으로
+                markup(f'<span class="adm-chip-{"on" if picked else "off"}"></span>')
+                with st.popover(label, key=f"adm_chip_pop_{col}", on_change="rerun"):
+                    markup(f'<span class="adm-fhead">{title}</span>')
+                    for i, v in enumerate(_options(rows, col)):
+                        st.checkbox(v, value=v in picked, key=f"adm_f_{col}_{i}_{v in picked}",
+                                    on_change=actions.adm_set_filter, args=(col, v))
+                    button("필터 삭제", key=f"adm_frm_{col}", variant="ghost", icon=":material/delete:",
+                           on_click=actions.adm_remove_filter, args=(col,))
+        left = [c for c in _FILTERS if c not in s.adm_filters]
+        if left:
+            with st.container(key="adm-fadd", gap=None):
+                with st.popover("필터", icon=":material/add:", key="adm_fadd_pop", on_change="rerun"):
+                    for col in left:
+                        button(_FILTERS[col], key=f"adm_fadd_{col}", variant="ghost", on_click=actions.adm_add_filter,
+                               args=(col,), width="stretch")
+        markup('<span class="adm-fspacer"></span>')
+        button("초기화", key="adm_reset", variant="ghost", on_click=actions.adm_reset_table)
 
 
 def _cell(text: str, muted: bool = False) -> None:
@@ -143,25 +199,26 @@ def render() -> None:
                    icon=None if s.adm_adding else ":material/person_add:", on_click=actions.toggle_add_member)
         if s.adm_adding:
             _add_form(s)
-        _summary(rows)
         with st.container(key="adm-filter", horizontal=True, vertical_alignment="center", gap="small"):
             st.text_input(_SEARCH, key="adm_q", value=s.adm_query, live=True, icon=":material/search:",
                           placeholder="이름 · 이메일 · 팀으로 찾기", label_visibility="collapsed",
                           on_change=actions.adm_filter, args=("adm_q",))
             ime_live(_SEARCH)
-            teams = [""] + sel.admin_teams()
-            st.selectbox("팀", teams, index=teams.index(s.adm_team), key="adm_team_sel",
-                         format_func=lambda t: t or "팀 전체", label_visibility="collapsed",
-                         on_change=lambda: actions.adm_set_team(st.session_state["adm_team_sel"]))
+            on = any(s.adm_filters.values())
+            with st.container(key=f"adm-ftoggle{'-on' if s.adm_filter_open else ''}{'-dot' if on else ''}", gap=None):
+                button("", key="adm_ftoggle", variant="ghost", icon=":material/filter_list:",
+                       on_click=actions.adm_open_filter_bar, help="필터")
+        if s.adm_filter_open:
+            _filter_bar(s, rows)
         shown = _filtered(s, rows)
+        markup(f'<span class="adm-count">{len(shown)}명 / 전체 {len(rows)}명</span>')
         with st.container(key="adm-table", gap=None):
-            heads = ("이름 · 이메일", "팀", "직무", "직급", "권한", "상태", "최근 접속", "")
             with st.container(key="adm-thead", gap=None):
-                c = st.columns(_COLS, gap="small")
-                for col, h in zip(c, heads):
+                c = st.columns(_COLS, gap="small", vertical_alignment="center")
+                for col, (key, title, sortable) in zip(c, _HEADS):
                     with col:
-                        markup(f'<span class="adm-th">{h}</span>')
+                        _head(s, key, title, sortable)
             if not shown:
-                empty_state("조건에 맞는 구성원이 없어요. 검색어나 팀을 바꿔 보세요.", pad=36)
+                empty_state("조건에 맞는 구성원이 없어요. 검색어나 필터를 바꿔 보세요.", pad=36)
             for m in shown:
                 _row(m)
