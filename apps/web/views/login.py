@@ -104,8 +104,10 @@ from __future__ import annotations
 import streamlit as st
 
 from components.landing import render_landing
+from config import DEMO_ACCOUNTS
 from state import actions
 from state.store import get_state
+from ui.buttons import button
 from ui.html import markup
 from ui.icons import brand_logo, icon
 from utils.text import esc
@@ -153,6 +155,36 @@ def _submit() -> None:
     actions.login(st.session_state.get("login_email", ""), st.session_state.get("login_pw", ""))
 
 
+def _fill(key: str) -> None:
+    st.session_state["login_email"] = DEMO_ACCOUNTS[key]["email"]
+    st.session_state["login_pw"] = DEMO_ACCOUNTS[key]["password"]
+    get_state().login_error = ""
+
+
+def _start(key: str) -> None:
+    actions.login(DEMO_ACCOUNTS[key]["email"], DEMO_ACCOUNTS[key]["password"])
+
+
+def _demo() -> None:
+    """테스트용 바로 시작 버튼 · 계정 상자. 로컬에만 보임 (config.DEMO_ACCOUNTS)."""
+    markup('<div class="login-or"><span></span>또는<span></span></div>')
+    with st.container(gap="small"):
+        if "u1" in DEMO_ACCOUNTS:
+            button("데모 계정으로 바로 시작", key="demo_start", variant="secondary", on_click=_start, args=("u1",),
+                   width="stretch")
+        if "admin" in DEMO_ACCOUNTS:
+            button("관리자 계정으로 시작", key="demo_admin_start", variant="secondary", on_click=_start, args=("admin",),
+                   icon=":material/admin_panel_settings:", width="stretch")
+    with st.container(gap="small"):
+        for key, box, label in (("u1", "demo-box", "데모 계정"), ("admin", "demo-box-admin", "관리자 계정")):
+            if key not in DEMO_ACCOUNTS:
+                continue
+            a = DEMO_ACCOUNTS[key]
+            with st.container(key=box, horizontal=True, vertical_alignment="center", wrap=False):
+                markup(f'<span class="demo-info"><b>{label}</b><span>{esc(a["email"])} · {esc(a["password"])}</span></span>')
+                button("자동 입력", key=f"{key}_fill", variant="mini", on_click=_fill, args=(key,))
+
+
 def _form() -> None:
     markup('<div class="login-title"><h2 id="login-title">로그인</h2><p>회사 계정으로 로그인하세요</p></div>')
     with st.form("login", border=False, enter_to_submit=True):
@@ -163,6 +195,8 @@ def _form() -> None:
             markup(f'<p class="login-err" role="alert">{esc(err)}</p>')
         st.form_submit_button("로그인", on_click=_submit, width="stretch")
     markup('<p class="hint">계정이 없으면 관리자에게 요청해 주세요.</p>')
+    if DEMO_ACCOUNTS:
+        _demo()
 
 
 def render() -> None:

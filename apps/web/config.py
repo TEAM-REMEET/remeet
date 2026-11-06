@@ -44,6 +44,7 @@
 화면/로직 어디서나 쓰는 상수만 모아 둡니다. 색상 토큰은 ui/theme.py, 목업 데이터는 data/mock/ 에 있습니다.
 """
 
+import json
 import os
 from pathlib import Path
 
@@ -64,6 +65,15 @@ WORKSPACE_PLAN = "회의노트 · Business"
 
 # 사용자에게 「관리자에게 문의」로 안내하는 관리자 이메일 (Neo4j 관리 계정)
 ADMIN_EMAIL = "admin@remeet.example"
+
+# 로그인 화면의 테스트용 「바로 시작」 버튼 (데모 = 바트 u1, 관리자 = admin).
+# 비밀번호는 git에 안 올라가는 backend/seed/passwords.local.json 에서 읽어요.
+# 이 파일은 Docker 이미지에 안 들어가서, 서버(EC2)에서는 버튼이 자동으로 숨겨져요.
+_PASSWORDS = Path(__file__).resolve().parents[2] / "backend" / "seed" / "passwords.local.json"
+DEMO_ACCOUNTS: dict = {}
+if _PASSWORDS.exists():
+    _pw = json.loads(_PASSWORDS.read_text(encoding="utf-8"))
+    DEMO_ACCOUNTS = {k: _pw[k] for k in ("u1", "admin") if k in _pw}  # {"u1": {name, email, password}, ...}
 
 # 결과 전달(SSE) 시뮬레이션 타이밍 (초)
 DELIVERY_FIRST_EVENT_DELAY = 0.4
