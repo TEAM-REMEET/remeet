@@ -8,11 +8,12 @@ from __future__ import annotations
 
 from components.dialogs.admin import contact_admin_dialog, member_edit_dialog, org_picker_dialog
 from components.dialogs.assign import assign_dialog
-from components.dialogs.confirm import confirm_meeting_dialog
 from components.dialogs.compose_pickers import (
+    compose_confirm_dialog,
+    compose_review_dialog,
+    format_error_dialog,
     host_picker_dialog,
     people_picker_dialog,
-    speaker_picker_dialog,
 )
 from components.dialogs.folder import delete_folder_dialog, delete_meeting_dialog, members_dialog
 from components.dialogs.meeting_people import people_dialog
@@ -26,13 +27,14 @@ _DIALOGS = {
     "delete_meeting": delete_meeting_dialog,
     "people": people_dialog,
     "assign": assign_dialog,
-    "confirm_meeting": confirm_meeting_dialog,
     "share": share_dialog,
     "add_todo": add_todo_dialog,
     "todo_owner": todo_owner_dialog,
     "cp_host": host_picker_dialog,
     "cp_people": people_picker_dialog,
-    "cp_speaker": speaker_picker_dialog,
+    "cp_format_error": format_error_dialog,
+    "cp_confirm": compose_confirm_dialog,
+    "cp_review": compose_review_dialog,
     "contact_admin": contact_admin_dialog,
     "org_picker": org_picker_dialog,
     "member_edit": member_edit_dialog,

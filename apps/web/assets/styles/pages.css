@@ -2010,3 +2010,18 @@
 /* 회의 상세 좌우 분할 규칙(gap 0 !important)이 이 줄에도 걸려서 같은 구체성으로 다시 지정 (태그 ↔ 글 8px) */
 .st-key-md-split [data-testid="stHorizontalBlock"][class*="st-key-resrow-"] { gap: 8px !important; }
 [class*="st-key-b-pick"][class*="-res"] button p { word-break: keep-all; }
+
+/* =========================================================
+   회의록 확정 (views/finalize.py): 1 담당자 추천 · 2 최종 회의록
+   ========================================================= */
+/* 1단계: 액션 아이템 한 줄씩 (할 일 · 담당자 태그 · 마감 | 추천 보기 버튼) */
+[class*="st-key-fintodo-"] {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  flex-wrap: nowrap !important;
+}
+.fin-todo .todo-title { margin: 0 0 8px; }
+/* 1단계 제목 줄: 제목 · 배지 (왼쪽) / 이전 화면 · 다음 단계 (오른쪽 위) */
+.st-key-fin-head .wz-head { justify-content: flex-start; }

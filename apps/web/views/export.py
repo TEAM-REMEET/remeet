@@ -20,6 +20,7 @@ from ui.icons import tool_mark
 from ui.layout import page, page_header
 from ui.tags import tag
 from utils.text import esc, md_escape
+from views import finalize
 
 _VIEW = {"wait": ("대기", "wait"), "sending": ("보내는 중", "run"), "ok": ("전송됨", "ok"), "fail": ("전송 실패", "fail")}
 
@@ -144,6 +145,8 @@ def render() -> None:
         if repo.meeting(mid).host != me_id():
             markup('<p class="hint" style="font-size:14px">외부 도구 전송은 회의 주관자만 할 수 있어요.</p>')
             return
+        if finalize.in_flow(s, mid):  # 「확정하기」로 들어온 흐름: 4단계
+            finalize.flow_stepper(4)
         if s.export.started_at is None:
             _pick(mid)
             return

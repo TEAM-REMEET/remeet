@@ -20,6 +20,7 @@ from ui.html import markup
 from ui.layout import page, page_header
 from ui.tags import tag
 from utils.text import esc
+from views import finalize
 
 _STEP_VIEW = {"wait": ("", "대기", "wait"), "run": ("", "진행 중", "run"), "done": ("✓", "완료", "ok"), "fail": ("!", "일부 실패", "fail")}
 _RC_VIEW = {"wait": ("대기", "wait"), "sending": ("보내는 중", "run"), "ok": ("전달됨", "ok"), "fail": ("전송 실패", "fail")}
@@ -58,7 +59,8 @@ def _banner(p: delivery.Progress, total: int, mid: str) -> None:
             _app_button(f"실패한 {p.failed}건 다시 보내기", "dv_retry", "danger", actions.start_delivery, mid, 2,
                         icon=":material/refresh:")
         if host:  # 결과 전달이 끝나면 외부 도구(MCP)로 따로 보내기
-            _app_button("외부 도구 전송", "dv_export", "primary", actions.open_export, mid, icon=":material/send:")
+            label = "다음: 외부 도구 전송 →" if finalize.in_flow(get_state(), mid) else "외부 도구 전송"
+            _app_button(label, "dv_export", "primary", actions.open_export, mid, icon=":material/send:")
 
 
 def _steps(p: delivery.Progress, rc_total: int, todo_n: int) -> None:
@@ -117,6 +119,8 @@ def render() -> None:
     mid = s.delivery.meeting_id
     with page("deliver"):
         page_header("결과 전달", f"{repo.meeting(mid).title} · 확정한 내용을 참석자에게 보내고 위키에 반영해요")
+        if finalize.in_flow(s, mid):  # 「확정하기」로 들어온 흐름: 3단계
+            finalize.flow_stepper(3)
         running = not delivery.progress(s).ended
         st.session_state["_dv_polling"] = running
         st.fragment(_live, run_every=DELIVERY_POLL_INTERVAL if running else None)()

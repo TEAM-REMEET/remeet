@@ -9,6 +9,7 @@
   /search                        검색 결과 (회의록 첫 화면 검색칸에서)
   /folder-rel                    프로젝트
   /meeting-m1                    회의 상세
+  /finalize-m1                   회의록 확정 (담당자 추천 → 최종 회의록 → 결과 전달로)
   /deliver-m1                    결과 전달 (참석자에게 보내기)
   /export-m1                     외부 도구(MCP) 전송 (결과 전달 뒤 도구를 골라 보내기)
   /shared-sent · /shared-received
@@ -76,6 +77,7 @@ def all_routes(state: AppState) -> list[Route]:
     routes += [Route("folder", f"folder-{fid}", f.name, (fid,)) for fid, f in sel.folders(state).items()]
     for mid, m in repo.meetings().items():
         routes.append(Route("note", f"meeting-{mid}", m.title, (mid,)))
+        routes.append(Route("finalize", f"finalize-{mid}", f"회의록 확정 · {m.title}", (mid,)))
         routes.append(Route("deliver", f"deliver-{mid}", f"결과 전달 · {m.title}", (mid,)))
         routes.append(Route("export", f"export-{mid}", f"외부 도구 전송 · {m.title}", (mid,)))
     return routes
@@ -89,6 +91,8 @@ def path_for(state: AppState, screen: str) -> str:
         return f"folder-{state.folder_id}"
     if screen == "note":
         return f"meeting-{state.meeting_id}"
+    if screen == "finalize":
+        return f"finalize-{state.meeting_id}"
     if screen == "deliver":
         return f"deliver-{state.delivery.meeting_id}"
     if screen == "export":
@@ -151,6 +155,10 @@ def sync_from_url(current_path: str) -> str:
         s.folder_id = route.param[0]
     elif route.screen == "note":
         s.meeting_id = route.param[0]
+    elif route.screen == "finalize":
+        s.meeting_id = route.param[0]
+        if s.fin_flow != s.meeting_id:  # 주소로 바로 들어옴 → 1단계부터
+            s.fin_flow, s.fin_step = s.meeting_id, 1
     elif route.screen == "deliver" and route.param[0] != s.delivery.meeting_id:
         s.delivery = Delivery(meeting_id=route.param[0])  # 지난 전달 결과 보기
     elif route.screen == "export" and route.param[0] != s.export.meeting_id:

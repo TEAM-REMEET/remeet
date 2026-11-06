@@ -27,10 +27,11 @@ FORMAT_LABEL = {"plain": "발화자 없는 텍스트", "bracket": "[발화자] �
 
 # 형식 버튼 아래 회색 안내글: 고른 형식에서 벗어나면 안 된다는 규칙
 FORMAT_RULE = {
-    "plain": "발화자 표기 없이 문장만 적고, 발언마다 한 줄씩 띄워 주세요. [참석자1] · A: 같은 발화자 표기를 넣으면 안 돼요.",
+    "plain": "발화자 표기 없이 문장만 적고, 발언마다 한 줄씩 띄워 주세요. [김철수] · 김철수: 같은 발화자 표기를 넣으면 안 돼요.",
     "bracket": "[발화자]만 한 줄에 쓰고 바로 아랫줄에 발언을 적은 뒤, 한 줄 띄우고 다음 [발화자]를 적어 주세요. "
-               "[발화자]와 발언을 한 줄에 쓰면 안 돼요.",
-    "colon": "모든 줄을 「발화자: 발언」으로 적고, 발언마다 한 줄씩 띄워 주세요. 발화자 표기가 빠진 줄이 있으면 안 돼요.",
+               "[발화자]와 발언을 한 줄에 쓰면 안 돼요. 발화자는 참석자 이름으로 적어 주세요.",
+    "colon": "모든 줄을 「발화자: 발언」으로 적고, 발언마다 한 줄씩 띄워 주세요. 발화자 표기가 빠진 줄이 있으면 안 되고, "
+             "발화자는 참석자 이름으로 적어 주세요.",
 }
 
 EXAMPLES = {
@@ -40,14 +41,14 @@ EXAMPLES = {
         "수정이 끝나면 QA팀에 테스트를 요청하겠습니다."
     ),
     "bracket": (
-        "[참석자1]\n이번 주에는 로그인 오류를 수정하겠습니다.\n\n"
-        "[참석자2]\n디자인 시안은 금요일에 공유할게요.\n\n"
-        "[참석자1]\n수정 후 테스트를 요청하겠습니다."
+        "[김철수]\n이번 주에는 로그인 오류를 수정하겠습니다.\n\n"
+        "[김영희]\n디자인 시안은 금요일에 공유할게요.\n\n"
+        "[김철수]\n수정 후 테스트를 요청하겠습니다."
     ),
     "colon": (  # 발언마다 한 줄씩 띄움
-        "A: 결제 오류 안내 문구는 이번 주 안에 확정하기로 해요.\n\n"
-        "B: 그럼 초안은 제가 수요일까지 공유할게요.\n\n"
-        "A: 좋아요. 고객 문의가 늘었는지도 확인해 주세요?"
+        "김철수: 결제 오류 안내 문구는 이번 주 안에 확정하기로 해요.\n\n"
+        "김영희: 그럼 초안은 제가 수요일까지 공유할게요.\n\n"
+        "김철수: 좋아요. 고객 문의가 늘었는지도 확인해 주세요?"
     ),
 }
 
@@ -186,13 +187,23 @@ def _parse(text: str) -> Parsed:
     return Parsed("plain", tuple(Line(no, None, ln) for no, ln in raw))
 
 
-def auto_match(label: str) -> str:
-    """발화자 표기가 실제 사람 이름(짧은 이름·전체 이름)과 같으면 그 사람을 미리 골라 둠."""
+ANALYZE_DELAY_SECONDS = 2.0  # 목업: 「확정하기」 때 AI 분석 · 회의록 생성에 걸리는 시간 흉내 (로딩 화면)
+
+
+def match_speakers(labels: tuple[str, ...], attendees: list[str]) -> tuple[dict[str, str], list[str]]:
+    """발화자 표기 → 참석자 id. 참석자의 이름(전체 · 짧은 이름)과 같아야 해요.
+
+    돌려줌: (연결, 참석자에 없는 발화자 표기들) · 없는 발화자가 있으면 형식 오류 (미지정으로 두지 않음)
+    """
     people = repo.people()
-    for pid, p in people.items():
-        if label in (p.short, p.name):
-            return pid
-    return ""
+    mapping, unknown = {}, []
+    for label in labels:
+        pid = next((p for p in dict.fromkeys(attendees) if p in people and label in (people[p].short, people[p].name)), "")
+        if pid:
+            mapping[label] = pid
+        else:
+            unknown.append(label)
+    return mapping, unknown
 
 
 # ---------------------------------------------------------------- 분석 (데모 규칙)
@@ -205,7 +216,7 @@ class Analysis:
     open_issues: tuple[str, ...]
     keywords: tuple[str, ...]
     transcript: tuple[tuple[str, str], ...]  # (보이는 발화자 이름, 발언) · 매칭 반영
-    mapping: dict[str, str] = field(default_factory=dict)  # 발화자 표기 → 사람 id ('' 면 미지정)
+    mapping: dict[str, str] = field(default_factory=dict)  # 발화자 표기 → 참석자 id
 
 
 _TOGETHER = re.compile(r"(같이|함께|둘이|두 분|세 분|랑|이랑|하고|와 |과 |및)")
@@ -287,7 +298,7 @@ def build_meeting(mid: str, *, title: str, day: date, project_id: str | None, di
         for ln in chunk:
             pid = f"p{ln.no}"
             person = mapping.get(ln.label or "", "")
-            # 원문 화자: 연결한 사람은 그 사람 이름(짧은 이름), 아니면 원래 표기 → 화면에서 「미지정」
+            # 원문 화자: 연결한 참석자 이름(짧은 이름) · 발화자 없는 텍스트면 「발화자」
             speaker = by_id[person].short if person else (ln.label or "발화자")
             paragraphs.append(Paragraph(pid, speaker, ln.text))
             points.append(Evidence(ln.text, (pid,)))
