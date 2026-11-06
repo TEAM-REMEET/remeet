@@ -13,6 +13,7 @@ from pathlib import Path
 
 import streamlit as st
 
+from config import MEETING_SUMMARY_TIMEOUT
 from data import api
 
 from data.models import (
@@ -111,6 +112,11 @@ def me(token: str) -> dict:
     return api.call("GET", "/api/auth/me", token=token)
 
 
+def summarize_meeting(body: dict) -> dict:
+    """회의 등록 입력 → 요약 · 액션 아이템 (POST /api/meetings, 응답은 MeetingSummary JSON). 실패하면 api.ApiError."""
+    return api.call("POST", "/api/meetings", body, _token(), timeout=MEETING_SUMMARY_TIMEOUT)
+
+
 def people() -> dict[str, Person]:
     """조직 구성원 (Neo4j). short는 원문 화자 이름인데 Neo4j에 따로 없어서 이름을 그대로 써요."""
     return {r["user_id"]: Person(r["user_id"], r["name"], r["name"], r["team"] or "") for r in people_rows()}
@@ -157,7 +163,8 @@ def _meeting(d: dict) -> Meeting:
         title=d["title"],
         when=d["when"],
         date=d["date"],
-        topic=d.get("topic"),
+        project_id=d.get("project_id"),
+        directory_id=d["directory_id"],
         host=d["host"],
         people=tuple(d["people"]),
         deep=d["deep"],
@@ -257,7 +264,6 @@ def base_folders() -> dict[str, Folder]:
         k: Folder(
             id=k,
             name=v["name"],
-            type=v["type"],
             host=v["host"],
             members=tuple(v["members"]),
             notes=tuple(v["notes"]),

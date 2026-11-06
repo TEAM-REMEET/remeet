@@ -11,7 +11,6 @@ from components.dialogs.assign import assign_dialog
 from components.dialogs.compose_pickers import (
     compose_confirm_dialog,
     compose_review_dialog,
-    folder_picker_dialog,
     format_error_dialog,
     host_picker_dialog,
     people_picker_dialog,
@@ -32,7 +31,6 @@ _DIALOGS = {
     "add_todo": add_todo_dialog,
     "todo_owner": todo_owner_dialog,
     "owner_change": owner_change_dialog,
-    "cp_folder": folder_picker_dialog,
     "cp_host": host_picker_dialog,
     "cp_people": people_picker_dialog,
     "cp_format_error": format_error_dialog,
