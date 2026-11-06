@@ -337,7 +337,7 @@ class MeetingResult:
 @dataclass(frozen=True)
 class Todo:
     text: str
-    owner: str | None  # 사람 id, 없으면 담당자 미정
+    owners: tuple[str, ...]  # 담당자 사람 id 들 (여러 명 가능 · 비어 있으면 담당자 미정)
     due: str
     src: tuple[str, ...]
     urgent: bool = False
@@ -426,6 +426,18 @@ class Candidate:
     att: bool
     skills: tuple[str, ...]
     match: str = ""
+
+
+@dataclass(frozen=True)
+class Predecessor:
+    """담당자 추천: 이 일과 이어지는 선행 업무를 맡았던 사람 (추천 6명보다 위에 따로 보여 줌)."""
+
+    name: str
+    team: str
+    role: str
+    task: str  # 맡았던 선행 업무
+    meeting: str  # 그 업무가 나온 회의
+    date: str  # M/D
 
 
 @dataclass(frozen=True)

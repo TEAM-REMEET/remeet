@@ -1,0 +1,88 @@
+"""액션 아이템 직접 추가 (주관자만): 내용 + 담당자(여러 명 가능) + 마감일 → 추가하면 원문을 다시 훑는 동안 로딩 화면.
+
+담당자 칸을 누르면 「담당자 선택」 창(새 회의록 참석자 선택과 같은 사람 찾기)으로 바뀌고,
+고르거나 돌아오면 다시 이 모달로 와요. 적어 둔 내용 · 마감일은 AppState.todo_draft_text / todo_draft_due 에 남아 있어요.
+"""
+
+from __future__ import annotations
+
+import streamlit as st
+
+from components.dialogs.compose_pickers import people_picker
+from config import CURRENT_USER_ID as ME
+from data import repository as repo
+from state import actions
+from state import selectors as sel
+from state.store import get_state
+from ui.buttons import button
+from ui.html import markup
+
+
+def _host_only(m) -> bool:
+    if sel.my_role(m) == "host":
+        return True
+    markup('<p class="hint" style="font-size:13px">액션 아이템은 회의 주관자만 추가할 수 있어요.</p>')
+    return False
+
+
+@st.dialog("액션 아이템 추가", width="small", on_dismiss=actions.close_modal)
+def add_todo_dialog() -> None:
+    s = get_state()
+    m = repo.meeting(s.meeting_id)
+    if not _host_only(m):
+        return
+    markup('<p class="hint" style="font-size:13px;color:#5F646D">추가하면 AI가 회의 원문을 다시 훑어 '
+           "이 할 일의 근거가 된 발언을 찾아 연결해요.</p>")
+    text_key = f"todo_text_{s.todo_nonce}"
+    text = st.text_area("액션 아이템 내용", value=s.todo_draft_text, key=text_key, height=90, max_chars=200,
+                        placeholder="예: 결제 오류 고객 안내 문구 초안 작성")
+
+    owners = list(s.todo_draft_owners)
+    markup('<p class="todo-field-label">담당자</p>')
+    # 모달 안 버튼은 모달만 다시 그려서, 담당자 선택 창으로 바꾸려면 st.rerun() 으로 앱 전체를 다시 그려야 해요
+    label = f"담당자 {len(owners)}명 · 바꾸기" if owners else "담당자 선택 (여러 명 가능 · 고르지 않으면 담당 미정)"
+    if button(label, key="todo_owner_field", variant="field" if owners else "fieldempty", icon=":material/group:",
+              width="stretch"):
+        actions.open_todo_owner_picker(text)
+        st.rerun()
+    if owners:  # 고른 사람 칩 · X 로 한 명씩 빼기
+        with st.container(key="todo-owner-chips", horizontal=True, gap="xsmall"):
+            for pid in owners:
+                name = sel.name_of(pid) + (" (나)" if pid == ME else "")
+                button(name, key=f"todo_owner_rm_{pid}", variant="chip", icon=":material/close:",
+                       help="담당자에서 빼기", on_click=actions.remove_todo_owner, args=(pid,))
+
+    due_key = f"todo_due_{s.todo_nonce}"
+    due = st.date_input("마감일", value=s.todo_draft_due, key=due_key, format="YYYY/MM/DD",
+                        on_change=actions.keep_todo_due, args=(due_key,), help="비워 두면 마감일 없이 추가돼요.")
+
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="todo_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        submit = button("추가", key="todo_submit", variant="primary")
+    if submit:
+        if not (text or "").strip():
+            markup('<p class="hint" style="font-size:13px;color:#B3261E">액션 아이템 내용을 적어 주세요.</p>')
+        elif actions.submit_todo(m.id, text, owners, f"{due.month}/{due.day}" if due else ""):
+            st.rerun()
+
+
+@st.dialog("담당자 선택", width="medium", on_dismiss=actions.back_to_add_todo)
+def todo_owner_dialog() -> None:
+    s = get_state()
+    if not _host_only(repo.meeting(s.meeting_id)):
+        return
+    m = repo.meeting(s.meeting_id)
+    attendees = [m.host, *[pid for pid in m.people if pid != m.host]]  # 주관자 먼저
+    people_picker("todo_owner", single=False, title=f"선택한 담당자 {len(s.pick_draft)}명",
+                  hint="이름을 누르면 선택 · 다시 누르면 해제 (여러 명 가능)",
+                  featured=attendees, featured_label=f"이 회의 참석자 {len(attendees)}")
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("← 돌아가기", key="todo_owner_back", variant="secondary"):
+            actions.back_to_add_todo()
+            st.rerun()
+        n = len(s.pick_draft)
+        if button(f"{n}명 선택" if n else "담당 미정으로 두기", key="todo_owner_ok", variant="primary"):
+            actions.back_to_add_todo(confirm=True)
+            st.rerun()

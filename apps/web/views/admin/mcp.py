@@ -18,6 +18,7 @@ from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button
 from ui.html import markup
+from ui.icons import tool_mark
 from ui.layout import card, card_title, empty_state, page, page_header
 from ui.tags import tag
 from utils.text import esc
@@ -42,7 +43,7 @@ def _tools(s: AppState) -> None:
                 meta.append(f"마지막 전송 {t.last_sync}")
             with st.container(key=f"adm-tool-{t.id}", horizontal=True, vertical_alignment="center", gap="medium"):
                 markup(
-                    f'<div class="adm-tool"><span class="integ-mark">{esc(t.mark)}</span>'
+                    f'<div class="adm-tool">{tool_mark(t.id, esc(t.mark))}'
                     f'<span class="integ-info"><span class="nm"><b>{esc(t.name)}</b>'
                     + ('<span class="pill-label">Phase 2</span>' if t.phase2 else "")
                     + f'{tag(label, tone)}</span><span class="d">{esc(" · ".join(meta))}</span>'

@@ -33,6 +33,7 @@ from data.models import (
     Notification,
     Paragraph,
     Person,
+    Predecessor,
     ShareInfo,
     TimelineItem,
     Todo,
@@ -76,6 +77,17 @@ def people_by_short_name() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------- meetings
+def _owners(t: dict) -> tuple[str, ...]:
+    """액션 아이템 담당자들 (사람 id). owners → assignee_user_ids(에이전트 출력 · 대조 안 된 null 은 뺌) → 예전 owner."""
+    if "owners" in t:
+        raw = t["owners"]
+    elif "assignee_user_ids" in t:
+        raw = t["assignee_user_ids"]
+    else:
+        raw = [t.get("owner")]
+    return tuple(dict.fromkeys(pid for pid in raw if pid))  # 빈 값 · 중복 제외, 순서 유지
+
+
 def _agenda(a: dict) -> Agenda:
     """안건. background/topics/decisions/open_issues/next 가 있으면 「안건별 상세」로 그대로 씀."""
     detail_keys = ("background", "topics", "decisions", "open_issues", "next")
@@ -122,7 +134,7 @@ def _meeting(d: dict) -> Meeting:
             MeetingResult(r["kind"], r["text"], tuple(r.get("agendas", ())), tuple(r.get("src", ())))
             for r in d.get("results", ())
         ),
-        todos=tuple(Todo(t["text"], t["owner"], t["due"], tuple(t["src"]), t["urgent"]) for t in d["todos"]),
+        todos=tuple(Todo(t["text"], _owners(t), t["due"], tuple(t["src"]), t["urgent"]) for t in d["todos"]),
         shared=ShareInfo(shared["from"], shared["scope"], shared["received"], shared["lock_raw"]) if shared else None,
         branch_of=(d.get("branch_of") or {}).get("meeting"),
     )
@@ -148,9 +160,32 @@ def _session_meetings() -> dict[str, Meeting]:
     return out
 
 
+def _added_todos() -> dict[str, list[Todo]]:
+    """주관자가 직접 추가한 액션 아이템 (AppState.added_todos)."""
+    try:
+        state = st.session_state.get("_app_state")
+    except Exception:  # noqa: BLE001 - Streamlit 밖(테스트 등)에서 부를 때
+        return {}
+    return getattr(state, "added_todos", {}) or {}
+
+
+def _fresh_todo(t) -> Todo:
+    """세션에 남아 있던 예전 Todo(담당자 한 명 · owner)를 지금 모양(owners)으로. 앱을 띄운 채 코드를 바꾼 경우 대비."""
+    if hasattr(t, "owners"):
+        return t
+    owner = getattr(t, "owner", None)
+    return Todo(t.text, (owner,) if owner else (), t.due, tuple(t.src), getattr(t, "urgent", False))
+
+
 def meetings() -> dict[str, Meeting]:
-    """목업 회의 + 새로 만든 회의."""
-    return {**_base_meetings(), **_session_meetings()}
+    """목업 회의 + 새로 만든 회의 (+ 주관자가 직접 추가한 액션 아이템)."""
+    out = dict(_base_meetings())
+    for mid, m in _session_meetings().items():
+        out[mid] = replace(m, todos=tuple(_fresh_todo(t) for t in m.todos))
+    for mid, todos in _added_todos().items():
+        if mid in out and todos:
+            out[mid] = replace(out[mid], todos=out[mid].todos + tuple(_fresh_todo(t) for t in todos))
+    return out
 
 
 def meeting(mid: str) -> Meeting:
@@ -198,6 +233,7 @@ def assignee_config() -> dict:
         "needed_skills": set(raw["needed_skills"]),
         "related_teams": set(raw["related_teams"]),
         "reasons": raw["reasons"],
+        "predecessors": [Predecessor(**p) for p in raw.get("predecessors", [])],
     }
 
 

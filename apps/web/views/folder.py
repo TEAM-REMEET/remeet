@@ -46,11 +46,18 @@ def _empty_texts(role: str) -> tuple[str, str]:
 def _folder_wiki(s: AppState, fid: str) -> None:
     f = sel.folders(s)[fid]
     graph = repo.folder_wiki()
-    if not (fid == graph.extra.get("folder") and len(f.notes) >= FOLDER_WIKI_MIN_NOTES):
+    if len(f.notes) < FOLDER_WIKI_MIN_NOTES:  # 회의록이 모자람
         markup(
             f'<div class="empty" style="padding:48px 24px">{icon("wiki", 28, "#F37321")}'
-            '<span class="empty-title">아직 관계도를 만들 만큼 회의가 쌓이지 않았어요</span>'
-            f'<span class="empty-text sub">회의록이 {FOLDER_WIKI_MIN_NOTES}개 이상 쌓이면 사람·주제·결정을 잇는 위키가 만들어져요 · 지금 {len(f.notes)}개</span></div>'
+            '<span class="empty-title">아직 관계도를 만들 회의록이 없어요</span>'
+            f'<span class="empty-text sub">회의록이 {FOLDER_WIKI_MIN_NOTES}개 이상 있으면 사람·주제·결정을 잇는 위키가 만들어져요 · 지금 {len(f.notes)}개</span></div>'
+        )
+        return
+    if fid != graph.extra.get("folder"):  # 회의록은 충분한데 이 폴더의 그래프 데이터가 아직 없음 (목업은 한 폴더만 있음)
+        markup(
+            f'<div class="empty" style="padding:48px 24px">{icon("wiki", 28, "#F37321")}'
+            '<span class="empty-title">이 폴더의 관계도를 아직 만들지 못했어요</span>'
+            '<span class="empty-text sub">폴더의 그래프 데이터가 생성되면 위키를 만들 예정이에요</span></div>'
         )
         return
 

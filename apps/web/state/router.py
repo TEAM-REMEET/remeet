@@ -12,7 +12,8 @@
   /search                        검색 결과 (회의록 첫 화면 검색칸에서)
   /folder-rel                    폴더
   /meeting-m1                    회의 상세
-  /deliver-m1                    결과 전달
+  /deliver-m1                    결과 전달 (참석자에게 보내기)
+  /export-m1                     외부 도구(MCP) 전송 (결과 전달 뒤 도구를 골라 보내기)
   /shared-sent · /shared-received
   /admin-cost · /admin-members · /admin-mcp   관리자 화면 (관리자 계정만)
 
@@ -33,7 +34,7 @@ import streamlit as st
 from data import repository as repo
 from state import archive
 from state import selectors as sel
-from state.store import AppState, Delivery, get_state
+from state.store import AppState, Delivery, ExportRun, get_state
 from utils.browser import hide_page_not_found
 
 # 고정 경로 화면: screen → (url_path, 탭 제목)
@@ -83,6 +84,7 @@ def all_routes(state: AppState) -> list[Route]:
     for mid, m in repo.meetings().items():
         routes.append(Route("note", f"meeting-{mid}", m.title, (mid,)))
         routes.append(Route("deliver", f"deliver-{mid}", f"결과 전달 · {m.title}", (mid,)))
+        routes.append(Route("export", f"export-{mid}", f"외부 도구 전송 · {m.title}", (mid,)))
     return routes
 
 
@@ -99,6 +101,8 @@ def path_for(state: AppState, screen: str) -> str:
         return f"meeting-{state.meeting_id}"
     if screen == "deliver":
         return f"deliver-{state.delivery.meeting_id}"
+    if screen == "export":
+        return f"export-{state.export.meeting_id}"
     return STATIC.get(screen, STATIC["compose"])[0]
 
 
@@ -161,6 +165,10 @@ def sync_from_url(current_path: str) -> str:
         s.meeting_id = route.param[0]
     elif route.screen == "deliver" and route.param[0] != s.delivery.meeting_id:
         s.delivery = Delivery(meeting_id=route.param[0])  # 지난 전달 결과 보기
+    elif route.screen == "export" and route.param[0] != s.export.meeting_id:
+        from state import export
+
+        s.export = ExportRun(meeting_id=route.param[0], picked=export.default_pick(route.param[0]))  # 도구 고르기부터
 
     s.screen = route.screen
     if route.path != s.last_route:

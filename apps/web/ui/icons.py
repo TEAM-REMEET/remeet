@@ -47,3 +47,25 @@ def brand_logo(height: int = 28) -> str:
     """가로형 로고 이미지 (assets/brand/logo.svg)."""
     return (f'<img class="brand-logo" src="data:image/svg+xml;base64,{_logo_data()}" '
             f'style="height:{height}px;width:auto" alt="RE:MEET">')
+
+
+# ---------------------------------------------------------------- 외부 도구(MCP) 마크
+_TOOL_LOGOS = {"jira": "jira.png", "slack": "slack.png", "notion": "notion.png"}  # assets/icons/tools/
+_TOOL_ICONS = {"mail": "mail", "cal": "calendar"}  # 사내 메일 · 캘린더는 일반 아이콘
+
+
+@lru_cache(maxsize=None)
+def _png(name: str) -> str:
+    return base64.b64encode((ICON_DIR / "tools" / name).read_bytes()).decode("ascii")
+
+
+def tool_mark(tool_id: str, mark: str, extra_class: str = "") -> str:
+    """도구 목록의 네모 마크: 로고(Jira · Slack · Notion) → 아이콘(메일 · 캘린더) → 없으면 글자(mark)."""
+    cls = f"integ-mark {extra_class}".strip()
+    if tool_id in _TOOL_LOGOS:
+        return (f'<span class="{cls} logo"><img src="data:image/png;base64,{_png(_TOOL_LOGOS[tool_id])}" '
+                f'alt="" aria-hidden="true"></span>')
+    if tool_id in _TOOL_ICONS:
+        return f'<span class="{cls} logo">{icon(_TOOL_ICONS[tool_id], 20, "#2B2F36")}</span>'
+    return f'<span class="{cls}">{mark}</span>'
+

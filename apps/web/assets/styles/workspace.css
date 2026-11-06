@@ -696,8 +696,9 @@ hr.cp-divider {
   overflow-anchor: none;
   box-sizing: border-box;
 }
-/* 스크롤 스크립트만 담는 숨은 칸 */
-.st-key-pick-js {
+/* 스크롤 · 복사 스크립트만 담는 숨은 칸 */
+.st-key-pick-js,
+.st-key-ca-js {
   display: none !important;
 }
 .pick-chosen-in {
@@ -2711,3 +2712,7 @@ hr.cp-divider {
 .st-key-org-tabs [class*="st-key-grp-tab-"] button p {
   text-align: center !important;
 }
+/* 관리자에게 문의: 「복사」 ↔ 「복사됨」 이 바뀌어도 버튼 자리 · 폭이 그대로 */
+.st-key-ca-mail [class*="st-key-b-mini-ca_copy"] button { min-width: 72px; justify-content: center; }
+/* 새 회의록 · 기본 정보: 필수 표시(*)는 주황색 */
+.cp-flabel .req, .cp-required .req { color: var(--accent); font-weight: 700; }

@@ -427,7 +427,7 @@
     ]
   },
   "folder": "rel",
-  "min_notes": 3,
+  "min_notes": 1,
   "branch_timeline": {
     "t2": [
       {

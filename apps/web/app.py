@@ -16,7 +16,7 @@ from components.sidebar import render_sidebar
 from components.toast import render_toast
 from components.topbar import render_topbar
 from config import APP_ICON, APP_TITLE, LOGIN_COOKIE
-from state import actions, delivery, router
+from state import actions, delivery, export, router
 from state.store import get_state
 from ui.theme import inject_css
 from utils import browser
@@ -29,6 +29,7 @@ st.set_page_config(page_title=f"{APP_TITLE} 프로토타입", page_icon=APP_ICON
 def main() -> None:
     state = get_state()
     delivery.sync(state)  # 진행 중이던 전달이 끝났으면 상태 확정
+    export.sync(state)  # 진행 중이던 외부 도구 전송이 끝났으면 실패 기록 · 상태 확정
     inject_css()
     js_host = st.container(key="js-host")  # 스크립트 전용 숨은 영역 (레이아웃에 영향 없음)
     js_host.html("<span></span>")  # 항상 내용이 있어야 영역이 생겼다 사라지지 않음

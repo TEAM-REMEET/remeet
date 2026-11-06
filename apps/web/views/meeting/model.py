@@ -189,6 +189,8 @@ class TodoView:
     mine: bool
     who: str
     who_tone: str
+    who_tags: tuple[tuple[str, str], ...]  # 담당자 한 명당 태그 하나 (이름, tone) · 나는 「나」 주황, 다른 사람은 회색
+    unassigned: bool  # 담당자가 아직 없음 (회의록에도 없고 지정도 안 함) → 「담당 미정」
     due: str
     raw_due: str
     urgent: bool
@@ -198,26 +200,36 @@ class TodoView:
 
     @property
     def plain(self) -> str:
-        return f"- {self.text} ({self.who}, {self.raw_due}까지)"
+        return f"- {self.text} ({self.who}, {self.raw_due}까지)" if self.raw_due else f"- {self.text} ({self.who})"
 
 
 def todos(s: AppState, m: Meeting) -> list[TodoView]:
     out = []
-    for i, t in enumerate(m.todos):
+    for i, t in sel.todo_items(s, m.id):  # 삭제한 액션 아이템은 빼고 (번호는 원래 그대로)
         key = sel.todo_key(m.id, i)
         done = s.done.get(key, False)
-        mine = t.owner == ME
-        who = sel.name_of(t.owner) if t.owner else (", ".join(s.assigned.get(key, [])) or "담당 미정")
+        mine = ME in t.owners
+        names = ["나" if pid == ME else sel.name_of(pid) for pid in t.owners]
+        who = ", ".join(names) if t.owners else (", ".join(s.assigned.get(key, [])) or "담당 미정")
+        if t.owners:
+            tags = tuple(("나", "mine") if pid == ME else (sel.name_of(pid), "att") for pid in t.owners)
+        elif s.assigned.get(key):  # 회의록엔 담당자가 없었고 주관자가 지정한 사람들 (이름으로 저장됨)
+            my_name = sel.me().name
+            tags = tuple(("나", "mine") if n == my_name else (n, "warn") for n in s.assigned[key])
+        else:
+            tags = (("담당 미정", "warn"),)
         para = m.paragraph(t.src[0]) if t.src else None
         out.append(TodoView(
             index=i, key=key, text=t.text, done=done, mine=mine,
-            who="나" if mine else who,
-            who_tone="mine" if mine else ("att" if t.owner else "warn"),
-            due=f"{t.due}까지" + (" · 곧 마감" if t.urgent and not done else ""),
+            who=who,
+            who_tone="mine" if mine else ("att" if t.owners else "warn"),
+            who_tags=tags,
+            unassigned=not t.owners and not s.assigned.get(key),
+            due=(f"{t.due}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent and not done else ""),
             raw_due=t.due,
             urgent=t.urgent and not done,
-            speaker=speaker_name(para.speaker) if para else "원문 비공개",
-            quote=para.text if para else "원문이 공유되지 않았어요",
+            speaker=speaker_name(para.speaker) if para else ("원문 비공개" if t.src else "근거 없음"),
+            quote=para.text if para else ("원문이 공유되지 않았어요" if t.src else "원문에서 관련 발언을 찾지 못했어요"),
             src=t.src,
         ))
     return out
@@ -231,9 +243,14 @@ def assignable(s: AppState, m: Meeting) -> list[tuple[str, str, list[str], list[
     return [
         (sel.todo_key(m.id, i), t.text, list(s.assigned.get(sel.todo_key(m.id, i), [])),
          list(s.assign_prev.get(sel.todo_key(m.id, i), [])), t.src)
-        for i, t in enumerate(m.todos)
-        if not t.owner
+        for i, t in sel.todo_items(s, m.id)
+        if not t.owners
     ]
+
+
+def deleted_todos(s: AppState, m: Meeting) -> list[tuple[int, str]]:
+    """삭제한 액션 아이템 [(원래 순서 번호, 할 일)] · 지운 순서대로 (되돌리기 목록)."""
+    return [(i, m.todos[i].text) for i in s.deleted_todos.get(m.id, []) if i < len(m.todos)]
 
 
 def assignee_editable(s: AppState, m: Meeting) -> bool:

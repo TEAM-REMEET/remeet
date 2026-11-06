@@ -55,7 +55,7 @@
       {
         "id": "b4",
         "speaker": "도윤",
-        "text": "가능성 있어요. 오류 로그는 제가 10/31까지 정리해서 공유할게요."
+        "text": "가능성 있어요. 오류 로그는 태현 님이랑 같이 10/31까지 정리해서 공유할게요."
       },
       {
         "id": "b5",
@@ -274,7 +274,7 @@
               },
               {
                 "kind": "정보",
-                "text": "가능성이 있다는 답변이 있었고, 오류 로그는 도윤 님이 10/31까지 정리해 공유하기로 했다.",
+                "text": "가능성이 있다는 답변이 있었고, 오류 로그는 도윤 님과 태현 님이 함께 10/31까지 정리해 공유하기로 했다.",
                 "src": ["b4"]
               }
             ]
@@ -375,35 +375,35 @@
     "todos": [
       {
         "text": "릴리즈 후보일 2안 비교표",
-        "owner": "yun",
+        "owners": ["yun"],
         "due": "11/2",
         "src": ["c2"],
         "urgent": true
       },
       {
         "text": "「결제 오류 대응」 회의 일정 잡기",
-        "owner": "yun",
+        "owners": ["yun"],
         "due": "10/31",
         "src": ["b5"],
         "urgent": true
       },
       {
         "text": "온보딩 3단계 안내 문구",
-        "owner": "har",
+        "owners": ["har"],
         "due": "11/3",
         "src": ["a3"],
         "urgent": false
       },
       {
         "text": "중복 결제 오류 로그 정리",
-        "owner": "doy",
+        "owners": ["doy", "tae"],
         "due": "10/31",
         "src": ["b4"],
         "urgent": false
       },
       {
         "text": "결제 오류 고객 안내 문구 작성",
-        "owner": null,
+        "owners": [],
         "due": "11/5",
         "src": ["b6"],
         "urgent": false
@@ -509,14 +509,14 @@
     "todos": [
       {
         "text": "중복 결제 오류 로그 정리",
-        "owner": "doy",
+        "owners": ["doy"],
         "due": "10/31",
         "src": ["a4"],
         "urgent": false
       },
       {
         "text": "다음 회의 일정 잡기",
-        "owner": "yun",
+        "owners": ["yun"],
         "due": "10/31",
         "src": ["a5"],
         "urgent": true
@@ -663,14 +663,14 @@
     "todos": [
       {
         "text": "재무팀에 정산 주기 의견 요청",
-        "owner": "yun",
+        "owners": ["yun"],
         "due": "오늘",
         "src": ["b2"],
         "urgent": true
       },
       {
         "text": "수수료 비교표 정리",
-        "owner": "doy",
+        "owners": ["doy"],
         "due": "10/30",
         "src": ["a3"],
         "urgent": false
@@ -742,7 +742,7 @@
     "todos": [
       {
         "text": "수수료 비교 회의 준비",
-        "owner": "doy",
+        "owners": ["doy"],
         "due": "10/29",
         "src": ["a2"],
         "urgent": false
@@ -823,7 +823,7 @@
     "todos": [
       {
         "text": "두 PG사 정산 테스트",
-        "owner": "jiw",
+        "owners": ["jiw"],
         "due": "10/28",
         "src": ["a3"],
         "urgent": false
@@ -923,7 +923,7 @@
     "todos": [
       {
         "text": "온보딩 B안 결과 공유",
-        "owner": "yun",
+        "owners": ["yun"],
         "due": "10/22",
         "src": ["b1"],
         "urgent": false
@@ -1004,14 +1004,14 @@
     "todos": [
       {
         "text": "CS 의견 받아 안내문 확정",
-        "owner": "yun",
+        "owners": ["yun"],
         "due": "10/31",
         "src": ["a2"],
         "urgent": true
       },
       {
         "text": "앱 안 배너 디자인",
-        "owner": "har",
+        "owners": ["har"],
         "due": "10/31",
         "src": ["a3"],
         "urgent": false
@@ -1096,7 +1096,7 @@
     "todos": [
       {
         "text": "주간 회의에서 개편 진행 공유",
-        "owner": "yun",
+        "owners": ["yun"],
         "due": "매주",
         "src": ["a3"],
         "urgent": false
@@ -1177,7 +1177,7 @@
     "todos": [
       {
         "text": "진행 표시줄 넣은 시안 수정",
-        "owner": "har",
+        "owners": ["har"],
         "due": "10/27",
         "src": ["a3"],
         "urgent": false
@@ -1345,7 +1345,7 @@
     "todos": [
       {
         "text": "응대 매크로 초안 작성",
-        "owner": "cs",
+        "owners": ["cs"],
         "due": "11/3",
         "src": [],
         "urgent": false

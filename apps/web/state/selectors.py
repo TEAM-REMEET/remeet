@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 from config import CURRENT_USER_ID as ME
 from config import YEAR
 from data import repository as repo
-from data.models import Folder, Meeting, Person
+from data.models import Folder, Meeting, Person, Todo
 from state.store import AppState
 from utils.dates import date_key
 
@@ -177,17 +177,26 @@ ROLE_TAGS = {
 }
 
 
+def todo_items(state: AppState, mid: str) -> list[tuple[int, Todo]]:
+    """이 회의의 액션 아이템 [(원래 순서 번호, 할 일)] · 사용자가 삭제한 것은 뺌.
+
+    번호는 지우기 전 그대로라서, 번호로 저장한 완료 체크 · 담당자 지정 기록이 다른 할 일에 붙지 않아요.
+    """
+    gone = set(state.deleted_todos.get(mid, []))
+    return [(i, t) for i, t in enumerate(repo.meeting(mid).todos) if i not in gone]
+
+
 def mine_count(mid: str) -> int:
-    return sum(1 for t in repo.meeting(mid).todos if t.owner == ME)
+    return sum(1 for t in repo.meeting(mid).todos if ME in t.owners)
 
 
 def my_todo_keys(state: AppState, mid: str) -> list[str]:
     """이 회의에서 나에게 맡겨진 할 일 (담당자 지정으로 바뀐 것까지 반영)."""
     my_name = me().name
     keys = []
-    for i, t in enumerate(repo.meeting(mid).todos):
+    for i, t in todo_items(state, mid):
         key = todo_key(mid, i)
-        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else t.owner == ME
+        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else ME in t.owners
         if owner_is_me:
             keys.append(key)
     return keys
@@ -223,8 +232,7 @@ def todo_key(mid: str, index: int) -> str:
 
 
 def unassigned_count(state: AppState, mid: str) -> int:
-    m = repo.meeting(mid)
-    return sum(1 for i, t in enumerate(m.todos) if not t.owner and not state.assigned.get(todo_key(mid, i)))
+    return sum(1 for i, t in todo_items(state, mid) if not t.owners and not state.assigned.get(todo_key(mid, i)))
 
 
 def status_of(state: AppState, mid: str) -> str:
@@ -344,7 +352,7 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
         status=label,
         status_tone=tone,
         status_sub=sub_by_status[st],
-        actions=len(m.todos),
+        actions=len(todo_items(state, mid)),
         action_sub=mine_text + (f" · 담당 미정 {unassigned}" if (unassigned := unassigned_count(state, mid)) else ""),
         button=button,
         button_kind=kind,

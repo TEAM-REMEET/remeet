@@ -235,11 +235,17 @@ _CHOSEN_SCROLL_JS = """<script>
 </script>"""
 
 
-def _people_picker(kind: str, *, single: bool) -> None:
+def people_picker(kind: str, *, single: bool, title: str | None = None, hint: str | None = None,
+                  featured: list[str] | None = None, featured_label: str = "") -> None:
+    """사람 고르기 (고른 사람 칩 + 조직도 · 검색 · 최근 · 즐겨찾기). 고른 사람은 AppState.pick_draft.
+
+    새 회의록의 주관자 · 참석자 · 발화자 연결, 액션 아이템 담당자에서 같이 씁니다.
+    """
     s = get_state()
 
     # 지금 고른 사람: 제목은 상자 위에 고정, 사람 칩만 상자 안에서 스크롤
-    title = ("연결할 사람" if kind == "cp_speaker" else "주관자") if single else f"선택한 참석자 {len(s.pick_draft)}명"
+    title = title or (("연결할 사람" if kind == "cp_speaker" else "주관자") if single
+                      else f"선택한 참석자 {len(s.pick_draft)}명")
     if s.pick_draft:
         chips = "".join(
             f'<span class="pick-chip">{avatar(sel.person(pid).initial, size=22, host=single)}'
@@ -256,23 +262,23 @@ def _people_picker(kind: str, *, single: bool) -> None:
             st.html(_CHOSEN_SCROLL_JS, unsafe_allow_javascript=True)
 
     # 사람 고르기: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기 (팀 · 조직이 많아도 찾기 쉽게)
-    hint = ("이름을 누르면 이 발화자로 연결돼요" if kind == "cp_speaker" else "이름을 누르면 주관자로 골라져요") if single \
-        else "이름을 누르면 선택 · 다시 누르면 해제"
+    hint = hint or (("이름을 누르면 이 발화자로 연결돼요" if kind == "cp_speaker" else "이름을 누르면 주관자로 골라져요")
+                    if single else "이름을 누르면 선택 · 다시 누르면 해제")
     markup(f'<div class="pick-section-head"><b>사람 찾기</b><span class="hint">{esc(hint)}</span></div>')
-    org_people_picker(kind, chosen=list(s.pick_draft), single=single,
+    org_people_picker(kind, chosen=list(s.pick_draft), single=single, featured=featured, featured_label=featured_label,
                       on_pick=functools.partial(actions.pick_person, single=single), height=280)
 
 
 @st.dialog("주관자 선택", width="medium", on_dismiss=actions.close_modal)
 def host_picker_dialog() -> None:
-    _people_picker("cp_host", single=True)
+    people_picker("cp_host", single=True)
     _footer("cp_host", "선택", disabled=not get_state().pick_draft)
 
 
 @st.dialog("참석자 선택", width="medium", on_dismiss=actions.close_modal)
 def people_picker_dialog() -> None:
     n = len(get_state().pick_draft)
-    _people_picker("cp_people", single=False)
+    people_picker("cp_people", single=False)
     _footer("cp_people", f"{n}명 선택" if n else "선택 안 함")
 
 
@@ -282,7 +288,7 @@ def speaker_picker_dialog() -> None:
     s = get_state()
     markup(f'<p class="hint" style="font-size:14px;color:#2B2F36">원문의 <b>「{esc(s.pick_label)}」</b>은(는) 누구인가요? '
            "팀을 고르고 이름을 누르세요. 모르면 「미지정으로 두기」를 누르면 돼요.</p>")
-    _people_picker("cp_speaker", single=True)
+    people_picker("cp_speaker", single=True)
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
         if button("취소", key="cp_speaker_cancel", variant="secondary"):
             actions.close_modal()
