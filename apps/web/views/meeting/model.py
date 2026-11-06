@@ -207,21 +207,24 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
     for i, t in sel.todo_items(s, m.id):  # 삭제한 액션 아이템은 빼고 (번호는 원래 그대로)
         key = sel.todo_key(m.id, i)
         me = me_id()
-        mine = me in t.owners
-        names = ["나" if pid == me else sel.name_of(pid) for pid in t.owners]
-        who = ", ".join(names) if t.owners else (", ".join(s.assigned.get(key, [])) or "담당 미정")
-        if t.owners:
-            tags = tuple(("나", "mine") if pid == me else (sel.name_of(pid), "att") for pid in t.owners)
-        elif s.assigned.get(key):  # 회의록엔 담당자가 없었고 주관자가 지정한 사람들 (이름으로 저장됨)
+        if s.assigned.get(key):  # 주관자가 지정 · 변경한 사람들 (이름으로 저장 · 회의록 담당자보다 먼저)
             my_name = sel.me().name
-            tags = tuple(("나", "mine") if n == my_name else (n, "warn") for n in s.assigned[key])
+            picked = s.assigned[key]
+            mine = my_name in picked
+            who = ", ".join("나" if n == my_name else n for n in picked)
+            # 회의록에 담당자가 없던 일은 노란색, 있던 일을 바꾼 것은 회색 (나는 주황)
+            tags = tuple(("나", "mine") if n == my_name else (n, "att" if t.owners else "warn") for n in picked)
+        elif t.owners:
+            mine = me in t.owners
+            who = ", ".join("나" if pid == me else sel.name_of(pid) for pid in t.owners)
+            tags = tuple(("나", "mine") if pid == me else (sel.name_of(pid), "att") for pid in t.owners)
         else:
-            tags = (("담당 미정", "warn"),)
+            mine, who, tags = False, "담당 미정", (("담당 미정", "warn"),)
         para = m.paragraph(t.src[0]) if t.src else None
         out.append(TodoView(
             index=i, key=key, text=t.text, mine=mine,
             who=who,
-            who_tone="mine" if mine else ("att" if t.owners else "warn"),
+            who_tone="mine" if mine else ("att" if t.owners else "warn"),  # (안 씀) 한 덩어리 태그 색
             who_tags=tags,
             unassigned=not t.owners and not s.assigned.get(key),
             due=(f"{t.due}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent else ""),

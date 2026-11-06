@@ -19,7 +19,8 @@ def member_pills(lead: str, host: str, people: list[str]) -> None:
         is_host = pid == host
         role = '<span class="role">주관</span>' if is_host else ""
         pills.append(
-            f'<span class="mpill{" host" if is_host else ""}">{avatar(p.initial, size=24, host=is_host)}{esc(p.name)}{role}</span>'
+            f'<span class="mpill{" host" if is_host else ""}">{avatar(p.initial, size=24, host=is_host)}'
+            f'<span class="nm">{esc(p.name)}</span>{role}</span>'
         )
     markup(f'<div class="pills"><span class="lead">{esc(lead)}</span>{"".join(pills)}</div>')
 

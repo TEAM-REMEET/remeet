@@ -174,7 +174,7 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
                    on_click=fn, args=args)
             if fp.is_host:
                 fn, args = fp.on_delete
-                button("폴더 삭제", key="open_delete", variant="dangerline", on_click=fn, args=args)
+                button("폴더 삭제", key="open_delete", variant="dangerline", icon=":material/delete:", on_click=fn, args=args)
             button("회의록 올리기", key="folder_upload", variant="primary", on_click=actions.open_new_note)
 
     button_group(

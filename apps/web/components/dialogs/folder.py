@@ -92,7 +92,7 @@ def delete_folder_dialog() -> None:
         if button("취소", key="del_cancel", variant="secondary"):
             actions.close_modal()
             st.rerun()
-        if button("삭제", key="del_ok", variant="danger"):
+        if button("삭제", key="del_ok", variant="danger", icon=":material/delete:"):
             on_ok()
             st.rerun()
 
@@ -109,6 +109,6 @@ def delete_meeting_dialog() -> None:
         if button("취소", key="mdel_cancel", variant="secondary"):
             actions.close_modal()
             st.rerun()
-        if button("회의 삭제", key="mdel_ok", variant="danger"):
+        if button("삭제", key="mdel_ok", variant="danger", icon=":material/delete:"):
             actions.delete_meeting(mid)
             st.rerun()

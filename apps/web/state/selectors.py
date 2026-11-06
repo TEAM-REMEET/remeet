@@ -184,7 +184,34 @@ def todo_items(state: AppState, mid: str) -> list[tuple[int, Todo]]:
     번호는 지우기 전 그대로라서, 번호로 저장한 완료 체크 · 담당자 지정 기록이 다른 할 일에 붙지 않아요.
     """
     gone = set(state.deleted_todos.get(mid, []))
-    return [(i, t) for i, t in enumerate(repo.meeting(mid).todos) if i not in gone]
+    out = []
+    for i, t in enumerate(repo.meeting(mid).todos):
+        if i in gone:
+            continue
+        due = state.todo_due.get(todo_key(mid, i))
+        out.append((i, replace(t, due=due, urgent=False) if due else t))  # 담당자 추천에서 고친 마감일
+    return out
+
+
+def todo_at(state: AppState, key: str) -> Todo | None:
+    """"mid:index" → 그 액션 아이템 (마감일 수정 반영)."""
+    mid, _, idx = key.rpartition(":")
+    return dict(todo_items(state, mid)).get(int(idx)) if idx.isdigit() else None
+
+
+def todo_owner_names(state: AppState, key: str, t: Todo) -> list[str]:
+    """지금 담당자 이름들: 담당자 추천 · 지정에서 바꿨으면 그 사람들, 아니면 회의록의 담당자."""
+    if state.assigned.get(key):
+        return list(state.assigned[key])
+    return [name_of(pid) for pid in t.owners]
+
+
+def todo_owner_ids(state: AppState, key: str, t: Todo) -> tuple[str, ...]:
+    """지금 담당자 id 들 (바꾼 담당자는 이름으로 저장돼 있어 이름으로 찾음)."""
+    if state.assigned.get(key):
+        by_name = {p.name: pid for pid, p in repo.people().items()}
+        return tuple(by_name[n] for n in state.assigned[key] if n in by_name)
+    return t.owners
 
 
 def mine_count(mid: str) -> int:
@@ -197,7 +224,7 @@ def my_todo_keys(state: AppState, mid: str) -> list[str]:
     keys = []
     for i, t in todo_items(state, mid):
         key = todo_key(mid, i)
-        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else me_id() in t.owners
+        owner_is_me = my_name in todo_owner_names(state, key, t) if state.assigned.get(key) else me_id() in t.owners
         if owner_is_me:
             keys.append(key)
     return keys
