@@ -28,6 +28,12 @@ def name_of(pid: str) -> str:
     return person(pid).name
 
 
+def assignee_name(who: str) -> str:
+    """지정한 담당자(user_id) → 이름. 구성원에 없는 값(목업 후보 이름)은 그대로 보여 줘요."""
+    p = repo.people().get(who)
+    return p.name if p else who
+
+
 def speaker_id(short_name: str) -> str | None:
     return repo.people_by_short_name().get(short_name)
 
@@ -193,11 +199,10 @@ def mine_count(mid: str) -> int:
 
 def my_todo_keys(state: AppState, mid: str) -> list[str]:
     """이 회의에서 나에게 맡겨진 할 일 (담당자 지정으로 바뀐 것까지 반영)."""
-    my_name = me().name
     keys = []
     for i, t in todo_items(state, mid):
         key = todo_key(mid, i)
-        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else me_id() in t.owners
+        owner_is_me = me_id() in state.assigned[key] if state.assigned.get(key) else me_id() in t.owners
         if owner_is_me:
             keys.append(key)
     return keys

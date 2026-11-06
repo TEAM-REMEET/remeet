@@ -341,6 +341,7 @@ class Todo:
     due: str
     src: tuple[str, ...]
     urgent: bool = False
+    item_id: str = ""  # MeetingSummary 액션 item_id (= Neo4j ActionItem.action_item_id) · 목업 · 직접 추가한 일은 빈 값
 
 
 @dataclass(frozen=True)
@@ -438,6 +439,7 @@ class Predecessor:
     task: str  # 맡았던 선행 업무
     meeting: str  # 그 업무가 나온 회의
     date: str  # M/D
+    user_id: str = ""  # 구성원 id (목업은 비어 있음 → 이름으로 찾음)
 
 
 @dataclass(frozen=True)

@@ -209,12 +209,11 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
         me = me_id()
         mine = me in t.owners
         names = ["나" if pid == me else sel.name_of(pid) for pid in t.owners]
-        who = ", ".join(names) if t.owners else (", ".join(s.assigned.get(key, [])) or "담당 미정")
+        who = ", ".join(names) if t.owners else (", ".join(map(sel.assignee_name, s.assigned.get(key, []))) or "담당 미정")
         if t.owners:
             tags = tuple(("나", "mine") if pid == me else (sel.name_of(pid), "att") for pid in t.owners)
-        elif s.assigned.get(key):  # 회의록엔 담당자가 없었고 주관자가 지정한 사람들 (이름으로 저장됨)
-            my_name = sel.me().name
-            tags = tuple(("나", "mine") if n == my_name else (n, "warn") for n in s.assigned[key])
+        elif s.assigned.get(key):  # 회의록엔 담당자가 없었고 주관자가 지정한 사람들 (user_id로 저장됨)
+            tags = tuple(("나", "mine") if pid == me else (sel.assignee_name(pid), "warn") for pid in s.assigned[key])
         else:
             tags = (("담당 미정", "warn"),)
         para = m.paragraph(t.src[0]) if t.src else None
@@ -240,8 +239,8 @@ def assignable(s: AppState, m: Meeting) -> list[tuple[str, str, list[str], list[
     (todo key, 할 일, 지금 담당자들, 바꾸기 전 담당자들, 원문 근거 문단 id들) · 담당자가 없으면 빈 목록
     """
     return [
-        (sel.todo_key(m.id, i), t.text, list(s.assigned.get(sel.todo_key(m.id, i), [])),
-         list(s.assign_prev.get(sel.todo_key(m.id, i), [])), t.src)
+        (sel.todo_key(m.id, i), t.text, [sel.assignee_name(p) for p in s.assigned.get(sel.todo_key(m.id, i), [])],
+         [sel.assignee_name(p) for p in s.assign_prev.get(sel.todo_key(m.id, i), [])], t.src)
         for i, t in sel.todo_items(s, m.id)
         if not t.owners
     ]

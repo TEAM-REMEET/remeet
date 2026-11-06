@@ -821,28 +821,23 @@ def open_assign(key: str, text: str) -> None:
     )
 
 
-def toggle_assignee(name: str) -> None:
-    """담당자 모달: 누르면 고르고, 다시 누르면 빼기 (여러 명)."""
+def toggle_assignee(pid: str) -> None:
+    """담당자 모달 · 조직도: 누르면 고르고, 다시 누르면 빼기 (여러 명 · user_id로 저장해서 동명이인도 구분)."""
     s = get_state()
-    if name in s.assign_draft:
-        s.assign_draft.remove(name)
+    if pid in s.assign_draft:
+        s.assign_draft.remove(pid)
     else:
-        s.assign_draft.append(name)
+        s.assign_draft.append(pid)
 
 
-def toggle_assignee_pid(pid: str) -> None:
-    """담당자 모달 · 조직도에서 사람을 누름 (담당자는 이름으로 저장)."""
-    toggle_assignee(repo.people()[pid].name)
-
-
-def assign_to(names: list[str] | None = None) -> None:
-    """고른 사람들에게 맡기기 (여러 명). 빈 목록이면 담당자를 비움."""
+def assign_to(pids: list[str] | None = None) -> None:
+    """고른 사람들(user_id)에게 맡기기 (여러 명). 빈 목록이면 담당자를 비움."""
     s = get_state()
-    names = list(s.assign_draft if names is None else names)
+    pids = list(s.assign_draft if pids is None else pids)
     s.assign_prev[s.assign_key] = list(s.assigned.get(s.assign_key, []))  # 바꾸기 전 담당자 (「누구 → 누구」 안내)
-    if names:
-        s.assigned[s.assign_key] = names
-        who = ", ".join(names)
+    if pids:
+        s.assigned[s.assign_key] = pids
+        who = ", ".join(map(sel.assignee_name, pids))
         msg = f"{s.assign_text} → {who} 님에게 맡겼어요. 확정하기 전까지 바꿀 수 있고, 확정하면 알림이 가요."
     else:
         s.assigned.pop(s.assign_key, None)
@@ -869,6 +864,23 @@ def start_finalize(mid: str) -> None:
 def finalize_goto(step: int) -> None:
     """회의록 확정 화면: 1 담당자 추천 ↔ 2 최종 회의록."""
     _set(fin_step=step)
+
+
+def confirm_assignees(mid: str) -> None:
+    """「다음: 최종 회의록」: 주관자가 고른 담당자를 Neo4j에 확정하고 2단계로. 실패하면 1단계에 남아 다시 누르게 함.
+
+    회의록에 담당자가 없던 일은 모두 보냄 (비운 일은 빈 목록 → 앞서 저장한 지정도 지워짐). 목업 회의는 저장 없이 넘어감.
+    """
+    s = get_state()
+    if mid in s.summaries:
+        try:
+            for i, t in sel.todo_items(s, mid):
+                if t.item_id and not t.owners:
+                    repo.set_assignees(t.item_id, s.assigned.get(sel.todo_key(mid, i), []))
+        except api.ApiError as e:
+            s.toast = f"담당자를 저장하지 못했어요. 다시 눌러 주세요. ({e})"
+            return
+    _set(fin_step=2)
 
 
 def deliver_final(mid: str) -> None:

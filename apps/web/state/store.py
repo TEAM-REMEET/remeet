@@ -120,7 +120,9 @@ class AppState:
     agenda_open: list[str] = field(default_factory=list)  # 요약 탭 「안건별 상세」에서 펼친 안건 ("mid:index")
     agenda_jump: str = ""  # 안건 목차를 눌러 스크롤해 갈 안건 앵커 id (한 번 스크롤하면 비움)
     agenda_jump_n: int = 0
-    assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 이름들 (여러 명)
+    assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 user_id들 (여러 명 · 동명이인 구분)
+    summaries: dict[str, dict] = field(default_factory=dict)  # 회의 id → 액션 아이템까지 검토가 끝난 MeetingSummary JSON
+    recommendations: dict[str, dict] = field(default_factory=dict)  # 회의 id → {item_id: 추천 결과} (POST .../recommendations)
     status_override: dict[str, str] = field(default_factory=dict)
     added_todos: dict[str, list[Todo]] = field(default_factory=dict)  # 주관자가 직접 추가한 액션 아이템 (회의 id → 할 일들)
     deleted_todos: dict[str, list[int]] = field(default_factory=dict)  # 삭제한 액션 아이템 (회의 id → 원래 순서 번호 · 되돌리기 가능)
@@ -150,7 +152,7 @@ class AppState:
     assign_sort: str = "score"
     assign_pending: str = ""
     assign_prev: dict[str, list[str]] = field(default_factory=dict)  # 마지막으로 바꾸기 전 담당자 ("누구 → 누구" 안내용)
-    assign_draft: list[str] = field(default_factory=list)  # 담당자 모달에서 고르는 중인 이름들 (「맡기기」를 눌러야 반영)
+    assign_draft: list[str] = field(default_factory=list)  # 담당자 모달에서 고르는 중인 user_id들 (「맡기기」를 눌러야 반영)
     assign_team: str = ""  # 담당자 지정 · 팀에서 직접 고르기 (빈 값이면 추천 1순위의 팀)
 
     # --- 폴더 멤버 추가 (팀 → 팀원)

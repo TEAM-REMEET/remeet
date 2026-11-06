@@ -16,6 +16,7 @@ from __future__ import annotations
 import streamlit as st
 
 from data import repository as repo
+from data.api import ApiError
 from data.models import Meeting
 from state import actions
 from state import selectors as sel
@@ -23,6 +24,7 @@ from state.store import AppState, get_state
 from ui.buttons import button
 from ui.html import markup
 from ui.layout import empty_state, page, page_header
+from ui.loading import loading_overlay
 from ui.tags import tag
 from utils.text import esc
 from views.meeting import model
@@ -68,7 +70,29 @@ def _todo_row(t: model.TodoView, assignable: set[str]) -> None:
                        on_click=actions.open_assign, args=(t.key, t.text))
 
 
+def _load_recommendations(s: AppState, m: Meeting) -> bool:
+    """처음 들어올 때 한 번: 검토가 끝난 요약을 Neo4j에 적재하고 담당자를 추천받아 둠 (목업 회의는 건너뜀).
+    실패하면 안내와 「다시 시도」를 보여 주고 False (같은 요청을 다시 보내도 됨)."""
+    if m.id not in s.summaries or m.id in s.recommendations:
+        return True
+    if not st.session_state.pop("_fin_rec_failed", None):  # 실패 직후 화면에서는 다시 부르지 않음 (「다시 시도」를 눌러야)
+        loading_overlay("담당자를 추천하고 있어요", "회의록을 저장하고 액션 아이템마다 후보를 찾는 중이에요 · 1~2분 걸릴 수 있어요")
+        try:
+            s.recommendations[m.id] = repo.recommend_assignees(s.summaries[m.id])
+            st.rerun()  # 로딩 표시 지우기
+        except ApiError as e:
+            st.session_state["_fin_rec_error"] = str(e)
+            st.session_state["_fin_rec_failed"] = True
+            st.rerun()
+    _box("<b>담당자 추천을 불러오지 못했어요</b>"
+         f"<span>{esc(st.session_state.get('_fin_rec_error', ''))}</span>", "warn")
+    button("다시 시도", key="fin_rec_retry", variant="primary")  # 누르면 다시 그려지면서 다시 요청
+    return False
+
+
 def _step_assign(s: AppState, m: Meeting) -> None:
+    if not _load_recommendations(s, m):
+        return
     items = model.todos(s, m)
     assignable = {key for key, *_ in model.assignable(s, m)}  # 회의록에서 담당자가 정해지지 않았던 일
     left = [t for t in items if t.unassigned]  # 담당 미정은 맨 위에
@@ -78,7 +102,7 @@ def _step_assign(s: AppState, m: Meeting) -> None:
             markup(f'<div class="wz-head"><h2>담당자 추천</h2><span class="wz-badge">액션 아이템 {len(items)}건</span></div>')
             st.space("stretch")
             button("← 이전 화면", key="fin_back", variant="secondary", on_click=actions.open_meeting, args=(m.id,))
-            button("다음: 최종 회의록 →", key="fin_next", variant="primary", on_click=actions.finalize_goto, args=(2,))
+            button("다음: 최종 회의록 →", key="fin_next", variant="primary", on_click=actions.confirm_assignees, args=(m.id,))
         if left:
             _box(f"<b>담당 미정 {len(left)}건</b><span>「담당자 추천 보기」를 눌러 추천 후보 중에서 골라 주세요. "
                  "그대로 넘어가도 되지만, 결과를 전달한 뒤에는 담당자를 바꿀 수 없어요.</span>", "warn")
