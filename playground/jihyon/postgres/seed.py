@@ -58,20 +58,24 @@ def seed() -> None:
         # 0) 표 새로 만들기
         cur.execute(SCHEMA.read_text(encoding="utf-8"))
 
-        # 1) 로그인 계정 (일반 사용자 3명 + 관리자 1명)
+        # 1) 로그인 계정: 목업 구성원 ID에서 일반 사용자 3명 + 관리자 1명
+        # password_hash는 NULL: 이 데모 계정들은 비밀번호 로그인이 불가능합니다.
+        # 로그인 테스트를 하려면 CRUD accounts.update_account(...)로 비밀번호를 지정하세요.
+        member_ids = list(people.keys())
+        ids = [CURRENT_USER_ID] + [uid for uid in member_ids if uid != CURRENT_USER_ID]
+        if len(ids) < 3:
+            raise ValueError("people.json 구성원 ID가 3개 이상 필요합니다.")
+        admin_id = "admin1"
+        if admin_id in ids:
+            raise ValueError("admin1 ID가 구성원 ID와 중복됩니다. 관리자 ID를 변경하세요.")
         demo_accounts = [
-            ("u1", "user1@remeet.test", "USER"),
-            ("u2", "user2@remeet.test", "USER"),
-            ("u3", "user3@remeet.test", "USER"),
-            ("admin1", "admin@remeet.test", "ADMIN"),
+            (uid, DEMO_EMAIL if i == 0 else f"user{i+1}@remeet.test", "USER")
+            for i, uid in enumerate(ids[:3])
         ]
-
+        demo_accounts.append((admin_id, "admin@remeet.test", "ADMIN"))
         for user_id, email, role in demo_accounts:
             cur.execute(
-                """
-                INSERT INTO accounts (user_id, email, role)
-                VALUES (%s, %s, %s)
-                """,
+                "INSERT INTO accounts (user_id, email, role) VALUES (%s, %s, %s)",
                 (user_id, email, role),
             )
 

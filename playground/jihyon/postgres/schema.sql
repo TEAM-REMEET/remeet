@@ -45,25 +45,14 @@ CASCADE;
 
 -- ---------------------------------------------------------------- 로그인 계정
 -- 사람의 이름 · 팀 · 역할 · 스킬은 Neo4j Person 에 있음. 여기는 로그인에 필요한 것만.
--- CREATE TABLE accounts (
---     user_id       TEXT PRIMARY KEY,                 -- = Neo4j Person.user_id
---     email         TEXT NOT NULL UNIQUE,
---     password_hash TEXT,                             -- 평문 비밀번호 저장 금지! (bcrypt 등으로 해시)
---     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
---     last_login_at TIMESTAMPTZ
--- );
 CREATE TABLE accounts (
-    user_id       TEXT PRIMARY KEY,
+    user_id       TEXT PRIMARY KEY,                 -- = Neo4j Person.user_id
     email         TEXT NOT NULL UNIQUE,
-    password_hash TEXT,
-
-    role          TEXT NOT NULL DEFAULT 'USER'
-                  CHECK (role IN ('USER', 'ADMIN')),
-
+    password_hash TEXT,                             -- 해시만 저장
+    role          TEXT NOT NULL DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     last_login_at TIMESTAMPTZ
 );
-
 
 -- 자잘한 설정값 (key → JSON)
 CREATE TABLE app_settings (

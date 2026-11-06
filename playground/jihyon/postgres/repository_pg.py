@@ -58,49 +58,213 @@ def _setting(key: str, default=None):
 
 
 # ---------------------------------------------------------------- meetings
+# PostgreSQL 원문 발화 노출을 막는 조치(AI 상세 분석 내용까지 요약 공유 범위에 맞춰 제한하려면 별도 필드 검사 필요)
 @lru_cache(maxsize=1)
 def _base_meetings() -> dict[str, Meeting]:
-    """Neo4j 쪽 회의 내용 + PostgreSQL 쪽 관리 정보 → Meeting.
+    """권한이 있는 회의만 조회하고 원문 공유 범위를 적용."""
 
-    표마다 SQL 을 한 번씩만 날리고(회의마다 날리면 N+1 문제로 느림) 파이썬에서 회의별로 나눕니다.
-    """
+    actor_id = CURRENT_USER_ID
+
+    # 일반 사용자만 회의 조회 가능
+    ms = query(
+        """
+        SELECT DISTINCT m.*
+        FROM meetings m
+        JOIN accounts a
+          ON a.user_id = %s
+         AND a.role = 'USER'
+        LEFT JOIN folders f
+          ON f.id = m.folder_id
+         AND f.deleted_at IS NULL
+        WHERE m.deleted_at IS NULL
+          AND (
+              m.host_user_id = %s
+
+              OR EXISTS (
+                  SELECT 1
+                  FROM folder_members fm
+                  WHERE fm.folder_id = f.id
+                    AND fm.user_id = %s
+              )
+
+              OR EXISTS (
+                  SELECT 1
+                  FROM meeting_shares s
+                  WHERE s.meeting_id = m.id
+                    AND s.recipient_user_id = %s
+                    AND s.revoked_at IS NULL
+              )
+          )
+        ORDER BY m.position, m.id
+        """,
+        (actor_id, actor_id, actor_id, actor_id),
+    )
+
+    # Neo4j 담당 데이터 (현재는 목업)
     graph_meetings = graph.graph_meetings()
-    ms = query("SELECT * FROM meetings WHERE deleted_at IS NULL ORDER BY position, id")
-    lines = _group(query("SELECT * FROM transcript_lines ORDER BY meeting_id, position"), "meeting_id")
-    kws = _group(query("SELECT * FROM meeting_keywords ORDER BY meeting_id, position"), "meeting_id")
-    # 나(CURRENT_USER_ID)에게 온 공유만. 보낸 사람 이름 · 팀은 Neo4j(Person)에 있어서 아래에서 붙임
-    shr = {r["meeting_id"]: r for r in query("""
-        SELECT meeting_id, sender_id, scope, lock_raw, shared_on
-        FROM meeting_shares
-        WHERE recipient_user_id = %s AND revoked_at IS NULL
-    """, (CURRENT_USER_ID,))}
-    people = graph.people()
 
-    out: dict[str, Meeting] = {}
+    # 사용자에게 직접 공유된 회의
+    share_rows = query(
+        """
+        SELECT meeting_id, sender_id, scope,
+               lock_raw, shared_on
+        FROM meeting_shares
+        WHERE recipient_user_id = %s
+          AND revoked_at IS NULL
+        ORDER BY id DESC
+        """,
+        (actor_id,),
+    )
+
+    shares = _group(share_rows, "meeting_id")
+
+    # 접근 가능한 폴더 멤버십
+    member_rows = query(
+        """
+        SELECT fm.folder_id
+        FROM folder_members fm
+        JOIN folders f
+          ON f.id = fm.folder_id
+        WHERE fm.user_id = %s
+          AND f.deleted_at IS NULL
+        """,
+        (actor_id,),
+    )
+
+    member_folder_ids = {
+        r["folder_id"] for r in member_rows
+    }
+
+    # 원문 열람 가능한 회의만 선별
+    raw_ids = set()
+
+    for m in ms:
+        mid = m["id"]
+        direct_shares = shares.get(mid, [])
+
+        if m["host_user_id"] == actor_id:
+            raw_ids.add(mid)
+
+        elif direct_shares:
+            if any(
+                s["scope"] == "full" and not s["lock_raw"]
+                for s in direct_shares
+            ):
+                raw_ids.add(mid)
+
+        elif m["folder_id"] in member_folder_ids:
+            raw_ids.add(mid)
+
+    # 원문 권한이 있는 회의만 DB에서 가져옴
+    if raw_ids:
+        lines = _group(
+            query(
+                """
+                SELECT meeting_id, line_id,
+                       speaker, text
+                FROM transcript_lines
+                WHERE meeting_id = ANY(%s)
+                ORDER BY meeting_id, position
+                """,
+                (list(raw_ids),),
+            ),
+            "meeting_id",
+        )
+    else:
+        lines = {}
+
+    # 키워드 조회
+    visible_ids = [m["id"] for m in ms]
+
+    if visible_ids:
+        kws = _group(
+            query(
+                """
+                SELECT meeting_id, keyword
+                FROM meeting_keywords
+                WHERE meeting_id = ANY(%s)
+                ORDER BY meeting_id, position
+                """,
+                (visible_ids,),
+            ),
+            "meeting_id",
+        )
+    else:
+        kws = {}
+
+    people = graph.people()
+    out = {}
+
     for m in ms:
         mid = m["id"]
         g = graph_meetings.get(mid)
+
         if g is None:
-            # PostgreSQL 에는 있는데 Neo4j 에 아직 적재 안 된 회의 (예: 분석 중) → 화면에 내지 않음
             continue
-        sh = shr.get(mid)
-        sender = people.get(sh["sender_id"]) if sh else None
+
+        direct_shares = shares.get(mid, [])
+
+        # 열람 가능한 전체 공유를 우선 표시
+        sh = next(
+            (
+                s for s in direct_shares
+                if s["scope"] == "full"
+                and not s["lock_raw"]
+            ),
+            direct_shares[0] if direct_shares else None,
+        )
+
+        sender = (
+            people.get(sh["sender_id"])
+            if sh else None
+        )
+
+        if mid in raw_ids:
+            paragraphs = tuple(
+                Paragraph(
+                    p["line_id"],
+                    p["speaker"],
+                    p["text"],
+                )
+                for p in lines.get(mid, [])
+            )
+        else:
+            paragraphs = ()
+
         out[mid] = replace(
-            g,  # 제목 · 날짜 · 참석자 · 안건 · 논의 · 결정 · 쟁점 · 할 일은 Neo4j 그대로
+            g,
             topic=m["folder_id"],
             host=m["host_user_id"],
             time=m["time_label"],
             deep=m["is_deep"],
             file=m["file_name"],
             initial_status=m["status"],
-            paragraphs=tuple(Paragraph(p["line_id"], p["speaker"], p["text"]) for p in lines[mid]),
-            summary=Evidence(m["summary_text"], tuple(m["summary_src"])),
-            keywords=tuple(k["keyword"] for k in kws[mid]),
-            shared=ShareInfo(f"{sender.name} · {sender.team}" if sender else sh["sender_id"], sh["scope"],
-                             _md(sh["shared_on"]), sh["lock_raw"]) if sh else None,
+            paragraphs=paragraphs,
+            summary=Evidence(
+                m["summary_text"],
+                tuple(m["summary_src"]),
+            ),
+            keywords=tuple(
+                k["keyword"]
+                for k in kws.get(mid, [])
+            ),
+            shared=(
+                ShareInfo(
+                    (
+                        f"{sender.name} · {sender.team}"
+                        if sender else sh["sender_id"]
+                    ),
+                    sh["scope"],
+                    _md(sh["shared_on"]),
+                    sh["lock_raw"],
+                )
+                if sh else None
+            ),
             branch_of=m["branch_of_id"],
         )
+
     return out
+
 
 
 # ---------------------------------------------------------------- folders
@@ -112,7 +276,25 @@ def meeting_types() -> dict[str, MeetingType]:
 
 @lru_cache(maxsize=1)
 def base_folders() -> dict[str, Folder]:
-    fs = query("SELECT * FROM folders WHERE deleted_at IS NULL ORDER BY sort_order, created_at")
+    fs = query(
+    """
+    SELECT DISTINCT f.*
+    FROM folders f
+    JOIN accounts a
+      ON a.user_id = %s
+     AND a.role = 'USER'
+    LEFT JOIN folder_members fm
+      ON fm.folder_id = f.id
+     AND fm.user_id = %s
+    WHERE f.deleted_at IS NULL
+      AND (
+          f.host_user_id = %s
+          OR fm.user_id IS NOT NULL
+      )
+    ORDER BY f.sort_order, f.created_at
+    """,
+    (CURRENT_USER_ID, CURRENT_USER_ID, CURRENT_USER_ID),
+)
     mem = _group(query("SELECT folder_id, user_id FROM folder_members ORDER BY folder_id, position, added_at"), "folder_id")
     brf = _group(query("SELECT * FROM folder_briefs ORDER BY folder_id, position"), "folder_id")
     # 안건 분리로 생긴 회의(branch_of_id 있음)는 목업과 똑같이 폴더 목록에 넣지 않음 (분리 확정 시 화면에서 추가)
