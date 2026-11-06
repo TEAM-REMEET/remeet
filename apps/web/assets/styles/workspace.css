@@ -853,19 +853,6 @@ hr.cp-divider {
 .st-key-spk-bar .stElementContainer:has(.inline-label) {
   margin-right: 4px;
 }
-.spk-unknown {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1.5px dashed #9ca1a9;
-  background: #f4f5f7;
-  color: #80858e;
-  font-size: 12px;
-  font-weight: 700;
-  box-sizing: border-box;
-}
 .para .who .tag,
 .ratio-row .nm .tag {
   margin-left: 4px;
@@ -911,9 +898,6 @@ hr.cp-divider {
 .spk-chip .n {
   font-size: 12px;
   color: var(--muted);
-}
-.spk-chip.unknown {
-  border-style: dashed;
 }
 
 /* ---------- 검색 결과 페이지 ---------- */
@@ -1229,16 +1213,6 @@ hr.cp-divider {
 /* 담당자 모달: 아래 「맡기기」 줄 자리만큼 본문 높이를 줄임 */
 .st-key-assign-body {
   height: min(560px, calc(100vh - 330px)) !important;
-}
-
-/* ---------- 원문 「미지정」: 다른 사람과 같은 칩 · 원문 안에서는 네모 없이 글자만 ---------- */
-.spk-chip.unknown {
-  border-style: solid;
-  color: var(--muted);
-}
-.who-unknown {
-  color: var(--muted);
-  font-weight: 600;
 }
 
 /* ---------- 요약: 담당자를 정한 일 ---------- */

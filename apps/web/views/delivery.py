@@ -76,7 +76,7 @@ def _steps(p: delivery.Progress, rc_total: int, todo_n: int) -> None:
         ("todo", "할 일·담당자 반영", f"할 일 {todo_n}건을 담당자에게 배정"),
         ("send", "참석자에게 결과 전송", f"{p.ok} / {rc_total}명 전달됨"),
         ("export", "외부 도구 전송 (MCP)", f"{p.export_ok} / {len(p.exports)}개 도구 전송됨"),
-        ("wiki", "위키 반영", "폴더 위키 · 개인 위키 업데이트"),
+        ("wiki", "위키 반영", "폴더 위키 업데이트"),
     ]
     html = ""
     for sid, label, detail in rows:

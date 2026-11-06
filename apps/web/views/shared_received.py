@@ -17,7 +17,7 @@ from utils.text import esc, md_escape
 
 def render() -> None:
     with page("recv"):
-        page_header("공유 받은 회의", desc_html="다른 부서 주관자가 보내 준 회의록이에요. 읽기만 할 수 있고 내 위키에는 들어가지 않아요. "
+        page_header("공유 받은 회의", desc_html="다른 부서 주관자가 보내 준 회의록이에요. 읽기만 할 수 있어요. "
                                              "오른쪽 태그는 보낸 사람이 정한 <b>공유 범위</b>예요.")
         with st.container(key="recv-list", gap=None):
             for mid in repo.received_meeting_ids():

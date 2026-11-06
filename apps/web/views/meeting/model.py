@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from config import CURRENT_USER_ID as ME
 from data import repository as repo
-from data.models import Discussion, Meeting
+from data.models import AgendaTopic, Evidence, Meeting, MeetingResult, TaggedPoint
 from state import selectors as sel
 from state.store import AppState
 from ui.theme import SEGMENT_COLORS
@@ -31,22 +31,19 @@ def speaker_name(short: str) -> str:
 
 
 def speaker_pid(s: AppState, m: Meeting, label: str) -> str | None:
-    """원문 화자 → 사람 id. 사람으로 인식되지 않은 화자(예: 화자 3)는 None → 화면에는 「미지정」."""
+    """원문 화자 → 사람 id. 사람으로 인식되지 않은 화자는 None."""
     return sel.speaker_id(label)
 
 
-UNKNOWN = "미지정"
-
-
-def speakers(s: AppState, m: Meeting) -> list[tuple[str | None, int]]:
-    """이 회의 원문의 화자: [(사람 id 또는 None=미지정, 발언 수)] · 나온 순서대로, 미지정은 하나로 묶어 맨 뒤."""
-    counts: dict[str | None, int] = {}
+def speakers(s: AppState, m: Meeting) -> list[tuple[str, int]]:
+    """이 회의 원문의 화자: [(사람 id, 발언 수)] · 나온 순서대로 (사람으로 인식되지 않은 화자는 넣지 않음)."""
+    counts: dict[str, int] = {}
     for p in m.paragraphs:
         if not p.is_heading:
             pid = speaker_pid(s, m, p.speaker)
-            counts[pid] = counts.get(pid, 0) + 1
-    unknown = counts.pop(None, 0)
-    return list(counts.items()) + ([(None, unknown)] if unknown else [])
+            if pid:
+                counts[pid] = counts.get(pid, 0) + 1
+    return list(counts.items())
 
 
 def speaker_initial(short: str) -> str:
@@ -63,25 +60,59 @@ def read_note(m: Meeting) -> str:
     return f"읽기 전용 · 주관 {sel.name_of(m.host)}"
 
 
-def discussion(m: Meeting) -> tuple[Discussion, ...]:
-    """주요 논의 사항. 데이터에 없으면 결정·쟁점·안건으로 대신 만듭니다."""
-    if m.discussion:
-        return m.discussion
-    return (
-        Discussion("의사결정", ", ".join(d.text for d in m.decisions) or "아직 결정된 것이 없어요",
-                   m.decisions[0].src if m.decisions else ()),
-        Discussion("남은 쟁점", ", ".join(d.text for d in m.open_issues), m.open_issues[0].src if m.open_issues else ()),
-        Discussion("다룬 안건", ", ".join(f"{a.title}({a.status})" for a in m.agendas), m.agendas[0].src if m.agendas else ()),
+# ---------------------------------------------------------------- 요약 탭: 안건 목차 · 회의 결과 · 안건별 상세
+def _overlaps(src: tuple[str, ...], other: tuple[str, ...]) -> bool:
+    return bool(set(src) & set(other))
+
+
+@dataclass(frozen=True)
+class AgendaDetail:
+    index: int  # 1부터
+    title: str
+    background: tuple[Evidence, ...]
+    topics: tuple[AgendaTopic, ...]
+    decisions: tuple[Evidence, ...]
+    open_issues: tuple[Evidence, ...]
+    next_candidates: tuple[Evidence, ...]
+
+
+def agenda_details(m: Meeting) -> list[AgendaDetail]:
+    """안건별 상세. 데이터에 상세가 없으면 안건 요점 · 근거가 겹치는 회의 단위 결정/미해결로 대신 채웁니다."""
+    out = []
+    for i, a in enumerate(m.agendas):
+        if a.detailed:
+            out.append(AgendaDetail(i + 1, a.title, a.background, a.topics, a.decisions, a.open_issues,
+                                    a.next_candidates))
+            continue
+        topics = (AgendaTopic("", tuple(TaggedPoint("", p.text, p.src) for p in a.points)),) if a.points else ()
+        out.append(AgendaDetail(
+            i + 1, a.title, (), topics,
+            tuple(d for d in m.decisions if _overlaps(d.src, a.src)),
+            tuple(d for d in m.open_issues if _overlaps(d.src, a.src)),
+            (),
+        ))
+    return out
+
+
+def meeting_results(m: Meeting) -> tuple[MeetingResult, ...]:
+    """회의 결과. 데이터에 없으면 결정 → 미해결 순으로 만들고, 근거가 겹치는 안건 번호를 붙입니다."""
+    if m.results:
+        return m.results
+
+    def refs(src: tuple[str, ...]) -> tuple[int, ...]:
+        return tuple(i + 1 for i, a in enumerate(m.agendas) if _overlaps(src, a.src))
+
+    return tuple(MeetingResult("결정", d.text, refs(d.src), d.src) for d in m.decisions) + tuple(
+        MeetingResult("미해결", d.text, refs(d.src), d.src) for d in m.open_issues
     )
 
 
 def speaking_ratio(m: Meeting) -> list[tuple[str, int]]:
-    """[(원문 화자, %)] · 사람으로 인식되지 않은 화자는 모두 「미지정」 하나로 합침."""
+    """[(원문 화자, %)] · 사람으로 인식된 화자만 (비율도 그 사람들 발언 합 기준)."""
     counts: dict[str, int] = {}
     for p in m.paragraphs:
-        if p.speaker:
-            label = p.speaker if sel.speaker_id(p.speaker) else UNKNOWN
-            counts[label] = counts.get(label, 0) + len(p.text)
+        if p.speaker and sel.speaker_id(p.speaker):
+            counts[p.speaker] = counts.get(p.speaker, 0) + len(p.text)
     total = sum(counts.values()) or 1
     return [(name, round(n * 100 / total)) for name, n in sorted(counts.items(), key=lambda x: -x[1])]
 

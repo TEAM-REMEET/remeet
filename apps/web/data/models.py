@@ -291,6 +291,23 @@ class Discussion:
 
 
 @dataclass(frozen=True)
+class TaggedPoint:
+    """안건별 상세 「주요 논의」의 한 줄. kind: 정보 | 제안 | 반대·우려 | 질문"""
+
+    kind: str
+    text: str
+    src: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class AgendaTopic:
+    """주요 논의의 소주제 (예: 1-1. 예산 및 리모컨 단가)."""
+
+    title: str
+    points: tuple[TaggedPoint, ...]
+
+
+@dataclass(frozen=True)
 class Agenda:
     title: str
     status: str
@@ -298,6 +315,23 @@ class Agenda:
     deep: bool
     src: tuple[str, ...]
     points: tuple[Evidence, ...]
+    # --- 안건별 상세 (회의록 형식). 비어 있으면 화면에서 points · 회의 단위 결정/미해결로 대신 채움
+    background: tuple[Evidence, ...] = ()  # 논의 배경
+    topics: tuple[AgendaTopic, ...] = ()  # 주요 논의
+    decisions: tuple[Evidence, ...] = ()  # 결정사항
+    open_issues: tuple[Evidence, ...] = ()  # 미해결 이슈
+    next_candidates: tuple[Evidence, ...] = ()  # 다음 회의 후보 안건
+    detailed: bool = False  # True 면 위 필드가 데이터에 있음 (비어 있어도 그대로 보여 줌)
+
+
+@dataclass(frozen=True)
+class MeetingResult:
+    """회의 결과 한 줄. kind: 결정 | 미해결 | 공유 · agendas: 관련 안건 번호(1부터)"""
+
+    kind: str
+    text: str
+    agendas: tuple[int, ...] = ()
+    src: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -340,6 +374,7 @@ class Meeting:
     todos: tuple[Todo, ...]
     shared: ShareInfo | None = None
     branch_of: str | None = None  # 안건 분리로 생긴 회의라면 원래 회의 id
+    results: tuple[MeetingResult, ...] = ()  # 회의 결과 (없으면 결정·미해결로 대신 만듦)
 
     @property
     def weekday(self) -> str:
