@@ -107,7 +107,7 @@ class AppState:
     raw_query: str = ""
     highlight: list[str] = field(default_factory=list)
     highlight_key: str = ""
-    todo_scope: str = "mine"
+    todo_scope: str = "all"  # 액션 아이템 탭: all(전체 · 기본) | mine(내 할 일)
     editing: bool = False
     just_shared: bool = False
     branched: bool = False

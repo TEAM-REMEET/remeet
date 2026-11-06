@@ -142,7 +142,7 @@ def open_folder(fid: str) -> None:
 
 def open_meeting(mid: str, *, editing: bool = False) -> None:
     # 확정 흐름(fin_flow)은 지우지 않음 → 흐름 중에 회의 상세로 와도 단계 표시가 이어짐 (외부 도구 전송을 마칠 때 끝)
-    go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="mine")
+    go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="all")
     _set(editing=editing)
 
 

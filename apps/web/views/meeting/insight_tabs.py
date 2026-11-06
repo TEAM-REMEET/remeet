@@ -257,7 +257,7 @@ def _todo_tab(s: AppState, m: Meeting, mode: str = "edit") -> None:
     with card("todos"):
         with st.container(horizontal=True, vertical_alignment="center", gap="small"):
             card_title("액션 아이템", icon_html=icon_box("check", bg="#E7F5EC", color="#1D6B43", stroke=2.6))
-            button_group([("mine", f"내 할 일 {len(mine)}"), ("all", f"전체 {len(items)}")], s.todo_scope,
+            button_group([("all", f"전체 {len(items)}"), ("mine", f"내 할 일 {len(mine)}")], s.todo_scope,
                          lambda v: actions.update(todo_scope=v), key="todo_scope", style="seg", gap=None)
         if not shown:
             hint("이 회의에서 나온 액션 아이템이 없어요." if s.todo_scope == "all"
