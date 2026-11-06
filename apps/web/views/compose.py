@@ -1,18 +1,20 @@
-"""새 회의록 작성 (로그인 후 첫 화면) — 3단계.
+"""새 회의록 작성 (로그인 후 첫 화면) — 2단계.
 
   1) 회의 내용 입력: 기본 정보(제목 · 날짜 · 주관자 · 참석자 · 회의 종류·폴더) + 회의 내용(직접 쓰기 / TXT · MD · DOCX · HWPX 첨부)
      · 지원하는 입력 형식: 발화자 없는 텍스트(기본) · [발화자] 형식 · 발화자: 형식 중 하나를 고름
        고른 형식의 규칙은 회색 안내글로, 예시는 입력칸의 회색 글씨(placeholder)로 보여 줌
-     · 고른 형식에서 벗어나면 「발화자 확인 →」에서 다음 단계로 못 가요
-  2) 발화자 확인: AI 가 붙인 임시 발화자(참석자1 · A …)를 실제 사람과 연결 (칸을 누르면 팀 → 팀원 모달 · 모르면 미지정)
-  3) 분석 및 결과: 회의 상세와 같은 화면(원문 · 요약 · 안건 · 액션 아이템 …)으로 미리 보고 「회의록 생성 완료」
-     → 완성된 회의록이 폴더에 생기고 회의 상세 화면으로 이동
+     · 주관자는 참석자에 늘 들어가요 (참석자 고르기에서 체크된 채로 · 뺄 수 없음)
+     · 고른 형식에서 벗어나거나 발화자가 참석자 안에 없으면 「다음 단계」에서 경고 창이 뜨고 넘어가지 못해요
+  2) 분석 및 검토: 회의 상세와 같은 화면(원문 · 요약 · 안건 · 액션 아이템 …)으로 미리 보고 (담당자 지정은 확정 뒤)
+     · 주관자: 「확정하기」 → 확인 창 → 로딩 → 회의록 확정 화면(담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송)
+     · 주관자가 아닌 사람: 「검토 요청하기」 → 확인 창 → 로딩 → 주관자에게 검토 요청 알림 · 회의 상세로
 분석 규칙과 회의록 만들기는 state/compose_ai.py 에 있어요 (실제 서비스에서는 AI 서버가 대신함).
 """
 
 from __future__ import annotations
 
 import json
+import time
 
 import streamlit as st
 
@@ -27,6 +29,7 @@ from state.store import AppState, get_state
 from ui.buttons import button
 from ui.html import markup
 from ui.layout import page
+from ui.loading import loading_overlay
 from ui.tags import tag
 from utils.files import ALLOWED_LABEL, read_text
 from utils.text import esc
@@ -77,7 +80,7 @@ def _field(label: str, key: str, value: str, placeholder: str, icon_name: str, m
            on_click=actions.open_picker, args=(modal,), width="stretch")
 
 
-_STEPS = ("회의 내용 입력", "발화자 확인", "분석 및 결과")
+_STEPS = ("회의 내용 입력", "분석 및 검토")
 
 
 # ================================================================ 공통
@@ -200,46 +203,14 @@ def _step1(s: AppState, n: int) -> None:
         with st.container(horizontal=True, vertical_alignment="center"):
             button("초기화", key="cp_reset", variant="secondary", on_click=actions.compose_reset)
             st.space("stretch")
-            button("발화자 확인 →", key="cp_next1", variant="primary", on_click=actions.compose_next, args=(n,))
+            button("다음 단계 →", key="cp_next1", variant="primary", on_click=actions.compose_next, args=(n,))
 
 
-# ================================================================ 2단계: 발화자 확인
+# ================================================================ 2단계: 분석 및 검토 (회의 상세와 같은 화면)
 def _step2(s: AppState) -> None:
-    parsed = ai.parse(actions.compose_text(s))
-    labels = parsed.labels
-    with st.container(key="wz-card-full", gap="medium"):
-        _card_head("발화자 확인 및 매칭", f"{len(labels)}명 감지")
-        _info("<span>AI가 읽은 발화자 표기를 실제 참석자와 연결하세요. <b>매칭은 선택 사항</b>이며 "
-              "이름을 모르면 「미지정」으로 두고 진행할 수 있어요.</span>")
-        if not labels:
-            _info("<b>발화자 표기가 없는 회의 내용이에요</b><span>연결할 발화자가 없어서 바로 분석으로 넘어가면 돼요. "
-                  "원문에서는 모든 발언이 「미지정」으로 보여요.</span>", "warn")
-        with st.container(key="wz-matches", gap="small"):
-            for i, label in enumerate(labels):
-                with st.container(key=f"wz-match-{i}", horizontal=True, vertical_alignment="center", gap="medium"):
-                    markup(f'<div class="wz-label">{esc(label)}</div>')
-                    markup('<span class="wz-to">→</span>')
-                    pid = s.nn_speaker_map.get(label, "")
-                    value = f"{sel.name_of(pid)} · {sel.person(pid).team}" if pid else ""
-                    # 누르면 「발화자 연결」 모달 (팀 → 팀원) · 비어 있으면 미지정
-                    button(value or "미지정 (나중에 확인)", key=f"wz_map_{i}", variant="field" if value else "fieldempty",
-                           icon=":material/person:", on_click=actions.open_speaker_picker, args=(label,),
-                           width="stretch")
-        if labels:
-            done = sum(1 for lb in labels if s.nn_speaker_map.get(lb))
-            _info(f"<b>{done}/{len(labels)}명 매칭 완료</b><span>미지정 발화자가 있어도 분석을 진행할 수 있어요. "
-                  "한 사람을 여러 발화자 표기에 연결할 수도 있어요.</span>", "warn" if done < len(labels) else "ok")
-        with st.container(key="wz-foot", horizontal=True, vertical_alignment="center"):  # 카드 맨 아래
-            button("← 이전 단계", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
-            st.space("stretch")
-            button("분석 내용 확인 →", key="cp_next2", variant="primary", on_click=actions.compose_goto, args=(3,))
-
-
-# ================================================================ 3단계: 분석 및 결과 (회의 상세와 같은 화면)
-def _step3(s: AppState) -> None:
     m = s.preview_meeting
     if m is None:  # 새로고침 등으로 미리보기가 없으면 다시 만들기
-        actions.compose_goto(3)
+        actions.compose_goto(2)
         m = s.preview_meeting
     s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
     parsed = ai.parse(actions.compose_text(s))
@@ -247,28 +218,30 @@ def _step3(s: AppState) -> None:
 
     data = {
         "title": s.nn_title, "date": str(s.nn_date), "host": sel.name_of(s.nn_host),
-        "speakers": {lb: (sel.name_of(p) if p else "미지정") for lb, p in s.nn_speaker_map.items()},
+        "speakers": {lb: sel.name_of(p) for lb, p in s.nn_speaker_map.items()},
         "summary": result.summary,
         "agendas": [{"title": t, "lines": list(b)} for t, b in result.agendas],
         "todos": [{"text": t, "owners": [x.strip() for x in w.split(",")] if w != "담당 미정" else [], "due": d}
                   for t, w, d in result.todos],
     }
-    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(편집 · 공유 대신 수정 · 저장 · 생성 완료)
+    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(뒤로 가기 · JSON 저장 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
-            button("← 발화자 매칭 수정", key="cp_prev3", variant="secondary", on_click=actions.compose_goto, args=(2,))
+            button("← 뒤로 가기", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
             with st.container(key="b-secondary-cp_json", width="content"):
                 st.download_button("결과 JSON 저장", json.dumps(data, ensure_ascii=False, indent=2),
                                    file_name="meeting_result.json", mime="application/json", key="cp_json")
-            button("회의록 생성 완료 ✓", key="cp_finish", variant="primary", on_click=actions.compose_finish)
+            # 주관자는 확정 · 주관자가 아니면 주관자에게 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
+            button("확정하기" if s.nn_host == me_id() else "검토 요청하기", key="cp_finish", variant="primary",
+                   icon=":material/task_alt:" if s.nn_host == me_id() else ":material/rate_review:",
+                   on_click=actions.open_compose_confirm)
     with st.container(horizontal=True, vertical_alignment="center"):
         member_pills(f"{m.when} · 참석 {len(m.people)}명", m.host, list(m.people))
-        mapped = " · ".join(f"{lb} → {sel.name_of(p) if p else '미지정'}" for lb, p in s.nn_speaker_map.items())
-        note = "프로토타입 · AI 분석 예시 — 「회의록 생성 완료」를 눌러야 저장돼요"
-        st.html(f'<span class="read-note">{esc(note)}' + (f"<br>발화자 매칭: {esc(mapped)}" if mapped else "")
-                + "</span>", width="content")
+        note = ("프로토타입 · AI 분석 예시 — 「확정하기」를 눌러야 저장돼요" if s.nn_host == me_id()
+                else f"프로토타입 · AI 분석 예시 — 「검토 요청하기」를 누르면 주관자 {sel.name_of(s.nn_host)}님에게 알림이 가요")
+        st.html(f'<span class="read-note">{esc(note)}</span>', width="content")
 
     # 본문: 회의 상세와 같은 원문 · 인사이트 탭
     with st.container(key="md-split"):
@@ -276,18 +249,27 @@ def _step3(s: AppState) -> None:
         with left, st.container(key="md-left", gap="small"):
             render_raw_panel(s, m)
         with right, st.container(key="md-right", gap=None):
-            render_insights(s, m)
+            render_insights(s, m, mode="preview")  # 담당자 지정은 확정 뒤 담당자 추천에서
+
+    if s.cp_finishing:  # 확인 창에서 확정 · 검토 요청: 화면을 다 그린 뒤 로딩 화면을 덮고 회의록을 만듦
+        if s.nn_host == me_id():
+            loading_overlay("회의록을 확정하고 있어요", "분석 결과로 회의록을 만들고 담당자 추천을 준비하는 중이에요")
+        else:
+            loading_overlay("검토를 요청하고 있어요", f"회의록을 만들어 주관자 {sel.name_of(s.nn_host)}님에게 보내는 중이에요")
+        time.sleep(ai.ANALYZE_DELAY_SECONDS)  # 실제 서비스에서는 AI 서버 호출
+        actions.compose_finish()
+        st.rerun()
 
 
 # ================================================================ 진입점
 def render() -> None:
     s = get_state()
     n = s.compose_nonce
+    if s.nn_host and s.nn_host not in s.nn_people:  # 주관자는 참석자에 늘 들어 있음 (예전 세션 포함)
+        s.nn_people = [s.nn_host, *s.nn_people]
     with page("compose"):
         _stepper(s.cp_step)
         if s.cp_step == 2:
             _step2(s)
-        elif s.cp_step == 3:
-            _step3(s)
         else:
             _step1(s, n)
