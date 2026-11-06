@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from state import selectors as sel
 from state.store import get_state
 from ui.layout import empty_state, page
 from views.meeting import model
@@ -25,4 +26,4 @@ def render() -> None:
             with left, st.container(key="md-left", gap="small"):
                 render_raw_panel(s, m)
             with right, st.container(key="md-right", gap=None):
-                render_insights(s, m)
+                render_insights(s, m, mode="edit" if sel.status_of(s, m.id) == "review" else "final")

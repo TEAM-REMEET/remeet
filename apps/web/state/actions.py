@@ -57,7 +57,7 @@ def start_session(token: str, user: dict, restore: bool = False) -> None:
     """로그인 성공 → 그 사람으로 첫 화면 시작. restore: 새로고침 후 쿠키로 되살림 (보던 주소 그대로)."""
     admin = user["permission"] == "admin"
     _set(logged_in=True, login_error="", is_admin=admin, token=token, user_id=user["user_id"],
-         user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], cookie_written=restore)
+         user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], nn_people=[user["user_id"]], cookie_written=restore)
     if not restore:
         screen = "adm_cost" if admin else "compose"
         _set(screen=screen, not_found="")
@@ -147,7 +147,7 @@ def open_folder(fid: str) -> None:
 
 
 def open_meeting(mid: str, *, editing: bool = False) -> None:
-    go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="mine")
+    go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="mine", fin_flow="")
     _set(editing=editing)
 
 
@@ -168,7 +168,7 @@ def close_modal() -> None:
 
 
 def _wizard_reset() -> dict:
-    """새 회의록 3단계 작성을 처음(1단계 · 빈 칸)으로."""
+    """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
                 cp_example="plain", preview_meeting=None)
 
@@ -187,10 +187,10 @@ def open_new_note() -> None:
             p = archive.period(s, mtype, s.archive_period)
             if p:  # 기간 폴더에서 왔으면 그 기간 폴더를 미리 골라 둠
                 go("compose", nn_type=mtype, nn_group="period", nn_period=p.key, nn_topic=topic, nn_name="",
-                   nn_host=me_id(), nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
+                   nn_host=me_id(), nn_people=[me_id()], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
                 return
     go("compose", nn_type=mtype, nn_group="project", nn_period="", nn_topic=topic, nn_name="", nn_host=me_id(),
-       nn_people=[], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
+       nn_people=[me_id()], compose_nonce=s.compose_nonce + 1, **_wizard_reset())
 
 
 def set_new_note_type(mtype: str) -> None:
@@ -216,7 +216,7 @@ def compose_example(kind: str) -> None:
 def compose_reset() -> None:
     """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
     s = get_state()
-    _set(compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[], nn_name="", **_wizard_reset())
+    _set(compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
 
 
 def compose_sync(nonce: int) -> None:
@@ -236,8 +236,13 @@ def compose_check() -> None:
     get_state().nn_error = ""
 
 
+def _format_error(error: str) -> None:
+    """「다음 단계」를 눌렀는데 입력이 맞지 않음: 입력칸 아래 빨간 안내 + 경고 창."""
+    _set(nn_error=error, modal="cp_format_error")
+
+
 def compose_next(nonce: int) -> None:
-    """1단계 → 2단계: 기본 정보와 입력 형식을 확인."""
+    """1단계 「다음 단계」 → 2단계(분석 및 검토): 기본 정보 · 입력 형식 · 발화자(참석자 안에 있는지)를 확인."""
     from state import compose_ai
 
     compose_sync(nonce)
@@ -249,24 +254,29 @@ def compose_next(nonce: int) -> None:
         missing.append("회의 종류 · 폴더")
     parsed = compose_ai.parse(compose_text(s))
     if missing:
-        s.nn_error = " · ".join(missing) + "을(를) 입력해 주세요."
+        _format_error(" · ".join(missing) + "을(를) 입력해 주세요.")
         return
     # 첨부 파일: TXT · MD · DOCX · HWPX 만 (그 밖의 형식이면 다음 단계로 못 감)
     wrong = [name for name, _ in s.nn_files if not is_allowed(name)]
     if wrong:
-        s.nn_error = (f"지원하지 않는 파일 형식이에요: {', '.join(wrong)} · "
-                      f"{ALLOWED_LABEL} 파일만 첨부할 수 있어요.")
+        _format_error(f"지원하지 않는 파일 형식이에요: {', '.join(wrong)} · {ALLOWED_LABEL} 파일만 첨부할 수 있어요.")
         return
     broken = [name for name, body in s.nn_files if body is None]
     if broken:
-        s.nn_error = f"파일을 읽을 수 없어요: {', '.join(broken)} · 파일이 손상되지 않았는지 확인해 주세요."
+        _format_error(f"파일을 읽을 수 없어요: {', '.join(broken)} · 파일이 손상되지 않았는지 확인해 주세요.")
         return
     if parsed.error or parsed.format != s.cp_example:  # 고른 형식에서 벗어나면 다음 단계로 못 감
-        s.nn_error = f"회의 내용이 「{compose_ai.FORMAT_LABEL[s.cp_example]}」 형식에 맞지 않아요. 입력칸 위 안내대로 적어 주세요."
+        _format_error(f"회의 내용이 「{compose_ai.FORMAT_LABEL[s.cp_example]}」 형식에 맞지 않아요. "
+                      + (parsed.error or "입력칸 위 안내대로 적어 주세요."))
         return
-    # 처음 보는 발화자는 이름이 같은 사람으로 미리 연결 (모르면 미지정)
-    s.nn_speaker_map = {lb: s.nn_speaker_map.get(lb, compose_ai.auto_match(lb)) for lb in parsed.labels}
-    _set(cp_step=2, nn_error="")
+    # 발화자는 모두 참석자여야 함 (참석자 안에 없는 발화자가 있으면 형식 오류 · 미지정 없음)
+    mapping, unknown = compose_ai.match_speakers(parsed.labels, [s.nn_host, *s.nn_people])
+    if unknown:
+        _format_error(f"참석자에 없는 발화자가 있어요: {', '.join(unknown)} · "
+                      "발화자는 참석자 이름으로 적거나, 참석자에 그 사람을 추가해 주세요.")
+        return
+    s.nn_speaker_map = mapping
+    compose_goto(2)
 
 
 PREVIEW_ID = "cp-preview"
@@ -284,9 +294,9 @@ def _build_preview(s, mid: str):
 
 
 def compose_goto(step: int) -> None:
-    """단계 이동. 3단계(분석 및 결과)로 가면 회의 상세와 같은 화면으로 볼 미리보기 회의록을 만듦."""
+    """단계 이동. 2단계(분석 및 검토)로 가면 회의 상세와 같은 화면으로 볼 미리보기 회의록을 만듦."""
     s = get_state()
-    if step == 3:
+    if step == 2:
         s.preview_meeting = _build_preview(s, PREVIEW_ID)
         s.added_todos.pop(PREVIEW_ID, None)
         s.deleted_todos.pop(PREVIEW_ID, None)
@@ -294,29 +304,27 @@ def compose_goto(step: int) -> None:
     _set(cp_step=step, nn_error="")
 
 
-def open_speaker_picker(label: str) -> None:
-    """2단계: 발화자 표기(참석자1 · A)를 실제 사람과 연결하는 모달 (팀 → 팀원)."""
-    s = get_state()
-    cur = s.nn_speaker_map.get(label, "")
-    first = cur or s.nn_host or me_id()
-    open_modal("cp_speaker", pick_label=label, pick_draft=[cur] if cur else [], pick_team=sel.person(first).team,
-               pick_nonce=s.pick_nonce + 1)
-
-
-def set_speaker_match(label: str, widget_key: str) -> None:
-    get_state().nn_speaker_map[label] = st.session_state.get(widget_key) or ""
-
-
 def compose_clear_files() -> None:
     _set(nn_files=[])
 
 
+def open_compose_confirm() -> None:
+    """2단계 「확정하기」(주관자) · 「검토 요청하기」(주관자가 아닌 사람) → 한 번 더 묻는 창."""
+    open_modal("cp_confirm" if get_state().nn_host == me_id() else "cp_review")
+
+
+def compose_confirm() -> None:
+    """확인 창에서 확정 · 검토 요청: 다음 화면에서 로딩 화면을 띄운 채 회의록을 만듦 (views/compose.py → compose_finish)."""
+    _set(modal=None, cp_finishing=True)
+
+
 def compose_finish() -> None:
-    """3단계 「회의록 생성 완료」: 완성된 회의록을 만들어 폴더에 넣고, 회의 상세로 이동."""
+    """확정하기 로딩이 끝나면: 완성된 회의록을 만들어 폴더에 넣고, 회의록 확정 1단계(담당자 추천)로 이동."""
     from state import compose_ai
 
     s = get_state()
     parsed = compose_ai.parse(compose_text(s))
+    s.cp_finishing = False
     if parsed.error:
         _set(cp_step=1, nn_error="회의 내용 형식을 확인해 주세요.")
         return
@@ -348,10 +356,22 @@ def compose_finish() -> None:
         s.deleted_todos[mid] = s.deleted_todos.pop(PREVIEW_ID)
     s.preview_meeting = None
     title = s.nn_title
-    open_meeting(mid)
-    _set(toast=f"「{title}」 회의록을 만들었어요. 내용을 검토한 뒤 확정해 주세요.",
-         compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[], nn_name="", **_wizard_reset())
-    s.tree_open |= {"root", f"t:{s.nn_type}", f"g:{s.nn_type}:project"}
+    tree = {"root", f"t:{s.nn_type}", f"g:{s.nn_type}:project"}
+    if s.nn_host == me_id():  # 확정 → 담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송
+        start_finalize(mid)
+        toast = f"「{title}」 회의록을 확정했어요. 담당자를 확인해 주세요."
+    else:  # 다른 사람을 주관자로 정함 → 주관자에게 검토 요청 알림 (주관자가 검토 · 편집한 뒤 확정)
+        from state.delivery import now_text
+
+        host = sel.name_of(s.nn_host)
+        s.review_requested.add(mid)
+        repo.push_notification("user", "review", f"{sel.me().name}님이 「{title}」 회의록 검토를 요청했어요. "
+                               f"주관자 {host}님이 검토한 뒤 확정해 주세요.", now_text(), mid)
+        open_meeting(mid)
+        toast = f"주관자 {host}님에게 「{title}」 회의록 검토를 요청했어요."
+    _set(toast=toast,
+         compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
+    s.tree_open |= tree
 
 
 def submit_compose(nonce: int) -> None:
@@ -376,7 +396,7 @@ def submit_compose(nonce: int) -> None:
         s.nn_error = " · ".join(missing) + "을(를) 입력해 주세요."
         return
     what = f"「{title}」"
-    reset = dict(nn_name="", nn_error="", nn_host=me_id(), nn_people=[], compose_nonce=nonce + 1)  # 입력칸 비우기
+    reset = dict(nn_name="", nn_error="", nn_host=me_id(), nn_people=[me_id()], compose_nonce=nonce + 1)  # 입력칸 비우기
     if s.nn_group == "period":
         from state import archive
 
@@ -408,6 +428,8 @@ def submit_compose(nonce: int) -> None:
 def open_picker(kind: str) -> None:
     """kind: cp_folder(폴더) | cp_host(주관자) | cp_people(참석자) — 지금 값을 임시 선택으로 복사해 모달 열기."""
     s = get_state()
+    if kind == "cp_people" and s.nn_host not in s.nn_people:  # 주관자는 참석자에 늘 체크된 채로
+        s.nn_people = [s.nn_host, *s.nn_people]
     draft = [s.nn_host] if kind == "cp_host" else list(s.nn_people)
     first = draft[0] if draft else me_id()
     open_modal(kind, pick_draft=draft, pick_team=sel.person(first).team, pick_folder=s.nn_topic,
@@ -453,8 +475,10 @@ def people_fav(pid: str) -> None:
 
 
 def pick_person(pid: str, single: bool) -> None:
-    """새 회의록 · 주관자/참석자/발화자 연결: 한 명이면 바꾸기, 여러 명이면 고르기/빼기."""
+    """새 회의록 · 주관자/참석자, 액션 아이템 담당자: 한 명이면 바꾸기, 여러 명이면 고르기/빼기."""
     s = get_state()
+    if s.modal == "cp_people" and pid == s.nn_host:  # 참석자 고르기: 주관자는 늘 체크된 채로 (뺄 수 없음)
+        return
     if single:
         s.pick_draft = [] if s.pick_draft == [pid] else [pid]
     elif pid in s.pick_draft:
@@ -471,16 +495,17 @@ def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
         s.pick_draft = [value] if value else []
     else:
         s.pick_draft = [p for p in s.pick_draft if p not in team_ids] + list(value or [])
+        if s.modal == "cp_people" and s.nn_host not in s.pick_draft:  # 주관자는 뺄 수 없음
+            s.pick_draft.insert(0, s.nn_host)
 
 
 def confirm_pick(kind: str) -> None:
     s = get_state()
-    if kind == "cp_host":
-        s.nn_host = s.pick_draft[0] if s.pick_draft else s.nn_host
+    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 참석자에서 빠짐)
+        old, s.nn_host = s.nn_host, (s.pick_draft[0] if s.pick_draft else s.nn_host)
+        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in (old, s.nn_host)]
     elif kind == "cp_people":
-        s.nn_people = list(s.pick_draft)
-    elif kind == "cp_speaker":  # 고른 사람이 없으면 미지정
-        s.nn_speaker_map[s.pick_label] = s.pick_draft[0] if s.pick_draft else ""
+        s.nn_people = [s.nn_host] + [p for p in s.pick_draft if p != s.nn_host]
     elif kind == "cp_folder":
         s.nn_type, s.nn_group = s.pick_type, s.pick_group
         if s.pick_group == "period":
@@ -622,24 +647,19 @@ def remove_todo_owner(pid: str) -> None:
 
 
 def submit_todo(mid: str, text: str, owners: list[str], due: str) -> bool:
-    """추가할 액션 아이템을 받아 두고, 다음 화면에서 원문을 다시 훑는 동안 로딩 화면을 띄움 (finish_todo)."""
+    """액션 아이템 직접 추가 (주관자만): 원문에서 근거 발언을 찾아 함께 넣음 (로딩 화면 없이 바로)."""
+    from state import todo_ai
+
     s = get_state()
-    if sel.my_role(repo.meeting(mid)) != "host" or not text.strip():
+    m = repo.meeting(mid)
+    if sel.my_role(m) != "host" or not text.strip():
         return False
-    _set(modal=None, todo_pending={"mid": mid, "text": text.strip(), "owners": list(owners), "due": due})
-    return True
-
-
-def finish_todo(src: tuple[str, ...]) -> None:
-    """원문 훑기가 끝나면 근거 발언(src)과 함께 액션 아이템을 추가."""
-    s = get_state()
-    p = s.todo_pending
-    if not p:
-        return
-    todo = Todo(p["text"], tuple(dict.fromkeys(p.get("owners", []))), p["due"], tuple(src))
-    s.added_todos = {**s.added_todos, p["mid"]: [*s.added_todos.get(p["mid"], []), todo]}
+    src = todo_ai.rescan(m, text.strip())
+    todo = Todo(text.strip(), tuple(dict.fromkeys(owners)), due, tuple(src))
+    s.added_todos = {**s.added_todos, mid: [*s.added_todos.get(mid, []), todo]}
     note = f"근거 발언 {len(src)}개를 찾았어요." if src else "원문에서 관련 발언을 찾지 못했어요."
-    _set(todo_pending={}, todo_scope="all", toast=f"액션 아이템을 추가했어요. {note}")
+    _set(modal=None, todo_scope="all", toast=f"액션 아이템을 추가했어요. {note}")
+    return True
 
 
 def clear_highlight() -> None:
@@ -753,13 +773,6 @@ def set_share_team_selection(team_id: str, widget_key: str) -> None:
     s.share_recipients = [pid for pid in s.share_recipients if pid not in team_ids] + picked
 
 
-def set_share_absent_selection(absent: list[str], widget_key: str) -> None:
-    """공유 모달: 빠진 멤버 선택 → 받는 사람 갱신 (팀에서 고른 사람은 그대로)."""
-    s = get_state()
-    picked = list(st.session_state.get(widget_key) or [])
-    s.share_recipients = [pid for pid in s.share_recipients if pid not in absent] + picked
-
-
 def share_summary(recipients: dict[str, list[str]]) -> str:
     """{'재무팀': ['강수현', '오지훈']} → '재무팀(강수현 외 1명)'"""
     parts = []
@@ -840,15 +853,20 @@ def start_delivery(mid: str, attempt: int = 1) -> None:
     go("deliver")
 
 
-def open_confirm(mid: str) -> None:
-    """「확정하기」 → 한 번 더 확인하는 창 (주관자만)."""
-    if sel.my_role(repo.meeting(mid)) != "host":
+def start_finalize(mid: str) -> None:
+    """회의 상세 「확정하기」 → 회의록 확정 화면 1단계(담당자 추천) (주관자 · 확정 전만)."""
+    if sel.my_role(repo.meeting(mid)) != "host" or sel.status_of(get_state(), mid) != "review":
         return
-    open_modal("confirm_meeting")
+    go("finalize", meeting_id=mid, fin_step=1, fin_flow=mid)
 
 
-def confirm_meeting(mid: str) -> None:
-    """확인 창에서 「확정하기」 → 결과 전달 화면으로."""
+def finalize_goto(step: int) -> None:
+    """회의록 확정 화면: 1 담당자 추천 ↔ 2 최종 회의록."""
+    _set(fin_step=step)
+
+
+def deliver_final(mid: str) -> None:
+    """최종 회의록 「결과 전달」 → 결과 전달 화면 (참석자에게 보내기 · 그다음 외부 도구 전송)."""
     if sel.my_role(repo.meeting(mid)) != "host":
         return
     close_modal()

@@ -124,7 +124,6 @@ class AppState:
     status_override: dict[str, str] = field(default_factory=dict)
     added_todos: dict[str, list[Todo]] = field(default_factory=dict)  # 주관자가 직접 추가한 액션 아이템 (회의 id → 할 일들)
     deleted_todos: dict[str, list[int]] = field(default_factory=dict)  # 삭제한 액션 아이템 (회의 id → 원래 순서 번호 · 되돌리기 가능)
-    todo_pending: dict = field(default_factory=dict)  # 추가 직후 원문을 다시 훑는 중인 액션 아이템 (로딩 화면)
     todo_nonce: int = 0  # 「액션 아이템 추가」 모달을 열 때마다 바뀌어 입력칸을 비움
     todo_draft_text: str = ""  # 추가 모달에 적은 내용 (담당자 고르기 창에 다녀와도 남도록)
     todo_draft_owners: list[str] = field(default_factory=list)  # 추가 모달에서 고른 담당자들 (사람 id · 비어 있으면 담당 미정)
@@ -163,6 +162,10 @@ class AppState:
     # --- 결과 전달
     delivery: Delivery = field(default_factory=Delivery)
     export: ExportRun = field(default_factory=ExportRun)
+    # --- 회의록 확정 (확정하기 → 1 담당자 추천 → 2 최종 회의록 → 3 결과 전달 → 4 외부 도구 전송)
+    fin_step: int = 1
+    review_requested: set[str] = field(default_factory=set)  # 주관자가 아닌 사람이 등록해 주관자에게 검토를 요청한 회의
+    fin_flow: str = ""  # 확정 흐름 중인 회의 id (결과 전달 · 외부 도구 전송 화면에 단계 표시)
 
     # --- 위키
     folder_wiki_node: str = "c"
@@ -207,20 +210,21 @@ class AppState:
     nn_period: str = ""  # 기간 폴더 키 (w1026 · m10 · d1023) · 아직 없는 기간이면 새로 만들어질 폴더
     nn_error: str = ""  # 작성 화면 오류 안내 (빈 값이면 없음)
     # 3단계 작성: 1 회의 내용 입력 → 2 발화자 확인 → 3 분석 및 결과
-    cp_step: int = 1
+    cp_step: int = 1  # 1 회의 내용 입력 · 2 분석 및 검토
+    cp_finishing: bool = False  # 2단계 「확정하기」를 눌러 회의록을 만드는 중 (로딩 화면)
     cp_text_rev: int = 0  # 예시를 넣을 때마다 바뀌어 입력칸을 새로 그림
     nn_title: str = ""
     nn_date: object = None  # datetime.date
     nn_text: str = ""  # 직접 쓴 회의 내용
     nn_files: list[tuple[str, str | None]] = field(default_factory=list)  # 첨부 파일 (이름, 내용 · 못 읽으면 None)
-    nn_speaker_map: dict[str, str] = field(default_factory=dict)  # 발화자 표기(참석자1 · A) → 사람 id ('' 미지정)
+    nn_speaker_map: dict[str, str] = field(default_factory=dict)  # 발화자 표기 → 참석자 id (모두 참석자여야 다음 단계로)
     cp_example: str = "plain"  # 고른 입력 형식 (버튼 주황 테두리 · 입력칸 회색 예시) — 처음엔 발화자 없는 텍스트
     preview_meeting: Meeting | None = None  # 3단계 「분석 및 결과」에서 보여 주는 미리보기 회의록
     pick_label: str = ""  # 발화자 연결 모달에서 다루는 발화자 표기 (참석자1 · A)
     new_meetings: dict[str, Meeting] = field(default_factory=dict)  # 「회의록 생성 완료」로 만든 회의
     created_notes: list[tuple[str, str]] = field(default_factory=list)  # (폴더 id, 회의 id)
     nn_host: str = ""  # 주관자 (로그인하면 나로 채움)
-    nn_people: list[str] = field(default_factory=list)  # 참석자
+    nn_people: list[str] = field(default_factory=list)  # 참석자 (주관자는 늘 들어 있음)
     # 작성 화면의 선택 모달(폴더 · 주관자 · 참석자): 「선택」을 누르기 전까지는 여기 임시로 담아 둠
     pick_team: str = ""  # 보고 있는 팀 이름
     pick_draft: list[str] = field(default_factory=list)  # 고른 사람 (주관자는 1명)

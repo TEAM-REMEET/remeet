@@ -239,12 +239,12 @@ def people_picker(kind: str, *, single: bool, title: str | None = None, hint: st
                   featured: list[str] | None = None, featured_label: str = "") -> None:
     """사람 고르기 (고른 사람 칩 + 조직도 · 검색 · 최근 · 즐겨찾기). 고른 사람은 AppState.pick_draft.
 
-    새 회의록의 주관자 · 참석자 · 발화자 연결, 액션 아이템 담당자에서 같이 씁니다.
+    새 회의록의 주관자 · 참석자, 액션 아이템 담당자에서 같이 씁니다.
     """
     s = get_state()
 
     # 지금 고른 사람: 제목은 상자 위에 고정, 사람 칩만 상자 안에서 스크롤
-    title = title or (("연결할 사람" if kind == "cp_speaker" else "주관자") if single
+    title = title or ("주관자" if single
                       else f"선택한 참석자 {len(s.pick_draft)}명")
     if s.pick_draft:
         chips = "".join(
@@ -262,8 +262,8 @@ def people_picker(kind: str, *, single: bool, title: str | None = None, hint: st
             st.html(_CHOSEN_SCROLL_JS, unsafe_allow_javascript=True)
 
     # 사람 고르기: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기 (팀 · 조직이 많아도 찾기 쉽게)
-    hint = hint or (("이름을 누르면 이 발화자로 연결돼요" if kind == "cp_speaker" else "이름을 누르면 주관자로 골라져요")
-                    if single else "이름을 누르면 선택 · 다시 누르면 해제")
+    hint = hint or ("이름을 누르면 주관자로 골라져요" if single
+                    else "이름을 누르면 선택 · 다시 누르면 해제" + (" · 주관자는 늘 참석해요" if kind == "cp_people" else ""))
     markup(f'<div class="pick-section-head"><b>사람 찾기</b><span class="hint">{esc(hint)}</span></div>')
     org_people_picker(kind, chosen=list(s.pick_draft), single=single, featured=featured, featured_label=featured_label,
                       on_pick=functools.partial(actions.pick_person, single=single), height=280)
@@ -282,21 +282,43 @@ def people_picker_dialog() -> None:
     _footer("cp_people", f"{n}명 선택" if n else "선택 안 함")
 
 
-@st.dialog("발화자 연결", width="medium", on_dismiss=actions.close_modal)
-def speaker_picker_dialog() -> None:
-    """2단계: 임시 발화자(참석자1 · A)를 실제 사람과 연결. 팀을 고르면 팀원이 나와요. 모르면 미지정."""
+@st.dialog("입력 내용을 확인해 주세요", width="small", on_dismiss=actions.close_modal)
+def format_error_dialog() -> None:
+    """1단계 「다음 단계」: 형식에 맞지 않거나 발화자가 참석자 안에 없으면 경고 창 (다음 단계로 넘어가지 않음)."""
     s = get_state()
-    markup(f'<p class="hint" style="font-size:14px;color:#2B2F36">원문의 <b>「{esc(s.pick_label)}」</b>은(는) 누구인가요? '
-           "팀을 고르고 이름을 누르세요. 모르면 「미지정으로 두기」를 누르면 돼요.</p>")
-    people_picker("cp_speaker", single=True)
-    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
-        if button("취소", key="cp_speaker_cancel", variant="secondary"):
+    markup('<div class="cp-warn-dlg"><span class="cp-warn-ico">!</span>'
+           f'<p>{esc(s.nn_error)}</p></div>'
+           '<p class="hint" style="font-size:13px;margin-top:10px">고친 뒤 다시 「다음 단계」를 눌러 주세요.</p>')
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        if button("확인", key="cp_warn_ok", variant="primary"):
             actions.close_modal()
             st.rerun()
-        if button("미지정으로 두기", key="cp_speaker_none", variant="secondary"):
-            s.pick_draft = []
-            actions.confirm_pick("cp_speaker")
+
+
+def _compose_confirm_body() -> None:
+    """2단계 「확정하기」 · 「검토 요청하기」를 한 번 더 확인 → 로딩 화면."""
+    s = get_state()
+    host = s.nn_host == me_id()
+    lead = ("확정하시겠어요? 확정하면 회의록이 만들어지고 담당자 추천 → 최종 회의록 확인으로 이어져요."
+            if host else f"주관자 {sel.name_of(s.nn_host)}님에게 검토를 요청할까요? 회의록이 만들어지고 "
+                         "주관자에게 검토 요청 알림이 가요. 확정은 주관자가 해요.")
+    markup(f'<div class="assign-target"><span class="assign-target-label">'
+           f'{"확정할" if host else "검토를 요청할"} 회의록</span><h3>{esc(s.nn_title)}</h3></div>'
+           f'<p class="confirm-lead">{esc(lead)}</p>')
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="cp_confirm_cancel", variant="secondary"):
+            actions.close_modal()
             st.rerun()
-        if button("연결하기", key="cp_speaker_ok", variant="primary", disabled=not s.pick_draft):
-            actions.confirm_pick("cp_speaker")
+        if button("확정하기" if host else "검토 요청하기", key="cp_confirm_ok", variant="primary"):
+            actions.compose_confirm()
             st.rerun()
+
+
+@st.dialog("회의록 확정", width="small", on_dismiss=actions.close_modal)
+def compose_confirm_dialog() -> None:
+    _compose_confirm_body()
+
+
+@st.dialog("검토 요청", width="small", on_dismiss=actions.close_modal)
+def compose_review_dialog() -> None:
+    _compose_confirm_body()
