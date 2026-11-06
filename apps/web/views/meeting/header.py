@@ -38,7 +38,7 @@ def _shared_notice(s: AppState) -> None:
 
 
 def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
-    """최종 회의록 머리말 (편집 없음): 회의 삭제 · 회의 공유하기 · (deliver) 결과 전달 / (전달 뒤) 외부 도구 전송.
+    """최종 회의록 머리말 (편집 없음): 삭제 · 공유 · (deliver) 결과 전달 / (전달 뒤) 외부 도구 전송.
 
     deliver: 회의록 확정 2단계 — 아직 결과 전달 전이라 「결과 전달」 버튼
     """
@@ -50,9 +50,9 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
             _title(s, m, tag("최종 회의록", "ok") + tag(role_label, role_tone))
         with st.container(horizontal=True, width="content", gap="small"):
             if host:
-                button("회의 삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
+                button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
                        on_click=actions.open_delete, args=("meeting", m.id))
-                button("회의 공유하기", key="md_share", variant="secondary", icon=":material/share:",
+                button("공유", key="md_share", variant="secondary", icon=":material/share:",
                        on_click=actions.open_share)
                 if deliver:  # → 결과 전달 화면 (그다음 외부 도구 전송)
                     button("결과 전달", key="md_deliver", variant="primary", icon=":material/send:",
@@ -82,22 +82,22 @@ def render_header(s: AppState, m: Meeting) -> None:
     role = sel.my_role(m)
     role_label, role_tone = ("내가 주관", "host") if role == "host" else sel.ROLE_TAGS[role]
 
-    # 1행: (왼쪽) 제목·역할  /  (오른쪽) 회의 삭제 · (편집) · 확정하기 · 회의 공유하기 또는 읽기 전용 안내
+    # 1행: (왼쪽) 제목·역할  /  (오른쪽) 삭제 · 공유 · (편집) · 확정하기 또는 읽기 전용 안내
     with st.container(horizontal=True, vertical_alignment="bottom"):
         with st.container(gap="small"):
             _title(s, m, tag(role_label, role_tone)
                    + (tag("검토 요청 받음", "warn") if host and m.id in s.review_requested else ""))
         with st.container(horizontal=True, width="content", gap="small"):
             if host and not editing:
-                button("회의 삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
+                button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
                        on_click=actions.open_delete, args=("meeting", m.id))
+                button("공유", key="md_share", variant="secondary", icon=":material/share:",
+                       on_click=actions.open_share)
                 if can_edit:
                     button("편집", key="md_edit", variant="secondary", icon=":material/edit:", on_click=actions.start_edit)
-                # 누르면 회의록 확정 화면(담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송)
-                button("확정하기", key="md_confirm", variant="accentline", icon=":material/task_alt:",
+                # 가장 오른쪽 · 누르면 회의록 확정 화면(담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송)
+                button("확정하기", key="md_confirm", variant="primary", icon=":material/task_alt:",
                        on_click=actions.start_finalize, args=(m.id,))
-                button("회의 공유하기", key="md_share", variant="primary", icon=":material/send:",  # 항상 가장 오른쪽
-                       on_click=actions.open_share)
             elif host:
                 button("취소", key="md_cancel", variant="secondary", on_click=actions.stop_edit)
                 button("확정하기", key="md_confirm", variant="primary", icon=":material/task_alt:",

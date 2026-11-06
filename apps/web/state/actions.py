@@ -141,7 +141,8 @@ def open_folder(fid: str) -> None:
 
 
 def open_meeting(mid: str, *, editing: bool = False) -> None:
-    go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="mine", fin_flow="")
+    # 확정 흐름(fin_flow)은 지우지 않음 → 흐름 중에 회의 상세로 와도 단계 표시가 이어짐 (외부 도구 전송을 마칠 때 끝)
+    go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="mine")
     _set(editing=editing)
 
 
@@ -317,8 +318,9 @@ def compose_finish() -> None:
         parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
     )
     s.created_notes.append((fid, mid))
-    for key in [k for k in s.assigned if k.startswith(f"{PREVIEW_ID}:")]:  # 미리보기에서 정한 담당자를 새 회의로 옮김
-        s.assigned[f"{mid}:{key.split(':', 1)[1]}"] = s.assigned.pop(key)
+    for store in (s.assigned, s.todo_due):  # 미리보기에서 정한 담당자 · 마감일을 새 회의로 옮김
+        for key in [k for k in store if k.startswith(f"{PREVIEW_ID}:")]:
+            store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
     if PREVIEW_ID in s.added_todos:  # 미리보기에서 직접 추가한 액션 아이템도 새 회의로
         s.added_todos[mid] = s.added_todos.pop(PREVIEW_ID)
     if PREVIEW_ID in s.deleted_todos:  # 미리보기에서 삭제한 액션 아이템도
@@ -692,6 +694,12 @@ def revoke_share(index: int) -> None:
 
 
 # ---------------------------------------------------------------- 담당자 지정
+def _current_owners(key: str) -> list[str]:
+    s = get_state()
+    t = sel.todo_at(s, key)
+    return list(sel.todo_owner_ids(s, key, t)) if t else list(s.assigned.get(key, []))
+
+
 def open_assign(key: str, text: str) -> None:
     open_modal(
         "assign",
@@ -701,7 +709,7 @@ def open_assign(key: str, text: str) -> None:
         assign_pending="",
         assign_query="",
         assign_team="",
-        assign_draft=list(get_state().assigned.get(key, [])),  # 지금 담당자들을 미리 골라 둠
+        assign_draft=_current_owners(key),  # 지금 담당자들(회의록 담당자 포함)을 미리 골라 둠
     )
 
 
@@ -719,7 +727,12 @@ def assign_to(pids: list[str] | None = None) -> None:
     s = get_state()
     pids = list(s.assign_draft if pids is None else pids)
     s.assign_prev[s.assign_key] = list(s.assigned.get(s.assign_key, []))  # 바꾸기 전 담당자 (「누구 → 누구」 안내)
-    if pids:
+    t = sel.todo_at(s, s.assign_key)
+    original = list(t.owners) if t else []
+    if original and pids in ([], original):  # 회의록 담당자가 있던 일: 그대로 두거나 비우면 회의록 담당자로
+        s.assigned.pop(s.assign_key, None)
+        msg = f"{s.assign_text} → 회의록의 담당자({', '.join(map(sel.name_of, original))})로 두었어요."
+    elif pids:
         s.assigned[s.assign_key] = pids
         who = ", ".join(map(sel.assignee_name, pids))
         msg = f"{s.assign_text} → {who} 님에게 맡겼어요. 확정하기 전까지 바꿀 수 있고, 확정하면 알림이 가요."
@@ -727,6 +740,32 @@ def assign_to(pids: list[str] | None = None) -> None:
         s.assigned.pop(s.assign_key, None)
         msg = f"{s.assign_text} → 담당자를 비웠어요."
     _set(modal=None, assign_pending="", assign_draft=[], last_assign=msg)
+
+
+def open_owner_change(key: str, text: str) -> None:
+    """담당자 추천 화면 「담당자 변경」 → 사람 찾기 창 (지금 담당자들을 미리 골라 둠)."""
+    s = get_state()
+    t = sel.todo_at(s, key)
+    current = list(sel.todo_owner_ids(s, key, t)) if t else []
+    s.pp_tab.pop("owner_change", None)
+    open_modal("owner_change", assign_key=key, assign_text=text, pick_draft=current, pick_nonce=s.pick_nonce + 1)
+
+
+def confirm_owner_change() -> None:
+    """사람 찾기 창에서 고른 사람들로 담당자 변경 (회의록 담당자와 같으면 원래대로)."""
+    s = get_state()
+    assign_to(list(s.pick_draft))
+    s.pp_nonce += 1
+
+
+def set_todo_due(key: str, widget_key: str) -> None:
+    """담당자 추천: 액션 아이템 마감일 고치기 (비우면 회의록의 마감일로)."""
+    s = get_state()
+    d = st.session_state.get(widget_key)
+    if d:
+        s.todo_due[key] = f"{d.month}/{d.day}"
+    else:
+        s.todo_due.pop(key, None)
 
 
 # ---------------------------------------------------------------- 결과 전달
@@ -753,14 +792,14 @@ def finalize_goto(step: int) -> None:
 def confirm_assignees(mid: str) -> None:
     """「다음: 최종 회의록」: 주관자가 고른 담당자를 Neo4j에 확정하고 2단계로. 실패하면 1단계에 남아 다시 누르게 함.
 
-    회의록에 담당자가 없던 일은 모두 보냄 (비운 일은 빈 목록 → 앞서 저장한 지정도 지워짐). 목업 회의는 저장 없이 넘어감.
+    모든 일의 지금 담당자를 보냄 (바꾼 사람 · 회의록 담당자 · 비운 일은 빈 목록 → 앞서 저장한 지정도 덮어씀). 목업 회의는 저장 없이 넘어감.
     """
     s = get_state()
     if mid in s.summaries:
         try:
             for i, t in sel.todo_items(s, mid):
-                if t.item_id and not t.owners:
-                    repo.set_assignees(t.item_id, s.assigned.get(sel.todo_key(mid, i), []))
+                if t.item_id:
+                    repo.set_assignees(t.item_id, list(sel.todo_owner_ids(s, sel.todo_key(mid, i), t)))
         except api.ApiError as e:
             s.toast = f"담당자를 저장하지 못했어요. 다시 눌러 주세요. ({e})"
             return
@@ -817,11 +856,11 @@ def retry_export() -> None:
 
 
 def finish_export() -> None:
-    """「전달 완료」 → 회의 상세로."""
+    """「전달 완료」 → 회의 상세로 · 마지막 단계라 확정 흐름(단계 표시)도 여기서 끝."""
     s = get_state()
     mid = s.export.meeting_id
     open_meeting(mid)
-    _set(toast="외부 도구 전송을 마쳤어요.")
+    _set(toast="외부 도구 전송을 마쳤어요.", fin_flow="" if s.fin_flow == mid else s.fin_flow)
 
 
 def run_row_action(mid: str, kind: str) -> None:

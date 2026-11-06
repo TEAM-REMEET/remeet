@@ -254,7 +254,12 @@
   background: #FFFFFF; font-size: 13px; font-weight: 600; color: var(--ink); border: 1px solid var(--line-soft); box-sizing: border-box;
 }
 .mpill.host { border-color: var(--accent-line); }
-.mpill .role { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+/* 이름 · 「주관」: 줄 높이를 1로 맞춰 세로 가운데가 같게 (주관이 아래로 처지지 않게) */
+.mpill .nm { line-height: 1; }
+.mpill .role {
+  display: inline-flex; align-items: center; height: 18px; padding: 0 5px; border-radius: 3px; line-height: 1;
+  font-size: 11px; font-weight: 700; color: #9A4A0B; background: var(--accent-soft);
+}
 
 /* 사람 목록 (모달) */
 .plist-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-faint); }
@@ -298,3 +303,11 @@ img.ico { display: inline-block; flex: none; vertical-align: middle; }
 @media (prefers-reduced-motion: reduce) { .ld-wheel { animation-duration: 3s; } }
 /* 액션 아이템 추가 모달: 담당자 칸 이름 (st.text_area 라벨과 같은 모양) */
 .todo-field-label { margin: 4px 0 -6px; font-size: 14px; color: var(--ink); }
+
+/* 단계 화면 머리말: 제목(왼쪽) · 버튼(오른쪽, 제목 줄 높이에 맞춤) — ui/layout.step_header */
+.st-key-step-head { flex-wrap: nowrap !important; }
+.st-key-step-head > .stElementContainer:has(.page-header) { flex: 1 1 0 !important; min-width: 0; }
+/* 단계 제목은 회의 제목(.md-title · 분석 및 검토 · 최종 회의록)과 같은 크기로 통일 */
+.st-key-step-head .page-header h1 { font-size: 26px; font-weight: 800; line-height: 1.3; letter-spacing: -0.5px; }
+.st-key-step-head .page-header { gap: 4px; }
+.st-key-step-head-btns { flex: none !important; flex-wrap: nowrap !important; margin-top: -2px; }

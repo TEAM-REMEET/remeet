@@ -117,7 +117,8 @@ class AppState:
     agenda_open: list[str] = field(default_factory=list)  # 요약 탭 「안건별 상세」에서 펼친 안건 ("mid:index")
     agenda_jump: str = ""  # 안건 목차를 눌러 스크롤해 갈 안건 앵커 id (한 번 스크롤하면 비움)
     agenda_jump_n: int = 0
-    assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 user_id들 (여러 명 · 동명이인 구분)
+    assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 user_id들 (여러 명 · 동명이인 구분 · 회의록 담당자 대신)
+    todo_due: dict[str, str] = field(default_factory=dict)  # "mid:index" → 담당자 추천에서 고친 마감일 ("11/5")
     summaries: dict[str, dict] = field(default_factory=dict)  # 회의 id → 액션 아이템까지 검토가 끝난 MeetingSummary JSON
     recommendations: dict[str, dict] = field(default_factory=dict)  # 회의 id → {item_id: 추천 결과} (POST .../recommendations)
     status_override: dict[str, str] = field(default_factory=dict)
@@ -164,7 +165,7 @@ class AppState:
     # --- 회의록 확정 (확정하기 → 1 담당자 추천 → 2 최종 회의록 → 3 결과 전달 → 4 외부 도구 전송)
     fin_step: int = 1
     review_requested: set[str] = field(default_factory=set)  # 주관자가 아닌 사람이 등록해 주관자에게 검토를 요청한 회의
-    fin_flow: str = ""  # 확정 흐름 중인 회의 id (결과 전달 · 외부 도구 전송 화면에 단계 표시)
+    fin_flow: str = ""  # 확정 흐름 중인 회의 id (회의 상세 · 결과 전달 · 외부 도구 전송에도 단계 표시 · 외부 도구 전송을 마치면 끝)
 
     # --- 위키
     folder_wiki_node: str = "c"

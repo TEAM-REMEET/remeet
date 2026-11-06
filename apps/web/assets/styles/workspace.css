@@ -1231,9 +1231,10 @@ hr.cp-divider {
 .st-key-assign-foot [class*="st-key-b-"] {
   flex: none !important;
 }
-/* 담당자 모달: 아래 「맡기기」 줄 자리만큼 본문 높이를 줄임 */
+/* 담당자 모달: 제목 줄 · 안내 한 줄 · 아래 「맡기기」 줄을 뺀 나머지가 본문 (팀에서 직접 고르기 버튼까지 한 화면에) */
 .st-key-assign-body {
-  height: min(560px, calc(100vh - 330px)) !important;
+  height: auto !important;
+  max-height: calc(100vh - 240px) !important;
 }
 
 /* ---------- 요약: 담당자를 정한 일 ---------- */
