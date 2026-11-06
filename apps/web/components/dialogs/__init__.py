@@ -10,7 +10,6 @@ from components.dialogs.admin import contact_admin_dialog, member_edit_dialog, o
 from components.dialogs.assign import assign_dialog
 from components.dialogs.confirm import confirm_meeting_dialog
 from components.dialogs.compose_pickers import (
-    folder_picker_dialog,
     host_picker_dialog,
     people_picker_dialog,
     speaker_picker_dialog,
@@ -31,7 +30,6 @@ _DIALOGS = {
     "share": share_dialog,
     "add_todo": add_todo_dialog,
     "todo_owner": todo_owner_dialog,
-    "cp_folder": folder_picker_dialog,
     "cp_host": host_picker_dialog,
     "cp_people": people_picker_dialog,
     "cp_speaker": speaker_picker_dialog,

@@ -41,9 +41,9 @@ def _absent_members() -> list[str]:
     """이 회의 폴더 멤버 중 회의에 빠진 사람 (조퇴·불참)."""
     s = get_state()
     m = repo.meeting(s.meeting_id)
-    if m.topic not in sel.folders(s):
+    if m.project_id not in sel.folders(s):
         return []
-    return [pid for pid in sel.members_of(s, m.topic) if pid not in m.people and pid != m.host]
+    return [pid for pid in sel.members_of(s, m.project_id) if pid not in m.people and pid != m.host]
 
 
 def _pick_absent() -> None:

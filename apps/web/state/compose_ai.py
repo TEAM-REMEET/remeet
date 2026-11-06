@@ -269,7 +269,7 @@ def analyze(parsed: Parsed, mapping: dict[str, str], title: str) -> Analysis:
 _WEEKDAYS = "월화수목금토일"
 
 
-def build_meeting(mid: str, *, title: str, day: date, topic: str | None, host: str, people: list[str],
+def build_meeting(mid: str, *, title: str, day: date, project_id: str | None, directory_id: str, host: str, people: list[str],
                   parsed: Parsed, mapping: dict[str, str], files: list[str]) -> Meeting:
     """분석 결과로 회의 상세 화면에서 바로 열 수 있는 회의록(Meeting)을 만듦."""
     by_id = repo.people()
@@ -315,7 +315,8 @@ def build_meeting(mid: str, *, title: str, day: date, topic: str | None, host: s
         title=title,
         when=f"{day.month}월 {day.day}일 ({_WEEKDAYS[day.weekday()]})",
         date=f"{day.month}/{day.day}",
-        topic=topic,
+        project_id=project_id,
+        directory_id=directory_id,
         host=host,
         people=tuple(dict.fromkeys([host, *people])),
         deep=False,

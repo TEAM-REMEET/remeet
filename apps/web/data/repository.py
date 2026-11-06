@@ -163,7 +163,8 @@ def _meeting(d: dict) -> Meeting:
         title=d["title"],
         when=d["when"],
         date=d["date"],
-        topic=d.get("topic"),
+        project_id=d.get("project_id"),
+        directory_id=d["directory_id"],
         host=d["host"],
         people=tuple(d["people"]),
         deep=d["deep"],
@@ -263,7 +264,6 @@ def base_folders() -> dict[str, Folder]:
         k: Folder(
             id=k,
             name=v["name"],
-            type=v["type"],
             host=v["host"],
             members=tuple(v["members"]),
             notes=tuple(v["notes"]),

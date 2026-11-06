@@ -69,25 +69,13 @@ def members_dialog() -> None:
 
 @st.dialog("폴더 삭제", width="small", on_dismiss=actions.close_modal)
 def delete_folder_dialog() -> None:
-    from state import archive
-
     s = get_state()
-    target = s.delete_target or ("folder", s.folder_id)
-    if target[0] == "period":
-        _, mtype, key = target
-        p = archive.period(s, mtype, key)
-        ids = [i for i in (p.meeting_ids if p else ()) if repo.meeting(i).host == me_id()]
-        markup(f'<h3 style="font-size:16px;font-weight:700">「{esc(archive.period_label(key))}」 폴더를 삭제할까요?</h3>'
-               f'<p style="color:#3A3E45">이 기간에 내가 주관한 회의록 {len(ids)}개가 삭제되고, 참석자·공유받은 사람 모두 더 이상 볼 수 없어요. '
-               "다른 사람이 주관한 회의는 그대로 남아요. 되돌릴 수 없어요.</p>")
-        on_ok = lambda: actions.delete_period(mtype, key, ids)  # noqa: E731
-    else:
-        fid = target[1]
-        f = sel.folders(s)[fid]
-        markup(f'<h3 style="font-size:16px;font-weight:700">「{esc(f.name)}」 폴더를 삭제할까요?</h3>'
-               f'<p style="color:#3A3E45">회의록 {len(f.notes)}개가 함께 삭제되고, 멤버 {len(sel.members_of(s, fid))}명 모두 더 이상 볼 수 없어요. '
-               "위키와 외부 AI 연동에서도 빠져요. 되돌릴 수 없어요.</p>")
-        on_ok = lambda: actions.delete_folder(fid)  # noqa: E731
+    fid = (s.delete_target or ("folder", s.folder_id))[1]
+    f = sel.folders(s)[fid]
+    markup(f'<h3 style="font-size:16px;font-weight:700">「{esc(f.name)}」 프로젝트를 삭제할까요?</h3>'
+           f'<p style="color:#3A3E45">회의록 {len(f.notes)}개가 함께 삭제되고, 멤버 {len(sel.members_of(s, fid))}명 모두 더 이상 볼 수 없어요. '
+           "위키와 외부 AI 연동에서도 빠져요. 되돌릴 수 없어요.</p>")
+    on_ok = lambda: actions.delete_folder(fid)  # noqa: E731
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
         if button("취소", key="del_cancel", variant="secondary"):
             actions.close_modal()
