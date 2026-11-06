@@ -124,8 +124,16 @@ def tree_toggle(node: str) -> None:
         s.tree_open.add(node)
 
 
+def set_tree_mode(mode: str) -> None:
+    """사이드바 회의록 트리 토글: time(정기 회의) | project(프로젝트 단위)."""
+    get_state().tree_mode = mode
+
+
 def tree_click(node: str) -> None:
-    """사이드바 트리 폴더 이름: 그 화면으로 이동 + 펼치기 (접기는 화살표로)."""
+    """사이드바 트리 폴더 이름: 그 화면으로 이동 + 펼치기 (접기는 화살표로).
+
+    연도(y:) · 월(ym:) · 프로젝트 묶음(proj)은 해당 화면이 없어 펼치기만 합니다.
+    """
     s = get_state()
     s.tree_open.add(node)
     kind, *rest = node.split(":")
@@ -133,12 +141,10 @@ def tree_click(node: str) -> None:
         open_archive()
     elif kind == "t":
         open_archive(rest[0])
-    elif kind == "g":
-        open_archive(rest[0], rest[1])
-    elif kind == "p":
-        open_archive(rest[0], "period", rest[1])
-    elif kind == "f":
-        open_folder(rest[1])
+    elif kind == "pf":
+        open_folder(rest[0])
+    elif kind == "m":
+        open_meeting(rest[0])
 
 
 def open_folder(fid: str) -> None:

@@ -1,12 +1,19 @@
 """회의록 보관함: 회의 종류 → 보기 방식(기간별 / 프로젝트별) → 기간 묶음.
 
+「회의록」 페이지
   회의록
   ├ 주간 회의 ─ 주차별 ─ 10월 4주차 ─ 회의 파일
   │           └ 프로젝트별 ─ 폴더 ─ 회의 파일
   ├ 월간 회의 ─ 월별 / 프로젝트별
   └ 일반 회의 ─ 일별 / 프로젝트별
 
-사이드바 트리와 「회의록」 페이지가 같은 계산을 씁니다. 상태는 바꾸지 않습니다.
+사이드바 트리 (토글로 전환)
+  정기 회의:   월간 회의 ─ 2026년 ─ 10월 (2026.10.27)
+            주간 회의 ─ 2026년 ─ 10월 ─ 4주차 (2026.10.27)
+            일반 회의 ─ 2026.10.23
+  프로젝트: 프로젝트 ─ 프로젝트 폴더 ─ 2026.10.27
+
+상태는 바꾸지 않습니다.
 """
 
 from __future__ import annotations
@@ -56,6 +63,21 @@ def period_label(key: str) -> str:
     if kind == "w":
         return f"{d.month}월 {(d.day - 1) // 7 + 1}주차"
     return f"{d.month}월 {d.day}일"
+
+
+def meeting_day(mid: str) -> date:
+    return _day(repo.meeting(mid).date)
+
+
+def dotted(d: date) -> str:
+    """2026.10.27 (사이드바 회의 파일 이름)"""
+    return f"{d.year}.{d.month:02d}.{d.day:02d}"
+
+
+def week_of(d: date) -> tuple[date, int]:
+    """그 주 월요일과 몇 주차인지. 주차는 월요일이 속한 달 기준 (period_label과 같은 규칙)."""
+    monday = d - timedelta(days=d.weekday())
+    return monday, (monday.day - 1) // 7 + 1
 
 
 def meeting_ids_of_type(state: AppState, mtype: str, owner: str = "all") -> list[str]:
@@ -121,30 +143,38 @@ def my_count(ids: list[str] | tuple[str, ...]) -> int:
 
 
 # ---------------------------------------------------------------- 트리 노드 id
-# root · t:weekly · g:weekly:period · p:weekly:w1027 · g:weekly:project · f:weekly:rel
+# 정기 회의:   root · t:monthly · y:monthly:2026 · ym:weekly:2026:10 · m:m1
+# 프로젝트: root · proj · pf:rel · m:m1
+def time_chain(mtype: str, d: date) -> list[str]:
+    """정기 회의 트리에서 그 날짜의 회의를 담는 폴더 노드들 (위에서 아래로)."""
+    if mtype == "normal":
+        return ["root", "t:normal"]
+    if mtype == "monthly":
+        return ["root", "t:monthly", f"y:monthly:{d.year}"]
+    monday, _ = week_of(d)
+    return ["root", f"t:{mtype}", f"y:{mtype}:{monday.year}", f"ym:{mtype}:{monday.year}:{monday.month}"]
+
+
 def node_of_location(state: AppState) -> tuple[str, list[str]]:
     """지금 화면에 해당하는 트리 노드와 그 조상들 (사이드바 강조·자동 펼침용)."""
+    project = state.tree_mode == "project"
     if state.screen == "archive":
-        t, g, p = state.archive_type, state.archive_group, state.archive_period
-        chain = ["root"]
-        if t:
-            chain.append(f"t:{t}")
-        if t and g:
-            chain.append(f"g:{t}:{g}")
-        if t and g == "period" and p:
-            chain.append(f"p:{t}:{p}")
-        return chain[-1], chain[:-1]
-    if state.screen == "note" and sel.is_period_folder(repo.meeting(state.meeting_id).topic or ""):
-        m = repo.meeting(state.meeting_id)
-        t = sel.folders(state)[m.topic].type if m.topic in sel.folders(state) else ""
-        if t:
-            node = f"p:{t}:{period_key(t, m.date)}"
-            return node, ["root", f"t:{t}", f"g:{t}:period", node]
-    if state.screen in ("folder", "note"):
-        fid = state.folder_id if state.screen == "folder" else repo.meeting(state.meeting_id).topic
-        fs = sel.folders(state)
-        if fid in fs:
-            t = fs[fid].type
-            node = f"f:{t}:{fid}"
-            return node, ["root", f"t:{t}", f"g:{t}:project"] + ([node] if state.screen == "note" else [])
+        t = state.archive_type
+        if project or not t:
+            return "root", []
+        return f"t:{t}", ["root"]
+    fs = sel.folders(state)
+    if state.screen == "note":
+        mid = state.meeting_id
+        fid = repo.meeting(mid).topic or ""
+        if fid not in fs:
+            return "", []
+        if project:
+            return (f"m:{mid}", ["root", "proj", f"pf:{fid}"]) if not sel.is_period_folder(fid) else ("", [])
+        return f"m:{mid}", time_chain(fs[fid].type, meeting_day(mid))
+    if state.screen == "folder" and state.folder_id in fs:
+        fid = state.folder_id
+        if project:
+            return f"pf:{fid}", ["root", "proj"]
+        return f"t:{fs[fid].type}", ["root"]
     return "", []

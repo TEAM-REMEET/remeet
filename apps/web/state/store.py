@@ -257,6 +257,7 @@ class AppState:
     todo_group: str = ""  # 회의 목록 판넬: left(내 할 일이 있음) · 빈 값이면 회의가 있는 첫 판넬
     archive_role: str = "all"  # 기간별 목록의 전체 / 내가 주관 / 참석
     tree_open: set[str] = field(default_factory=lambda: {"root"})  # 사이드바에서 펼친 노드
+    tree_mode: str = "time"  # 사이드바 회의록 트리: time(정기 회의) | project(프로젝트 단위)
 
 
 def me_id() -> str:
