@@ -129,7 +129,7 @@ def _by_content(s: AppState, q: str) -> list[Hit]:
     for mid in _meetings(s):
         m = repo.meeting(mid)
         texts = [x.text for x in m.paragraphs if not x.is_heading]
-        texts += [m.summary.text] + [d.text for d in m.decisions] + [t.text for t in m.todos]
+        texts += [m.summary.text] + [d.text for d in m.decisions] + [t.text for _, t in sel.todo_items(s, mid)]
         found = [t for t in texts if q.lower() in t.lower()]
         if found:
             snippets = tuple(_snip(t, q) for t in found[:2])

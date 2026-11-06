@@ -274,3 +274,27 @@ img.ico { display: inline-block; flex: none; vertical-align: middle; }
 [class*="st-key-b-card-"] button > div > span, [class*="st-key-b-src-"] button > div > span { justify-content: flex-start !important; width: 100%; text-align: left; }
 [class*="st-key-mrow-"] [class*="st-key-b-"]:not([class*="st-key-b-link-"]) button { height: 38px; padding: 0 16px !important; }
 .st-key-sidebar-user [class*="st-key-b-ghost-"] { flex: none; }
+
+/* 로딩 화면: 화면 전체를 살짝 뿌옇게 덮고 점 12개가 도는 표시 (ui/loading.py) */
+.ld-overlay {
+  position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center;
+  background: rgba(246, 247, 249, 0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: ld-fade 0.2s ease-out;
+}
+.ld-box {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  padding: 28px 36px 24px; border-radius: 12px; background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 32px rgba(26, 26, 26, 0.12);
+}
+.ld-box b { margin-top: 14px; font-size: 15px; font-weight: 700; color: var(--ink); }
+.ld-box span { font-size: 13px; color: var(--muted); }
+.ld-wheel { position: relative; width: 84px; height: 84px; animation: ld-spin 1.1s steps(12) infinite; }
+.ld-dot {
+  position: absolute; top: 50%; left: 50%; border-radius: 50%;
+  transform: rotate(var(--a)) translateY(-34px);
+}
+@keyframes ld-spin { to { transform: rotate(360deg); } }
+@keyframes ld-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ld-wheel { animation-duration: 3s; } }
+/* 액션 아이템 추가 모달: 담당자 칸 이름 (st.text_area 라벨과 같은 모양) */
+.todo-field-label { margin: 4px 0 -6px; font-size: 14px; color: var(--ink); }

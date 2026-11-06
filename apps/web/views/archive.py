@@ -130,7 +130,7 @@ def _period_card(s: AppState, t: str, p: arc.Period) -> None:
             f'{tag("내가 만든 폴더" if is_host else "멤버", "host" if is_host else "att")}</div>'
             f'<span class="meta">회의록 {len(ids)}개 · 멤버 {len(members)}명</span>'
             f'<span class="last">{esc(_latest(ids))}</span>'
-            + (f'<span>{tag(f"내 할 일 남은 회의 {left}", "mine")}</span>' if left else "")
+            + (f'<span>{tag(f"내 할 일 있는 회의 {left}", "mine")}</span>' if left else "")
             + "</div>"
         )
         button(p.label, key=f"open_per_{t}_{p.key}", variant="secondary", on_click=actions.open_archive,
@@ -199,7 +199,7 @@ def _topic_card(s: AppState, fid: str) -> None:
             f'{tag("내가 만든 폴더" if is_host else "멤버", "host" if is_host else "att")}</div>'
             f'<span class="meta">회의록 {len(notes)}개 · 멤버 {len(sel.members_of(s, fid))}명</span>'
             f'<span class="last">{esc(last)}</span>'
-            + (f'<span>{tag(f"내 할 일 남은 회의 {left}", "mine")}</span>' if left else "")
+            + (f'<span>{tag(f"내 할 일 있는 회의 {left}", "mine")}</span>' if left else "")
             + "</div>"
         )
         button(f.name, key=f"open_topic_{fid}", variant="secondary", on_click=actions.open_folder, args=(fid,), width="stretch")

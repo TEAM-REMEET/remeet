@@ -8,12 +8,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import MISSING, dataclass, field, fields
 
 import streamlit as st
 
 from data import repository as repo
-from data.models import Meeting
+from data.models import Meeting, Todo
 
 _KEY = "_app_state"
 
@@ -35,15 +35,26 @@ class NewFolder:
 
 @dataclass
 class Delivery:
-    """결과 전달(SSE) 시뮬레이션 진행 정보."""
+    """결과 전달(SSE) 시뮬레이션 진행 정보 — 참석자에게 보내기까지 (외부 도구 전송은 ExportRun)."""
 
     meeting_id: str = "m1"
     attempt: int = 1  # 1: 첫 전송, 2: 실패 건 재시도
     started_at: float | None = None  # time.time()
     finished: bool = True
-    fids: tuple[str, ...] = ()  # 보내기 시작할 때 남아 있던 외부 도구 전송 실패 id (결과 고정용)
-    expired: tuple[str, ...] = ()  # 보내기 시작할 때 인증이 만료돼 있던 외부 도구 (기술 이슈로 실패)
-    contact_shown: bool = False  # 이번 전송이 기술 이슈로 끝나 「관리자에게 문의」 모달을 띄웠는지
+
+
+@dataclass
+class ExportRun:
+    """외부 도구(MCP) 전송: 결과 전달이 끝난 뒤 주관자가 도구를 골라 보냄."""
+
+    meeting_id: str = "m1"
+    picked: tuple[str, ...] = ()  # 고른 도구 id (보내기 전에는 고르는 중인 값)
+    attempt: int = 1  # 1: 첫 전송, 2: 실패한 도구만 다시
+    started_at: float | None = None  # None 이면 아직 도구를 고르는 중
+    finished: bool = False
+    fids: tuple[str, ...] = ()  # 보내기 시작할 때 남아 있던 전송 실패 id (결과 고정용)
+    expired: tuple[str, ...] = ()  # 보내기 시작할 때 인증이 만료돼 있던 도구 (기술 이슈로 실패)
+    contact_shown: bool = False  # 기술 이슈로 끝나 「관리자에게 문의」 모달을 띄웠는지
 
 
 @dataclass
@@ -109,9 +120,15 @@ class AppState:
     agenda_open: list[str] = field(default_factory=list)  # 요약 탭 「안건별 상세」에서 펼친 안건 ("mid:index")
     agenda_jump: str = ""  # 안건 목차를 눌러 스크롤해 갈 안건 앵커 id (한 번 스크롤하면 비움)
     agenda_jump_n: int = 0
-    done: dict[str, bool] = field(default_factory=dict)  # "mid:index"
     assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 이름들 (여러 명)
     status_override: dict[str, str] = field(default_factory=dict)
+    added_todos: dict[str, list[Todo]] = field(default_factory=dict)  # 주관자가 직접 추가한 액션 아이템 (회의 id → 할 일들)
+    deleted_todos: dict[str, list[int]] = field(default_factory=dict)  # 삭제한 액션 아이템 (회의 id → 원래 순서 번호 · 되돌리기 가능)
+    todo_pending: dict = field(default_factory=dict)  # 추가 직후 원문을 다시 훑는 중인 액션 아이템 (로딩 화면)
+    todo_nonce: int = 0  # 「액션 아이템 추가」 모달을 열 때마다 바뀌어 입력칸을 비움
+    todo_draft_text: str = ""  # 추가 모달에 적은 내용 (담당자 고르기 창에 다녀와도 남도록)
+    todo_draft_owners: list[str] = field(default_factory=list)  # 추가 모달에서 고른 담당자들 (사람 id · 비어 있으면 담당 미정)
+    todo_draft_due: object = None  # 추가 모달에서 고른 마감일 (datetime.date · 없으면 None)
     copied: str = ""
 
     # --- 공유
@@ -145,6 +162,7 @@ class AppState:
 
     # --- 결과 전달
     delivery: Delivery = field(default_factory=Delivery)
+    export: ExportRun = field(default_factory=ExportRun)
 
     # --- 위키
     folder_wiki_node: str = "c"
@@ -236,7 +254,7 @@ class AppState:
     archive_qnonce: int = 0  # 화면을 옮길 때마다 바뀌어 검색칸을 비움
     archive_owner: str = "all"  # 기간별 목록의 전체 / 내가 만든 폴더 / 멤버 (기간 폴더 화면까지 이어짐)
     period_wiki_folder: str = ""  # 기간 폴더 화면 · 위키 탭에서 보고 있는 프로젝트 폴더
-    todo_group: str = ""  # 회의 목록 판넬: left(할 일 남음) | done(다 끝냄) | none(할당 없음) · 빈 값이면 회의가 있는 첫 판넬
+    todo_group: str = ""  # 회의 목록 판넬: left(내 할 일이 있음) · 빈 값이면 회의가 있는 첫 판넬
     archive_role: str = "all"  # 기간별 목록의 전체 / 내가 주관 / 참석
     tree_open: set[str] = field(default_factory=lambda: {"root"})  # 사이드바에서 펼친 노드
 
@@ -249,7 +267,17 @@ def me_id() -> str:
 def get_state() -> AppState:
     if _KEY not in st.session_state:
         st.session_state[_KEY] = AppState()
-    return st.session_state[_KEY]
+    state = st.session_state[_KEY]
+    _fill_missing(state)
+    return state
+
+
+def _fill_missing(state: AppState) -> None:
+    """코드에 새 필드가 생기기 전에 만든 세션 상태(앱을 띄운 채 코드를 고친 경우)에 빠진 필드를 기본값으로 채움."""
+    for f in fields(AppState):
+        if not hasattr(state, f.name):
+            default = f.default_factory() if f.default_factory is not MISSING else f.default
+            setattr(state, f.name, default)
 
 
 def reset_state(**overrides) -> AppState:

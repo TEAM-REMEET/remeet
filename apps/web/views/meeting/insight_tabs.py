@@ -7,13 +7,16 @@ from __future__ import annotations
 
 import streamlit as st
 
+from data import repository as repo
 from data.models import Meeting
-from state import actions
+from state import actions, todo_ai
+from state import selectors as sel
 from state.store import AppState
 from ui.buttons import button, button_group
 from ui.html import markup
 from ui.icons import icon_box
 from ui.layout import card, card_title, hint
+from ui.loading import loading_overlay
 from ui.tags import md_tag, tag
 from utils.browser import copy_to_clipboard, scroll_into_view
 from utils.text import esc, md_escape
@@ -61,7 +64,7 @@ def _assign_card(s: AppState, m: Meeting, items: list, *, host: bool, editable: 
 
 
 # 회의 결과 · 주요 논의 태그 → Streamlit 마크다운 배경색
-_RESULT_COLORS = {"결정": "green", "미해결": "orange", "공유": "violet"}
+_RESULT_TONES = {"결정": "ok", "미해결": "open", "공유": "info"}  # 회의 결과 태그 색 (pages.css .res-*)
 _POINT_COLORS = {"정보": "gray", "제안": "blue", "반대·우려": "red", "질문": "violet"}
 
 
@@ -92,10 +95,12 @@ def _results_card(s: AppState, m: Meeting) -> None:
             hint("정리된 회의 결과가 없어요.", size=13)
         with st.container(gap=None):
             for i, r in enumerate(results):
-                color = _RESULT_COLORS.get(r.kind, "gray")
                 refs = " ".join(f"`안건 {n}`" for n in r.agendas)
-                _pick(f":{color}-background[**{md_escape(r.kind)}**] {md_escape(r.text)}" + (f"  \n{refs}" if refs else ""),
-                      f"res{i}", s, r.src)
+                # 태그는 왼쪽 칸 · 글은 오른쪽 칸 → 글이 길어져 줄이 바뀌어도 태그 아래로 내려가지 않고 태그 뒤에 맞춰 정렬
+                with st.container(key=f"resrow-{i}", horizontal=True, vertical_alignment="top", gap="small"):
+                    tone = _RESULT_TONES.get(r.kind, "etc")
+                    st.html(f'<span class="res-tag res-{tone}">{esc(r.kind)}</span>', width="content")
+                    _pick(md_escape(r.text) + (f"  \n{refs}" if refs else ""), f"res{i}", s, r.src)
 
 
 def _detail_section(title: str, items: tuple, key: str, s: AppState, empty: str = "없어요.") -> None:
@@ -253,14 +258,53 @@ def _todo_tab(s: AppState, m: Meeting) -> None:
         if not shown:
             hint("이 회의에서 나온 액션 아이템이 없어요." if s.todo_scope == "all"
                  else "이 회의에서 나에게 배정된 일은 없어요. 「전체」에서 다른 사람의 일을 볼 수 있어요.", size=13)
+        host = model.is_host(m)
+        can_assign = host and model.assignee_editable(s, m)  # 요약 탭 담당자 카드와 같은 조건
         for t in shown:
-            with st.container(key=f"todo-{t.index}{'-done' if t.done else ''}"):
-                st.checkbox(md_escape(t.text), value=t.done, key=f"todo_cb_{t.key}",
-                            on_change=actions.toggle_todo, args=(t.key,))
-                markup(f'<div class="todo-meta">{tag(t.who, t.who_tone)}'
-                       f'<span class="todo-due{" urgent" if t.urgent else ""}">{esc(t.due)}</span></div>')
+            with st.container(key=f"todo-{t.index}"):
+                # 할 일 제목 · 지우기는 오른쪽 빨간 휴지통 (주관자만)
+                with st.container(key=f"todohead-{t.index}", horizontal=True, vertical_alignment="top", gap="small"):
+                    st.html(f'<p class="todo-title">{esc(t.text)}</p>', width="stretch")
+                    if host:
+                        button("", key=f"todo_del_{t.key}", variant="trash", icon=":material/delete:",
+                               help="이 액션 아이템 삭제 (목록 아래에서 되돌릴 수 있어요)",
+                               on_click=actions.delete_todo, args=(m.id, t.index))
+                due = f'<span class="todo-due{" urgent" if t.urgent else ""}">{esc(t.due)}</span>'
+                if t.unassigned and can_assign:
+                    # 「담당 미정」을 누르면 요약 탭 「담당자 지정」과 같은 담당자 지정 창
+                    with st.container(key=f"todometa-{t.index}", horizontal=True, vertical_alignment="center",
+                                      gap="small"):
+                        button("담당 미정", key=f"todo_assign_{t.key}", variant="tagwarn",
+                               icon=":material/person_add:", help="눌러서 담당자 지정",
+                               on_click=actions.open_assign, args=(t.key, t.text))
+                        st.html(due, width="content")
+                else:
+                    markup(f'<div class="todo-meta">{"".join(tag(name, tone) for name, tone in t.who_tags)}{due}</div>')
                 with st.container(key=f"quotewrap-{t.index}"):
                     _pick(f"`{md_escape(t.speaker)}` “{md_escape(t.quote)}”", f"quote{t.index}", s, t.src)
+        if model.is_host(m):  # 액션 아이템 직접 추가는 주관자만
+            button("\\+ 액션 아이템 추가", key="add_todo", variant="dashed", width="stretch",
+                   on_click=actions.open_add_todo)
+    if model.is_host(m):
+        _deleted_todos(s, m)
+
+
+def _deleted_todos(s: AppState, m: Meeting) -> None:
+    """삭제한 액션 아이템: 하나씩 되돌리기 + 모두 되돌리기(리셋)."""
+    gone = model.deleted_todos(s, m)
+    if not gone:
+        return
+    with card("todo-trash", tone="muted"):
+        with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+            card_title(f"삭제한 액션 아이템 {len(gone)}개", size=14,
+                       icon_html=icon_box("trash", bg="transparent", color="#B3261E", size=15, box=16))
+            button("모두 되돌리기", key="todo_restore_all", variant="secondary", icon=":material/restart_alt:",
+                   on_click=actions.restore_all_todos, args=(m.id,))
+        for i, text in gone:
+            with st.container(key=f"todogone-{i}", horizontal=True, vertical_alignment="center", gap="small"):
+                markup(f'<span class="todo-gone">{esc(text)}</span>')
+                button("되돌리기", key=f"todo_restore_{i}", variant="mini", icon=":material/undo:",
+                       on_click=actions.restore_todo, args=(m.id, i))
 
 
 # ---------------------------------------------------------------- 키워드·일정
@@ -298,10 +342,22 @@ def _related_tab(s: AppState, m: Meeting) -> None:
 _TABS = {"sum": _summary_tab, "ag": _agenda_tab, "todo": _todo_tab, "kw": _keyword_tab, "rel": _related_tab}
 
 
+def _process_pending_todo(s: AppState, m: Meeting) -> None:
+    """방금 추가한 액션 아이템: 화면을 다 그린 뒤 로딩 화면을 덮고 원문을 다시 훑음 → 끝나면 다시 그림."""
+    p = s.todo_pending
+    if not p or p.get("mid") != m.id:
+        return
+    loading_overlay("원문을 다시 살펴보고 있어요", "추가한 액션 아이템의 근거가 된 발언을 찾는 중이에요")
+    src = todo_ai.rescan(m, p["text"])
+    actions.finish_todo(src)
+    st.rerun()
+
+
 def render_insights(s: AppState, m: Meeting) -> None:
+    m = repo.meeting(m.id)  # 직접 추가한 액션 아이템까지 합친 회의 (새 회의록 미리보기 포함)
     with st.container(key="md-tabs"):
         button_group(
-            [("sum", "요약"), ("ag", f"안건 {len(m.agendas) + sum(1 for t in s.added_agendas.get(m.id, []) if t)}"), ("todo", f"액션 아이템 {len(m.todos)}"),
+            [("sum", "요약"), ("ag", f"안건 {len(m.agendas) + sum(1 for t in s.added_agendas.get(m.id, []) if t)}"), ("todo", f"액션 아이템 {len(sel.todo_items(s, m.id))}"),
              ("kw", "키워드·일정"), ("rel", f"연관 회의 {len(model.related(s, m))}")],
             s.insight_tab, actions.set_insight_tab, key="insight", style="tab",
         )
@@ -309,3 +365,4 @@ def render_insights(s: AppState, m: Meeting) -> None:
         if not model.raw_locked(m) and s.insight_tab != "rel":
             hint("문장을 누르면 왼쪽 원문에서 근거가 된 발언을 표시해요")
         _TABS.get(s.insight_tab, _summary_tab)(s, m)
+    _process_pending_todo(s, m)

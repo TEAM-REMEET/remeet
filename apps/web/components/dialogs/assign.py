@@ -1,4 +1,6 @@
-"""담당자 지정 — 여러 명 (추천 상위 3명 + 팀에서 직접 고르기).
+"""담당자 지정 — 여러 명 (선행 업무 담당자 + 추천 상위 6명 + 팀에서 직접 고르기).
+
+선행 업무를 맡았던 사람은 맨 위에 따로 보여 주고(점수 · 스킬 없이), 추천 6명 안에도 있으면 거기에도 한 번 더 나와요.
 
 이름 옆 버튼을 누르면 고르고(✓), 다시 누르면 빠져요. 아래 「n명에게 맡기기」를 눌러야 반영돼요.
 """
@@ -8,9 +10,8 @@ from __future__ import annotations
 import streamlit as st
 
 from data import repository as repo
-from data.models import Candidate
+from data.models import Candidate, Predecessor
 from components.org_people import org_people_picker
-from state import selectors as sel
 from state import actions
 from state.store import get_state
 from ui.buttons import button, button_group
@@ -30,20 +31,45 @@ def _pick_button(name: str, key: str, *, stretch: bool = False) -> None:
            on_click=actions.toggle_assignee, args=(name,), width="stretch" if stretch else "content")
 
 
-def _top3(cands: list[Candidate]) -> None:
-    cols = st.columns(3, gap="medium")
-    for i, (col, c) in enumerate(zip(cols, cands[:3])):
-        bars = "".join(
-            f'<div class="r"><span class="l">{label}</span><span class="bar"><span style="width:{v}%"></span></span>'
-            f'<span class="v">{v}</span></div>'
-            for label, v in _bars(c)
-        )
-        sub = f"{c.team} · {c.role}" + ("" if c.att else " · 비참석자")
-        with col, st.container(key=f"cand-{c.id}"):
-            markup(f'<div class="cand-head"><span>{i + 1}. {esc(c.name)}</span><span>{c.score}점</span></div>'
-                   f'<div class="cand-sub">{esc(sub)}</div><div class="cand-bars">{bars}</div>'
-                   f'<p class="cand-match">보유 스킬 일치: {esc(c.match)}</p>')
-            _pick_button(c.name, f"pick_{c.id}", stretch=True)
+TOP_N = 6  # 추천 후보 수 (한 줄에 모두)
+
+
+PREV_PER_ROW = 3  # 선행 업무 담당자 카드: 한 줄에 최대 3장 (가로로 긴 카드)
+
+
+def _predecessors(prev: list[Predecessor]) -> None:
+    """선행 업무 담당자 카드: 이름 · 소속 · 추천 이유 · 맡았던 선행 업무 · 선택 (점수 · 스킬은 보여 주지 않음)."""
+    with st.container(key="prev-box", gap="small"):
+        markup('<div class="prev-title"><b>선행 업무 담당자</b>'
+               '<span class="hint">이 일과 이어지는 업무를 먼저 맡았던 사람이에요</span></div>')
+        for start in range(0, len(prev), PREV_PER_ROW):
+            cols = st.columns(PREV_PER_ROW, gap="small")
+            for col, (i, p) in zip(cols, list(enumerate(prev))[start:start + PREV_PER_ROW]):
+                with col, st.container(key=f"prevcard-{i}", gap="small"):
+                    markup(f'<div class="prev-who"><b>{esc(p.name)}</b><span>{esc(p.team)} · {esc(p.role)}</span></div>'
+                           '<span class="tag tag-host small">선행 업무 담당자여서 추천해요</span>'
+                           f'<div class="prev-task">선행 업무 <b>{esc(p.task)}</b>'
+                           f'<span>「{esc(p.meeting)}」 {esc(p.date)}</span></div>')
+                    _pick_button(p.name, f"prev_{i}", stretch=True)
+
+
+def _top(cands: list[Candidate]) -> None:
+    """추천 상위 6명을 한 줄에."""
+    top = cands[:TOP_N]
+    with st.container(key="top-cands"):
+        cols = st.columns(TOP_N, gap="small")
+        for i, (col, c) in enumerate(zip(cols, top)):
+            bars = "".join(
+                f'<div class="r"><span class="l">{label}</span><span class="bar"><span style="width:{v}%"></span></span>'
+                f'<span class="v">{v}</span></div>'
+                for label, v in _bars(c)
+            )
+            sub = f"{c.team} · {c.role}" + ("" if c.att else " · 비참석자")
+            with col, st.container(key=f"cand-{c.id}"):
+                markup(f'<div class="cand-head"><span>{i + 1}. {esc(c.name)}</span><span>{c.score}점</span></div>'
+                       f'<div class="cand-sub">{esc(sub)}</div><div class="cand-bars">{bars}</div>'
+                       + (f'<p class="cand-match">{esc(c.match)}</p>' if c.match else '<p class="cand-match"></p>'))
+                _pick_button(c.name, f"pick_{c.id}", stretch=True)
 
 
 def _candidate_row(c: Candidate, cfg: dict, top_rank: int | None) -> None:
@@ -67,25 +93,15 @@ def _candidate_row(c: Candidate, cfg: dict, top_rank: int | None) -> None:
 
 
 def _team_picker(cands: list[Candidate], cfg: dict) -> None:
-    """추천 밖에서 고르기: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기. 이름 옆에 점수 · 진행 중 업무."""
+    """추천 밖에서 고르기: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기. 이름 옆에는 직급만."""
     s = get_state()
-    by_name = {c.name: c for team in repo.team_candidates().values() for c in team}
-    top_rank = {c.name: i + 1 for i, c in enumerate(cands[:3])}
-    people = repo.people()
-    name_to_pid = {p.name: pid for pid, p in people.items()}
-
-    def sub(pid: str) -> str:
-        c = by_name.get(people[pid].name)
-        if not c:
-            return sel.person_role(pid)
-        rank = f" · 추천 {top_rank[c.name]}순위" if c.name in top_rank else ""
-        return f"{c.role} · 진행 중 {c.tasks}건 · {c.score}점{rank}"
+    name_to_pid = {p.name: pid for pid, p in repo.people().items()}
 
     with st.container(key="card-default-more", gap="small"):
         markup('<h3 style="font-size:15px;font-weight:700">팀에서 직접 고르기</h3>'
-               '<p class="hint">이름 · 팀으로 찾거나 조직도를 펼쳐 고르세요. 이름 옆에 직무 · 진행 중 업무 · 점수가 나와요.</p>')
+               '<p class="hint">이름 · 팀으로 찾거나 조직도를 펼쳐 고르세요.</p>')
         org_people_picker("assign", chosen=[name_to_pid[n] for n in s.assign_draft if n in name_to_pid],
-                          on_pick=actions.toggle_assignee_pid, sub=sub, height=320)
+                          on_pick=actions.toggle_assignee_pid, height=320)  # 이름 옆엔 직급만 (기본값)
 
 
 @st.dialog("담당자 지정", width="large", on_dismiss=actions.close_modal)
@@ -94,14 +110,20 @@ def assign_dialog() -> None:
     cfg = repo.assignee_config()
     cands: list[Candidate] = cfg["candidates"]
     current = s.assigned.get(s.assign_key, [])
-    markup(f'<h3 style="font-size:17px;font-weight:700">{esc(s.assign_text)}</h3>'
-           '<p class="hint" style="font-size:14px;color:#5F646D">회의록·보유 스킬·현재 업무량으로 점수를 매겼어요. '
-           "여러 명에게 함께 맡길 수 있고, 최종 선택은 주관자가 해요.</p>"
+    # 어떤 일의 담당자를 정하는지: 라벨 + 큰 글씨 상자로 눈에 띄게, 안내 문구와는 간격을 둠
+    markup(f'<div class="assign-target"><span class="assign-target-label">담당자를 정할 액션 아이템</span>'
+           f'<h3>{esc(s.assign_text)}</h3></div>'
+           '<p class="hint assign-guide">여러 명에게 함께 맡길 수 있고, 최종 선택은 주관자가 해요.</p>'
            + (f'<p class="hint" style="font-size:13px;color:#2B2F36;margin-top:4px">현재 담당: <b>{esc(", ".join(current))}</b> · '
               "회의를 확정하기 전까지 바꿀 수 있어요</p>" if current else ""))
     # 모달이 길어지지 않도록 본문은 고정 높이 안에서 스크롤 (높이는 pages.css 의 .st-key-assign-body)
     with st.container(height=440, border=False, key="assign-body", gap="medium"):
-        _top3(cands)
+        if cfg["predecessors"]:  # 선행 업무 담당자는 추천 6명 위, 맨 위에
+            _predecessors(cfg["predecessors"])
+        # 점수 안내는 점수가 나오는 추천 후보 바로 위에 (선행 업무 담당자 카드에는 점수가 없음)
+        markup(f'<div class="prev-title top-title"><b>추천 후보 {min(TOP_N, len(cands))}명</b>'
+               '<span class="hint">회의록·보유 스킬·현재 업무량으로 점수를 매겼어요</span></div>')
+        _top(cands)
         if not s.assign_searching:
             button("추천에 원하는 사람이 없나요? 팀에서 직접 고르기", key="start_search", variant="dashed",
                    width="stretch", on_click=actions.update, kwargs={"assign_searching": True})

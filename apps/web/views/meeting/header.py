@@ -27,18 +27,29 @@ def render_header(s: AppState, m: Meeting) -> None:
     # 1행: (왼쪽) 뒤로가기 · 제목  /  (오른쪽) 편집·공유·확정 또는 읽기 전용 안내
     with st.container(horizontal=True, vertical_alignment="bottom"):
         with st.container(gap="small"):
-            markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-                   f'<h1 class="section-title" style="font-size:20px">{esc(m.title)}</h1>{tag(role_label, role_tone)}</div>')
+            # 제목을 크게 · 위에 폴더(어느 회의인지)를 작은 글씨로
+            folder = sel.folder_label(s, m)
+            markup((f'<div class="md-eyebrow">{esc(folder)}</div>' if folder else "")
+                   + f'<div class="md-title-row"><h1 class="md-title">{esc(m.title)}</h1>{tag(role_label, role_tone)}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
+            reviewing = sel.status_of(s, m.id) == "review"  # 아직 확정 전 (확정하면 결과 전달로)
             if host and not editing:
                 button("회의 삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
                        on_click=actions.open_delete, args=("meeting", m.id))
                 button("편집", key="md_edit", variant="secondary", icon=":material/edit:", on_click=actions.start_edit)
-                button("회의 공유하기", key="md_share", variant="primary", icon=":material/send:",
+                if reviewing:  # 편집 옆에 바로 · 누르면 한 번 더 확인하는 창
+                    button("확정하기", key="md_confirm", variant="accentline", icon=":material/task_alt:",
+                           on_click=actions.open_confirm, args=(m.id,))
+                if sel.status_of(s, m.id) in ("done", "fail"):  # 결과 전달이 끝난 회의: 외부 도구(MCP)로 (다시) 보내기
+                    button("외부 도구 전송", key="md_export", variant="accentline", icon=":material/output:",
+                           on_click=actions.open_export, args=(m.id,))
+                button("회의 공유하기", key="md_share", variant="primary", icon=":material/send:",  # 항상 가장 오른쪽
                        on_click=actions.open_share)
             elif host:
                 button("취소", key="md_cancel", variant="secondary", on_click=actions.stop_edit)
-                button("확정하기", key="md_confirm", variant="primary", on_click=actions.start_delivery, args=(m.id, 1))
+                if reviewing:
+                    button("확정하기", key="md_confirm", variant="primary", icon=":material/task_alt:",
+                           on_click=actions.open_confirm, args=(m.id,))
             else:
                 st.html(f'<span class="read-note">{esc(model.read_note(m))}</span>', width="content")
 
@@ -63,7 +74,7 @@ def _export_notices(s: AppState, m: Meeting) -> None:
     """
     for f in repo.export_failures(m.id):
         tool = repo.tool(f.tool)
-        n = len(m.todos)
+        n = len(sel.todo_items(s, m.id))
         if not sel.failure_open(s, f.id):
             notice(f"액션 아이템 {n}건을 {esc(tool.name)}(으)로 다시 보냈어요. ({esc(tool.target)})", "success")
             continue

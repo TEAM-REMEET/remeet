@@ -9,6 +9,7 @@ from state import actions
 from state.store import AppState, get_state
 from ui.buttons import button
 from ui.html import markup
+from ui.icons import tool_mark
 from ui.layout import page, page_header
 from ui.tags import tag
 from utils.text import esc
@@ -34,7 +35,7 @@ def _tool_rows(s: AppState, cfg: dict) -> None:
         desc = t.desc + (f" · {t.target}" if st_ != "off" and t.target else "")
         with st.container(key=f"irow-{t.id}", horizontal=True, vertical_alignment="center", gap="medium"):
             markup(
-                f'<div style="display:flex;gap:16px;align-items:center"><span class="integ-mark">{esc(t.mark)}</span>'
+                f'<div style="display:flex;gap:16px;align-items:center">{tool_mark(t.id, esc(t.mark))}'
                 f'<span class="integ-info"><span class="nm"><b>{esc(t.name)}</b>'
                 + ('<span class="pill-label">Phase 2</span>' if t.phase2 else "")
                 + f'{tag(label, tone)}</span><span class="d">{esc(desc)}</span>'

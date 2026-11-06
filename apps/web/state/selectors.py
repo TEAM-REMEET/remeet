@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 from state.store import me_id
 from config import YEAR
 from data import repository as repo
-from data.models import Folder, Meeting, Person
+from data.models import Folder, Meeting, Person, Todo
 from state.store import AppState
 from utils.dates import date_key
 
@@ -178,34 +178,39 @@ ROLE_TAGS = {
 }
 
 
+def todo_items(state: AppState, mid: str) -> list[tuple[int, Todo]]:
+    """이 회의의 액션 아이템 [(원래 순서 번호, 할 일)] · 사용자가 삭제한 것은 뺌.
+
+    번호는 지우기 전 그대로라서, 번호로 저장한 완료 체크 · 담당자 지정 기록이 다른 할 일에 붙지 않아요.
+    """
+    gone = set(state.deleted_todos.get(mid, []))
+    return [(i, t) for i, t in enumerate(repo.meeting(mid).todos) if i not in gone]
+
+
 def mine_count(mid: str) -> int:
-    return sum(1 for t in repo.meeting(mid).todos if t.owner == me_id())
+    return sum(1 for t in repo.meeting(mid).todos if me_id() in t.owners)
 
 
 def my_todo_keys(state: AppState, mid: str) -> list[str]:
     """이 회의에서 나에게 맡겨진 할 일 (담당자 지정으로 바뀐 것까지 반영)."""
     my_name = me().name
     keys = []
-    for i, t in enumerate(repo.meeting(mid).todos):
+    for i, t in todo_items(state, mid):
         key = todo_key(mid, i)
-        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else t.owner == me_id()
+        owner_is_me = my_name in state.assigned[key] if state.assigned.get(key) else me_id() in t.owners
         if owner_is_me:
             keys.append(key)
     return keys
 
 
 def my_todo_status(state: AppState, mid: str) -> str:
-    """left(내 할 일 남음) | done(다 끝냄) | none(나에게 할당된 할 일 없음)"""
-    keys = my_todo_keys(state, mid)
-    if not keys:
-        return "none"
-    return "done" if all(state.done.get(k, False) for k in keys) else "left"
+    """left(나에게 맡겨진 할 일이 있음) | none(없음)"""
+    return "left" if my_todo_keys(state, mid) else "none"
 
 
 # 회의 목록을 나눠 보여 줄 때의 묶음 (순서대로)
 TODO_GROUPS = (
-    ("left", "내 할 일이 남은 회의"),
-    ("done", "내 할 일을 다 끝낸 회의"),
+    ("left", "내 할 일이 있는 회의"),
 )  # 나에게 할당된 할 일이 없는 회의는 판넬에 넣지 않아요
 
 
@@ -224,8 +229,7 @@ def todo_key(mid: str, index: int) -> str:
 
 
 def unassigned_count(state: AppState, mid: str) -> int:
-    m = repo.meeting(mid)
-    return sum(1 for i, t in enumerate(m.todos) if not t.owner and not state.assigned.get(todo_key(mid, i)))
+    return sum(1 for i, t in todo_items(state, mid) if not t.owners and not state.assigned.get(todo_key(mid, i)))
 
 
 def status_of(state: AppState, mid: str) -> str:
@@ -324,13 +328,7 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
             "sending": ("진행 보기", "progress"),
         }.get(st, (button, kind))
     mine_keys = my_todo_keys(state, mid)
-    left = sum(1 for k in mine_keys if not state.done.get(k, False))
-    if not mine_keys:
-        mine_text = "내 할 일 없음"
-    elif left:
-        mine_text = f"내 할 일 {left} 남음"
-    else:
-        mine_text = "내 할 일 완료"
+    mine_text = f"내 할 일 {len(mine_keys)}" if mine_keys else "내 할 일 없음"
     label, tone = _STATUS_VIEW[st]
     return MeetingRow(
         id=mid,
@@ -345,7 +343,7 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
         status=label,
         status_tone=tone,
         status_sub=sub_by_status[st],
-        actions=len(m.todos),
+        actions=len(todo_items(state, mid)),
         action_sub=mine_text + (f" · 담당 미정 {unassigned}" if (unassigned := unassigned_count(state, mid)) else ""),
         button=button,
         button_kind=kind,

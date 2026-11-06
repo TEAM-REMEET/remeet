@@ -64,9 +64,15 @@ def _folder_text(s: AppState) -> str:
     return f"{t} › 프로젝트별 › {s.nn_name} (새 폴더)" if s.nn_name.strip() else ""
 
 
+def _label(label: str) -> None:
+    """입력칸 이름 · 끝이 「 *」면 필수 표시(*)만 주황색."""
+    text, req = (label[:-2], True) if label.endswith(" *") else (label, False)
+    markup(f'<span class="cp-flabel">{esc(text)}' + (' <span class="req">*</span>' if req else "") + "</span>")
+
+
 def _field(label: str, key: str, value: str, placeholder: str, icon_name: str, modal: str) -> None:
     """입력칸처럼 생긴 버튼: 누르면 선택 모달(폴더 · 주관자 · 참석자)이 떠요."""
-    markup(f'<span class="cp-flabel">{esc(label)}</span>')
+    _label(label)
     button(value or placeholder, key=key, variant="field" if value else "fieldempty", icon=icon_name,
            on_click=actions.open_picker, args=(modal,), width="stretch")
 
@@ -106,7 +112,7 @@ def _current_text(s: AppState, n: int) -> str:
 def _basic_info(s: AppState, n: int) -> None:
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup('<h2 class="cp-section">기본 정보</h2>')
-        markup('<span class="cp-required">* 필수 입력</span>')
+        markup('<span class="cp-required"><span class="req">*</span> 필수 입력</span>')
 
     types = repo.meeting_types()
     folders = sel.folders(s)
@@ -116,9 +122,14 @@ def _basic_info(s: AppState, n: int) -> None:
     with st.container(key="cp-grid", gap="small"):
         c1, c2 = st.columns(2, gap="medium")
         with c1:
-            st.text_input("회의 제목 *", key=f"cp_title_{n}", value=s.nn_title, placeholder="예: 4분기 계획 회의")
+            # 기본 라벨은 * 만 색을 바꿀 수 없어서 숨기고(화면 낭독기용으로는 남음) 주관자 칸과 같은 라벨로 그림
+            _label("회의 제목 *")
+            st.text_input("회의 제목 (필수)", key=f"cp_title_{n}", value=s.nn_title, placeholder="예: 4분기 계획 회의",
+                          label_visibility="collapsed")
         with c2:
-            st.date_input("회의 날짜 *", value=s.nn_date, key=f"cp_date_{n}", format="YYYY/MM/DD")
+            _label("회의 날짜 *")
+            st.date_input("회의 날짜 (필수)", value=s.nn_date, key=f"cp_date_{n}", format="YYYY/MM/DD",
+                          label_visibility="collapsed")
         c1, c2 = st.columns(2, gap="medium")
         with c1:
             _field("주관자 *", "cp_host_field", _person_label(s.nn_host) if s.nn_host else "", "주관자 선택",
@@ -239,12 +250,13 @@ def _step3(s: AppState) -> None:
         "speakers": {lb: (sel.name_of(p) if p else "미지정") for lb, p in s.nn_speaker_map.items()},
         "summary": result.summary,
         "agendas": [{"title": t, "lines": list(b)} for t, b in result.agendas],
-        "todos": [{"text": t, "owner": w, "due": d} for t, w, d in result.todos],
+        "todos": [{"text": t, "owners": [x.strip() for x in w.split(",")] if w != "담당 미정" else [], "due": d}
+                  for t, w, d in result.todos],
     }
     # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(편집 · 공유 대신 수정 · 저장 · 생성 완료)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-               f'<h1 class="section-title" style="font-size:20px">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
+               f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
             button("← 발화자 매칭 수정", key="cp_prev3", variant="secondary", on_click=actions.compose_goto, args=(2,))
             with st.container(key="b-secondary-cp_json", width="content"):

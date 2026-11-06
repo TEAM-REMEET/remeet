@@ -39,7 +39,8 @@ def _k(name: str) -> str:
 
 class _Picker:
     def __init__(self, ctx: str, chosen: list[str], on_pick: Callable[[str], None], *, single: bool,
-                 locked: dict[str, str], sub: Callable[[str], str] | None) -> None:
+                 locked: dict[str, str], sub: Callable[[str], str] | None,
+                 featured: list[str] | None = None, featured_label: str = "") -> None:
         self.s = get_state()
         self.ctx = ctx
         self.chosen = set(chosen)
@@ -48,6 +49,8 @@ class _Picker:
         self.locked = locked  # 고를 수 없는 사람 → 이유 (예: 이미 멤버)
         self.sub = sub or (lambda pid: sel.person_role(pid))
         self.members = dict(sel.team_groups())  # 팀 이름 → [사람 id]
+        self.featured = [pid for pid in (featured or []) if pid in repo.people()]  # 맨 앞 탭 (예: 이 회의 참석자)
+        self.tabs = ([("featured", featured_label or "추천")] if featured is not None else []) + list(_TABS)
 
     # ------------------------------------------------------------ 한 사람
     def person(self, pid: str, level: int, *, path: bool = False) -> None:
@@ -127,10 +130,10 @@ class _Picker:
         qkey = f"pp_q_{self.ctx}_{s.pp_nonce}"
         q = (st.text_input("이름 · 팀 · 조직 검색", key=qkey, placeholder="이름 · 팀 · 조직 검색", icon=":material/search:",
                            live=True, label_visibility="collapsed") or "").strip().lower()
-        tab = s.pp_tab.get(self.ctx, "all")
+        tab = s.pp_tab.get(self.ctx, self.tabs[0][0] if self.tabs[0][0] == "featured" else "all")
         if not q:
             with st.container(key=f"pp-tabs-{self.ctx}"):
-                button_group(list(_TABS), tab, lambda v: actions.people_tab(self.ctx, v), key=f"pp_tab_{self.ctx}",
+                button_group(self.tabs, tab, lambda v: actions.people_tab(self.ctx, v), key=f"pp_tab_{self.ctx}",
                              style="tab")
         with st.container(key=f"pp-body-{self.ctx}", height=height, gap=None):
             if q:  # 검색: 이름 · 직무 · 팀 · 본부/부 이름으로
@@ -141,6 +144,11 @@ class _Picker:
                     self.person(pid, 0, path=True)
                 if not hits:
                     markup('<p class="hint" style="padding:24px 0;text-align:center">찾는 사람이 없어요.</p>')
+            elif tab == "featured":
+                for pid in self.featured:
+                    self.person(pid, 0, path=True)
+                if not self.featured:
+                    markup('<p class="hint" style="padding:24px 0;text-align:center">보여 줄 사람이 없어요.</p>')
             elif tab == "all":
                 self.tree(repo.org_tree())
                 for t in [t for t in self.members if t not in _tree_teams()]:  # 조직도에 없는 팀
@@ -171,11 +179,13 @@ def _tree_teams() -> set[str]:
 
 def org_people_picker(ctx: str, *, chosen: list[str], on_pick: Callable[[str], None], single: bool = False,
                       locked: dict[str, str] | None = None, sub: Callable[[str], str] | None = None,
-                      height: int = 300) -> None:
+                      height: int = 300, featured: list[str] | None = None, featured_label: str = "") -> None:
     """사람 고르기 (조직도 · 검색 · 최근 · 즐겨찾기).
 
     ctx: 모달마다 다른 이름 (위젯 key · 펼친 상태를 따로 기억)
     chosen: 지금 고른 사람 id · on_pick(pid): 이름을 누르면 (고르기/빼기는 부르는 쪽에서)
     single: 한 명만 (라디오 모양) · locked: 고를 수 없는 사람 → 이유 · sub(pid): 이름 옆 설명
+    featured: 맨 앞 탭에 먼저 보여 줄 사람 (예: 이 회의 참석자) · featured_label: 그 탭 이름 · 주면 처음엔 이 탭이 열림
     """
-    _Picker(ctx, chosen, on_pick, single=single, locked=locked or {}, sub=sub).render(height)
+    _Picker(ctx, chosen, on_pick, single=single, locked=locked or {}, sub=sub, featured=featured,
+            featured_label=featured_label).render(height)

@@ -14,10 +14,11 @@ from state.store import me_id
 from data import api
 from components import member_fields as mf
 from data import repository as repo
+from data.models import Todo
 from state import router
 from utils.files import ALLOWED_LABEL, is_allowed, read_text
 from state import selectors as sel
-from state.store import Delivery, NewFolder, SentShare, get_state, reset_state
+from state.store import Delivery, ExportRun, NewFolder, SentShare, get_state, reset_state
 
 # 화면을 옮길 때 항상 초기화하는 값
 _SCREEN_RESET = dict(editing=False, highlight=[], highlight_key="", show_brief=False, raw_query="", copied="", nn_error="",
@@ -287,6 +288,8 @@ def compose_goto(step: int) -> None:
     s = get_state()
     if step == 3:
         s.preview_meeting = _build_preview(s, PREVIEW_ID)
+        s.added_todos.pop(PREVIEW_ID, None)
+        s.deleted_todos.pop(PREVIEW_ID, None)
         _set(meeting_id=PREVIEW_ID, insight_tab="sum", left_tab="raw", highlight=[], highlight_key="", raw_query="")
     _set(cp_step=step, nn_error="")
 
@@ -337,9 +340,12 @@ def compose_finish() -> None:
         parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
     )
     s.created_notes.append((fid, mid))
-    for store in (s.assigned, s.done):  # 미리보기에서 정한 담당자 · 완료 체크를 새 회의로 옮김
-        for key in [k for k in store if k.startswith(f"{PREVIEW_ID}:")]:
-            store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
+    for key in [k for k in s.assigned if k.startswith(f"{PREVIEW_ID}:")]:  # 미리보기에서 정한 담당자를 새 회의로 옮김
+        s.assigned[f"{mid}:{key.split(':', 1)[1]}"] = s.assigned.pop(key)
+    if PREVIEW_ID in s.added_todos:  # 미리보기에서 직접 추가한 액션 아이템도 새 회의로
+        s.added_todos[mid] = s.added_todos.pop(PREVIEW_ID)
+    if PREVIEW_ID in s.deleted_todos:  # 미리보기에서 삭제한 액션 아이템도
+        s.deleted_todos[mid] = s.deleted_todos.pop(PREVIEW_ID)
     s.preview_meeting = None
     title = s.nn_title
     open_meeting(mid)
@@ -579,6 +585,63 @@ def jump_to_agenda(mid: str, index: int) -> None:
          agenda_jump=f"agd-{mid}-{index}", agenda_jump_n=s.agenda_jump_n + 1)
 
 
+def open_add_todo() -> None:
+    """「+ 액션 아이템 추가」: 주관자만."""
+    s = get_state()
+    if sel.my_role(repo.meeting(s.meeting_id)) != "host":
+        return
+    open_modal("add_todo", todo_nonce=s.todo_nonce + 1, todo_draft_text="", todo_draft_owners=[], todo_draft_due=None)
+
+
+def keep_todo_due(due_key: str) -> None:
+    """추가 모달의 마감일: 고르는 즉시 저장 (담당자 고르기 창에 다녀와도 남도록)."""
+    get_state().todo_draft_due = st.session_state.get(due_key)
+
+
+def open_todo_owner_picker(text: str) -> None:
+    """추가 모달 「담당자」 칸 → 사람 찾기 창 (맨 앞 탭: 이 회의 참석자 · 그다음 최근 · 즐겨찾기 · 전체 조직)."""
+    s = get_state()
+    s.todo_draft_text = text or ""
+    s.pp_tab.pop("todo_owner", None)  # 열 때마다 「이 회의 참석자」 탭부터
+    open_modal("todo_owner", pick_draft=list(s.todo_draft_owners), pick_nonce=s.pick_nonce + 1)
+
+
+def back_to_add_todo(confirm: bool = False) -> None:
+    """사람 찾기 창 → 추가 모달로 돌아감 (confirm 이면 고른 사람들을 담당자로 · 여러 명 가능)."""
+    s = get_state()
+    if confirm:
+        s.todo_draft_owners = list(s.pick_draft)
+    s.pp_nonce += 1
+    _set(modal="add_todo")
+
+
+def remove_todo_owner(pid: str) -> None:
+    """추가 모달: 고른 담당자 한 명 빼기."""
+    s = get_state()
+    s.todo_draft_owners = [p for p in s.todo_draft_owners if p != pid]
+
+
+def submit_todo(mid: str, text: str, owners: list[str], due: str) -> bool:
+    """추가할 액션 아이템을 받아 두고, 다음 화면에서 원문을 다시 훑는 동안 로딩 화면을 띄움 (finish_todo)."""
+    s = get_state()
+    if sel.my_role(repo.meeting(mid)) != "host" or not text.strip():
+        return False
+    _set(modal=None, todo_pending={"mid": mid, "text": text.strip(), "owners": list(owners), "due": due})
+    return True
+
+
+def finish_todo(src: tuple[str, ...]) -> None:
+    """원문 훑기가 끝나면 근거 발언(src)과 함께 액션 아이템을 추가."""
+    s = get_state()
+    p = s.todo_pending
+    if not p:
+        return
+    todo = Todo(p["text"], tuple(dict.fromkeys(p.get("owners", []))), p["due"], tuple(src))
+    s.added_todos = {**s.added_todos, p["mid"]: [*s.added_todos.get(p["mid"], []), todo]}
+    note = f"근거 발언 {len(src)}개를 찾았어요." if src else "원문에서 관련 발언을 찾지 못했어요."
+    _set(todo_pending={}, todo_scope="all", toast=f"액션 아이템을 추가했어요. {note}")
+
+
 def clear_highlight() -> None:
     _set(highlight=[], highlight_key="")
 
@@ -595,9 +658,33 @@ def search_keyword(keyword: str) -> None:
         _set(raw_query=keyword, left_tab="raw", highlight=[], highlight_key="")
 
 
-def toggle_todo(key: str) -> None:
+def delete_todo(mid: str, index: int) -> None:
+    """액션 아이템 삭제 (주관자만) · 아래 「삭제한 액션 아이템」에서 되돌릴 수 있음. 체크(완료)와는 별개."""
     s = get_state()
-    s.done[key] = not s.done.get(key, False)
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    gone = s.deleted_todos.get(mid, [])
+    if index not in gone:
+        s.deleted_todos = {**s.deleted_todos, mid: [*gone, index]}
+    text = repo.meeting(mid).todos[index].text
+    _set(highlight=[], highlight_key="", toast=f"「{text}」을(를) 삭제했어요. 목록 아래에서 되돌릴 수 있어요.")
+
+
+def restore_todo(mid: str, index: int) -> None:
+    s = get_state()
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    s.deleted_todos = {**s.deleted_todos, mid: [i for i in s.deleted_todos.get(mid, []) if i != index]}
+
+
+def restore_all_todos(mid: str) -> None:
+    """삭제한 액션 아이템 모두 되돌리기 (리셋)."""
+    s = get_state()
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    n = len(s.deleted_todos.get(mid, []))
+    s.deleted_todos = {k: v for k, v in s.deleted_todos.items() if k != mid}
+    _set(toast=f"삭제한 액션 아이템 {n}개를 모두 되돌렸어요.")
 
 
 def mark_copied(key: str) -> None:
@@ -746,14 +833,75 @@ def assign_to(names: list[str] | None = None) -> None:
 
 # ---------------------------------------------------------------- 결과 전달
 def start_delivery(mid: str, attempt: int = 1) -> None:
+    """결과 전달 시작 (참석자에게 보내기까지 · 외부 도구 전송은 끝난 뒤 따로)."""
     s = get_state()
-    from state import delivery  # delivery 가 store 를 쓰므로 함수 안에서 불러옴
-
-    s.delivery = Delivery(meeting_id=mid, attempt=attempt, started_at=time.time(), finished=False,
-                          fids=delivery.open_ids(s, mid),
-                          expired=tuple(k for k, v in repo.tool_statuses().items() if v == "expired"))
+    s.delivery = Delivery(meeting_id=mid, attempt=attempt, started_at=time.time(), finished=False)
     s.status_override[mid] = "sending"
     go("deliver")
+
+
+def open_confirm(mid: str) -> None:
+    """「확정하기」 → 한 번 더 확인하는 창 (주관자만)."""
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    open_modal("confirm_meeting")
+
+
+def confirm_meeting(mid: str) -> None:
+    """확인 창에서 「확정하기」 → 결과 전달 화면으로."""
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    close_modal()
+    start_delivery(mid, 1)
+
+
+# ---------------------------------------------------------------- 외부 도구(MCP) 전송 (결과 전달이 끝난 뒤 따로)
+def open_export(mid: str) -> None:
+    """결과 전달 화면 → 「외부 도구 전송」 화면 (도구 고르기부터)."""
+    from state import export
+
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    s = get_state()
+    s.export = ExportRun(meeting_id=mid, picked=export.default_pick(mid))
+    go("export")
+
+
+def toggle_export_tool(tool_id: str) -> None:
+    s = get_state()
+    x = s.export
+    x.picked = tuple(t for t in x.picked if t != tool_id) if tool_id in x.picked else (*x.picked, tool_id)
+
+
+def start_export() -> None:
+    """고른 도구로 보내기 시작."""
+    from state import export
+
+    s = get_state()
+    x = s.export
+    if sel.my_role(repo.meeting(x.meeting_id)) != "host" or not x.picked:
+        return
+    s.export = ExportRun(meeting_id=x.meeting_id, picked=x.picked, attempt=1, started_at=time.time(),
+                         fids=export.open_ids(s, x.meeting_id),
+                         expired=tuple(k for k, v in repo.tool_statuses().items() if v == "expired"))
+    s.status_override[x.meeting_id] = "sending"
+
+
+def retry_export() -> None:
+    """단순 이슈로 실패한 도구만 다시 보내기."""
+    s = get_state()
+    x = s.export
+    s.export = ExportRun(meeting_id=x.meeting_id, picked=x.picked, attempt=2, started_at=time.time(),
+                         fids=x.fids, expired=x.expired, contact_shown=True)
+    s.status_override[x.meeting_id] = "sending"
+
+
+def finish_export() -> None:
+    """「전달 완료」 → 회의 상세로."""
+    s = get_state()
+    mid = s.export.meeting_id
+    open_meeting(mid)
+    _set(toast="외부 도구 전송을 마쳤어요.")
 
 
 def run_row_action(mid: str, kind: str) -> None:
@@ -762,8 +910,11 @@ def run_row_action(mid: str, kind: str) -> None:
         open_meeting(mid, editing=True)
     elif kind == "deliver":
         start_delivery(mid, 1)
-    elif kind == "retry":
-        start_delivery(mid, 2)
+    elif kind == "retry":  # 외부 도구 전송이 실패했으면 외부 도구 전송 화면, 아니면 실패한 참석자에게 다시
+        if sel.open_export_failure(get_state(), mid):
+            open_export(mid)
+        else:
+            start_delivery(mid, 2)
     elif kind == "progress":
         get_state().delivery.meeting_id = mid
         go("deliver")

@@ -200,12 +200,31 @@ def auto_match(label: str) -> str:
 class Analysis:
     summary: str
     agendas: tuple[tuple[str, tuple[str, ...]], ...]  # (안건 제목, 그 안건의 발언들)
-    todos: tuple[tuple[str, str, str], ...]  # (할 일, 담당자 이름 또는 표기, 기한)
+    todos: tuple[tuple[str, str, str], ...]  # (할 일, 담당자 이름들(쉼표로 구분) 또는 표기, 기한)
     decisions: tuple[str, ...]
     open_issues: tuple[str, ...]
     keywords: tuple[str, ...]
     transcript: tuple[tuple[str, str], ...]  # (보이는 발화자 이름, 발언) · 매칭 반영
     mapping: dict[str, str] = field(default_factory=dict)  # 발화자 표기 → 사람 id ('' 면 미지정)
+
+
+_TOGETHER = re.compile(r"(같이|함께|둘이|두 분|세 분|랑|이랑|하고|와 |과 |및)")
+
+
+def todo_owners(text: str, label: str | None, mapping: dict[str, str]) -> tuple[str, ...]:
+    """액션 아이템 담당자들 (사람 id · 여러 명 가능) — 데모 규칙.
+
+    말한 사람(발화자로 연결된 사람) + 「같이 · 함께 · 랑 …」처럼 함께 맡는 표현이 있으면 발언에 이름이 나온
+    이 회의의 다른 사람도 담당자로 넣어요. 실제 서비스에서는 에이전트가 assignees(여러 명)로 돌려줘요.
+    """
+    by_id = repo.people()
+    owners = [mapping[label]] if label and mapping.get(label) else []
+    if _TOGETHER.search(text):
+        for pid in dict.fromkeys(v for v in mapping.values() if v):
+            p = by_id.get(pid)
+            if p and (p.short in text or p.name in text):
+                owners.append(pid)
+    return tuple(dict.fromkeys(owners))
 
 
 def who(label: str | None, mapping: dict[str, str]) -> str:
@@ -225,8 +244,14 @@ def analyze(parsed: Parsed, mapping: dict[str, str], title: str) -> Analysis:
     texts = [ln.text for ln in lines]
     chunks = [lines[i:i + 3] for i in range(0, len(lines), 3)]  # 3문장마다 안건 하나 (데모 규칙)
     agendas = tuple((_short(c[0].text), tuple(x.text for x in c)) for c in chunks)
+    def owner_names(ln) -> str:
+        ids = todo_owners(ln.text, ln.label, mapping)
+        if ids:
+            return ", ".join(repo.people()[pid].name for pid in ids)
+        return who(ln.label, mapping) or "담당 미정"
+
     todos = tuple(
-        (ln.text, who(ln.label, mapping) or "담당 미정", find_date_token(ln.text) or "원문 확인 필요")
+        (ln.text, owner_names(ln), find_date_token(ln.text) or "원문 확인 필요")
         for ln in lines if _TODO.search(ln.text)
     )
     decisions = tuple(t for t in texts if _DECISION.search(t))
@@ -267,7 +292,8 @@ def build_meeting(mid: str, *, title: str, day: date, topic: str | None, host: s
             paragraphs.append(Paragraph(pid, speaker, ln.text))
             points.append(Evidence(ln.text, (pid,)))
             if _TODO.search(ln.text):
-                todos.append(Todo(ln.text, person or None, find_date_token(ln.text) or "확인 필요", (pid,)))
+                todos.append(Todo(ln.text, todo_owners(ln.text, ln.label, mapping),
+                                  find_date_token(ln.text) or "확인 필요", (pid,)))
             if _DECISION.search(ln.text):
                 decisions.append(Evidence(ln.text, (pid,)))
             if _OPEN.search(ln.text):

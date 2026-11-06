@@ -885,24 +885,19 @@
   border-left: 3px solid #2b2d33;
   gap: 6px !important;
 }
-[class*="st-key-todo-"][class*="-done"] {
-  border-left-color: #d3d6db;
-}
-[class*="st-key-todo-"] .stCheckbox label p {
-  font-size: 15px !important;
-  font-weight: 700 !important;
+.stHtml p.todo-title {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
   color: var(--ink);
-}
-[class*="st-key-todo-"][class*="-done"] .stCheckbox label p {
-  color: #8a8f97;
-  text-decoration: line-through;
+  word-break: keep-all;
 }
 .todo-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  margin-left: 28px;
 }
 .todo-due {
   font-size: 12px;
@@ -913,8 +908,7 @@
   font-weight: 700;
 }
 [class*="st-key-quotewrap-"] {
-  margin-left: 24px;
-  width: calc(100% - 24px) !important;
+  width: 100% !important;
 }
 .branch-box {
   font-size: 13px;
@@ -1905,3 +1899,114 @@
 .agd-empty { margin: 2px 0 0 10px; font-size: 13px; color: var(--muted); }
 [class*="st-key-b-pick"][class*="-toc"] button { padding: 5px 10px !important; color: var(--ink) !important; }
 [class*="st-key-b-pick"][class*="-atp"] button { padding-left: 20px !important; }
+
+/* 담당자 추천: 선행 업무 담당자 (맨 위) — 가로로 긴 카드, 한 줄에 최대 3장 */
+.st-key-prev-box {
+  background: #FFF8F2; border: 1px solid #FDE3CF; border-radius: 4px; padding: 14px 16px;
+}
+.prev-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.prev-title b { font-size: 17px; }
+.prev-title .hint { font-size: 13px; }
+[class*="st-key-prevcard-"] {
+  background: #FFFFFF; border: 1px solid #FDE3CF; border-radius: 4px; padding: 12px 14px;
+}
+.prev-who { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.prev-who b { font-size: 15px; }
+.prev-who span { font-size: 13px; color: var(--muted); }
+[class*="st-key-prevcard-"] .tag { align-self: flex-start; margin-top: 6px; }
+.prev-task { margin-top: 8px; font-size: 13px; color: #4a5260; line-height: 1.55; word-break: keep-all; }
+.prev-task b { margin-left: 4px; }
+.prev-task span { display: block; font-size: 12px; color: var(--muted); }
+[class*="st-key-prevcard-"] [class*="st-key-b-"] button { height: 36px; font-size: 14px; font-weight: 700 !important; }
+
+/* 담당자 추천: 상위 6명을 한 줄에 (카드를 좁게) */
+.st-key-top-cands [class*="st-key-cand-"] { padding: 14px 12px 14px; }
+.st-key-top-cands .cand-head { font-size: 14px; flex-wrap: wrap; gap: 2px 6px; }
+.st-key-top-cands .cand-head span:first-child { white-space: nowrap; }
+.st-key-top-cands .cand-sub { font-size: 12px; min-height: 34px; }
+.st-key-top-cands .cand-bars { gap: 6px; margin-top: 10px; }
+.st-key-top-cands .cand-bars .r { gap: 6px; }
+.st-key-top-cands .cand-bars .l { width: 52px; font-size: 11px; }
+.st-key-top-cands .cand-bars .v { width: 22px; font-size: 11px; }
+.st-key-top-cands .cand-match { margin-top: 8px; font-size: 11px; line-height: 1.5; min-height: 50px; }
+.st-key-top-cands [class*="st-key-cand-"] [class*="st-key-b-"] button { height: 38px; font-size: 14px; }
+.st-key-top-cands .cand-sub, .st-key-top-cands .cand-match { word-break: keep-all; }
+
+/* 담당자 지정 모달 맨 위: 어떤 액션 아이템의 담당자를 정하는지 */
+.assign-target {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 18px; background: #F6F7F9; border-left: 4px solid var(--accent); border-radius: 4px;
+}
+.assign-target-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.assign-target h3 { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.45; color: var(--ink); word-break: keep-all; }
+.assign-guide { margin-top: 14px !important; font-size: 14px; color: #5F646D; }
+
+/* 액션 아이템 탭: 「담당 미정」 태그 모양 버튼 (누르면 담당자 지정) — .tag-warn 과 같은 모양 */
+/* 「담당 미정」 버튼 ↔ 기간: 버튼은 아이콘이 붙어 무게가 있어서 일반 태그 줄(6px)보다 조금 넓게 10px
+   (Streamlit 가로 컨테이너 기본 gap 은 1rem) */
+/* 체크박스를 뺀 뒤로 제목 · 담당자 · 근거 발언 모두 왼쪽 끝에 맞춤 */
+/* 회의 상세의 좌우 분할 규칙(.st-key-md-split [data-testid="stHorizontalBlock"]:first-child { gap: 0 !important })이
+   이 줄에도 걸려 간격이 0 이 되므로, 같은 구체성으로 다시 지정 (이 파일에서 더 뒤에 있어서 이김) */
+.st-key-md-split [data-testid="stHorizontalBlock"][class*="st-key-todometa-"] { gap: 10px !important; }
+[class*="st-key-todometa-"] > .stElementContainer,
+[class*="st-key-todometa-"] > [class*="st-key-b-"] { margin: 0 !important; }
+[class*="st-key-b-tagwarn-"] button {
+  height: 26px; min-height: 26px; padding: 0 10px !important; border: none !important; border-radius: 3px;
+  background: #FFF6D1 !important; color: #6E5200 !important; font-size: 13px; font-weight: 600 !important;
+}
+[class*="st-key-b-tagwarn-"] button:hover { background: #FFEB99 !important; box-shadow: inset 0 0 0 1px #E8C34A; }
+[class*="st-key-b-tagwarn-"] button p { font-size: 13px; font-weight: 600; }
+.prev-title.top-title { margin-bottom: -6px; }
+
+/* 액션 아이템 삭제: 체크박스 줄 오른쪽 빨간 휴지통 · 삭제한 액션 아이템(되돌리기) */
+[class*="st-key-b-trash-"] button {
+  width: 30px; height: 30px; min-height: 30px; padding: 0 !important; border: none !important;
+  background: transparent !important; color: #B3261E !important; border-radius: 4px;
+}
+[class*="st-key-b-trash-"] button:hover { background: #FDECEA !important; }
+[class*="st-key-b-trash-"] button [data-testid="stIconMaterial"] { font-size: 20px; color: #B3261E; }
+[class*="st-key-todohead-"] > [class*="st-key-b-trash-"],
+[class*="st-key-todohead-"] > .stElementContainer:has([class*="st-key-b-trash-"]) { flex: none !important; }
+.todo-gone { flex: 1; font-size: 14px; color: #80858e; text-decoration: line-through; word-break: keep-all; }
+[class*="st-key-todogone-"] { padding: 4px 0; border-top: 1px solid var(--line-soft); }
+
+/* 회의 상세 머리말: 제목을 크게 (위에 폴더 이름 작게) */
+.md-eyebrow { margin-bottom: 2px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.md-title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.md-title {
+  margin: 0; font-size: 26px; font-weight: 800; line-height: 1.3; letter-spacing: -0.5px; color: var(--ink);
+  word-break: keep-all;
+}
+
+/* 회의록 확정 확인 창 */
+/* .stHtml p { margin: 0 } (base.css) 보다 구체적이어야 여백이 먹어요 · 위 제목 상자와 한 줄(22px) 띄움 */
+.stHtml p.confirm-lead { margin: 22px 0 6px; font-size: 14px; color: var(--ink); line-height: 1.6; word-break: keep-all; }
+.confirm-list { margin: 0 0 4px; padding-left: 18px; font-size: 13px; color: #4a5260; line-height: 1.8; }
+.stHtml p.confirm-warn { margin: 6px 0 0; padding: 8px 12px; border-radius: 4px; background: #FFF6D1; color: #6E5200; font-size: 13px; }
+
+/* 외부 도구 전송: 도구 고르기 */
+[class*="st-key-exptool-"] { padding: 10px 14px; border: 1px solid var(--line-soft); border-radius: 4px; background: #fff; }
+[class*="st-key-exptool-on-"] { border-color: var(--accent-line); background: var(--accent-soft); }
+.st-key-exp-foot { margin-top: 8px; }
+
+/* 외부 도구 마크: 로고 · 아이콘일 때는 흰 바탕 (ui/icons.py tool_mark) */
+.integ-mark.logo { background: #FFFFFF; }
+.integ-mark.logo img { width: 72%; height: 72%; object-fit: contain; display: block; }
+.integ-mark.logo img.ico { width: 20px; height: 20px; }
+
+/* 요약 · 회의 결과: [태그] [글 · 연결한 안건] — 글이 여러 줄이어도 태그 뒤에 맞춰 정렬 */
+[class*="st-key-resrow-"] { flex-wrap: nowrap !important; }
+[class*="st-key-resrow-"] > [class*="st-key-b-pick"] { flex: 1 1 0 !important; min-width: 0; }
+.res-tag {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 52px; height: 24px; padding: 0 8px;
+  margin-top: 6px; border-radius: 3px; font-size: 13px; font-weight: 700; white-space: nowrap; box-sizing: border-box;
+}
+.res-ok { background: #E3F4EA; color: #146C3C; }
+.res-open { background: #FDEBDC; color: #9A4A0B; }
+.res-info { background: #F1EEFB; color: #5A3EA6; }
+.res-etc { background: #EEF0F3; color: #4B515A; }
+/* 연결한 안건: 글 아래로 조금 띄움 */
+[class*="st-key-b-pick"][class*="-res"] button p code { display: inline-block; margin-top: 8px; margin-right: 2px; }
+/* 회의 상세 좌우 분할 규칙(gap 0 !important)이 이 줄에도 걸려서 같은 구체성으로 다시 지정 (태그 ↔ 글 8px) */
+.st-key-md-split [data-testid="stHorizontalBlock"][class*="st-key-resrow-"] { gap: 8px !important; }
+[class*="st-key-b-pick"][class*="-res"] button p { word-break: keep-all; }

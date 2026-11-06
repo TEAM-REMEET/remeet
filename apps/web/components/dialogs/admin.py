@@ -45,7 +45,9 @@ def contact_admin_dialog() -> None:
         copied = s.copied == "admin_mail"
         button("복사됨" if copied else "복사", key="ca_copy", variant="mini", on_click=actions.mark_copied,
                args=("admin_mail",))
-        if copied:
+    if copied:
+        # 복사 스크립트는 이메일 줄 밖의 숨은 칸에 (줄 안에 넣으면 칸이 하나 늘어 버튼이 왼쪽으로 밀림)
+        with st.container(key="ca-js"):
             copy_to_clipboard(ADMIN_EMAIL, nonce="admin_mail")
 
     subject = f"[RE:MEET] {tool.name} 전송 실패 문의 — {m.title}"
