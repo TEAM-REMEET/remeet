@@ -14,7 +14,6 @@ import streamlit as st
 
 from data import repository as repo
 from state import actions
-from state import archive as arc
 from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button, button_group
@@ -85,22 +84,15 @@ def _by_folder(s: AppState, q: str) -> list[Hit]:
     hits = []
     types = repo.meeting_types()
     fs = sel.folders(s)
-    for t in sel.TYPE_ORDER:
-        for fid in sel.folder_ids_of_type(s, t):
-            f = fs[fid]
-            if q.lower() not in f.name.lower():
-                continue
-            notes = sel.folder_note_ids(s, fid)
-            last = f"최근 회의 · {repo.meeting(notes[0]).title}" if notes else "아직 회의록이 없어요"
-            hits.append(Hit(f"f_{fid}", _hl(f.name, q),
-                            f"{types[t].name} · 프로젝트 폴더 · 회의록 {len(notes)}개 · 멤버 {len(sel.members_of(s, fid))}명",
-                            (esc(last),), actions.open_folder, (fid,), "folder"))
-        for p in arc.periods(s, t):
-            if q.replace(" ", "") in p.label.replace(" ", ""):
-                hits.append(Hit(f"p_{t}_{p.key}", _hl(p.label, q),
-                                f"{types[t].name} · {arc.PERIOD_LABEL[t]} 폴더 · 회의록 {len(p.meeting_ids)}개",
-                                (esc(f"최근 회의 · {repo.meeting(p.meeting_ids[0]).title}"),),
-                                actions.open_archive, (t, "period", p.key), "folder"))
+    for fid in sel.all_my_folder_ids(s):
+        f = fs[fid]
+        if q.lower() not in f.name.lower():
+            continue
+        notes = sel.folder_note_ids(s, fid)
+        last = f"최근 회의 · {repo.meeting(notes[0]).title}" if notes else "아직 회의록이 없어요"
+        hits.append(Hit(f"f_{fid}", _hl(f.name, q),
+                        f"프로젝트 · 회의록 {len(notes)}개 · 멤버 {len(sel.members_of(s, fid))}명",
+                        (esc(last),), actions.open_folder, (fid,), "folder"))
     return hits
 
 
