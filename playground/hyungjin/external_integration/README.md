@@ -1,4 +1,4 @@
-# Jira · Teams 연결 실험
+# Jira · 메일 연결 실험
 
 담당자 추천 JSON의 `action_item`을 사용한다. 추천 후보는 자동으로 확정하지 않는다. 관리자가 선택한 사람의 **Atlassian accountId**를 별도로 전달해야 한다. 서비스의 `user_id`는 Jira accountId가 아니다.
 
@@ -47,23 +47,24 @@ print(response.content)
 
 요청은 `cloudId`, `projectKey`, `issueType`, `summary`, `description`, `assignee` 및 기한이 있으면 `additional_fields.duedate`를 전송한다. Jira 프로젝트의 이슈 유형과 필수 필드 설정에 따라 추가 필드가 필요할 수 있다. 기한은 Jira의 `YYYY-MM-DD` 형식이어야 한다. 반환값은 MCP 응답이며 이슈 키 추출은 실제 서버 응답을 확인해 호출 측에서 처리한다.
 
-## Teams: Microsoft Graph
+## 메일: SMTP
 
-```python
-from integrations import send_teams_message
+확정된 액션 아이템을 담당자에게 메일로 알린다. 발송 전용 계정 하나로 보내므로 사용자 로그인은 필요 없다. 운영에서는 도입 회사의 메일 서버로, 개발·시연은 Gmail로 연결한다. 서버 주소와 계정만 바뀌고 코드는 같다.
 
-message = send_teams_message(
-    access_token="Graph 사용자 위임 액세스 토큰",
-    team_id="팀 ID", channel_id="채널 ID",
-    message="회의 후속 업무: 로그인 화면 디자인\nJira: https://example.atlassian.net/browse/PROJ-1",
-)
-print(message["id"])
+`.env`에 `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM`, `MAIL_TEST_TO`를 설정한다. Gmail이면 `smtp.gmail.com` / `587`이고, `SMTP_PASSWORD`에는 계정 비밀번호가 아니라 **앱 비밀번호**(2단계 인증 후 [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)에서 발급)를 넣는다. 포트 465는 SSL, 그 밖의 포트는 STARTTLS로 연결한다.
+
+```powershell
+python mail.py preview "추천결과.json"                       # 보내지 않고 메일 내용만 출력
+python mail.py send "추천결과.json"                          # MAIL_TEST_TO로 실제 발송
+python mail.py send "추천결과.json" --to "담당자@회사.com" --issue-url "https://….atlassian.net/browse/KAN-1"
 ```
 
-Microsoft Entra 앱 등록과 로그인 후 `ChannelMessage.Send` 사용자 위임 권한이 있는 Graph 토큰이 필요하다. 채널 메시지만 지원하며 일반 앱 전용 토큰으로 메시지를 보낼 수 없다. 토큰은 소스나 로그에 기록하지 않는다.
+화면에서는 `streamlit run jira_web.py`의 "이슈 생성 후 담당자에게 메일 보내기"를 켜고 전송한다. 이슈가 생성된 뒤 메일을 보내며, 메일만 실패하면 "메일만 다시 보내기" 버튼이 나온다.
 
-두 함수는 외부에 즉시 생성·전송한다. Jira 성공 후 Teams 실패 시 Jira 응답을 보관하고 Teams만 재시도해야 중복 이슈를 막을 수 있다. 네트워크 시간 초과 시 성공 여부가 불명확할 수 있으므로 외부 결과를 확인한 뒤 재시도한다. 자동 재시도와 중복 방지는 구현하지 않았다.
+메일에는 업무 제목, 기한, 회의, 안건, 액션 아이템 ID와, `--issue-url`을 주면 Jira 이슈 주소가 들어간다. Jira 이슈를 먼저 만든 뒤 그 주소로 메일을 보내야 링크가 들어간다. 개인 Gmail은 하루 약 500통까지 보낼 수 있다.
+
+Jira 이슈와 메일은 외부에 즉시 생성·전송된다. Jira 성공 후 메일이 실패하면 Jira 응답을 보관하고 메일만 다시 보내야 중복 이슈를 막을 수 있다. 네트워크 시간 초과 시 성공 여부가 불명확할 수 있으므로 외부 결과를 확인한 뒤 재시도한다. 자동 재시도와 중복 방지는 구현하지 않았다.
 
 검증: `python -m unittest discover -s remeet/playground/hyungjin/external_integration -p "test_*.py"`
 
-참고: [Atlassian MCP 도구](https://support.atlassian.com/atlassian-ai-gateway/docs/supported-tools/), [Graph 채널 메시지](https://learn.microsoft.com/en-us/graph/api/channel-post-messages?view=graph-rest-1.0)
+참고: [Atlassian MCP 도구](https://support.atlassian.com/atlassian-ai-gateway/docs/supported-tools/)

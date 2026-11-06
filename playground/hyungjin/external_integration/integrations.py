@@ -1,8 +1,7 @@
-"""담당자 추천 결과를 Jira와 Teams에 전달한다."""
+"""담당자 추천 결과를 Jira와 메일로 전달한다."""
 
-import json
-from urllib.parse import quote
-from urllib.request import Request, urlopen
+import smtplib
+from email.message import EmailMessage
 
 
 def jira_arguments(result, cloud_id, project_key, issue_type, assignee_account_id):
@@ -57,14 +56,38 @@ async def send_jira_issue(session, args):
     return response
 
 
-def send_teams_message(access_token, team_id, channel_id, message):
-    """사용자 위임 Graph 토큰으로 Teams 채널에 메시지를 보낸다."""
-    if not all((access_token, team_id, channel_id, message)):
-        raise ValueError("Graph 토큰, 팀 ID, 채널 ID, 메시지가 필요합니다.")
-    url = ("https://graph.microsoft.com/v1.0/teams/" + quote(team_id, safe="")
-           + "/channels/" + quote(channel_id, safe="") + "/messages")
-    body = json.dumps({"body": {"contentType": "text", "content": message}}, ensure_ascii=False).encode("utf-8")
-    request = Request(url, data=body, headers={"Authorization": f"Bearer {access_token}",
-                      "Content-Type": "application/json"}, method="POST")
-    with urlopen(request, timeout=30) as response:
-        return json.load(response)
+def mail_message(result, sender, to, issue_url=None):
+    """확정된 액션 아이템으로 담당자 알림 메일을 만든다."""
+    item = result["action_item"]
+    if not all((item.get("title"), sender, to)):
+        raise ValueError("제목, 보내는 주소, 받는 주소가 필요합니다.")
+    title = " ".join(str(item["title"]).split())  # 제목 줄바꿈은 헤더 주입이 되므로 공백으로 바꾼다
+    message = EmailMessage()
+    message["Subject"] = f"[RE:MEET] 후속 업무: {title}"
+    message["From"], message["To"] = sender, to
+    lines = ["회의에서 담당자로 확정된 업무가 있습니다.", "",
+             f"업무: {title}",
+             f"기한: {item.get('due') or '-'}",
+             f"회의: {item.get('meeting_title') or '-'}",
+             f"안건: {item.get('agenda_title') or '-'}",
+             f"액션 아이템 ID: {item.get('action_item_id') or '-'}"]
+    if issue_url:
+        lines.append(f"Jira: {issue_url}")
+    message.set_content("\n".join(lines))
+    return message
+
+
+def send_mail(config, message):
+    """SMTP 서버로 메일을 보낸다. 465는 SSL, 그 밖의 포트는 STARTTLS로 암호화한다."""
+    host, port = config.get("SMTP_HOST"), int(config.get("SMTP_PORT") or 587)
+    if not all((host, config.get("SMTP_USERNAME"), config.get("SMTP_PASSWORD"))):
+        raise ValueError("SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD 설정이 필요합니다.")
+    if port == 465:
+        server = smtplib.SMTP_SSL(host, port, timeout=30)
+    else:
+        server = smtplib.SMTP(host, port, timeout=30)
+    with server as smtp:
+        if port != 465:
+            smtp.starttls()
+        smtp.login(config["SMTP_USERNAME"], config["SMTP_PASSWORD"])
+        smtp.send_message(message)

@@ -4,7 +4,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from integrations import create_jira_issue, jira_arguments, send_teams_message
+from integrations import create_jira_issue, jira_arguments, mail_message, send_mail
 from jira import connect, list_issue_types, list_tool_names, settings
 
 
@@ -54,14 +54,37 @@ class IntegrationTests(unittest.TestCase):
         self.assertIn("assignee", str(error.exception))
         self.assertEqual(session.calls, [])
 
-    def test_teams_request(self):
-        from io import BytesIO
-        with patch("integrations.urlopen", return_value=BytesIO(b'{"id":"message-id"}')) as send:
-            self.assertEqual(send_teams_message("token", "team", "channel/1", "안녕하세요"), {"id": "message-id"})
-            request = send.call_args.args[0]
-            self.assertIn("channel%2F1/messages", request.full_url)
-            self.assertEqual(json.loads(request.data)["body"], {"contentType": "text", "content": "안녕하세요"})
-            self.assertEqual(request.get_header("Authorization"), "Bearer token")
+    def test_mail_message(self):
+        result = {"action_item": {**self.result["action_item"], "title": "작업\nBcc: x@evil.com"}}
+        message = mail_message(result, "from@example.com", "to@example.com", "https://jira/PROJ-1")
+        self.assertEqual(message["Subject"], "[RE:MEET] 후속 업무: 작업 Bcc: x@evil.com")
+        self.assertIsNone(message["Bcc"], "제목 줄바꿈으로 헤더를 추가할 수 없다")
+        body = message.get_content()
+        self.assertIn("기한: 2026-11-20", body)
+        self.assertIn("Jira: https://jira/PROJ-1", body)
+        with self.assertRaises(ValueError):
+            mail_message(self.result, "from@example.com", "")
+
+    def test_send_mail_starttls_and_ssl(self):
+        config = {"SMTP_HOST": "smtp.example.com", "SMTP_USERNAME": "user", "SMTP_PASSWORD": "pw"}
+        message = mail_message(self.result, "from@example.com", "to@example.com")
+        with patch("integrations.smtplib.SMTP") as smtp:
+            send_mail({**config, "SMTP_PORT": "587"}, message)
+        server = smtp.return_value.__enter__.return_value
+        smtp.assert_called_once_with("smtp.example.com", 587, timeout=30)
+        server.starttls.assert_called_once()
+        server.login.assert_called_once_with("user", "pw")
+        server.send_message.assert_called_once_with(message)
+        with patch("integrations.smtplib.SMTP_SSL") as ssl:
+            send_mail({**config, "SMTP_PORT": "465"}, message)
+        ssl.return_value.__enter__.return_value.starttls.assert_not_called()
+
+    def test_mail_missing_configuration_does_not_print_password(self):
+        from mail import settings as mail_settings
+        with patch("mail.dotenv_values", return_value={"SMTP_PASSWORD": "secret"}):
+            with self.assertRaises(ValueError) as error:
+                mail_settings()
+        self.assertNotIn("secret", str(error.exception))
 
     def test_types_paginated_and_schema(self):
         class Session:
