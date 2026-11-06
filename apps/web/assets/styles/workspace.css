@@ -7,6 +7,26 @@
 .st-key-navgroup-meetings {
   gap: 3px !important; /* 트리 줄 사이 간격 */
 }
+/* 트리 위 토글 (정기 회의 | 프로젝트): 사이드바 폭을 꽉 채우고 두 버튼을 반씩.
+   토글을 감싼 래퍼가 내용 폭으로 잡혀서 래퍼부터 늘림 */
+div:has(> .st-key-grp-seg-tree_mode),
+.st-key-grp-seg-tree_mode {
+  width: 100% !important;
+}
+.st-key-grp-seg-tree_mode > * {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+.st-key-grp-seg-tree_mode [class*="st-key-b-seg"],
+.st-key-grp-seg-tree_mode .stElementContainer,
+.st-key-grp-seg-tree_mode .stButton,
+.st-key-grp-seg-tree_mode button {
+  width: 100% !important;
+}
+.st-key-grp-seg-tree_mode button p {
+  white-space: nowrap;
+}
 [class*="st-key-b-tree"] button {
   width: 100%;
   height: 34px !important; /* 트리 줄 높이 (28 → 34) */
