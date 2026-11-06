@@ -1,4 +1,4 @@
-"""관리자 · 구성원 관리: 조직 구성원 목록 · 팀 · 직무 · 권한(관리자/구성원) · 활성/비활성 · 구성원 추가.
+"""관리자 · 구성원 관리: 조직 구성원 목록(팀 · 직무 · 직급 · 권한 · 상태) · 「수정」 팝업 · 구성원 추가.
 
 여기서 바꾼 값은 서버 공용 값이라 사용자 화면(참석자 · 주관자 고르기, 담당자 지정, 폴더 멤버)에 바로 반영돼요.
 """
@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from components import member_fields as mf
 from data import repository as repo
 from state import actions
 from state import selectors as sel
@@ -23,71 +24,83 @@ from utils.text import esc
 _SEARCH = "구성원 검색"
 _STATUS = {"active": ("활성", "on"), "invited": ("초대 중", "wait"), "inactive": ("비활성", "off")}
 _ROLE = {"admin": "관리자", "member": "구성원"}
-_COLS = [2.4, 1.35, 1.25, 1.15, 0.8, 1.0, 1.1]
+_COLS = [2.4, 1.3, 1.3, 0.8, 0.85, 0.75, 0.95, 0.9]
 
 
-def _summary(rows: list[AdminMember]) -> None:
-    n = len(rows)
-    admins = sum(m.role == "admin" for m in rows)
-    invited = sum(m.status == "invited" for m in rows)
-    inactive = sum(m.status == "inactive" for m in rows)
-    items = (("전체", n), ("관리자", admins), ("초대 중", invited), ("비활성", inactive))
-    markup('<div class="adm-sum">' + "".join(f"<span>{lb}<b>{v}</b></span>" for lb, v in items) + "</div>")
+# 표 머리글: (컬럼, 제목, 정렬 · 필터 가능). 최근 접속은 아직 기록이 없어 둘 다 안 됨
+_HEADS = (("name", "이름 · 이메일", True), ("team", "팀", True), ("job", "직무", True), ("position", "직급", True),
+          ("role", "권한", True), ("status", "상태", True), ("last", "최근 접속", False), ("", "", False))
+_FILTERS = {"team": "팀", "job": "직무", "position": "직급", "role": "권한", "status": "상태"}
+_POSITION_RANK = {"junior": 1, "mid": 2, "senior": 3}  # 직급은 글자 순이 아니라 주니어 → 시니어 순
+
+
+def _value(m: AdminMember, col: str) -> str:
+    """화면에 보이는 값 (필터 선택지 · 정렬 기준)."""
+    return {"name": m.name, "team": m.team, "job": m.job, "position": mf.POSITION.get(m.position, "-"),
+            "role": _ROLE[m.role], "status": _STATUS[m.status][0]}[col]
+
+
+def _sort_key(m: AdminMember, col: str):
+    return _POSITION_RANK.get(m.position, 0) if col == "position" else _value(m, col)
 
 
 def _filtered(s: AppState, rows: list[AdminMember]) -> list[AdminMember]:
     q = s.adm_query.lower()
-    return [m for m in rows
-            if (not s.adm_team or m.team == s.adm_team)
-            and (not q or q in m.name.lower() or q in m.email.lower() or q in m.team.lower())]
+    shown = [m for m in rows
+             if all(_value(m, col) in picked for col, picked in s.adm_filters.items() if picked)
+             and (not q or q in m.name.lower() or q in m.email.lower() or q in m.team.lower())]
+    if s.adm_sort:
+        shown.sort(key=lambda m: _sort_key(m, s.adm_sort), reverse=s.adm_sort_desc)
+        shown.sort(key=lambda m: not m.is_self)  # 내 관리 계정은 늘 맨 위 (stable sort라 순서 유지)
+    return shown
 
 
-def _team_popover(m: AdminMember) -> None:
-    """목록 · 팀: 팝오버로 편집 (열었을 때만 안을 그림 → 구성원이 많아도 가벼움)."""
-    with st.popover(m.team, icon=":material/search:", key=f"tpop_{m.id}", on_change="rerun", width="stretch") as pop:
-        if not pop.open:
-            return
-        qkey = f"tq_{m.id}"
-        q = (st.text_input("팀 검색", key=qkey, placeholder="팀 검색", icon=":material/search:", live=True,
-                           label_visibility="collapsed") or "").strip().lower()
-        teams = [t for t in sel.admin_teams() if not q or q in t.lower() or q in sel.team_path(t).lower()]
-        teams.sort(key=lambda t: t != m.team)  # 지금 팀을 맨 위에 (✓)
-        markup(f'<span class="pop-cap">{"검색 결과" if q else "팀"}</span>')
-        with st.container(key=f"tlist-{m.id}", gap=None, height=220 if len(teams) > 6 else "content"):
-            for t in teams:
-                on = t == m.team
-                with st.container(key=f"popopt-{'on' if on else 'off'}-t{m.id}-{sel.admin_teams().index(t)}", gap=None):
-                    button(t, key=f"tpick_{m.id}_{sel.admin_teams().index(t)}", variant="ghost", width="stretch",
-                           on_click=actions.member_pick_team, args=(m.id, t))
-                    if sel.team_path(t):
-                        markup(f'<span class="pop-path">{esc(sel.team_path(t))}</span>')
-            if not teams:
-                markup('<p class="hint" style="padding:12px 4px">찾는 팀이 없어요.</p>')
-        button("조직도에서 선택", key=f"torg_{m.id}", variant="secondary", width="stretch",
-               icon=":material/account_tree:", on_click=actions.open_org_picker, args=(m.id,))
+def _head(s: AppState, col: str, title: str, sortable: bool) -> None:
+    """머리글 한 칸. 기본 ⌃(오름차순), 누르면 ⌄(내림차순)으로 바뀌며 정렬."""
+    if not sortable:
+        markup(f'<span class="adm-th">{title}</span>')
+        return
+    on = s.adm_sort == col
+    arrow = ":material/keyboard_arrow_down:" if on and s.adm_sort_desc else ":material/keyboard_arrow_up:"
+    with st.container(key=f"adm-th-{'on-' if on else ''}{col}", gap=None):
+        button(f"{title} {arrow}", key=f"adm_sort_{col}", variant="link", on_click=actions.adm_sort, args=(col,))
 
 
-def _job_popover(m: AdminMember) -> None:
-    """목록 · 직무: 연필 팝오버 (직무 검색 · 추천 직무 · 직접 입력)."""
-    label = m.job if m.job != "-" else "직무 입력"
-    with st.popover(label, icon=":material/edit:", key=f"jpop_{m.id}", on_change="rerun", width="stretch") as pop:
-        if not pop.open:
-            return
-        q = (st.text_input("직무 검색", key=f"jq_{m.id}", placeholder="직무 검색", icon=":material/search:", live=True,
-                           label_visibility="collapsed") or "").strip()
-        jobs = repo.job_catalog()
-        hits = [j for j in jobs if not q or q.lower() in j.lower()]
-        hits.sort(key=lambda j: j != m.job)  # 지금 직무를 맨 위에 (✓)
-        markup(f'<span class="pop-cap">{"검색 결과" if q else "추천 직무"}</span>')
-        with st.container(key=f"jlist-{m.id}", gap=None, height=220 if len(hits) > 6 else "content"):
-            for j in hits:
-                on = j == m.job
-                with st.container(key=f"popopt-{'on' if on else 'off'}-j{m.id}-{jobs.index(j)}", gap=None):
-                    button(j, key=f"jpick_{m.id}_{jobs.index(j)}", variant="ghost", width="stretch",
-                           on_click=actions.member_pick_job, args=(m.id, j))
-            if q and q not in jobs:
-                button(f"「{q}」 직접 입력", key=f"jnew_{m.id}", variant="ghost", width="stretch", icon=":material/add:",
-                       on_click=actions.member_pick_job, args=(m.id, q))
+def _options(rows: list[AdminMember], col: str) -> list[str]:
+    values = {_value(m, col) for m in rows}
+    if col == "position":  # 시니어 → 미드 → 주니어 순
+        return [v for v in (*[mf.POSITION[k] for k in ("senior", "mid", "junior")], "-") if v in values]
+    return sorted(values, key=lambda v: (v == "-", v))  # "-"(값 없음)은 맨 뒤
+
+
+def _filter_bar(s: AppState, rows: list[AdminMember]) -> None:
+    """노션 표처럼 표 위 필터 줄: [팀 ▾] [직무 ▾] [+ 필터] ······ 초기화"""
+    with st.container(key="adm-fbar", horizontal=True, vertical_alignment="center", gap="small"):
+        for col in list(s.adm_filters):
+            title, picked = _FILTERS[col], s.adm_filters[col]
+            label = title + (f": {picked[0]}" + (f" 외 {len(picked) - 1}" if len(picked) > 1 else "") if picked else "")
+            with st.container(key=f"adm-chip-{col}", gap=None):  # key가 바뀌면 메뉴가 닫혀서 고정, 색은 표시용 span으로
+                markup(f'<span class="adm-chip-{"on" if picked else "off"}"></span>')
+                with st.popover(label, key=f"adm_chip_pop_{col}", on_change="rerun"):
+                    markup(f'<span class="adm-fhead">{title}</span>')
+                    for i, v in enumerate(_options(rows, col)):
+                        st.checkbox(v, value=v in picked, key=f"adm_f_{col}_{i}_{v in picked}",
+                                    on_change=actions.adm_set_filter, args=(col, v))
+                    button("필터 삭제", key=f"adm_frm_{col}", variant="ghost", icon=":material/delete:",
+                           on_click=actions.adm_remove_filter, args=(col,))
+        left = [c for c in _FILTERS if c not in s.adm_filters]
+        if left:
+            with st.container(key="adm-fadd", gap=None):
+                with st.popover("필터", icon=":material/add:", key="adm_fadd_pop", on_change="rerun"):
+                    for col in left:
+                        button(_FILTERS[col], key=f"adm_fadd_{col}", variant="ghost", on_click=actions.adm_add_filter,
+                               args=(col,), width="stretch")
+        markup('<span class="adm-fspacer"></span>')
+        button("초기화", key="adm_reset", variant="ghost", on_click=actions.adm_reset_table)
+
+
+def _cell(text: str, muted: bool = False) -> None:
+    markup(f'<span class="adm-cell{" muted" if muted else ""}">{esc(text or "-")}</span>')
 
 
 def _row(m: AdminMember) -> None:
@@ -97,41 +110,28 @@ def _row(m: AdminMember) -> None:
             me = '<span class="me">나</span>' if m.is_self else ""
             markup(f'<div class="adm-who">{avatar(m.name[:1], size=32, accent=m.role == "admin")}'
                    f'<span><b>{esc(m.name)}{me}</b><span>{esc(m.email)}</span></span></div>')
-        with c[1]:  # 팀
-            if m.is_self:
-                markup(f'<span class="adm-cell">{esc(m.team)}</span>')
-            else:
-                _team_popover(m)
-        with c[2]:  # 직무
-            if m.is_self:
-                markup(f'<span class="adm-cell">{esc(m.job)}</span>')
-            else:
-                _job_popover(m)
-        with c[3]:  # 권한
-            if m.is_self:
-                markup(tag("관리자", "host"))
-            else:
-                key = f"adm_role_{m.id}"
-                st.selectbox("권한", ["member", "admin"], index=1 if m.role == "admin" else 0, key=key,
-                             format_func=_ROLE.get, label_visibility="collapsed",
-                             on_change=lambda pid=m.id, k=key: actions.set_member_role(pid, st.session_state[k]))
+        with c[1]:
+            _cell(m.team)
+        with c[2]:
+            _cell(m.job)
+        with c[3]:
+            _cell(mf.POSITION.get(m.position, "-"))
         with c[4]:
+            if m.role == "admin":
+                markup(tag(_ROLE[m.role], "host"))
+            else:
+                _cell(_ROLE[m.role])
+        with c[5]:
             label, tone = _STATUS[m.status]
             markup(tag(label, tone))
-        with c[5]:
-            markup(f'<span class="adm-cell muted">{esc(m.last or "-")}</span>')
         with c[6]:
+            _cell(m.last, muted=True)
+        with c[7]:
             if m.is_self:
-                markup('<span class="adm-cell muted">-</span>')
-            elif m.status == "invited":
-                button("초대 취소", key=f"adm_cancel_{m.id}", variant="secondary", on_click=actions.cancel_invite,
-                       args=(m.id,))
-            elif m.status == "inactive":
-                button("다시 활성화", key=f"adm_on_{m.id}", variant="secondary", on_click=actions.toggle_member_status,
-                       args=(m.id,))
+                _cell("-", muted=True)
             else:
-                button("비활성화", key=f"adm_off_{m.id}", variant="dangerline", on_click=actions.toggle_member_status,
-                       args=(m.id,))
+                button("", key=f"adm_edit_{m.id}", variant="secondary", icon=":material/edit:",
+                       on_click=actions.open_member_edit, args=(m.id,), help=f"{m.name} 님 정보 수정")
 
 
 def _add_form(s: AppState) -> None:
@@ -179,6 +179,11 @@ def _add_form(s: AppState) -> None:
             st.selectbox("권한", ["member", "admin"], key=f"add_role_{n}", format_func=_ROLE.get)
         with c[5]:
             button("추가", key="adm_add_ok", variant="primary", on_click=actions.adm_add_member, args=(n,))
+        c = st.columns([1, 4.2], gap="small", vertical_alignment="top")
+        with c[0]:
+            mf.position_select(f"add_{n}")
+        with c[1]:
+            mf.skill_fields(f"add_{n}")
         if s.adm_invite_error:
             markup(f'<span role="alert" class="cp-error">{esc(s.adm_invite_error)}</span>')
 
@@ -194,25 +199,26 @@ def render() -> None:
                    icon=None if s.adm_adding else ":material/person_add:", on_click=actions.toggle_add_member)
         if s.adm_adding:
             _add_form(s)
-        _summary(rows)
         with st.container(key="adm-filter", horizontal=True, vertical_alignment="center", gap="small"):
             st.text_input(_SEARCH, key="adm_q", value=s.adm_query, live=True, icon=":material/search:",
                           placeholder="이름 · 이메일 · 팀으로 찾기", label_visibility="collapsed",
                           on_change=actions.adm_filter, args=("adm_q",))
             ime_live(_SEARCH)
-            teams = [""] + sel.admin_teams()
-            st.selectbox("팀", teams, index=teams.index(s.adm_team), key="adm_team_sel",
-                         format_func=lambda t: t or "팀 전체", label_visibility="collapsed",
-                         on_change=lambda: actions.adm_set_team(st.session_state["adm_team_sel"]))
+            on = any(s.adm_filters.values())
+            with st.container(key=f"adm-ftoggle{'-on' if s.adm_filter_open else ''}{'-dot' if on else ''}", gap=None):
+                button("", key="adm_ftoggle", variant="ghost", icon=":material/filter_list:",
+                       on_click=actions.adm_open_filter_bar, help="필터")
+        if s.adm_filter_open:
+            _filter_bar(s, rows)
         shown = _filtered(s, rows)
+        markup(f'<span class="adm-count">{len(shown)}명 / 전체 {len(rows)}명</span>')
         with st.container(key="adm-table", gap=None):
-            heads = ("이름 · 이메일", "팀", "직무", "권한", "상태", "최근 접속", "")
             with st.container(key="adm-thead", gap=None):
-                c = st.columns(_COLS, gap="small")
-                for col, h in zip(c, heads):
+                c = st.columns(_COLS, gap="small", vertical_alignment="center")
+                for col, (key, title, sortable) in zip(c, _HEADS):
                     with col:
-                        markup(f'<span class="adm-th">{h}</span>')
+                        _head(s, key, title, sortable)
             if not shown:
-                empty_state("조건에 맞는 구성원이 없어요. 검색어나 팀을 바꿔 보세요.", pad=36)
+                empty_state("조건에 맞는 구성원이 없어요. 검색어나 필터를 바꿔 보세요.", pad=36)
             for m in shown:
                 _row(m)

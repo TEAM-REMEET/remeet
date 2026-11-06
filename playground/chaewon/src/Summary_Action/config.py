@@ -64,6 +64,10 @@ MAX_VERIFY_ROUNDS = 3               # 검증 최대 횟수 (1~3) — 재수정�
 IMPROVEMENT_ISSUE_TYPES = {"깊이 부족", "논의 흐름 단절", "세부 정보 누락", "결정 고려사항 누락", "중복 요약",
                            "요약 범위 오류", "안건 구성 오류", "기타 안건 분류 오류"}
 
+# ── 2-2. 사용자 수정(HITL) 반영 (hitl_graph.py) ─────────
+HITL_MAX_VERIFY_ROUNDS = 2          # 근거 검증 최대 횟수 (1~3) — 근거 연결도 같은 횟수까지 (무한 루프 방지)
+HITL_EFFORT = None                  # 근거 연결 · 검증 추론 강도 / None이면 REASONING_EFFORT
+
 # ══════════════════════════════════════════════════════════════════════
 # 3. LangSmith (키는 .env, 키가 없으면 기록 없이 동작)
 # ══════════════════════════════════════════════════════════════════════
@@ -114,6 +118,7 @@ SHOW_ITEM_ID = False                 # 항목 앞에 item_id 표시 (검토용)
 SHOW_TRANSCRIPT = True               # 회의록 끝에 원본 전사문 첨부 (md에서는 근거 발화 번호가 전사문 링크가 됨)
 HIDE_EMPTY = True                    # 빈 섹션 (미해결 이슈 · 다음 회의 후보 안건 등) 출력 안 함
 EMPTY_TEXT = ""                # HIDE_EMPTY=False일 때 빈 섹션 표시
+EMPTY_DUE_TEXT = ""                  # 일정이 없을 때 '기한:' 뒤에 표시할 값 (빈 일정)
 REVIEW_MARK = " (!!검토 필요!!)"          # REVIEW_REQUIRED 항목 표시 (근거 검사 · 검증 미통과)
 REVIEW_BANNER = "⚠ 검토 필요"        # 검증을 MAX_VERIFY_ROUNDS회 해도 통과하지 못한 회의록 상단 경고
 SHOW_REVIEW_REASONS = True           # 회의록 상단 경고 아래에 남은 검증 문제 목록 표시
@@ -148,6 +153,11 @@ def llm_call_plan_text() -> str:
     return f"{steps} + 여유 {LLM_CALL_MARGIN} = {max_llm_calls()}"
 
 
+def hitl_max_llm_calls() -> int:
+    # 사용자 수정 반영 1회당 실제 API 호출 상한 = 근거 연결 + 근거 검증 (수정 건수와 무관하게 한 번에 묶어 호출)
+    return HITL_MAX_VERIFY_ROUNDS * 2
+
+
 def validate() -> None:
     # 실행 전 설정값 범위 확인 — 문제가 있으면 모두 모아 한 번에 알림
     errors = []
@@ -159,7 +169,9 @@ def validate() -> None:
     unknown = IMPROVEMENT_ISSUE_TYPES - set(get_args(IssueType))
     if unknown:
         errors.append(f"IMPROVEMENT_ISSUE_TYPES에 없는 유형: {sorted(unknown)} — schemas.IssueType의 이름과 같아야 함")
-    for name, value in (("VERIFY_EFFORT", VERIFY_EFFORT), ("REVISE_EFFORT", REVISE_EFFORT)):
+    if not isinstance(HITL_MAX_VERIFY_ROUNDS, int) or not 1 <= HITL_MAX_VERIFY_ROUNDS <= 3:
+        errors.append(f"HITL_MAX_VERIFY_ROUNDS={HITL_MAX_VERIFY_ROUNDS!r} — 1~3 (LLM 반복은 최대 3회)")
+    for name, value in (("VERIFY_EFFORT", VERIFY_EFFORT), ("REVISE_EFFORT", REVISE_EFFORT), ("HITL_EFFORT", HITL_EFFORT)):
         if value is not None and value not in ALLOWED_EFFORTS:
             errors.append(f"{name}={value!r} — {sorted(ALLOWED_EFFORTS)} 또는 None")
     if not isinstance(LLM_CALL_MARGIN, int) or not 0 <= LLM_CALL_MARGIN <= 3:

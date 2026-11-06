@@ -8,10 +8,13 @@
         LANGSMITH_TRACING     true일 때만 기록 (실명 · 발화가 외부로 전송되므로 기본은 꺼짐)
         LANGSMITH_PROJECT     LangSmith 프로젝트 (없으면 아래 LANGSMITH_PROJECT 사용)
         SUMMARY_OUTPUT_DIR    summary.json · 단계별 LLM 응답 저장 위치 (없으면 backend/outputs/summary_action)
+        NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD   Neo4j 접속 정보
+        AUTH_SECRET           로그인 토큰 서명 키 (길고 무작위인 값)
     - 환경변수는 이 파일에서만 읽음 (openai_client.py 제외)
     - 실행 전 validate()로 값의 범위를 확인
 
 구성
+    0. 서버 (Neo4j · 로그인)
     1. 저장
     2. LLM 호출 (2-1. 검증 · 재수정 루프)
     3. LangSmith
@@ -24,6 +27,25 @@ from pathlib import Path
 from typing import get_args
 
 from dotenv import find_dotenv, load_dotenv
+
+# 이 파일을 불러올 때 바로 읽음 (아래 NEO4J · AUTH 값이 바로 os.getenv로 읽히므로 load_env() 호출을 기다릴 수 없음)
+load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False, encoding="utf-8-sig")
+
+# ══════════════════════════════════════════════════════════════════════
+# 0. 서버 (Neo4j · 로그인)
+# ══════════════════════════════════════════════════════════════════════
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
+
+# 로그인 출입증(토큰) 서명 키. 길고 무작위인 값이어야 하고, 바뀌면 모든 사람이 다시 로그인해야 한다.
+AUTH_SECRET = os.getenv("AUTH_SECRET", "")
+AUTH_TOKEN_DAYS = 7
+
+
+def missing() -> list[str]:
+    """서버가 동작하는 데 꼭 필요한데 비어 있는 설정 이름."""
+    return [name for name in ("NEO4J_PASSWORD", "AUTH_SECRET") if not globals()[name]]
 
 # ══════════════════════════════════════════════════════════════════════
 # 1. 저장

@@ -11,6 +11,8 @@ services:
     build:
       context: ../apps/web
     restart: unless-stopped
+    environment:
+      API_BASE_URL: http://backend:8000 # 웹 → 백엔드는 컨테이너끼리 직접 호출
     expose:
       - "8501"
 

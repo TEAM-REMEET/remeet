@@ -20,7 +20,7 @@ from components.knowledge_graph import (
 )
 from components.meeting_table import meeting_sections
 from components.member_pills import member_pills
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from config import FOLDER_WIKI_MIN_NOTES
 from data import repository as repo
 from state import actions
@@ -67,7 +67,7 @@ def _folder_wiki(s: AppState, fid: str) -> None:
     for nid, n in graph.nodes.items():
         gone = n.kind == "person" and n.person not in members
         opacity[nid] = 0.12 if gone else (1.0 if nid == selected or nid in near else 0.35)
-    avatars = {nid: Avatar(n.initial, n.person == ME) for nid, n in graph.nodes.items() if n.kind == "person"}
+    avatars = {nid: Avatar(n.initial, n.person == me_id()) for nid, n in graph.nodes.items() if n.kind == "person"}
     legend = (
         '<span><i style="width:14px;height:10px;border-radius:3px;background:#2B2D33"></i>이 폴더</span>'
         '<span><i style="width:14px;height:10px;border-radius:3px;border:1.5px solid #F37321"></i>논의 주제</span>'
@@ -94,7 +94,7 @@ def _folder_wiki(s: AppState, fid: str) -> None:
             desc=node.desc,
             timeline=[
                 TimelineEntry(t.when, t.text, sel.source_label(t.meeting, t.src), t.meeting, t.src,
-                              absent=ME not in repo.meeting(t.meeting).people)
+                              absent=me_id() not in repo.meeting(t.meeting).people)
                 for t in timeline
             ],
             links=[(nid, graph.nodes[nid].label, rel) for nid, rel in near.items()],
@@ -202,7 +202,7 @@ def _folder_screen(s: AppState, fid: str) -> None:
         key="folder",
         title=f.name,
         host=f.host,
-        is_host=f.host == ME,
+        is_host=f.host == me_id(),
         members=sel.members_of(s, fid),
         notes=sel.folder_note_ids(s, fid),  # 참석·주관한 회의 + 빠졌지만 주관자가 공유해 준 회의
         wiki_folders=[fid],

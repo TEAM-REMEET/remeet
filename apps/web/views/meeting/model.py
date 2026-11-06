@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from data.models import AgendaTopic, Evidence, Meeting, MeetingResult, TaggedPoint
 from state import selectors as sel
@@ -206,7 +206,7 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
     for i, t in enumerate(m.todos):
         key = sel.todo_key(m.id, i)
         done = s.done.get(key, False)
-        mine = t.owner == ME
+        mine = t.owner == me_id()
         who = sel.name_of(t.owner) if t.owner else (", ".join(s.assigned.get(key, [])) or "담당 미정")
         para = m.paragraph(t.src[0]) if t.src else None
         out.append(TodoView(
