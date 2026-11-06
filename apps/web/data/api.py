@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from config import API_BASE_URL
@@ -38,5 +38,5 @@ def call(method: str, path: str, body: dict | None = None, token: str = ""):
             return json.load(res)
     except HTTPError as e:
         raise ApiError(_detail(e), e.code) from e
-    except URLError as e:
+    except OSError as e:  # URLError(연결 안 됨) · TimeoutError(응답이 15초 넘게 없음) 둘 다
         raise ApiError(f"백엔드에 연결할 수 없어요 ({API_BASE_URL}). 백엔드 서버가 켜져 있는지 확인해 주세요.") from e

@@ -16,7 +16,9 @@ def get_driver() -> Driver:
         raise RuntimeError("NEO4J_PASSWORD가 설정되지 않았습니다. remeet/.env를 확인하세요.")
     # UNRECOGNIZED 경고 끔: 아직 아무도 email이 없을 때처럼 "없는 속성" 경고가 조회마다 찍힘
     return GraphDatabase.driver(settings.NEO4J_URI, auth=(settings.NEO4J_USERNAME, settings.NEO4J_PASSWORD),
-                                notifications_disabled_classifications=["UNRECOGNIZED"])
+                                notifications_disabled_classifications=["UNRECOGNIZED"],
+                                # Aura는 오래 쉰 연결을 끊는다 → 30초 넘게 쉰 연결은 쓰기 전에 살아 있는지 확인 (끊긴 연결로 수십 초 재시도 방지)
+                                liveness_check_timeout=30, max_connection_lifetime=300)
 
 
 def close_driver() -> None:

@@ -134,7 +134,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from data import repository as repo
+from data import api, repository as repo
 from state import actions
 from state import archive as arc
 from state import selectors as sel
@@ -223,6 +223,14 @@ class _Tree:
                     self.leaf(f"f:{t}:{fid}", f.name, 3, len(notes), new=f.is_new)
 
 
+def _member_count(s) -> str:
+    """구성원 수 배지. 백엔드가 잠깐 안 되면 배지만 빼고 메뉴는 그대로 그림 (본문에서 오류를 보여 줌)."""
+    try:
+        return f'<span class="nav-trail count">{len(sel.admin_members(s))}</span>'
+    except api.ApiError:
+        return ""
+
+
 def _admin_sidebar() -> None:
     """관리자 계정: 관리 메뉴 3개 + 관리자 카드."""
     s = get_state()
@@ -238,7 +246,7 @@ def _admin_sidebar() -> None:
                           args=("adm_cost",), icon_name=":material/payments:")
                 _nav_item("구성원 관리", "adm_members", on=s.screen == "adm_members", on_click=actions.go,
                           args=("adm_members",), icon_name=":material/group:",
-                          trail_html=f'<span class="nav-trail count">{len(sel.admin_members(s))}</span>')
+                          trail_html=_member_count(s))
                 warn = sel.has_integration_warning(s)
                 _nav_item("MCP 관리", "adm_mcp", on=s.screen == "adm_mcp", on_click=actions.go, args=("adm_mcp",),
                           icon_name=":material/hub:",
