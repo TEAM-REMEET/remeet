@@ -22,6 +22,8 @@ services:
     env_file:
       - path: .env # 비밀값(API 키, Neo4j 접속 정보). .env.example 참고
         required: false
+    volumes:
+      - backend_outputs:/app/outputs # summary.json · 재실행용 단계별 LLM 응답 (외부 저장소 연결 전까지)
     expose:
       - "8000"
 
@@ -37,3 +39,6 @@ services:
         condition: service_healthy
       backend:
         condition: service_healthy
+
+volumes:
+  backend_outputs:
