@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from config import YEAR
 from data import repository as repo
 from state import selectors as sel
@@ -73,9 +73,9 @@ def _period_containers(state: AppState, mtype: str, owner: str = "all") -> list[
     fs = sel.folders(state)
     fids = sel.period_container_ids(state, mtype)
     if owner == "mine":
-        return [k for k in fids if fs[k].host == ME]
+        return [k for k in fids if fs[k].host == me_id()]
     if owner == "member":
-        return [k for k in fids if fs[k].host != ME]
+        return [k for k in fids if fs[k].host != me_id()]
     return fids
 
 
@@ -117,7 +117,7 @@ def by_role(ids: list[str] | tuple[str, ...], role: str) -> list[str]:
 
 
 def my_count(ids: list[str] | tuple[str, ...]) -> int:
-    return sum(1 for i in ids if ME in repo.meeting(i).people)
+    return sum(1 for i in ids if me_id() in repo.meeting(i).people)
 
 
 # ---------------------------------------------------------------- 트리 노드 id

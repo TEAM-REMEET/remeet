@@ -1,7 +1,7 @@
-"""목업 데이터 저장소.
+"""데이터 저장소.
 
-data/mock/*.json 을 한 번만 읽어서 모델 객체로 돌려줍니다. 실제 API 로 바꿀 때는
-이 파일의 함수 시그니처만 유지하고 내부 구현을 교체하면 됩니다.
+구성원 · 팀 · 직무는 백엔드 API(Neo4j)에서, 나머지는 아직 data/mock/*.json 에서 읽어요.
+실제 API 로 바꿀 때는 이 파일의 함수 시그니처만 유지하고 내부 구현을 교체하면 됩니다.
 """
 
 from __future__ import annotations
@@ -12,6 +12,8 @@ from functools import lru_cache
 from pathlib import Path
 
 import streamlit as st
+
+from data import api
 
 from data.models import (
     Agenda,
@@ -53,21 +55,64 @@ def _evidence(items: list[dict]) -> tuple[Evidence, ...]:
 
 
 # ---------------------------------------------------------------- people
-@lru_cache(maxsize=1)
-def _base_people() -> dict[str, Person]:
-    return {k: Person(k, v["short"], v["name"], v["team"]) for k, v in _load("people").items()}
+# ---------------------------------------------------------------- 구성원 (백엔드 → Neo4j)
+def _token() -> str:
+    """로그인한 사람의 출입증. state.store 를 import 하면 순환 import 라 세션 상태에서 바로 읽어요."""
+    return getattr(st.session_state.get("_app_state"), "token", "")
+
+
+# shortcut: 60초 캐시, 이 앱에서 바꾸면 바로 비우지만 다른 곳(DB 직접 수정)의 변경은 최대 60초 늦게 보임
+@st.cache_data(ttl=60, show_spinner=False)
+def _people_rows(token: str) -> list[dict]:
+    return api.call("GET", "/api/people", token=token)
+
+
+def people_rows() -> list[dict]:
+    """구성원 전체 (GET /api/people): user_id · name · email · permission · position · is_active · team · job · skills."""
+    return _people_rows(_token())
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _catalog(kind: str, token: str) -> list[dict]:
+    return api.call("GET", f"/api/{kind}", token=token)
+
+
+def catalog(kind: str) -> list[dict]:
+    """kind: teams | roles | skills"""
+    return _catalog(kind, _token())
+
+
+def _people_changed() -> None:
+    _people_rows.clear()
+    _catalog.clear()  # 새 직무를 입력하면 직무 목록도 바뀜
+    org_changed()  # 열려 있는 다른 화면도 새로 그림
+
+
+def create_person(body: dict, token: str) -> dict:
+    row = api.call("POST", "/api/people", body, token)
+    _people_changed()
+    return row
+
+
+def update_person(user_id: str, changes: dict, token: str) -> dict:
+    row = api.call("PATCH", f"/api/people/{user_id}", changes, token)
+    _people_changed()
+    return row
+
+
+def login(email: str, password: str) -> dict:
+    """{token, user: {user_id, name, email, permission}}. 틀리면 api.ApiError."""
+    return api.call("POST", "/api/auth/login", {"email": email, "password": password})
+
+
+def me(token: str) -> dict:
+    """토큰 → 로그인한 사람 (새로고침 후 로그인 되살리기). 만료 · 위조면 api.ApiError."""
+    return api.call("GET", "/api/auth/me", token=token)
 
 
 def people() -> dict[str, Person]:
-    """조직 구성원. 관리자가 바꾼 팀 · 새로 추가한 구성원까지 반영 (사용자 화면의 사람 고르기에 바로 보임)."""
-    org = _server()["org"]
-    out = {}
-    for k, p in _base_people().items():
-        team = org["edits"].get(k, {}).get("team", p.team)
-        out[k] = Person(k, p.short, p.name, team) if team != p.team else p
-    for k, a in org["added"].items():
-        out[k] = Person(k, a["name"][1:] or a["name"], a["name"], org["edits"].get(k, {}).get("team", a["team"]))
-    return {k: p for k, p in out.items() if org["status"].get(k) != "removed"}
+    """조직 구성원 (Neo4j). short는 원문 화자 이름인데 Neo4j에 따로 없어서 이름을 그대로 써요."""
+    return {r["user_id"]: Person(r["user_id"], r["name"], r["name"], r["team"] or "") for r in people_rows()}
 
 
 def people_by_short_name() -> dict[str, str]:
@@ -271,14 +316,17 @@ def org_version() -> int:
 
 
 def org_tree() -> list[dict]:
-    """조직도: 본부 › 부 › 팀 (이름 · children)."""
-    return admin()["org_tree"]
+    """조직도 (이름 · children). Neo4j 팀은 계층이 없어 팀만 한 줄로 나열해요."""
+    return [{"name": t["name"]} for t in catalog("teams")]
+
+
+def team_id_of(name: str) -> str | None:
+    return next((t["team_id"] for t in catalog("teams") if t["name"] == name), None)
 
 
 def job_catalog() -> list[str]:
-    """직무 목록 (추천 직무) + 지금 쓰고 있는 직무."""
-    used = [mb.role for t in teams().values() for mb in t.members if mb.role]
-    return list(dict.fromkeys(admin()["jobs"] + used))
+    """직무 목록 (Neo4j Role)."""
+    return [r["name"] for r in catalog("roles")]
 
 
 def budget() -> dict:
@@ -359,35 +407,15 @@ def notifications(audience: str = "user") -> list[Notification]:
 
 
 
-# ---------------------------------------------------------------- directory (공유 대상 팀·구성원)
-@lru_cache(maxsize=1)
-def _base_teams() -> dict[str, Team]:
-    return {
-        t["id"]: Team(t["id"], t["name"], tuple(TeamMember(**mb) for mb in t["members"]))
-        for t in _load("directory")
-    }
-
-
+# ---------------------------------------------------------------- 팀 (공유 대상 · 조직도)
 def teams() -> dict[str, Team]:
-    """조직도 (팀 → 구성원 · 직무). 관리자가 바꾼 팀 · 직무와 새로 추가한 구성원까지 반영."""
-    o = org()
-    members: dict[str, list[TeamMember]] = {}
-    names = {t.name: tid for tid, t in _base_teams().items()}
-    for tid, t in _base_teams().items():
-        members[tid] = []
-    everyone = [(mb.id, mb.name, mb.role, t.name) for t in _base_teams().values() for mb in t.members]
-    everyone += [(k, a["name"], a["job"], a["team"]) for k, a in o["added"].items()]
-    for pid, name, job, team in everyone:
-        if o["status"].get(pid) == "removed":
-            continue
-        e = o["edits"].get(pid, {})
-        team, job = e.get("team", team), e.get("job", job)
-        tid = names.get(team) or f"t-{team}"
-        names[team] = tid
-        members.setdefault(tid, []).append(TeamMember(pid, name, job))
-    tname = {v: k for k, v in names.items()}
-    return {tid: Team(tid, tname[tid], tuple(mbs)) for tid, mbs in members.items()}
-
+    """팀 id → 팀 (구성원 · 직무). Neo4j 팀 순서 그대로."""
+    members: dict[str, list[TeamMember]] = {t["team_id"]: [] for t in catalog("teams")}
+    for r in people_rows():
+        if r["team_id"]:
+            members.setdefault(r["team_id"], []).append(TeamMember(r["user_id"], r["name"], r["job"] or ""))
+    names = {t["team_id"]: t["name"] for t in catalog("teams")}
+    return {tid: Team(tid, names.get(tid, tid), tuple(mbs)) for tid, mbs in members.items()}
 
 
 def team_candidates() -> dict[str, list[Candidate]]:

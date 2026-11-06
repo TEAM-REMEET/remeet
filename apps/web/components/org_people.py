@@ -20,7 +20,7 @@ from collections.abc import Callable
 
 import streamlit as st
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import selectors as sel
@@ -65,7 +65,7 @@ class _Picker:
         with st.container(key=f"pprow-{level}-{state}-{self.ctx}-{pid}", horizontal=True, vertical_alignment="center",
                           gap=None):
             sub = self.sub(pid)
-            label = p.name + (" (나)" if pid == ME else "") + (f"  ·  {sub}" if sub else "")
+            label = p.name + (" (나)" if pid == me_id() else "") + (f"  ·  {sub}" if sub else "")
             button(label, key=f"pp_{self.ctx}_{level}_{pid}", variant="ghost", width="stretch", icon=icon,
                    disabled=bool(lock), on_click=actions.people_pick, args=(self.ctx, pid, self.on_pick))
             if lock:

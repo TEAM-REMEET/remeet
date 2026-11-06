@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from config import DELIVERY_POLL_INTERVAL
 from data import repository as repo
 from state import actions, delivery
@@ -65,7 +65,7 @@ def _banner(p: delivery.Progress, total: int, mid: str) -> None:
         if not p.ended:
             return
         _app_button("회의 상세로 돌아가기", "dv_back", "secondary", actions.open_meeting, mid)
-        if p.failed and not tech and repo.meeting(mid).host == ME:  # 다시 보내기는 주관자만  # 단순 이슈: 실패한 것만 다시 보내기 (다시 보내기 버튼은 여기 하나만)
+        if p.failed and not tech and repo.meeting(mid).host == me_id():  # 다시 보내기는 주관자만  # 단순 이슈: 실패한 것만 다시 보내기 (다시 보내기 버튼은 여기 하나만)
             _app_button(f"실패한 {p.failed}건 다시 보내기", "dv_retry", "danger", actions.start_delivery, mid, 2,
                         icon=":material/refresh:")
 

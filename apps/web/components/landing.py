@@ -10,8 +10,6 @@ import base64
 
 import streamlit as st
 
-from state import actions
-from ui.buttons import button
 from ui.html import markup
 from ui.icons import brand_logo, icon
 from utils.text import esc
@@ -172,11 +170,9 @@ def _roles() -> None:
 
 def _cta() -> None:
     with st.container(key="ld-cta", gap="medium", horizontal_alignment="center"):
-        markup('<div class="ld-cta-tx"><h2>지금 데모로 둘러보세요</h2>'
-               "<p>목업 데이터로 채워진 회의·폴더·위키를 바로 써 볼 수 있어요.</p></div>")
+        markup('<div class="ld-cta-tx"><h2>회사 계정으로 시작하세요</h2>'
+               "<p>계정은 관리자가 구성원 관리에서 만들어 드려요.</p></div>")
         with st.container(horizontal=True, horizontal_alignment="center", gap="small", width="content"):
-            button("데모 계정으로 바로 시작", key="ld_demo", variant="primary", icon=":material/arrow_forward:",
-                   on_click=actions.demo_login)
             st.html('<a class="ld-up" href="#login-title">로그인하러 위로 ↑</a>', width="content")
     # <footer> 태그는 base.css 에서 Streamlit 기본 푸터와 함께 숨겨지므로 div 사용
     markup(f'<div class="ld-foot">{brand_logo(18)}<span>회의가 끝나면, 할 일과 맥락이 남아요 · 프로토타입</span>'

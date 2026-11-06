@@ -16,7 +16,7 @@ from datetime import date
 import streamlit as st
 
 from components.org_people import org_people_picker
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import archive as arc
@@ -81,7 +81,7 @@ def _folder_button(s, t: str, g: str, opt: str, chosen_key: tuple, *, where: boo
         f = sel.folders(s)[opt]
         label = f.name
         meta = f"회의록 {len(sel.folder_note_ids(s, opt))}개 · 멤버 {len(sel.members_of(s, opt))}명" + (
-            " · 내가 만든 폴더" if f.host == ME else "")
+            " · 내가 만든 폴더" if f.host == me_id() else "")
     else:
         p = arc.period(s, t, opt)
         label = arc.period_label(opt)
@@ -195,7 +195,7 @@ def folder_picker_dialog() -> None:
 def _person_option(pid: str) -> str:
     p = sel.person(pid)
     role = sel.person_role(pid)
-    return f"{p.name}" + (f" · {role}" if role else "") + (" (나)" if pid == ME else "")
+    return f"{p.name}" + (f" · {role}" if role else "") + (" (나)" if pid == me_id() else "")
 
 
 # 「선택한 참석자」 상자 스크롤 (한 번만 설치되는 브라우저 스크립트)
