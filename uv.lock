@@ -2685,6 +2685,7 @@ name = "remeet"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "certifi" },
     { name = "fastapi" },
     { name = "google-genai" },
     { name = "langchain-openai" },
@@ -2708,6 +2709,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "certifi", specifier = ">=2026.10.19" },
     { name = "fastapi", specifier = ">=0.162.0" },
     { name = "google-genai", specifier = ">=2.32.0" },
     { name = "langchain-openai", specifier = ">=1.7.3" },
