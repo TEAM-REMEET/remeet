@@ -313,6 +313,19 @@ def folder_wiki() -> KnowledgeGraph:
     return _graph(_load("wiki_folder"))
 
 
+# ---------------------------------------------------------------- 회의에 물어보기
+def ask(question: str) -> dict:
+    """회의 기록에 묻고 근거가 달린 답을 받음. 형식은 온보딩 에이전트 ask 결과 JSON 그대로.
+
+    shortcut: 목업 답변에서 낱말로 골라 줌, 백엔드에 온보딩 에이전트 API 가 생기면 api.call 로 교체
+    """
+    data = _load("ask")
+    q = question.replace(" ", "").lower()
+    hit = next((a["answer"] for a in data["answers"] if any(w.replace(" ", "").lower() in q for w in a["match"])),
+               data["no_evidence"])
+    return {**hit, "question": question}
+
+
 # ---------------------------------------------------------------- integrations
 @lru_cache(maxsize=1)
 def integrations() -> dict:

@@ -354,6 +354,8 @@ def breadcrumbs(state: AppState) -> list[str]:
         return ["공유", "공유한 회의"]
     if s == "recv":
         return ["공유", "공유 받은 회의"]
+    if s == "ask":
+        return ["회의에 물어보기"]
     if s == "adm_cost":
         return ["관리자", "비용 관리"]
     if s == "adm_members":

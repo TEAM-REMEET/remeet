@@ -82,6 +82,32 @@ def open_archive(mtype: str = "") -> None:
     go("archive", archive_type=mtype, archive_role="all", archive_query="", archive_qnonce=s.archive_qnonce + 1)
 
 
+def ask_meetings(question: str) -> None:
+    """회의에 물어보기: 질문을 보내고 받은 답을 맨 위에 쌓음 (같은 질문을 다시 하면 새로 받아 위로)."""
+    q = (question or "").strip()
+    if not q:
+        return
+    from state.delivery import now_text
+
+    s = get_state()
+    s.ask_history = [{**repo.ask(q), "asked_at": now_text()}] + [a for a in s.ask_history if a["question"] != q]
+    s.ask_current = q
+    s.ask_nonce += 1
+
+
+def ask_open(question: str) -> None:
+    """질문 기록에서 하나를 골라 그 답을 봄 (다시 묻지 않음)."""
+    get_state().ask_current = question
+
+
+def ask_submit(widget_key: str) -> None:
+    ask_meetings(st.session_state.get(widget_key) or "")
+
+
+def ask_clear() -> None:
+    _set(ask_history=[], ask_current="")
+
+
 def start_search(widget_key: str) -> None:
     """회의록 첫 화면 검색칸: 치는 즉시 검색 결과 페이지로."""
     s = get_state()
