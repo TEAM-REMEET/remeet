@@ -2,6 +2,12 @@
 data/
 !apps/web/data/
 
+# 추후 뺄 부분
+graphify-out/
+docs/decisions
+# 시드 계정 비밀번호 원문 (해시는 backend/seed/users.json). 팀원에게는 따로 전달
+*.local.json
+
 # .DS_store
 .DS_store
 

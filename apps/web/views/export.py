@@ -9,12 +9,11 @@ from __future__ import annotations
 
 import streamlit as st
 
-from config import CURRENT_USER_ID as ME
 from config import DELIVERY_POLL_INTERVAL
 from data import repository as repo
 from state import actions, export
 from state import selectors as sel
-from state.store import get_state
+from state.store import get_state, me_id
 from ui.buttons import button
 from ui.html import markup
 from ui.icons import tool_mark
@@ -96,7 +95,7 @@ def _banner(p: export.Progress, mid: str) -> None:
         if not p.ended:
             return
         n_simple = sum(1 for f in fails if f.kind == "simple")
-        if n_simple and s.export.attempt == 1 and repo.meeting(mid).host == ME:
+        if n_simple and s.export.attempt == 1 and repo.meeting(mid).host == me_id():
             _app_button(f"실패한 {n_simple}개 다시 보내기", "exp_retry", "danger", actions.retry_export,
                         icon=":material/refresh:")
         _app_button("전달 완료", "exp_done", "primary", actions.finish_export, icon=":material/check:")
@@ -142,7 +141,7 @@ def render() -> None:
     mid = s.export.meeting_id
     with page("export"):
         page_header("외부 도구 전송", f"{repo.meeting(mid).title} · 결과를 보낼 외부 도구(Jira · Slack 등)를 골라 보내요")
-        if repo.meeting(mid).host != ME:
+        if repo.meeting(mid).host != me_id():
             markup('<p class="hint" style="font-size:14px">외부 도구 전송은 회의 주관자만 할 수 있어요.</p>')
             return
         if s.export.started_at is None:

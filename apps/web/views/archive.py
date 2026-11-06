@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import archive as arc
@@ -113,8 +113,8 @@ def _period_owner(s: AppState, p: arc.Period) -> tuple[list[str], list[str], str
     fs = sel.folders(s)
     fids = arc.period_folder_ids(s, p)
     members = list(dict.fromkeys(pid for k in fids for pid in sel.members_of(s, k)))
-    is_host = bool(fids) and all(fs[k].host == ME for k in fids)
-    host = ME if is_host else next(fs[k].host for k in fids if fs[k].host != ME)
+    is_host = bool(fids) and all(fs[k].host == me_id() for k in fids)
+    host = me_id() if is_host else next(fs[k].host for k in fids if fs[k].host != me_id())
     return fids, members, host, is_host
 
 
@@ -130,7 +130,7 @@ def _period_card(s: AppState, t: str, p: arc.Period) -> None:
             f'{tag("내가 만든 폴더" if is_host else "멤버", "host" if is_host else "att")}</div>'
             f'<span class="meta">회의록 {len(ids)}개 · 멤버 {len(members)}명</span>'
             f'<span class="last">{esc(_latest(ids))}</span>'
-            + (f'<span>{tag(f"내 할 일 남은 회의 {left}", "mine")}</span>' if left else "")
+            + (f'<span>{tag(f"내 할 일 있는 회의 {left}", "mine")}</span>' if left else "")
             + "</div>"
         )
         button(p.label, key=f"open_per_{t}_{p.key}", variant="secondary", on_click=actions.open_archive,
@@ -170,7 +170,7 @@ def _period(s: AppState, t: str, key: str) -> None:
         empty_state("이 기간에 볼 수 있는 회의록이 없어요.", title="빈 폴더예요", pad=48)
         return
     fids, members, host, is_host = _period_owner(s, p)
-    mine_fids = [k for k in fids if sel.folders(s)[k].host == ME]
+    mine_fids = [k for k in fids if sel.folders(s)[k].host == me_id()]
     render_folder_page(s, FolderPage(
         key="period",
         title=p.label,
@@ -191,7 +191,7 @@ def _topic_card(s: AppState, fid: str) -> None:
     notes = sel.folder_note_ids(s, fid)
     last = f"최근 {repo.meeting(notes[0]).date} · {repo.meeting(notes[0]).title}" if notes else "아직 회의록이 없어요"
     left = sum(1 for i in notes if sel.my_todo_status(s, i) == "left")
-    is_host = f.host == ME
+    is_host = f.host == me_id()
     with st.container(key=f"topic-{fid}"):
         markup(
             '<div class="topic-card">'
@@ -199,7 +199,7 @@ def _topic_card(s: AppState, fid: str) -> None:
             f'{tag("내가 만든 폴더" if is_host else "멤버", "host" if is_host else "att")}</div>'
             f'<span class="meta">회의록 {len(notes)}개 · 멤버 {len(sel.members_of(s, fid))}명</span>'
             f'<span class="last">{esc(last)}</span>'
-            + (f'<span>{tag(f"내 할 일 남은 회의 {left}", "mine")}</span>' if left else "")
+            + (f'<span>{tag(f"내 할 일 있는 회의 {left}", "mine")}</span>' if left else "")
             + "</div>"
         )
         button(f.name, key=f"open_topic_{fid}", variant="secondary", on_click=actions.open_folder, args=(fid,), width="stretch")
@@ -208,8 +208,8 @@ def _topic_card(s: AppState, fid: str) -> None:
 def _projects(s: AppState, t: str) -> None:
     mtype = repo.meeting_types()[t]
     mine_ids = sel.folder_ids_of_type(s, t)
-    own = [k for k in mine_ids if sel.folders(s)[k].host == ME]
-    member = [k for k in mine_ids if sel.folders(s)[k].host != ME]
+    own = [k for k in mine_ids if sel.folders(s)[k].host == me_id()]
+    member = [k for k in mine_ids if sel.folders(s)[k].host != me_id()]
     shown = {"mine": own, "member": member}.get(s.folder_owner_filter, mine_ids)
 
     with st.container(horizontal=True, vertical_alignment="bottom"):

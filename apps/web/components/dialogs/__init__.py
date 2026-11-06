@@ -6,7 +6,7 @@ AppState.modal 값에 맞는 모달 하나만 엽니다. 사용자가 X/바깥 �
 
 from __future__ import annotations
 
-from components.dialogs.admin import contact_admin_dialog, org_picker_dialog
+from components.dialogs.admin import contact_admin_dialog, member_edit_dialog, org_picker_dialog
 from components.dialogs.assign import assign_dialog
 from components.dialogs.confirm import confirm_meeting_dialog
 from components.dialogs.compose_pickers import (
@@ -37,6 +37,7 @@ _DIALOGS = {
     "cp_speaker": speaker_picker_dialog,
     "contact_admin": contact_admin_dialog,
     "org_picker": org_picker_dialog,
+    "member_edit": member_edit_dialog,
 }
 
 

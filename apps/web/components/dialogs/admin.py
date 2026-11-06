@@ -1,6 +1,7 @@
 """관리자 관련 모달.
 
 - 관리자에게 문의 (사용자): 기술 이슈(API · 인증 문제)로 외부 전송이 실패했을 때 관리자 이메일 안내
+- 구성원 수정 (관리자): 팀 · 직무 · 직급 · 권한 · 활성 · 스킬
 """
 
 from __future__ import annotations
@@ -11,10 +12,12 @@ from urllib.parse import quote
 import streamlit as st
 
 from config import ADMIN_EMAIL
+from components import member_fields as mf
 from data import repository as repo
 from state import actions
 from state import selectors as sel
 from state.store import get_state
+from ui.avatar import avatar
 from ui.buttons import button, button_group
 from ui.html import markup
 from utils.browser import copy_to_clipboard
@@ -139,3 +142,46 @@ def org_picker_dialog() -> None:
     if button("선택 완료", key="org_done", variant="primary", width="stretch", disabled=not s.adm_org_pick):
         actions.org_done()
         st.rerun()
+
+
+# ---------------------------------------------------------------- 구성원 수정 (관리자 · 구성원 관리)
+_PERMISSION = {"member": "구성원", "admin": "관리자"}
+
+
+@st.dialog("구성원 수정", width="large", on_dismiss=actions.close_modal)
+def member_edit_dialog() -> None:
+    s = get_state()
+    row = next((r for r in repo.people_rows() if r["user_id"] == s.adm_edit_pid), None)
+    if row is None:
+        markup('<p class="hint">이 구성원을 찾을 수 없어요. 목록을 새로 고쳐 주세요.</p>')
+        return
+    p = f"edit_{s.adm_edit_nonce}"
+    markup(f'<div class="adm-who">{avatar(row["name"][:1], size=36, accent=row["permission"] == "admin")}'
+           f'<span><b>{esc(row["name"])}</b><span>{esc(row["email"] or "-")} · {esc(row["user_id"])}</span></span></div>')
+    teams = [t["name"] for t in repo.catalog("teams")]
+    jobs = repo.job_catalog()
+    c = st.columns(2, gap="small")
+    with c[0]:
+        st.selectbox("팀", teams, index=teams.index(row["team"]) if row["team"] in teams else None, key=f"{p}_team",
+                     placeholder="팀 검색")
+    with c[1]:
+        st.selectbox("직무", jobs, index=jobs.index(row["job"]) if row["job"] in jobs else None, key=f"{p}_job",
+                     placeholder="직무 검색 (없으면 직접 입력)", accept_new_options=True)
+    c = st.columns(3, gap="small", vertical_alignment="bottom")
+    with c[0]:
+        mf.position_select(p, row["position"])
+    with c[1]:
+        st.selectbox("권한", list(_PERMISSION), index=list(_PERMISSION).index(row["permission"]), key=f"{p}_permission",
+                     format_func=_PERMISSION.get)
+    with c[2]:
+        st.toggle("활성 계정", value=row["is_active"] is not False, key=f"{p}_active",
+                  help="끄면 비활성 구성원이 돼요. 삭제하지 않고 기록은 남아요.")
+    mf.skill_fields(p, {k["skill_id"]: k["level"] for k in row["skills"]})
+    if s.adm_edit_error:
+        markup(f'<span role="alert" class="cp-error">{esc(s.adm_edit_error)}</span>')
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="me_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        if button("저장", key="me_save", variant="primary") and actions.save_member_edit(p):
+            st.rerun()

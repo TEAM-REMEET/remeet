@@ -17,7 +17,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from dataclasses import dataclass, field
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from config import DELIVERY_EVENT_INTERVAL, DELIVERY_FIRST_EVENT_DELAY
 from data import repository as repo
 from state.store import AppState
@@ -34,7 +34,7 @@ class Event:
 
 
 def recipients(mid: str) -> list[str]:
-    return [p for p in repo.meeting(mid).people if p != ME]
+    return [p for p in repo.meeting(mid).people if p != me_id()]
 
 
 def now_text() -> str:
@@ -134,7 +134,7 @@ def _apply(p: Progress, e: Event, mid: str, attempt: int) -> None:
     elif e.kind == "sent":
         p.recipients[e.to] = "ok" if e.ok else "fail"
         _settle(p)
-        name = people[e.to].name
+        name = people[e.to].name if e.to in people else "알 수 없음"
         data = f'{{"to":"{name}","status":"ok"}}' if e.ok else f'{{"to":"{name}","error":"timeout"}}'
         p.log.append({"ev": "delivery.sent" if e.ok else "delivery.failed", "data": data, "fail": not e.ok})
     elif e.kind == "end":

@@ -232,7 +232,7 @@ def who(label: str | None, mapping: dict[str, str]) -> str:
     if not label:
         return ""
     pid = mapping.get(label, "")
-    return repo.people()[pid].name if pid else label
+    return repo.people()[pid].name if pid in repo.people() else label
 
 
 def _short(text: str, n: int = 26) -> str:

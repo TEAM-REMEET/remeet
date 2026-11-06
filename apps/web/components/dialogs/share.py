@@ -11,7 +11,7 @@ from __future__ import annotations
 import streamlit as st
 
 from components.org_people import org_people_picker
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import selectors as sel
@@ -34,7 +34,7 @@ def _pick_people() -> None:
     with st.container(key="share-add", gap="small"):
         markup('<b style="font-size:13px">받는 사람</b> <span class="hint">이름 · 팀으로 찾거나 조직도를 펼쳐 이름을 누르세요 · 다시 누르면 해제</span>')
         org_people_picker("share", chosen=list(s.share_recipients), on_pick=actions.toggle_share_recipient, height=240,
-                          locked={ME: "나"})
+                          locked={me_id(): "나"})
 
 
 def _absent_members() -> list[str]:

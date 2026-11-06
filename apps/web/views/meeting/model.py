@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from data.models import AgendaTopic, Evidence, Meeting, MeetingResult, TaggedPoint
 from state import selectors as sel
@@ -185,7 +185,6 @@ class TodoView:
     index: int
     key: str
     text: str
-    done: bool
     mine: bool
     who: str
     who_tone: str
@@ -207,12 +206,12 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
     out = []
     for i, t in sel.todo_items(s, m.id):  # 삭제한 액션 아이템은 빼고 (번호는 원래 그대로)
         key = sel.todo_key(m.id, i)
-        done = s.done.get(key, False)
-        mine = ME in t.owners
-        names = ["나" if pid == ME else sel.name_of(pid) for pid in t.owners]
+        me = me_id()
+        mine = me in t.owners
+        names = ["나" if pid == me else sel.name_of(pid) for pid in t.owners]
         who = ", ".join(names) if t.owners else (", ".join(s.assigned.get(key, [])) or "담당 미정")
         if t.owners:
-            tags = tuple(("나", "mine") if pid == ME else (sel.name_of(pid), "att") for pid in t.owners)
+            tags = tuple(("나", "mine") if pid == me else (sel.name_of(pid), "att") for pid in t.owners)
         elif s.assigned.get(key):  # 회의록엔 담당자가 없었고 주관자가 지정한 사람들 (이름으로 저장됨)
             my_name = sel.me().name
             tags = tuple(("나", "mine") if n == my_name else (n, "warn") for n in s.assigned[key])
@@ -220,14 +219,14 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
             tags = (("담당 미정", "warn"),)
         para = m.paragraph(t.src[0]) if t.src else None
         out.append(TodoView(
-            index=i, key=key, text=t.text, done=done, mine=mine,
+            index=i, key=key, text=t.text, mine=mine,
             who=who,
             who_tone="mine" if mine else ("att" if t.owners else "warn"),
             who_tags=tags,
             unassigned=not t.owners and not s.assigned.get(key),
-            due=(f"{t.due}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent and not done else ""),
+            due=(f"{t.due}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent else ""),
             raw_due=t.due,
-            urgent=t.urgent and not done,
+            urgent=t.urgent,
             speaker=speaker_name(para.speaker) if para else ("원문 비공개" if t.src else "근거 없음"),
             quote=para.text if para else ("원문이 공유되지 않았어요" if t.src else "원문에서 관련 발언을 찾지 못했어요"),
             src=t.src,

@@ -17,7 +17,7 @@ import json
 import streamlit as st
 
 from components.member_pills import member_pills
-from config import CURRENT_USER_ID as ME
+from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import archive as arc
@@ -40,7 +40,7 @@ _NEW = "new"
 
 def _person_label(pid: str) -> str:
     p = sel.person(pid)
-    return f"{p.name} · {p.team}" + (" (나)" if pid == ME else "")
+    return f"{p.name} · {p.team}" + (" (나)" if pid == me_id() else "")
 
 
 def _people_text(pids: list[str]) -> str:

@@ -64,7 +64,7 @@ def _assign_card(s: AppState, m: Meeting, items: list, *, host: bool, editable: 
 
 
 # 회의 결과 · 주요 논의 태그 → Streamlit 마크다운 배경색
-_RESULT_COLORS = {"결정": "green", "미해결": "orange", "공유": "violet"}
+_RESULT_TONES = {"결정": "ok", "미해결": "open", "공유": "info"}  # 회의 결과 태그 색 (pages.css .res-*)
 _POINT_COLORS = {"정보": "gray", "제안": "blue", "반대·우려": "red", "질문": "violet"}
 
 
@@ -95,10 +95,12 @@ def _results_card(s: AppState, m: Meeting) -> None:
             hint("정리된 회의 결과가 없어요.", size=13)
         with st.container(gap=None):
             for i, r in enumerate(results):
-                color = _RESULT_COLORS.get(r.kind, "gray")
                 refs = " ".join(f"`안건 {n}`" for n in r.agendas)
-                _pick(f":{color}-background[**{md_escape(r.kind)}**] {md_escape(r.text)}" + (f"  \n{refs}" if refs else ""),
-                      f"res{i}", s, r.src)
+                # 태그는 왼쪽 칸 · 글은 오른쪽 칸 → 글이 길어져 줄이 바뀌어도 태그 아래로 내려가지 않고 태그 뒤에 맞춰 정렬
+                with st.container(key=f"resrow-{i}", horizontal=True, vertical_alignment="top", gap="small"):
+                    tone = _RESULT_TONES.get(r.kind, "etc")
+                    st.html(f'<span class="res-tag res-{tone}">{esc(r.kind)}</span>', width="content")
+                    _pick(md_escape(r.text) + (f"  \n{refs}" if refs else ""), f"res{i}", s, r.src)
 
 
 def _detail_section(title: str, items: tuple, key: str, s: AppState, empty: str = "없어요.") -> None:
@@ -259,11 +261,10 @@ def _todo_tab(s: AppState, m: Meeting) -> None:
         host = model.is_host(m)
         can_assign = host and model.assignee_editable(s, m)  # 요약 탭 담당자 카드와 같은 조건
         for t in shown:
-            with st.container(key=f"todo-{t.index}{'-done' if t.done else ''}"):
-                # 체크는 완료 표시만 (지우지 않음) · 지우기는 오른쪽 빨간 휴지통 (주관자만)
+            with st.container(key=f"todo-{t.index}"):
+                # 할 일 제목 · 지우기는 오른쪽 빨간 휴지통 (주관자만)
                 with st.container(key=f"todohead-{t.index}", horizontal=True, vertical_alignment="top", gap="small"):
-                    st.checkbox(md_escape(t.text), value=t.done, key=f"todo_cb_{t.key}",
-                                on_change=actions.toggle_todo, args=(t.key,), width="stretch")
+                    st.html(f'<p class="todo-title">{esc(t.text)}</p>', width="stretch")
                     if host:
                         button("", key=f"todo_del_{t.key}", variant="trash", icon=":material/delete:",
                                help="이 액션 아이템 삭제 (목록 아래에서 되돌릴 수 있어요)",

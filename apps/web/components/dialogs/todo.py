@@ -9,11 +9,10 @@ from __future__ import annotations
 import streamlit as st
 
 from components.dialogs.compose_pickers import people_picker
-from config import CURRENT_USER_ID as ME
 from data import repository as repo
 from state import actions
 from state import selectors as sel
-from state.store import get_state
+from state.store import get_state, me_id
 from ui.buttons import button
 from ui.html import markup
 
@@ -48,7 +47,7 @@ def add_todo_dialog() -> None:
     if owners:  # 고른 사람 칩 · X 로 한 명씩 빼기
         with st.container(key="todo-owner-chips", horizontal=True, gap="xsmall"):
             for pid in owners:
-                name = sel.name_of(pid) + (" (나)" if pid == ME else "")
+                name = sel.name_of(pid) + (" (나)" if pid == me_id() else "")
                 button(name, key=f"todo_owner_rm_{pid}", variant="chip", icon=":material/close:",
                        help="담당자에서 빼기", on_click=actions.remove_todo_owner, args=(pid,))
 

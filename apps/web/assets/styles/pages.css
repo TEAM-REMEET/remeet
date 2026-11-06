@@ -885,24 +885,19 @@
   border-left: 3px solid #2b2d33;
   gap: 6px !important;
 }
-[class*="st-key-todo-"][class*="-done"] {
-  border-left-color: #d3d6db;
-}
-[class*="st-key-todo-"] .stCheckbox label p {
-  font-size: 15px !important;
-  font-weight: 700 !important;
+.stHtml p.todo-title {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
   color: var(--ink);
-}
-[class*="st-key-todo-"][class*="-done"] .stCheckbox label p {
-  color: #8a8f97;
-  text-decoration: line-through;
+  word-break: keep-all;
 }
 .todo-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  margin-left: 28px;
 }
 .todo-due {
   font-size: 12px;
@@ -913,8 +908,7 @@
   font-weight: 700;
 }
 [class*="st-key-quotewrap-"] {
-  margin-left: 24px;
-  width: calc(100% - 24px) !important;
+  width: 100% !important;
 }
 .branch-box {
   font-size: 13px;
@@ -1950,7 +1944,7 @@
 /* 액션 아이템 탭: 「담당 미정」 태그 모양 버튼 (누르면 담당자 지정) — .tag-warn 과 같은 모양 */
 /* 「담당 미정」 버튼 ↔ 기간: 버튼은 아이콘이 붙어 무게가 있어서 일반 태그 줄(6px)보다 조금 넓게 10px
    (Streamlit 가로 컨테이너 기본 gap 은 1rem) */
-[class*="st-key-todometa-"] { margin-left: 28px; }
+/* 체크박스를 뺀 뒤로 제목 · 담당자 · 근거 발언 모두 왼쪽 끝에 맞춤 */
 /* 회의 상세의 좌우 분할 규칙(.st-key-md-split [data-testid="stHorizontalBlock"]:first-child { gap: 0 !important })이
    이 줄에도 걸려 간격이 0 이 되므로, 같은 구체성으로 다시 지정 (이 파일에서 더 뒤에 있어서 이김) */
 .st-key-md-split [data-testid="stHorizontalBlock"][class*="st-key-todometa-"] { gap: 10px !important; }
@@ -1999,3 +1993,20 @@
 .integ-mark.logo { background: #FFFFFF; }
 .integ-mark.logo img { width: 72%; height: 72%; object-fit: contain; display: block; }
 .integ-mark.logo img.ico { width: 20px; height: 20px; }
+
+/* 요약 · 회의 결과: [태그] [글 · 연결한 안건] — 글이 여러 줄이어도 태그 뒤에 맞춰 정렬 */
+[class*="st-key-resrow-"] { flex-wrap: nowrap !important; }
+[class*="st-key-resrow-"] > [class*="st-key-b-pick"] { flex: 1 1 0 !important; min-width: 0; }
+.res-tag {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 52px; height: 24px; padding: 0 8px;
+  margin-top: 6px; border-radius: 3px; font-size: 13px; font-weight: 700; white-space: nowrap; box-sizing: border-box;
+}
+.res-ok { background: #E3F4EA; color: #146C3C; }
+.res-open { background: #FDEBDC; color: #9A4A0B; }
+.res-info { background: #F1EEFB; color: #5A3EA6; }
+.res-etc { background: #EEF0F3; color: #4B515A; }
+/* 연결한 안건: 글 아래로 조금 띄움 */
+[class*="st-key-b-pick"][class*="-res"] button p code { display: inline-block; margin-top: 8px; margin-right: 2px; }
+/* 회의 상세 좌우 분할 규칙(gap 0 !important)이 이 줄에도 걸려서 같은 구체성으로 다시 지정 (태그 ↔ 글 8px) */
+.st-key-md-split [data-testid="stHorizontalBlock"][class*="st-key-resrow-"] { gap: 8px !important; }
+[class*="st-key-b-pick"][class*="-res"] button p { word-break: keep-all; }

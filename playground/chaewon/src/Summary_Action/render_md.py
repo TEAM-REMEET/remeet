@@ -89,7 +89,7 @@ def format_item(item: BaseItem, decision_only: bool = False, agenda_number: int 
     parts.append(f"{tags} " if tags else "")
     parts.append(_esc(item.text))
     if isinstance(item, DiscussionItem) and item.is_action:
-        parts.append(f" (담당: {_esc(', '.join(item.assignees)) or '-'} · 기한: {_esc(item.due) or '-'})")
+        parts.append(f" (담당: {_esc(', '.join(item.assignees)) or '-'} · {f'기한: {_esc(item.due) or cfg.EMPTY_DUE_TEXT}'.rstrip()})")
     if evidence:
         parts.append(_evidence(item))
     if agenda_number is not None:

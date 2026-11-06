@@ -12,7 +12,6 @@ from dataclasses import MISSING, dataclass, field, fields
 
 import streamlit as st
 
-from config import CURRENT_USER_ID
 from data import repository as repo
 from data.models import Meeting, Todo
 
@@ -64,8 +63,12 @@ class AppState:
     logged_in: bool = False
     logged_out: bool = False  # 직접 로그아웃함 (쿠키 자동 로그인 막기)
     cookie_written: bool = False
-    login_error: bool = False
+    login_error: str = ""  # 로그인 실패 이유 (백엔드 메시지)
     is_admin: bool = False  # 관리자 계정으로 로그인함 → 관리자 화면(비용 · 구성원 · MCP)만 보임
+    user_id: str = ""  # 로그인한 사람 (Neo4j user_id, 관리 계정은 "admin")
+    user_name: str = ""
+    user_email: str = ""
+    token: str = ""  # 백엔드 출입증 (관리자 API 호출 · 새로고침 후 로그인 유지)
 
     # --- 라우팅
     screen: str = "compose"  # compose | archive | search | folder | note | deliver | sent | recv | adm_cost | adm_members | adm_mcp
@@ -117,7 +120,6 @@ class AppState:
     agenda_open: list[str] = field(default_factory=list)  # 요약 탭 「안건별 상세」에서 펼친 안건 ("mid:index")
     agenda_jump: str = ""  # 안건 목차를 눌러 스크롤해 갈 안건 앵커 id (한 번 스크롤하면 비움)
     agenda_jump_n: int = 0
-    done: dict[str, bool] = field(default_factory=dict)  # "mid:index"
     assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 이름들 (여러 명)
     status_override: dict[str, str] = field(default_factory=dict)
     added_todos: dict[str, list[Todo]] = field(default_factory=dict)  # 주관자가 직접 추가한 액션 아이템 (회의 id → 할 일들)
@@ -174,21 +176,27 @@ class AppState:
     adm_month: str = field(  # 비용 관리에서 보는 달 (처음엔 이번 달)
         default_factory=lambda: next(m["key"] for m in repo.admin()["months"] if m.get("running")))
     adm_query: str = ""  # 구성원 검색어
-    adm_team: str = ""  # 구성원 팀 필터 (빈 값이면 전체)
+    adm_sort: str = ""  # 구성원 표 정렬 컬럼 (빈 값이면 기본 순서)
+    adm_sort_desc: bool = False  # True면 내림차순
+    adm_filter_open: bool = False  # 필터 줄 펼침 (검색칸 옆 필터 아이콘)
+    adm_filters: dict = field(default_factory=dict)  # 컬럼 → 고른 값들 (없으면 전체)
     adm_adding: bool = False  # 구성원 관리 · 「구성원 추가」 입력 줄이 열려 있는지
     adm_invite_error: str = ""
-    adm_recent_jobs: list[str] = field(default_factory=lambda: ["개발자", "디자이너", "PM"])  # 「최근 사용」 직무
+    adm_recent_jobs: list[str] = field(default_factory=list)  # 「최근 사용」 직무
     # 조직 선택 모달 (구성원 추가 · 팀)
     adm_org_target: str = "add"  # 고른 팀을 넣을 곳: add(구성원 추가 줄) | 사람 id
     adm_org_pick: str = ""  # 고른 팀
     adm_org_query: str = ""  # 조직명 검색어
     adm_org_tab: str = "all"  # recent | fav | all
     adm_org_open: set[str] = field(default_factory=set)  # 펼친 본부 · 부
-    adm_org_recent: list[str] = field(default_factory=lambda: ["UX디자인팀", "결제개발팀"])  # 최근 고른 팀
-    adm_org_fav: set[str] = field(default_factory=lambda: {"서비스기획팀"})  # 즐겨찾기 팀
+    adm_org_recent: list[str] = field(default_factory=list)  # 최근 고른 팀
+    adm_org_fav: set[str] = field(default_factory=set)  # 즐겨찾기 팀
     adm_org_nonce: int = 0
     adm_team_pending: str = ""  # 조직 선택 모달에서 고른 팀 → 구성원 추가 줄 팀 칸에 넣을 값
     org_seen: int = -1  # 마지막으로 반영한 조직 버전 (관리자가 바꾸면 화면을 새로 그림)
+    adm_edit_pid: str = ""  # 구성원 수정 팝업에서 고치는 사람 id
+    adm_edit_error: str = ""
+    adm_edit_nonce: int = 0  # 수정 팝업을 열 때마다 바뀌어 입력칸을 지금 값으로 새로 채움
     adm_nonce: int = 0  # 구성원 추가 줄을 열 때마다 바뀌어 입력칸을 비움
 
     # --- 새 회의록 작성 화면
@@ -211,7 +219,7 @@ class AppState:
     pick_label: str = ""  # 발화자 연결 모달에서 다루는 발화자 표기 (참석자1 · A)
     new_meetings: dict[str, Meeting] = field(default_factory=dict)  # 「회의록 생성 완료」로 만든 회의
     created_notes: list[tuple[str, str]] = field(default_factory=list)  # (폴더 id, 회의 id)
-    nn_host: str = CURRENT_USER_ID  # 주관자 (기본: 나)
+    nn_host: str = ""  # 주관자 (로그인하면 나로 채움)
     nn_people: list[str] = field(default_factory=list)  # 참석자
     # 작성 화면의 선택 모달(폴더 · 주관자 · 참석자): 「선택」을 누르기 전까지는 여기 임시로 담아 둠
     pick_team: str = ""  # 보고 있는 팀 이름
@@ -246,9 +254,14 @@ class AppState:
     archive_qnonce: int = 0  # 화면을 옮길 때마다 바뀌어 검색칸을 비움
     archive_owner: str = "all"  # 기간별 목록의 전체 / 내가 만든 폴더 / 멤버 (기간 폴더 화면까지 이어짐)
     period_wiki_folder: str = ""  # 기간 폴더 화면 · 위키 탭에서 보고 있는 프로젝트 폴더
-    todo_group: str = ""  # 회의 목록 판넬: left(할 일 남음) | done(다 끝냄) | none(할당 없음) · 빈 값이면 회의가 있는 첫 판넬
+    todo_group: str = ""  # 회의 목록 판넬: left(내 할 일이 있음) · 빈 값이면 회의가 있는 첫 판넬
     archive_role: str = "all"  # 기간별 목록의 전체 / 내가 주관 / 참석
     tree_open: set[str] = field(default_factory=lambda: {"root"})  # 사이드바에서 펼친 노드
+
+
+def me_id() -> str:
+    """지금 로그인한 사람 id."""
+    return get_state().user_id
 
 
 def get_state() -> AppState:
