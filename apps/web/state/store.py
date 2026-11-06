@@ -106,6 +106,9 @@ class AppState:
     added_agendas: dict[str, list[str]] = field(default_factory=dict)  # 편집 중 「+ 안건 추가」로 넣은 안건 (회의 id → 제목들)
     agenda_backup: list[str] = field(default_factory=list)  # 편집 시작 때의 추가 안건 (취소하면 되돌림)
     branch_requests: set[str] = field(default_factory=set)  # 주관자에게 안건 분리를 요청한 회의
+    agenda_open: list[str] = field(default_factory=list)  # 요약 탭 「안건별 상세」에서 펼친 안건 ("mid:index")
+    agenda_jump: str = ""  # 안건 목차를 눌러 스크롤해 갈 안건 앵커 id (한 번 스크롤하면 비움)
+    agenda_jump_n: int = 0
     done: dict[str, bool] = field(default_factory=dict)  # "mid:index"
     assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 이름들 (여러 명)
     status_override: dict[str, str] = field(default_factory=dict)
@@ -144,8 +147,6 @@ class AppState:
     delivery: Delivery = field(default_factory=Delivery)
 
     # --- 위키
-    wiki_node: str = "me"
-    wiki_series: str = "all"
     folder_wiki_node: str = "c"
 
     # --- 외부 전송 (연결은 관리자 · MCP 관리에서)

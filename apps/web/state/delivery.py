@@ -200,7 +200,7 @@ def _apply(p: Progress, e: Event, mid: str, attempt: int) -> None:
     elif e.kind == "step":
         p.steps[e.step] = "done"
         ev = {"save": "meeting.confirmed", "todo": "tasks.assigned", "wiki": "wiki.updated"}[e.step]
-        data = {"save": '{"version":2}', "todo": f'{{"tasks":{todo_n}}}', "wiki": '{"folder":true,"personal":true}'}
+        data = {"save": '{"version":2}', "todo": f'{{"tasks":{todo_n}}}', "wiki": '{"folder":true}'}
         p.log.append({"ev": ev, "data": data[e.step]})
     elif e.kind == "sendStart":
         p.steps["send"] = "run"

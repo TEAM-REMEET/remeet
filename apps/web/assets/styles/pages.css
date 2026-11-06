@@ -576,7 +576,7 @@
   color: var(--ink-3);
 }
 
-/* ---------- 지식 그래프 (내 위키 · 폴더 위키) ---------- */
+/* ---------- 지식 그래프 (폴더 위키) ---------- */
 [class*="st-key-kgwrap-"] {
   background: #ffffff;
   border: 1px solid var(--line);
@@ -1895,3 +1895,13 @@
   max-width: calc(100% - 24px) !important;
   box-sizing: border-box;
 }
+
+/* 요약 탭: 안건 목차 · 회의 결과 · 안건별 상세 (회의록 형식) */
+.agd-anchor { height: 0; scroll-margin-top: 12px; }
+[class*="st-key-agdhead-"] { border-top: 1px solid var(--line-soft); padding-top: 4px; }
+[class*="st-key-agdet-"] { padding: 2px 0 10px 18px; }
+.agd-h { margin: 12px 0 2px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.agd-topic { margin: 8px 0 0 10px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.agd-empty { margin: 2px 0 0 10px; font-size: 13px; color: var(--muted); }
+[class*="st-key-b-pick"][class*="-toc"] button { padding: 5px 10px !important; color: var(--ink) !important; }
+[class*="st-key-b-pick"][class*="-atp"] button { padding-left: 20px !important; }
