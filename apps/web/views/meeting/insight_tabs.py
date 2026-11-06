@@ -1,4 +1,4 @@
-"""오른쪽 패널: 요약 / 안건 / 액션 아이템 / 키워드·일정 / 연관 회의 탭.
+"""오른쪽 패널: 요약(안건 목차 · 회의 결과 · 안건별 상세) / 안건 / 액션 아이템 / 키워드·일정 / 연관 회의 탭.
 
 문장 버튼(variant pick)을 누르면 왼쪽 원문에서 근거 발언이 강조됩니다.
 """
@@ -15,7 +15,7 @@ from ui.html import markup
 from ui.icons import icon_box
 from ui.layout import card, card_title, hint
 from ui.tags import md_tag, tag
-from utils.browser import copy_to_clipboard
+from utils.browser import copy_to_clipboard, scroll_into_view
 from utils.text import esc, md_escape
 from views.meeting import model
 
@@ -60,41 +60,110 @@ def _assign_card(s: AppState, m: Meeting, items: list, *, host: bool, editable: 
                                args=(key, text))
 
 
+# 회의 결과 · 주요 논의 태그 → Streamlit 마크다운 배경색
+_RESULT_COLORS = {"결정": "green", "미해결": "orange", "공유": "violet"}
+_POINT_COLORS = {"정보": "gray", "제안": "blue", "반대·우려": "red", "질문": "violet"}
+
+
+def _count_label(d: model.AgendaDetail) -> str:
+    return f"결정 {len(d.decisions)} · 미해결 {len(d.open_issues)}"
+
+
+def _toc_card(s: AppState, m: Meeting, details: list[model.AgendaDetail]) -> None:
+    """안건 목차: 누르면 아래 「안건별 상세」에서 그 안건을 펼치고 그 자리로 이동."""
+    with card("toc"):
+        card_title("안건 목차", aside="누르면 안건별 상세로 이동해요",
+                   icon_html=icon_box("lines-full", bg="#F1F2F4", color="#F37321"))
+        if not details:
+            hint("정리된 안건이 없어요.", size=13)
+        for d in details:
+            button(f"**{d.index}.** {md_escape(d.title)}  :gray[{_count_label(d)}]", key=f"toc{d.index}",
+                   variant="pick", on_click=actions.jump_to_agenda, args=(m.id, d.index - 1), width="stretch")
+
+
+def _results_card(s: AppState, m: Meeting) -> None:
+    results = model.meeting_results(m)
+    with card("results"):
+        with st.container(horizontal=True, vertical_alignment="center"):
+            card_title("회의 결과", icon_html=icon_box("bulb", bg="#FFF5D9", color="#9A6700"))
+            _copy_button(s, "results", "\n".join(
+                f"- [{r.kind}] {r.text}" + "".join(f" [안건{n}]" for n in r.agendas) for r in results))
+        if not results:
+            hint("정리된 회의 결과가 없어요.", size=13)
+        with st.container(gap=None):
+            for i, r in enumerate(results):
+                color = _RESULT_COLORS.get(r.kind, "gray")
+                refs = " ".join(f"`안건 {n}`" for n in r.agendas)
+                _pick(f":{color}-background[**{md_escape(r.kind)}**] {md_escape(r.text)}" + (f"  \n{refs}" if refs else ""),
+                      f"res{i}", s, r.src)
+
+
+def _detail_section(title: str, items: tuple, key: str, s: AppState, empty: str = "없어요.") -> None:
+    markup(f'<h4 class="agd-h">{esc(title)}</h4>')
+    if not items:
+        markup(f'<p class="agd-empty">{esc(empty)}</p>')
+    for j, e in enumerate(items):
+        _pick(md_escape(e.text), f"{key}_{j}", s, e.src)
+
+
+def _agenda_detail(s: AppState, m: Meeting, d: model.AgendaDetail) -> None:
+    i = d.index - 1
+    with st.container(key=f"agdet-{i}", gap=None):
+        _detail_section("논의 배경", d.background, f"abg{i}", s)
+        markup('<h4 class="agd-h">주요 논의</h4>')
+        if not d.topics:
+            markup('<p class="agd-empty">없어요.</p>')
+        for t, topic in enumerate(d.topics):
+            if topic.title:
+                markup(f'<p class="agd-topic">{d.index}-{t + 1}. {esc(topic.title)}</p>')
+            for j, p in enumerate(topic.points):
+                kind = f":{_POINT_COLORS.get(p.kind, 'gray')}-background[{md_escape(p.kind)}] " if p.kind else ""
+                _pick(kind + md_escape(p.text), f"atp{i}_{t}_{j}", s, p.src)
+        _detail_section("결정사항", d.decisions, f"adec{i}", s)
+        _detail_section("미해결 이슈", d.open_issues, f"aopen{i}", s)
+        _detail_section("다음 회의 후보 안건", d.next_candidates, f"anext{i}", s)
+
+
+def _details_card(s: AppState, m: Meeting, details: list[model.AgendaDetail]) -> None:
+    opened = {k for k in s.agenda_open if k.startswith(f"{m.id}:")}
+    with card("agdetails"):
+        with st.container(horizontal=True, vertical_alignment="center"):
+            card_title("안건별 상세")
+            if details:
+                all_open = len(opened) >= len(details)
+                button("모두 접기" if all_open else "모두 펼치기", key="agd_all", variant="mini",
+                       on_click=actions.set_all_agenda_details, args=(m.id, len(details), not all_open))
+        if not details:
+            hint("정리된 안건이 없어요.", size=13)
+        for d in details:
+            i = d.index - 1
+            is_open = f"{m.id}:{i}" in opened
+            status, tone, _ = model.agenda_status(s, m, i)
+            markup(f'<div id="agd-{m.id}-{i}" class="agd-anchor"></div>')
+            with st.container(key=f"agdhead-{i}", horizontal=True, vertical_alignment="center", gap="small"):
+                button(f"{'▾' if is_open else '▸'} **{d.index}. {md_escape(d.title)}**  :gray[{_count_label(d)}]",
+                       key=f"agh{i}", variant="pick", on_click=actions.toggle_agenda_detail, args=(m.id, i),
+                       width="stretch")
+                st.html(tag(status, tone), width="content")
+            if is_open:
+                _agenda_detail(s, m, d)
+    if s.agenda_jump:  # 목차에서 누른 안건으로 한 번만 스크롤
+        scroll_into_view(s.agenda_jump, nonce=str(s.agenda_jump_n), to_top=True)
+        s.agenda_jump = ""
+
+
 def _summary_tab(s: AppState, m: Meeting) -> None:
+    """회의록 형식: 안건 목차 → 회의 결과 → 안건별 상세 (+ 담당자 카드)."""
     host = model.is_host(m)
     editable = model.assignee_editable(s, m)
     items = model.assignable(s, m)
     show = any(not who for _, _, who, _, _ in items) or (items and editable)
 
-    with card("summary"):
-        card_title("핵심 요약", icon_html=icon_box("lines-full", bg="#F1F2F4", color="#F37321"))
-        if s.editing and host:
-            st.text_area("핵심 요약 편집", value=m.summary.text, label_visibility="collapsed", key=f"edit_summary_{m.id}")
-        else:
-            _pick(md_escape(m.summary.text), "sum", s, m.summary.src)
-
-    disc = model.discussion(m)
-    with card("discussion"):
-        with st.container(horizontal=True, vertical_alignment="center"):
-            card_title("주요 논의 사항", icon_html=icon_box("bulb", bg="#FFF5D9", color="#9A6700"))
-            _copy_button(s, "disc", "\n".join(f"- {d.label}: {d.text}" for d in disc))
-        with st.container(gap=None):
-            for i, d in enumerate(disc):
-                _pick(f"**{md_escape(d.label)}:** {md_escape(d.text)}", f"disc{i}", s, d.src)
-
-    with card("decisions"):
-        card_title("결정된 것", icon_html=icon_box("check", bg="transparent", color="#1D6B43", size=15, box=16, stroke=2.4), size=14)
-        if not m.decisions:
-            hint("아직 결정된 것이 없어요.", size=13)
-        for i, d in enumerate(m.decisions):
-            _pick(md_escape(d.text), f"dec{i}", s, d.src)
-    with card("open"):
-        card_title("다음에 이어서", icon_html=icon_box("clock", bg="transparent", color="#9A6700", size=15, box=16), size=14)
-        if not m.open_issues:
-            hint("결론이 나지 않아 다음 회의로 넘긴 일이 없어요.", size=13)
-        for i, d in enumerate(m.open_issues):
-            _pick(md_escape(d.text), f"open{i}", s, d.src)
-    if show:  # 담당자 카드는 항상 「다음에 이어서」 아래에
+    details = model.agenda_details(m)
+    _toc_card(s, m, details)
+    _results_card(s, m)
+    _details_card(s, m, details)
+    if show:  # 담당자 카드는 항상 맨 아래에
         _assign_card(s, m, items, host=host, editable=editable)
 
 

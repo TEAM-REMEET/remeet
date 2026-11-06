@@ -32,9 +32,13 @@ def copy_to_clipboard(text: str, nonce: str = "") -> None:
     _run(f"/* {nonce} */ try {{ navigator.clipboard && navigator.clipboard.writeText({payload}); }} catch (e) {{}}")
 
 
-def scroll_into_view(element_id: str, nonce: str = "") -> None:
-    """요소가 들어 있는 스크롤 박스만 움직입니다 (페이지 전체는 움직이지 않음)."""
+def scroll_into_view(element_id: str, nonce: str = "", *, to_top: bool = False) -> None:
+    """요소가 들어 있는 스크롤 박스만 움직입니다 (페이지 전체는 움직이지 않음).
+
+    to_top: 이미 보이는 곳에 있어도 요소를 스크롤 박스 맨 위로 올림 (목차 → 해당 위치로 이동할 때).
+    """
     target = json.dumps(element_id)
+    cond = "true" if to_top else "r.top < b.top || r.bottom > b.bottom"
     _run(
         f"/* {nonce} */ setTimeout(function () {{"
         f" var el = document.getElementById({target}); if (!el) return;"
@@ -43,7 +47,7 @@ def scroll_into_view(element_id: str, nonce: str = "") -> None:
         "   box = box.parentElement;"
         " if (!box) return;"
         " var r = el.getBoundingClientRect(), b = box.getBoundingClientRect();"
-        " if (r.top < b.top || r.bottom > b.bottom)"
+        f" if ({cond})"
         "   box.scrollTo({top: box.scrollTop + (r.top - b.top) - 12, behavior: 'smooth'});"
         " }, 120);"
     )

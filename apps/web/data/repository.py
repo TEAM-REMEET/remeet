@@ -15,6 +15,9 @@ import streamlit as st
 
 from data.models import (
     Agenda,
+    AgendaTopic,
+    MeetingResult,
+    TaggedPoint,
     BriefItem,
     Candidate,
     Discussion,
@@ -73,6 +76,23 @@ def people_by_short_name() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------- meetings
+def _agenda(a: dict) -> Agenda:
+    """안건. background/topics/decisions/open_issues/next 가 있으면 「안건별 상세」로 그대로 씀."""
+    detail_keys = ("background", "topics", "decisions", "open_issues", "next")
+    return Agenda(
+        a["title"], a["status"], a["tone"], a["deep"], tuple(a["src"]), _evidence(a["points"]),
+        background=_evidence(a.get("background", [])),
+        topics=tuple(
+            AgendaTopic(t["title"], tuple(TaggedPoint(p["kind"], p["text"], tuple(p.get("src", ()))) for p in t["points"]))
+            for t in a.get("topics", [])
+        ),
+        decisions=_evidence(a.get("decisions", [])),
+        open_issues=_evidence(a.get("open_issues", [])),
+        next_candidates=_evidence(a.get("next", [])),
+        detailed=any(k in a for k in detail_keys),
+    )
+
+
 def _meeting(d: dict) -> Meeting:
     shared = d.get("shared")
     return Meeting(
@@ -97,9 +117,10 @@ def _meeting(d: dict) -> Meeting:
         keywords=tuple(d["keywords"]),
         decisions=_evidence(d["decisions"]),
         open_issues=_evidence(d["open_issues"]),
-        agendas=tuple(
-            Agenda(a["title"], a["status"], a["tone"], a["deep"], tuple(a["src"]), _evidence(a["points"]))
-            for a in d["agendas"]
+        agendas=tuple(_agenda(a) for a in d["agendas"]),
+        results=tuple(
+            MeetingResult(r["kind"], r["text"], tuple(r.get("agendas", ())), tuple(r.get("src", ())))
+            for r in d.get("results", ())
         ),
         todos=tuple(Todo(t["text"], t["owner"], t["due"], tuple(t["src"]), t["urgent"]) for t in d["todos"]),
         shared=ShareInfo(shared["from"], shared["scope"], shared["received"], shared["lock_raw"]) if shared else None,
@@ -198,11 +219,6 @@ def _graph(raw: dict) -> KnowledgeGraph:
             for k, v in extra["branch_timeline"].items()
         }
     return KnowledgeGraph(nodes, edges, timeline, extra)
-
-
-@lru_cache(maxsize=1)
-def personal_wiki() -> KnowledgeGraph:
-    return _graph(_load("wiki_personal"))
 
 
 @lru_cache(maxsize=1)
