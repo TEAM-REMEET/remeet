@@ -20,6 +20,10 @@ def render() -> None:
         if m.id in s.deleted_meetings:  # 뒤로가기 등으로 삭제한 회의에 다시 온 경우
             empty_state("주관자가 삭제한 회의예요. 회의록과 정리된 내용을 더 볼 수 없어요.", title="삭제된 회의예요", pad=48)
             return
+        if s.fin_flow == m.id:  # 확정 흐름 중(외부 도구 전송을 마치기 전)에는 회의 상세에서도 전체 흐름을 맨 위에
+            from views.finalize import flow_step_of, flow_stepper  # finalize 가 views.meeting 을 불러서 함수 안에서
+
+            flow_stepper(flow_step_of(s, m.id))
         render_header(s, m)
         with st.container(key="md-split"):
             left, right = st.columns([1, 1.15], gap=None)

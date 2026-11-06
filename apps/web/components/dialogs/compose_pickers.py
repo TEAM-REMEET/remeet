@@ -140,12 +140,13 @@ def _compose_confirm_body() -> None:
     """2단계 「확정하기」 · 「검토 요청하기」를 한 번 더 확인 → 로딩 화면."""
     s = get_state()
     host = s.nn_host == me_id()
-    lead = ("확정하시겠어요? 확정하면 회의록이 만들어지고 담당자 추천 → 최종 회의록 확인으로 이어져요."
-            if host else f"주관자 {sel.name_of(s.nn_host)}님에게 검토를 요청할까요? 회의록이 만들어지고 "
-                         "주관자에게 검토 요청 알림이 가요. 확정은 주관자가 해요.")
+    # 묻는 말 다음 줄에 설명
+    ask, lead = (("확정하시겠어요?", "확정하면 회의록이 만들어지고 담당자 추천 → 최종 회의록 확인으로 이어져요.") if host else
+                 (f"주관자 {sel.name_of(s.nn_host)}님에게 검토를 요청할까요?",
+                  "회의록이 만들어지고 주관자에게 검토 요청 알림이 가요. 확정은 주관자가 해요."))
     markup(f'<div class="assign-target"><span class="assign-target-label">'
            f'{"확정할" if host else "검토를 요청할"} 회의록</span><h3>{esc(s.nn_title)}</h3></div>'
-           f'<p class="confirm-lead">{esc(lead)}</p>')
+           f'<p class="confirm-lead">{esc(ask)}<br>{esc(lead)}</p>')
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
         if button("취소", key="cp_confirm_cancel", variant="secondary"):
             actions.close_modal()

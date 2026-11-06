@@ -17,7 +17,7 @@ from state.store import get_state, me_id
 from ui.buttons import button
 from ui.html import markup
 from ui.icons import tool_mark
-from ui.layout import page, page_header
+from ui.layout import page, step_header
 from ui.tags import tag
 from utils.text import esc, md_escape
 from views import finalize
@@ -51,24 +51,9 @@ def _pick(mid: str) -> None:
                     label += "  \n:red[인증이 만료됐어요 · 보내면 실패하고 관리자 확인이 필요해요]"
                 st.checkbox(label, value=on, key=f"exp_pick_{mid}_{tool.id}",
                             on_change=actions.toggle_export_tool, args=(tool.id,), width="stretch")
-    n = len(x.picked)
-    with st.container(key="exp-foot", horizontal=True, vertical_alignment="center", gap="small"):
-        st.space("stretch")
-        button("회의 상세로 돌아가기", key="exp_back", variant="secondary", on_click=actions.open_meeting, args=(mid,))
-        button(f"선택한 {n}개 도구로 보내기" if n else "도구를 골라 주세요", key="exp_send", variant="primary",
-               icon=":material/send:", disabled=not n, on_click=actions.start_export)
 
 
 # ---------------------------------------------------------------- 2) 보내기 · 3) 끝
-def _app_button(label: str, key: str, variant: str, fn, *args, icon: str | None = None) -> None:
-    """이 영역(fragment) 안의 버튼이 화면 이동 · 다시 보내기를 시작할 때: 누른 뒤 전체를 다시 그림."""
-    def _cb() -> None:
-        fn(*args)
-        st.session_state["_exp_need_app"] = True
-
-    button(label, key=key, variant=variant, on_click=_cb, icon=icon)
-
-
 def _banner(p: export.Progress, mid: str) -> None:
     s = get_state()
     fails = export.failed_records(s, p)
@@ -93,13 +78,7 @@ def _banner(p: export.Progress, mid: str) -> None:
         markup(f'<div class="dv-banner" role="status" aria-live="polite">'
                f'<span class="dot{"" if p.ended else " pulse"}" style="background:{dot}"></span>'
                f'<span class="tx"><b>{esc(head)}</b><span>{esc(sub)}</span></span></div>')
-        if not p.ended:
-            return
-        n_simple = sum(1 for f in fails if f.kind == "simple")
-        if n_simple and s.export.attempt == 1 and repo.meeting(mid).host == me_id():
-            _app_button(f"실패한 {n_simple}개 다시 보내기", "exp_retry", "danger", actions.retry_export,
-                        icon=":material/refresh:")
-        _app_button("전달 완료", "exp_done", "primary", actions.finish_export, icon=":material/check:")
+
 
 
 def _rows(p: export.Progress, mid: str) -> None:
@@ -118,8 +97,6 @@ def _rows(p: export.Progress, mid: str) -> None:
 
 def _live() -> None:
     s = get_state()
-    if st.session_state.pop("_exp_need_app", False):  # 이 영역의 버튼이 화면 이동 · 다시 보내기를 시작함
-        st.rerun(scope="app")
     export.sync(s)
     mid = s.export.meeting_id
     p = export.progress(s)
@@ -141,12 +118,27 @@ def render() -> None:
     s = get_state()
     mid = s.export.meeting_id
     with page("export"):
-        page_header("외부 도구 전송", f"{repo.meeting(mid).title} · 결과를 보낼 외부 도구(Jira · Slack 등)를 골라 보내요")
-        if repo.meeting(mid).host != me_id():
+        if finalize.in_flow(s, mid) and repo.meeting(mid).host == me_id():  # 확정 흐름: 전체 흐름(6단계)이 맨 위
+            finalize.flow_stepper(6)
+        host = repo.meeting(mid).host == me_id()
+        x = s.export
+        p = export.progress(s) if x.started_at is not None else None
+        # 현재 단계 제목과 같은 줄 오른쪽: (고를 때) 이전화면으로 · 보내기 / (끝나면) 다시 보내기 · 전달 완료
+        with step_header("외부 도구 전송", f"{repo.meeting(mid).title} · 결과를 보낼 외부 도구(Jira · Slack 등)를 골라 보내요"):
+            if host and p is None:
+                n = len(x.picked)
+                button("← 이전화면으로", key="exp_back", variant="secondary", on_click=actions.open_meeting, args=(mid,))
+                button(f"선택한 {n}개 도구로 보내기" if n else "도구를 골라 주세요", key="exp_send", variant="primary",
+                       icon=":material/send:", disabled=not n, on_click=actions.start_export)
+            elif host and p.ended:
+                n_simple = sum(1 for f in export.failed_records(s, p) if f.kind == "simple")
+                if n_simple and x.attempt == 1:
+                    button(f"실패한 {n_simple}개 다시 보내기", key="exp_retry", variant="danger", icon=":material/refresh:",
+                           on_click=actions.retry_export)
+                button("전달 완료", key="exp_done", variant="primary", icon=":material/check:", on_click=actions.finish_export)
+        if not host:
             markup('<p class="hint" style="font-size:14px">외부 도구 전송은 회의 주관자만 할 수 있어요.</p>')
             return
-        if finalize.in_flow(s, mid):  # 「확정하기」로 들어온 흐름: 4단계
-            finalize.flow_stepper(4)
         if s.export.started_at is None:
             _pick(mid)
             return

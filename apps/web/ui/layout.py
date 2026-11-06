@@ -36,6 +36,18 @@ def page_header(title: str, desc: str = "", *, desc_html: str | None = None) -> 
     )
 
 
+@contextmanager
+def step_header(title: str, desc: str = "", *, desc_html: str | None = None):
+    """단계 화면 머리말: (왼쪽) 현재 단계 제목 · 설명  /  (오른쪽, 제목과 같은 줄) 이전화면으로 · 다음 · 삭제 · 공유 버튼.
+
+    with step_header(...): 안에서 버튼을 그리면 모든 화면에서 같은 자리에 와요.
+    """
+    with st.container(key="step-head", horizontal=True, vertical_alignment="top", gap="small"):
+        page_header(title, desc, desc_html=desc_html)
+        with st.container(key="step-head-btns", horizontal=True, width="content", gap="small"):
+            yield
+
+
 def card_title(title: str, *, icon_html: str = "", aside: str = "", size: int = 15) -> None:
     markup(
         f'<div class="card-title">{icon_html}<h3 style="font-size:{size}px">{esc(title)}</h3>'

@@ -27,12 +27,13 @@ from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button, button_group
 from ui.html import markup
-from ui.layout import page
+from ui.layout import page, step_header
 from ui.loading import loading_overlay
 from ui.tags import tag
 from utils.dates import date_key
 from utils.files import ALLOWED_LABEL, read_text
 from utils.text import esc
+from views.finalize import flow_stepper
 from views.meeting.insight_tabs import render_insights
 from views.meeting.raw_panel import render_raw_panel
 
@@ -103,17 +104,9 @@ def _field(label: str, key: str, value: str, placeholder: str, icon_name: str, m
            on_click=actions.open_picker, args=(modal,), width="stretch")
 
 
-_STEPS = ("회의 내용 입력", "분석 및 검토")
-
-
-# ================================================================ 공통
 def _stepper(step: int) -> None:
-    items = []
-    for i, name in enumerate(_STEPS, 1):
-        state = "done" if i < step else ("on" if i == step else "todo")
-        mark = "✓" if state == "done" else str(i)
-        items.append(f'<span class="wz-step {state}"><span class="dot">{mark}</span>{esc(name)}</span>')
-    markup('<div class="wz-steps">' + '<span class="wz-arrow">→</span>'.join(items) + "</div>")
+    """새 회의록 작성부터 외부 도구 전송까지 이어지는 6단계 표시 (이 화면은 1 · 2단계)."""
+    flow_stepper(step)
 
 
 def _card_head(title: str, badge: str = "") -> None:
@@ -208,16 +201,16 @@ def _content(s: AppState, n: int) -> None:
 
 
 def _step1(s: AppState, n: int) -> None:
+    # 현재 단계 제목과 같은 줄 오른쪽: 초기화 · 다음 단계 (모든 단계 화면에서 같은 자리)
+    with step_header("회의 내용 입력", "기본 정보와 회의 내용을 적은 뒤 「다음 단계」를 눌러 주세요"):
+        button("초기화", key="cp_reset", variant="secondary", icon=":material/restart_alt:", on_click=actions.compose_reset)
+        button("다음 단계 →", key="cp_next1", variant="primary", on_click=actions.compose_next, args=(n,))
     with st.container(key="wz-card", gap="medium"):
         _basic_info(s, n)
         markup('<hr class="cp-divider">')
         _content(s, n)
         if s.nn_error:
             markup(f'<span role="alert" class="cp-error">{esc(s.nn_error)}</span>')
-        with st.container(horizontal=True, vertical_alignment="center"):
-            button("초기화", key="cp_reset", variant="secondary", on_click=actions.compose_reset)
-            st.space("stretch")
-            button("다음 단계 →", key="cp_next1", variant="primary", on_click=actions.compose_next, args=(n,))
 
 
 # ================================================================ 2단계: 분석 및 검토 (회의 상세와 같은 화면)
@@ -238,12 +231,12 @@ def _step2(s: AppState) -> None:
         "todos": [{"text": t, "owners": [x.strip() for x in w.split(",")] if w != "담당 미정" else [], "due": d}
                   for t, w, d in result.todos],
     }
-    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(뒤로 가기 · JSON 저장 · 확정하기)
+    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · JSON 저장 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
-            button("← 뒤로 가기", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
+            button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
             with st.container(key="b-secondary-cp_json", width="content"):
                 st.download_button("결과 JSON 저장", json.dumps(data, ensure_ascii=False, indent=2),
                                    file_name="meeting_result.json", mime="application/json", key="cp_json")

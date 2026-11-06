@@ -15,6 +15,7 @@ from state import selectors as sel
 from state.store import get_state, me_id
 from ui.buttons import button
 from ui.html import markup
+from utils.text import esc
 
 
 def _host_only(m) -> bool:
@@ -78,10 +79,28 @@ def todo_owner_dialog() -> None:
                   hint="이름을 누르면 선택 · 다시 누르면 해제 (여러 명 가능)",
                   featured=attendees, featured_label=f"이 회의 참석자 {len(attendees)}")
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
-        if button("← 돌아가기", key="todo_owner_back", variant="secondary"):
+        if button("← 이전화면으로", key="todo_owner_back", variant="secondary"):
             actions.back_to_add_todo()
             st.rerun()
         n = len(s.pick_draft)
         if button(f"{n}명 선택" if n else "담당 미정으로 두기", key="todo_owner_ok", variant="primary"):
             actions.back_to_add_todo(confirm=True)
+            st.rerun()
+
+
+@st.dialog("담당자 변경", width="medium", on_dismiss=actions.close_modal)
+def owner_change_dialog() -> None:
+    """담당자 추천 화면 「담당자 변경」: 새 회의록의 참석자 고르기와 같은 사람 찾기 창 (소속별 조직도 · 검색 · 최근 · 즐겨찾기)."""
+    s = get_state()
+    markup(f'<p class="hint owner-change-target">액션 아이템 <b>{esc(s.assign_text)}</b></p>')
+    people_picker("owner_change", single=False, title=f"선택한 담당자 {len(s.pick_draft)}명",
+                  hint="이름을 누르면 선택 · 다시 누르면 해제 (여러 명 가능)")
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if button("취소", key="owner_change_cancel", variant="secondary"):
+            actions.close_modal()
+            st.rerun()
+        n = len(s.pick_draft)
+        if button(f"{n}명으로 변경" if n else "사람을 골라 주세요", key="owner_change_ok", variant="primary",
+                  disabled=not n):
+            actions.confirm_owner_change()
             st.rerun()
