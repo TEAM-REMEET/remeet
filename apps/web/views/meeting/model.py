@@ -207,13 +207,13 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
     for i, t in sel.todo_items(s, m.id):  # 삭제한 액션 아이템은 빼고 (번호는 원래 그대로)
         key = sel.todo_key(m.id, i)
         me = me_id()
-        if s.assigned.get(key):  # 주관자가 지정 · 변경한 사람들 (이름으로 저장 · 회의록 담당자보다 먼저)
-            my_name = sel.me().name
+        if s.assigned.get(key):  # 주관자가 지정 · 변경한 사람들 (user_id로 저장 · 회의록 담당자보다 먼저)
             picked = s.assigned[key]
-            mine = my_name in picked
-            who = ", ".join("나" if n == my_name else n for n in picked)
+            mine = me in picked
+            who = ", ".join("나" if pid == me else sel.assignee_name(pid) for pid in picked)
             # 회의록에 담당자가 없던 일은 노란색, 있던 일을 바꾼 것은 회색 (나는 주황)
-            tags = tuple(("나", "mine") if n == my_name else (n, "att" if t.owners else "warn") for n in picked)
+            tags = tuple(("나", "mine") if pid == me else (sel.assignee_name(pid), "att" if t.owners else "warn")
+                         for pid in picked)
         elif t.owners:
             mine = me in t.owners
             who = ", ".join("나" if pid == me else sel.name_of(pid) for pid in t.owners)
@@ -243,8 +243,8 @@ def assignable(s: AppState, m: Meeting) -> list[tuple[str, str, list[str], list[
     (todo key, 할 일, 지금 담당자들, 바꾸기 전 담당자들, 원문 근거 문단 id들) · 담당자가 없으면 빈 목록
     """
     return [
-        (sel.todo_key(m.id, i), t.text, list(s.assigned.get(sel.todo_key(m.id, i), [])),
-         list(s.assign_prev.get(sel.todo_key(m.id, i), [])), t.src)
+        (sel.todo_key(m.id, i), t.text, [sel.assignee_name(p) for p in s.assigned.get(sel.todo_key(m.id, i), [])],
+         [sel.assignee_name(p) for p in s.assign_prev.get(sel.todo_key(m.id, i), [])], t.src)
         for i, t in sel.todo_items(s, m.id)
         if not t.owners
     ]

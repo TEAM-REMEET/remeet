@@ -28,6 +28,12 @@ def name_of(pid: str) -> str:
     return person(pid).name
 
 
+def assignee_name(who: str) -> str:
+    """지정한 담당자(user_id) → 이름. 구성원에 없는 값(목업 후보 이름)은 그대로 보여 줘요."""
+    p = repo.people().get(who)
+    return p.name if p else who
+
+
 def speaker_id(short_name: str) -> str | None:
     return repo.people_by_short_name().get(short_name)
 
@@ -183,17 +189,12 @@ def todo_at(state: AppState, key: str) -> Todo | None:
 
 def todo_owner_names(state: AppState, key: str, t: Todo) -> list[str]:
     """지금 담당자 이름들: 담당자 추천 · 지정에서 바꿨으면 그 사람들, 아니면 회의록의 담당자."""
-    if state.assigned.get(key):
-        return list(state.assigned[key])
-    return [name_of(pid) for pid in t.owners]
+    return [assignee_name(who) for who in todo_owner_ids(state, key, t)]
 
 
 def todo_owner_ids(state: AppState, key: str, t: Todo) -> tuple[str, ...]:
-    """지금 담당자 id 들 (바꾼 담당자는 이름으로 저장돼 있어 이름으로 찾음)."""
-    if state.assigned.get(key):
-        by_name = {p.name: pid for pid, p in repo.people().items()}
-        return tuple(by_name[n] for n in state.assigned[key] if n in by_name)
-    return t.owners
+    """지금 담당자 user_id 들: 담당자 추천 · 지정에서 바꿨으면 그 사람들, 아니면 회의록의 담당자."""
+    return tuple(state.assigned[key]) if state.assigned.get(key) else t.owners
 
 
 def mine_count(mid: str) -> int:
@@ -202,11 +203,10 @@ def mine_count(mid: str) -> int:
 
 def my_todo_keys(state: AppState, mid: str) -> list[str]:
     """이 회의에서 나에게 맡겨진 할 일 (담당자 지정으로 바뀐 것까지 반영)."""
-    my_name = me().name
     keys = []
     for i, t in todo_items(state, mid):
         key = todo_key(mid, i)
-        owner_is_me = my_name in todo_owner_names(state, key, t) if state.assigned.get(key) else me_id() in t.owners
+        owner_is_me = me_id() in state.assigned[key] if state.assigned.get(key) else me_id() in t.owners
         if owner_is_me:
             keys.append(key)
     return keys

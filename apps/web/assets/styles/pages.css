@@ -1969,6 +1969,9 @@
 [class*="st-key-b-trash-"] button [data-testid="stIconMaterial"] { font-size: 20px; color: #B3261E; }
 [class*="st-key-todohead-"] > [class*="st-key-b-trash-"],
 [class*="st-key-todohead-"] > .stElementContainer:has([class*="st-key-b-trash-"]) { flex: none !important; }
+/* 할 일 문장이 길어 줄바꿈돼도 휴지통은 같은 줄 오른쪽에: 줄은 안 넘기고, 문장 칸이 남는 폭만 씀 */
+[class*="st-key-todohead-"] { flex-wrap: nowrap !important; }
+[class*="st-key-todohead-"] > .stElementContainer:not(:has([class*="st-key-b-trash-"])) { flex: 1 1 0 !important; min-width: 0; }
 .todo-gone { flex: 1; font-size: 14px; color: #80858e; text-decoration: line-through; word-break: keep-all; }
 [class*="st-key-todogone-"] { padding: 4px 0; border-top: 1px solid var(--line-soft); }
 
