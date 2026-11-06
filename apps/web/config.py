@@ -52,6 +52,8 @@ APP_TITLE = "RE:MEET"
 
 # 백엔드(FastAPI) 주소. 로컬은 기본값, Docker는 docker-compose에서 http://backend:8000 을 넣어요.
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+# 회의 요약 응답을 기다리는 시간 (초). 요약은 몇 분 이상 걸릴 수 있어 nginx의 proxy_read_timeout과 같게 둬요.
+MEETING_SUMMARY_TIMEOUT = 3600
 
 # 브랜드 이미지 (assets/brand/)
 BRAND_DIR = Path(__file__).resolve().parent / "assets" / "icons"

@@ -1,6 +1,7 @@
 """POST /api/meetings — 회의 등록 폼 입력으로 요약 · 액션 아이템 추출 (응답: MeetingSummary)
 
 오류 응답
+    401  로그인하지 않음 · 출입증 만료 (LLM을 호출하지 않음)
     422  입력 형식 오류 (LLM을 호출하지 않음)
     502  요약 실행 실패 — 같은 요청을 다시 보내면 실패한 단계부터 진행됨
 """
@@ -15,6 +16,7 @@ from followup.analysis.summary.schemas import MeetingSummary
 from followup.analysis.summary.transcript_builder import MeetingSubmission
 from followup.application.ports import StructuredLLM, SummaryStore
 from followup.application.summarize_meeting import summarize_submission
+from followup.entrypoints.api.routes.auth import current_user
 from followup.entrypoints.bootstrap import build_llm, build_store
 
 logger = logging.getLogger(__name__)
@@ -32,7 +34,8 @@ def get_store() -> SummaryStore:
 
 
 # 동기 함수로 두어 요약이 실행되는 동안 다른 요청(헬스체크 등)을 막지 않음
-@router.post("/meetings", response_model=MeetingSummary)
+# nginx가 /api/를 외부에 공개하므로, 로그인한 사람만 호출하게 함 (LLM 비용 보호)
+@router.post("/meetings", response_model=MeetingSummary, dependencies=[Depends(current_user)])
 def create_meeting(submission: MeetingSubmission, llm: StructuredLLM = Depends(get_llm),
                    store: SummaryStore = Depends(get_store)) -> MeetingSummary:
     try:

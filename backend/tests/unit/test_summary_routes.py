@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from followup.adapters.storage.local_files import LocalFileStore
 from followup.analysis.summary.schemas import LLMAgenda, LLMDiscussionItem, LLMMeetingSummary, LLMVerification
 from followup.entrypoints.api.main import app
+from followup.entrypoints.api.routes.auth import current_user
 from followup.entrypoints.api.summary_routes import get_llm, get_store
 
 REQUEST = {
@@ -53,6 +54,7 @@ class MeetingRouteTests(unittest.TestCase):
         self.addCleanup(env.stop)
         self.addCleanup(app.dependency_overrides.clear)
         app.dependency_overrides[get_store] = lambda: LocalFileStore(self.root)
+        app.dependency_overrides[current_user] = lambda: {"user_id": "u1", "permission": "member"}
         self.client = TestClient(app, raise_server_exceptions=False)
 
     def post(self, llm, body=None):
@@ -100,6 +102,28 @@ class MeetingRouteTests(unittest.TestCase):
         retry = FakeLLM()
         self.assertEqual(self.post(retry).status_code, 200)
         self.assertEqual(retry.calls, ["LLMVerification"])      # 생성 응답을 재사용하고 실패한 단계부터 호출
+
+
+class MeetingRouteAuthTests(unittest.TestCase):
+    def setUp(self):
+        self.addCleanup(app.dependency_overrides.clear)
+        self.llm = FakeLLM()
+        app.dependency_overrides[get_llm] = lambda: self.llm
+        self.client = TestClient(app)
+
+    def assert_rejected(self, headers=None, body=None):
+        response = self.client.post("/api/meetings", json=body or REQUEST, headers=headers or {})
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(self.llm.calls, [])
+
+    def test_without_token_is_401_without_llm_call(self):
+        self.assert_rejected()
+
+    def test_wrong_token_is_401_without_llm_call(self):
+        self.assert_rejected(headers={"Authorization": "Bearer fake-token"})
+
+    def test_invalid_body_without_token_is_still_401(self):
+        self.assert_rejected(body={"title": "형식이 틀린 요청"})
 
 
 class ProjectIdCompatibilityTests(unittest.TestCase):

@@ -25,18 +25,23 @@ def _detail(e: HTTPError) -> str:
         return f"서버 오류 ({e.code})"
     if isinstance(detail, list):  # 422: 입력 검증 실패 목록
         return " · ".join(f"{'.'.join(map(str, d.get('loc', [])[1:]))}: {d.get('msg')}" for d in detail)
+    if isinstance(detail, dict) and "errors" in detail:  # 422: 회의록 형식 오류 목록 (POST /api/meetings)
+        return " · ".join(map(str, detail["errors"]))
     return str(detail)
 
 
-def call(method: str, path: str, body: dict | None = None, token: str = ""):
-    """token: 로그인 출입증 (관리자 API 등). 없으면 보내지 않아요."""
+def call(method: str, path: str, body: dict | None = None, token: str = "", timeout: float = 15):
+    """token: 로그인 출입증 (관리자 API 등). 없으면 보내지 않아요.
+    timeout: 응답을 기다리는 시간(초). 회의 요약처럼 오래 걸리는 요청만 늘려요."""
     data = json.dumps(body).encode() if body is not None else None
     headers = {"Content-Type": "application/json"} | ({"Authorization": f"Bearer {token}"} if token else {})
     req = Request(f"{API_BASE_URL}{path}", data=data, method=method, headers=headers)
     try:
-        with urlopen(req, timeout=15) as res:
+        with urlopen(req, timeout=timeout) as res:
             return json.load(res)
     except HTTPError as e:
         raise ApiError(_detail(e), e.code) from e
-    except OSError as e:  # URLError(연결 안 됨) · TimeoutError(응답이 15초 넘게 없음) 둘 다
+    except TimeoutError as e:  # 서버는 켜져 있는데 응답이 늦음 (연결 실패와 구분)
+        raise ApiError(f"백엔드 응답이 {timeout:g}초 안에 오지 않았어요. 잠시 뒤 다시 시도해 주세요.") from e
+    except OSError as e:  # URLError(연결 안 됨)
         raise ApiError(f"백엔드에 연결할 수 없어요 ({API_BASE_URL}). 백엔드 서버가 켜져 있는지 확인해 주세요.") from e

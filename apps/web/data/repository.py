@@ -13,6 +13,7 @@ from pathlib import Path
 
 import streamlit as st
 
+from config import MEETING_SUMMARY_TIMEOUT
 from data import api
 
 from data.models import (
@@ -108,6 +109,11 @@ def login(email: str, password: str) -> dict:
 def me(token: str) -> dict:
     """토큰 → 로그인한 사람 (새로고침 후 로그인 되살리기). 만료 · 위조면 api.ApiError."""
     return api.call("GET", "/api/auth/me", token=token)
+
+
+def summarize_meeting(body: dict) -> dict:
+    """회의 등록 입력 → 요약 · 액션 아이템 (POST /api/meetings, 응답은 MeetingSummary JSON). 실패하면 api.ApiError."""
+    return api.call("POST", "/api/meetings", body, _token(), timeout=MEETING_SUMMARY_TIMEOUT)
 
 
 def people() -> dict[str, Person]:
