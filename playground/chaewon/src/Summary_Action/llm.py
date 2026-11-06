@@ -21,11 +21,14 @@ from tracing import traceable, wrap_client
 
 _client = None
 _api_calls = 0      # 현재 회의에서 실제 API 호출 수 (run 시작 시 reset_call_count)
+_call_limit = None  # API 호출 상한 (None이면 config.max_llm_calls())
 
 
-def reset_call_count() -> None:
-    global _api_calls
+def reset_call_count(limit: int | None = None) -> None:
+    # limit: 이번 실행의 호출 상한 (사용자 수정 반영은 config.hitl_max_llm_calls()) / 생략하면 기본 상한
+    global _api_calls, _call_limit
     _api_calls = 0
+    _call_limit = limit
 
 
 def api_call_count() -> int:
@@ -64,9 +67,10 @@ def call_structured(system: str, user: str, schema: type[BaseModel], tag: str = 
             return cached
 
     global _api_calls
-    if _api_calls >= cfg.max_llm_calls():
-        raise RuntimeError(f"LLM 호출 상한 초과 — 회의 하나당 최대 {cfg.max_llm_calls()}회 "
-                           f"({cfg.llm_call_plan_text()}), 호출하지 않고 중단")
+    limit = cfg.max_llm_calls() if _call_limit is None else _call_limit
+    if _api_calls >= limit:
+        plan = cfg.llm_call_plan_text() if _call_limit is None else "사용자 수정 반영"
+        raise RuntimeError(f"LLM 호출 상한 초과 — 회의 하나당 최대 {limit}회 ({plan}), 호출하지 않고 중단")
     _api_calls += 1     # 실패해도 센 횟수로 둠 (같은 실행에서 다시 호출하지 않음)
 
     kwargs = {} if cfg.LLM_TEMPERATURE is None else {"temperature": cfg.LLM_TEMPERATURE}

@@ -24,7 +24,7 @@ def format_item(item: BaseItem) -> str:
         tags = f"[{item.tag}]"
     parts = [f"{item.item_id} | " if cfg.SHOW_ITEM_ID else "", f"{tags} " if tags else "", item.text]
     if isinstance(item, DiscussionItem) and item.is_action:
-        parts.append(f" (담당: {', '.join(item.assignees) or '-'} · 기한: {item.due or '-'})")
+        parts.append(f" (담당: {', '.join(item.assignees) or '-'} · {f'기한: {item.due or cfg.EMPTY_DUE_TEXT}'.rstrip()})")
     if cfg.SHOW_EVIDENCE:
         parts.append(f" [근거 발화 {', '.join(map(str, item.evidence_utterance_indices)) or '-'}]")
     if item.status == "REVIEW_REQUIRED":
