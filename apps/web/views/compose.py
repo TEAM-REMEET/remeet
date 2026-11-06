@@ -22,15 +22,15 @@ from components.member_pills import member_pills
 from state.store import me_id
 from data import repository as repo
 from state import actions
-from state import archive as arc
 from state import compose_ai as ai
 from state import selectors as sel
 from state.store import AppState, get_state
-from ui.buttons import button
+from ui.buttons import button, button_group
 from ui.html import markup
 from ui.layout import page
 from ui.loading import loading_overlay
 from ui.tags import tag
+from utils.dates import date_key
 from utils.files import ALLOWED_LABEL, read_text
 from utils.text import esc
 from views.meeting.insight_tabs import render_insights
@@ -53,18 +53,41 @@ def _people_text(pids: list[str]) -> str:
     return ", ".join(names[:3]) + (f" 외 {len(names) - 3}명" if len(names) > 3 else "") + f"  ({len(names)}명)"
 
 
-def _folder_text(s: AppState) -> str:
-    """'주간 회의 › 프로젝트별 › 11월 릴리즈 준비' · '월간 회의 › 월별 › 11월 (새 폴더)'"""
-    t = repo.meeting_types()[s.nn_type].name
-    if s.nn_group == "period":
-        if not s.nn_period:
-            return ""
-        new = "" if arc.period(s, s.nn_type, s.nn_period) else " (새 폴더)"
-        return f"{t} › {arc.PERIOD_LABEL[s.nn_type]} › {arc.period_label(s.nn_period)}{new}"
-    topics = sel.folder_ids_of_type(s, s.nn_type)
-    if s.nn_topic in topics:
-        return f"{t} › 프로젝트별 › {sel.folders(s)[s.nn_topic].name}"
-    return f"{t} › 프로젝트별 › {s.nn_name} (새 폴더)" if s.nn_name.strip() else ""
+def _project_ids(s: AppState) -> list[str]:
+    """내 프로젝트 폴더 전체: 최근 회의가 있었던 순 (새로 만든 폴더 먼저)."""
+    def recent(fid: str) -> tuple:
+        notes = sel.folder_note_ids(s, fid)
+        return (sel.folders(s)[fid].is_new, date_key(repo.meeting(notes[0]).date) if notes else 0)
+
+    return sorted(sel.all_my_folder_ids(s), key=recent, reverse=True)
+
+
+def _project_field(s: AppState, n: int) -> None:
+    """프로젝트 드롭다운 → 이 회의의 종류.
+
+    프로젝트 하나에 월간 · 주간 · 일반 회의가 함께 있어요. 프로젝트는 이름으로 검색해 고르거나,
+    목록에 없는 이름을 적으면 새 프로젝트로 만들어요.
+    """
+    types = repo.meeting_types()
+    folders = sel.folders(s)
+    fids = _project_ids(s)
+    by_name = {folders[k].name: k for k in fids}  # shortcut: 이름이 같은 프로젝트가 둘 이상이면 하나만 보임
+    pending = s.nn_name.strip() if s.nn_topic not in fids else ""
+    options = list(by_name) + ([pending] if pending and pending not in by_name else [])
+    current = folders[s.nn_topic].name if s.nn_topic in fids else pending
+    _label("프로젝트 *")
+    value = st.selectbox(
+        "프로젝트 (필수)", options, index=options.index(current) if current in options else None,
+        placeholder="프로젝트 검색 또는 새 이름 입력", accept_new_options=True, label_visibility="collapsed",
+        key=f"cp_project_{n}",
+    )
+    value = (value or "").strip()
+    if value:  # 고른 값을 바로 작성 상태에 반영 (기존 이름을 그대로 적으면 새로 만들지 않고 그 프로젝트로)
+        fid = by_name.get(value, "")
+        s.nn_topic, s.nn_name = (fid, "") if fid else (_NEW, value)
+    _label("회의 종류 *")
+    button_group([(k, types[k].name) for k in ("monthly", "weekly", "normal")], s.nn_type, actions.set_compose_type,
+                 key="cp_type", style="seg", gap=None)
 
 
 def _label(label: str) -> None:
@@ -119,8 +142,6 @@ def _basic_info(s: AppState, n: int) -> None:
 
     types = repo.meeting_types()
     folders = sel.folders(s)
-    topics = sel.folder_ids_of_type(s, s.nn_type)
-    topic = s.nn_topic if s.nn_topic in topics else _NEW
 
     with st.container(key="cp-grid", gap="small"):
         c1, c2 = st.columns(2, gap="medium")
@@ -140,21 +161,14 @@ def _basic_info(s: AppState, n: int) -> None:
         with c2:
             _field("참석자", "cp_people_field", _people_text(s.nn_people), "참석자 선택",
                    ":material/group:", "cp_people")
-        _field("회의 종류 · 폴더 *", "cp_folder_field", _folder_text(s), "회의 종류와 폴더 선택",
-               ":material/folder:", "cp_folder")
+        _project_field(s, n)
     t = types[s.nn_type].name
-    if s.nn_group == "period":
-        if not s.nn_period:
-            hint = "회의 종류와 폴더를 골라 주세요."
-        elif arc.period(s, s.nn_type, s.nn_period):
-            hint = f"{t} 「{arc.period_label(s.nn_period)}」 폴더에 쌓여요 · 참석자만 볼 수 있어요."
-        else:
-            hint = f"{t} 안에 「{arc.period_label(s.nn_period)}」 폴더가 새로 만들어져요."
-    elif topic == _NEW:
-        hint = (f"{t} 안에 「{s.nn_name}」 폴더가 만들어지고, 내가 폴더 주관자가 돼요." if s.nn_name.strip()
-                else "회의 종류와 폴더를 골라 주세요.")
+    topic = s.nn_topic if s.nn_topic in sel.all_my_folder_ids(s) else _NEW
+    if topic == _NEW:
+        hint = (f"「{s.nn_name}」 프로젝트가 새로 만들어지고(내가 주관자) 이 회의는 {t}로 쌓여요." if s.nn_name.strip()
+                else "프로젝트를 고르거나 새 이름을 적어 주세요.")
     else:
-        hint = f"「{folders[topic].name}」 폴더에 쌓여요 · 참석자만 볼 수 있고, 빠진 멤버에게는 회의 상세에서 공유할 수 있어요."
+        hint = f"「{folders[topic].name}」 프로젝트의 {t}로 쌓여요 · 참석자만 볼 수 있고, 빠진 멤버에게는 회의 상세에서 공유할 수 있어요."
     markup(f'<span class="cp-hint">{esc(hint)}</span>')
 
 

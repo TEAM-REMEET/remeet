@@ -69,7 +69,7 @@ def folders(state: AppState) -> dict[str, Folder]:
     """지금 존재하는 폴더 (새로 만든 폴더 포함, 삭제한 폴더 제외)."""
     out = dict(repo.base_folders())
     for nf in state.new_folders:
-        out[nf.id] = Folder(nf.id, nf.name, nf.type, me_id(), (me_id(),), (), is_new=True)
+        out[nf.id] = Folder(nf.id, nf.name, me_id(), (me_id(),), (), is_new=True)
     if state.branched and "rel" in out:
         notes = list(out["rel"].notes)
         notes.insert(1, "m9")
@@ -88,27 +88,14 @@ def members_of(state: AppState, fid: str) -> list[str]:
     return [p for p in members if f"{fid}:{p}" not in state.members_removed]
 
 
-PERIOD_PREFIX = "period-"  # 주차별 · 월별 · 일별에만 보이는 회의를 담는 폴더 (프로젝트별에는 안 보임)
-
-
-def is_period_folder(fid: str) -> bool:
-    return fid.startswith(PERIOD_PREFIX)
-
-
-def folder_ids_of_type(state: AppState, mtype: str) -> list[str]:
-    """내가 멤버인 프로젝트 폴더만 (회의 종류별). 주차별·월별·일별 전용 폴더는 빼요."""
-    return [k for k, f in folders(state).items()
-            if f.type == mtype and not is_period_folder(k) and me_id() in members_of(state, k)]
-
-
-def period_container_ids(state: AppState, mtype: str) -> list[str]:
-    """주차별 · 월별 · 일별 회의를 담는 폴더 (내가 멤버인 것)."""
-    return [k for k, f in folders(state).items()
-            if f.type == mtype and is_period_folder(k) and me_id() in members_of(state, k)]
+def meeting_type(state: AppState, mid: str) -> str:
+    """회의 종류(weekly | monthly | normal) = 회의의 directory_id. 한 프로젝트에 여러 종류의 회의가 있어요."""
+    return repo.meeting(mid).directory_id
 
 
 def all_my_folder_ids(state: AppState) -> list[str]:
-    return [k for t in TYPE_ORDER for k in folder_ids_of_type(state, t)]
+    """내가 멤버인 프로젝트(폴더)."""
+    return [k for k in folders(state) if me_id() in members_of(state, k)]
 
 
 def can_see(state: AppState, mid: str) -> bool:
@@ -132,9 +119,9 @@ def folder_note_ids(state: AppState, fid: str) -> list[str]:
     return by_date_desc([i for i in folders(state)[fid].notes if can_see(state, i)])
 
 
-def folder_ids_by_owner(state: AppState, mtype: str, owner: str) -> list[str]:
-    """회의 종류의 내 폴더를 전체 / 내가 만든 폴더(mine) / 멤버(member)로 거르기."""
-    fids = folder_ids_of_type(state, mtype)
+def folder_ids_by_owner(state: AppState, owner: str) -> list[str]:
+    """내 프로젝트를 전체 / 내가 만든 프로젝트(mine) / 멤버(member)로 거르기."""
+    fids = all_my_folder_ids(state)
     if owner == "mine":
         return [k for k in fids if folders(state)[k].host == me_id()]
     if owner == "member":
@@ -152,13 +139,8 @@ def visible_note_ids(state: AppState) -> list[str]:
 
 def folder_label(state: AppState, m: Meeting) -> str:
     fs = folders(state)
-    if m.topic in fs:
-        f = fs[m.topic]
-        if is_period_folder(m.topic):  # 주차별 · 월별 · 일별 회의: 「주간 회의 / 10월 3주차」
-            from state import archive  # archive 가 이 모듈을 쓰므로 함수 안에서 불러옴
-
-            return f"{repo.meeting_types()[f.type].name} / {archive.period_label(archive.period_key(f.type, m.date))}"
-        return f"{repo.meeting_types()[f.type].name} / {f.name}"
+    if m.project_id in fs:  # 「주간 회의 / 11월 릴리즈 준비」
+        return f"{repo.meeting_types()[m.directory_id].name} / {fs[m.project_id].name}"
     return "공유 받은 회의" if m.shared else ""
 
 
@@ -364,8 +346,6 @@ def home_meeting_ids(state: AppState) -> list[str]:
 
 # ---------------------------------------------------------------- 상단 경로
 def breadcrumbs(state: AppState) -> list[str]:
-    from state import archive  # archive 가 이 모듈을 쓰므로 함수 안에서 불러옴
-
     if state.not_found:
         return ["페이지를 찾을 수 없음"]
     s = state.screen
@@ -387,27 +367,18 @@ def breadcrumbs(state: AppState) -> list[str]:
         return ["관리자", "MCP 관리"]
     if s == "archive":
         crumbs = ["회의록"]
-        t, g, p = state.archive_type, state.archive_group, state.archive_period
-        if t:
-            crumbs.append(types[t].name)
-        if t and g:
-            crumbs.append(archive.group_label(t, g))
-        if t and g == "period" and p:
-            crumbs.append(archive.period_label(p))
+        if state.archive_type:
+            crumbs.append(types[state.archive_type].name)
         return crumbs
     if s == "folder":
-        crumbs = ["회의록", types[state.folder_type].name, "프로젝트별"]
+        crumbs = ["회의록", "프로젝트"]
         if state.folder_id in fs:
             crumbs.append(fs[state.folder_id].name)
         return crumbs
     if s == "note":
         m = repo.meeting(state.meeting_id)
-        if m.topic in fs:
-            f = fs[m.topic]
-            if is_period_folder(m.topic):
-                p = archive.period_key(f.type, m.date)
-                return ["회의록", types[f.type].name, archive.PERIOD_LABEL[f.type], archive.period_label(p), m.title]
-            return ["회의록", types[f.type].name, f.name, m.title]
+        if m.project_id in fs:
+            return ["회의록", fs[m.project_id].name, types[m.directory_id].name, m.title]
         return ["공유 받은 회의", m.title]
     if s == "deliver":
         return ["회의록", repo.meeting(state.delivery.meeting_id).title, "결과 전달"]
