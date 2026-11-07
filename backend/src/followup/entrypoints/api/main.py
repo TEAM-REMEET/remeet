@@ -14,6 +14,7 @@ from fastapi import FastAPI
 
 from followup import settings
 from followup.adapters.neo4j.driver import close_driver
+from followup.entrypoints.api.ask_routes import router as ask_router
 from followup.entrypoints.api.recommend_routes import router as recommend_router
 from followup.entrypoints.api.routes import auth, people
 from followup.entrypoints.api.summary_routes import router as summary_router
@@ -39,6 +40,7 @@ app.include_router(auth.router)
 app.include_router(people.router)
 app.include_router(summary_router)
 app.include_router(recommend_router)
+app.include_router(ask_router)
 
 
 @app.get("/api/health")
