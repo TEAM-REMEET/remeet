@@ -19,7 +19,8 @@ from followup.entrypoints.api import errors
 from followup.entrypoints.api.ask_routes import router as ask_router
 from followup.entrypoints.api.export_routes import router as export_router
 from followup.entrypoints.api.recommend_routes import router as recommend_router
-from followup.entrypoints.api.routes import auth, integrations, notifications, people, projects, search, shares
+from followup.entrypoints.api.routes import (auth, integrations, meeting_records, notifications, people, projects,
+                                            search, shares)
 from followup.entrypoints.api.summary_routes import router as summary_router
 
 
@@ -52,6 +53,7 @@ app.include_router(shares.router)
 app.include_router(notifications.router)
 app.include_router(search.router)
 app.include_router(integrations.router)
+app.include_router(meeting_records.router)
 errors.install(app)
 
 

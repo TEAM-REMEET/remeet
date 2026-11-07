@@ -2,7 +2,7 @@
 from __future__ import annotations
 from followup.adapters.postgres.db import transaction
 from .common import (ValidationError, PermissionDenied, required, can_access_meeting,
-                     get_one, is_admin, invalidate, require_user)
+                     get_one, is_admin, invalidate, person_label, require_user)
 
 
 def create_share(*,actor_id: str,meeting_id: str,recipient_user_id: str | None = None,
@@ -77,4 +77,6 @@ def list_received(*, actor_id: str) -> list[dict]:
                        ORDER BY s.meeting_id, (s.scope = 'full' AND NOT s.lock_raw) DESC, s.id DESC""",
                     (actor_id,))
         rows = cur.fetchall()
+        for r in rows:  # web ShareInfo.sender "이름 · 팀"
+            r["sender"] = person_label(cur, r["sender_id"])
     return sorted(rows, key=lambda r: (r["shared_on"], r["meeting_id"]), reverse=True)

@@ -47,6 +47,15 @@ def _notify(cur, user_id: str, kind: str, text: str, meeting_id: str | None) -> 
 # =====================================================================
 # 도구 · 연결 상태
 # =====================================================================
+def organization(*, actor_id: str) -> str:
+    """조직 이름 (외부 연동 화면 상단 · web integrations()["organization"]). app_settings 의 organization_name."""
+    with transaction(actor_id) as cur:
+        account(cur, actor_id)
+        cur.execute("SELECT value FROM app_settings WHERE key = 'organization_name'")
+        row = cur.fetchone()
+    return row["value"] if row and isinstance(row["value"], str) else ""
+
+
 def list_tools(*, actor_id: str) -> list[dict]:
     """연동 도구 목록 + 연결 상태 · 마지막 전송 시각 (로그인한 누구나)."""
     with transaction(actor_id) as cur:

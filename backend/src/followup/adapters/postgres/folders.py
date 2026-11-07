@@ -96,6 +96,15 @@ def add_member(*, actor_id: str, folder_id: str, user_id: str) -> None:
     invalidate('_base_meetings', 'base_folders')
 
 
+def list_members(*, actor_id: str, folder_id: str) -> list[str]:
+    """프로젝트 멤버 user_id (주관자 먼저 · 추가한 순). web Folder.members."""
+    with transaction(actor_id) as cur:
+        f = can_access_folder(cur, folder_id, actor_id)
+        cur.execute("SELECT user_id FROM folder_members WHERE folder_id = %s ORDER BY position, user_id", (folder_id,))
+        ids = [r["user_id"] for r in cur.fetchall()]
+    return list(dict.fromkeys([f["host_user_id"], *ids]))
+
+
 def remove_member(*, actor_id: str, folder_id: str, user_id: str) -> None:
     with transaction(actor_id) as cur:
         f=can_access_folder(cur,folder_id,actor_id,write=True)

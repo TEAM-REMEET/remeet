@@ -1,5 +1,6 @@
 """외부 연동 상태 · 전송 실패 (PostgreSQL).
 
+GET  /api/integrations/organization                   조직 이름 (연동 화면 상단)
 GET  /api/integrations/tools                          도구 목록 · 연결 상태 · 마지막 동기화
 PUT  /api/integrations/tools/{tool_id}/status         연결 상태 바꾸기 (관리자)
 GET  /api/integrations/failures?meeting_id=&open_only= 전송 실패 기록 (관리자는 전체, 사용자는 회의 단위로만)
@@ -23,6 +24,11 @@ router = APIRouter(prefix="/api/integrations", tags=["integrations"])
 
 class ToolStatus(BaseModel):
     status: Literal["on", "off", "expired"]
+
+
+@router.get("/organization")
+def organization(me: str = Depends(actor)):
+    return {"name": integrations.organization(actor_id=me)}
 
 
 @router.get("/tools")

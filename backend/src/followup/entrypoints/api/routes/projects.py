@@ -1,12 +1,14 @@
 """프로젝트(폴더) · 폴더 트리 · 회의 목록 · 상태 이력 (PostgreSQL). 회의록 작성 · 상세는 다른 라우터 담당.
 
 GET    /api/folders/tree                         사이드바: 정기 회의 트리 + 프로젝트 트리
+GET    /api/meeting-types                        정기 회의 종류 (이름 · 설명 · 내가 못 보는 회의 수)
 GET    /api/meeting-types/{type_id}/meetings     정기 회의(weekly · monthly · normal) 안의 회의, 최신순
 GET    /api/meetings                             내가 볼 수 있는 전체 회의, 최신순   (POST /api/meetings 는 요약 생성)
 GET    /api/meetings/{meeting_id}/status-history 상태 변경 이력 (누가 · 언제)
 GET    /api/projects                             내 프로젝트 목록
 POST   /api/projects                             프로젝트 만들기 (만든 사람 = 주관자)
-GET    /api/projects/{project_id}                프로젝트 하나
+GET    /api/projects/{project_id}                프로젝트 하나 (+ members: 멤버 user_id, 주관자 먼저)
+GET    /api/projects/{project_id}/members        멤버 user_id 목록
 PATCH  /api/projects/{project_id}                이름 바꾸기 (주관자)
 DELETE /api/projects/{project_id}                지우기 (주관자)
 POST   /api/projects/{project_id}/members        멤버 추가 (주관자)
@@ -51,6 +53,11 @@ def folder_tree(me: str = Depends(actor)):
     return {"regular": minutes.list_regular_tree(actor_id=me), "projects": minutes.list_project_tree(actor_id=me)}
 
 
+@router.get("/meeting-types")
+def meeting_types(me: str = Depends(actor)):
+    return minutes.list_meeting_types(actor_id=me)
+
+
 @router.get("/meeting-types/{type_id}/meetings")
 def regular_meetings(type_id: str, limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
                      me: str = Depends(actor)):
@@ -80,7 +87,13 @@ def create_project(body: ProjectCreate, me: str = Depends(actor)):
 
 @router.get("/projects/{project_id}")
 def get_project(project_id: str, me: str = Depends(actor)):
-    return folders.get_folder(actor_id=me, folder_id=project_id)
+    project = folders.get_folder(actor_id=me, folder_id=project_id)
+    return {**project, "members": folders.list_members(actor_id=me, folder_id=project_id)}
+
+
+@router.get("/projects/{project_id}/members")
+def project_members(project_id: str, me: str = Depends(actor)):
+    return folders.list_members(actor_id=me, folder_id=project_id)
 
 
 @router.patch("/projects/{project_id}")

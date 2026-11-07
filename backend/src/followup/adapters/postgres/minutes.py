@@ -203,6 +203,26 @@ def _tree_rows(cur, actor_id: str, extra: str = "", params: dict | None = None) 
     return cur.fetchall()
 
 
+def list_meeting_types(*, actor_id: str) -> list[dict]:
+    """정기 회의 종류 (web MeetingType: id · name · meta · hidden_count) — 화면 순서(월간 · 주간 · 일반).
+    hidden_count = 그 종류 회의 중 내가 볼 수 없는 것 (생성된 회의만 · 미리보기 · 삭제 제외)."""
+    with transaction(actor_id) as cur:
+        require_user(cur, actor_id)
+        cur.execute(
+            f"""SELECT t.id, t.name, t.meta, t.sort_order,
+                       (SELECT count(*) FROM meetings m WHERE m.directory_id = t.id AND m.deleted_at IS NULL
+                          AND m.status <> 'draft') AS total,
+                       (SELECT count(*) FROM meetings m WHERE m.directory_id = t.id AND {_IN_MY_PROJECTS}) AS visible
+                FROM meeting_types t""",
+            {"actor": actor_id},
+        )
+        rows = cur.fetchall()
+    rank = {t: i for i, t in enumerate(REGULAR_ORDER)}
+    rows.sort(key=lambda r: (rank.get(r["id"], len(rank)), r["sort_order"], r["id"]))
+    return [{"id": r["id"], "name": r["name"], "meta": r["meta"], "hidden_count": r["total"] - r["visible"]}
+            for r in rows]
+
+
 def list_regular_tree(*, actor_id: str) -> list[dict]:
     """[사이드바 · 정기 회의] web sidebar._timeline 과 같은 트리 (node id · 이름 · 회의 수 · 최근 것이 먼저).
 
