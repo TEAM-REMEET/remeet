@@ -880,8 +880,7 @@ hr.cp-divider {
 .st-key-spk-bar .stElementContainer:has(.inline-label) {
   margin-right: 4px;
 }
-.para .who .tag,
-.ratio-row .nm .tag {
+.para .who .tag {
   margin-left: 4px;
   vertical-align: 1px;
 }
@@ -1410,6 +1409,20 @@ hr.cp-divider {
 .wz-box span {
   font-size: 13px;
 }
+/* 분석 중 안내 제목 앞 로딩 동그라미 */
+.wz-spin {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid #f5d3bb;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: wz-spin 0.8s linear infinite;
+}
+@keyframes wz-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wz-spin { animation-duration: 2.4s; } }
 .wz-info {
   background: #f6f7f9;
   color: var(--ink-2);

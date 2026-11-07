@@ -822,23 +822,6 @@
   font-size: 13px;
   color: var(--muted);
 }
-.ratio-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.ratio-row .nm {
-  width: 60px;
-  font-size: 14px;
-  flex: none;
-}
-.ratio-row .pct {
-  width: 40px;
-  text-align: right;
-  font-size: 13px;
-  color: var(--ink-3);
-  flex: none;
-}
 .read-note {
   height: 38px;
   padding: 0 12px;
@@ -1520,6 +1503,10 @@
 .st-key-md-split [data-testid="stColumn"]:last-child {
   background: var(--bg-soft);
 }
+/* 원문 검색창 돋보기: 연한 주황 */
+.st-key-raw_query_input [data-testid="stIconMaterial"] {
+  color: #F5A06B;
+}
 .st-key-raw-status {
   min-height: 24px;
   height: 24px;
@@ -2122,11 +2109,11 @@
 .ask-summary { margin: 0; font-size: 15px; line-height: 1.7; color: #2B2F36; }
 .ask-summary sup { color: #F37321; font-weight: 700; margin-left: 1px; }
 .ask-none { margin: 0; padding: 12px 14px; border-radius: 8px; background: #F5F6F8; color: #5F646D; font-size: 14px; }
-.ask-sec { margin-top: 6px; font-size: 12px; font-weight: 700; color: #80858E; }
+.ask-sec { display: inline-block; margin: 6px 0 10px; padding: 3px 10px; border: 1px solid #F5B58A; border-radius: 6px; background: none; font-size: 13.5px; font-weight: 700; color: #D9661C; }
 .ask-timeline { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 2px solid #E6E8EC; }
-.ask-timeline li { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13.5px; }
-.ask-timeline .where { color: #80858E; font-size: 12px; min-width: 190px; }
-.ask-timeline .what { flex: 1; color: #2B2F36; }
+.ask-timeline li { display: flex; align-items: center; gap: 20px; padding: 5px 0; font-size: 13.5px; }
+.ask-timeline .where { color: #80858E; font-size: 12px; flex: 0 0 auto; min-width: 120px; }
+.ask-timeline .what { flex: 1; color: #2B2F36; margin-right: 8px; }
 .ask-timeline li.old .what { text-decoration: line-through; color: #9CA1A9; }
 .ask-cite { padding: 10px 12px; border-radius: 8px; background: #FAFAFB; border: 1px solid #EEF0F3; }
 .ask-cite .head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -2136,7 +2123,7 @@
 .ask-cite .utts li { font-size: 13px; color: #3A3E45; padding: 2px 0; }
 .ask-cite .utts .no { color: #9CA1A9; margin-right: 6px; font-variant-numeric: tabular-nums; }
 .ask-cite .utts .role { color: #80858E; margin: 0 8px 0 4px; font-size: 12px; }
-.ask-contacts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ask-contacts { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .ask-contacts li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
 .ask-contacts .who { display: flex; flex-direction: column; min-width: 120px; }
 .ask-contacts .who span { font-size: 12px; color: #80858E; }

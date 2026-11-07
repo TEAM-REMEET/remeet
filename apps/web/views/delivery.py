@@ -31,7 +31,7 @@ def _banner(p: delivery.Progress, total: int, mid: str) -> None:
         tone = "fail" if p.failed else "ok"
         head = f"전송 실패 · {p.failed}건" if p.failed else "참석자에게 모두 전달했어요"
         sub = ("메신저가 잠깐 응답하지 않았어요. 다시 보내면 실패한 사람에게만 보내요." if p.failed
-               else f"참석자 {total}명에게 요약·결정·할 일을 보내고 위키에 반영했어요. "
+               else f"참석자 {total}명에게 요약·결정·할 일을 보냈어요. "
                     "Jira · Slack 같은 외부 도구로도 보내려면 「외부 도구 전송」을 눌러 주세요.")
         dot = "#B3261E" if p.failed else "#2E9E62"
     else:
@@ -49,7 +49,6 @@ def _steps(p: delivery.Progress, rc_total: int, todo_n: int) -> None:
         ("save", "회의록 확정 저장", "편집한 요약·안건을 새 버전으로 저장"),
         ("todo", "할 일·담당자 반영", f"할 일 {todo_n}건을 담당자에게 배정"),
         ("send", "참석자에게 결과 전송", f"{p.ok} / {rc_total}명 전달됨"),
-        ("wiki", "위키 반영", "폴더 위키 업데이트"),
     ]
     html = ""
     for sid, label, detail in rows:
@@ -102,7 +101,7 @@ def render() -> None:
             finalize.flow_stepper(5)
         p = delivery.progress(s)
         # 현재 단계 제목과 같은 줄 오른쪽: 전달이 끝나면 이전화면으로 · (실패) 다시 보내기 · 외부 도구 전송
-        with step_header("결과 전달", f"{repo.meeting(mid).title} · 확정한 내용을 참석자에게 보내고 위키에 반영해요"):
+        with step_header("결과 전달", f"{repo.meeting(mid).title} · 확정한 내용을 참석자에게 보내요"):
             if p.ended:
                 host = repo.meeting(mid).host == me_id()
                 button("← 이전화면으로", key="dv_back", variant="secondary", on_click=actions.open_meeting, args=(mid,))

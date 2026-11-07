@@ -114,16 +114,6 @@ def meeting_results(m: Meeting) -> tuple[MeetingResult, ...]:
     )
 
 
-def speaking_ratio(m: Meeting) -> list[tuple[str, int]]:
-    """[(원문 화자, %)] · 사람으로 인식된 화자만 (비율도 그 사람들 발언 합 기준)."""
-    counts: dict[str, int] = {}
-    for p in m.paragraphs:
-        if p.speaker and sel.paragraph_speaker(p):
-            counts[p.speaker] = counts.get(p.speaker, 0) + len(p.text)
-    total = sum(counts.values()) or 1
-    return [(name, round(n * 100 / total)) for name, n in sorted(counts.items(), key=lambda x: -x[1])]
-
-
 @dataclass(frozen=True)
 class AgendaWeight:
     index: int

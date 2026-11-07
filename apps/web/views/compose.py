@@ -230,7 +230,7 @@ def _analyzing(s: AppState) -> None:
     """분석 진행 중 화면: 입력을 다시 고치거나 새로 등록할 수 없고, 다른 화면으로는 자유롭게 이동해요."""
     with st.container(key="wz-card-full", gap="medium"):
         _card_head("회의를 분석하고 있어요", "진행 중")
-        _info(f"<b>「{esc(s.nn_title)}」의 요약과 액션 아이템을 정리하고 있어요</b>"
+        _info(f"<b><i class=\"wz-spin\"></i>「{esc(s.nn_title)}」의 요약과 액션 아이템을 정리하고 있어요</b>"
               "<span>몇 분 걸릴 수 있어요. 다른 화면으로 이동해도 분석은 계속되고, 「새 회의록」으로 돌아오면 "
               "이어서 확인할 수 있어요. 끝나기 전에는 새 회의록을 등록할 수 없어요.</span>")
         _poll_analysis()

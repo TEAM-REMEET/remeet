@@ -126,7 +126,7 @@ def _contacts(a: dict) -> None:
     )
     markup('<div class="ask-sec">더 물어보려면</div>'
            f'<ul class="ask-contacts">{items}</ul>'
-           '<p class="hint">회의에 참석했거나 관련 할 일이 있는 사람이에요 · 그 분야 전문가라는 뜻은 아니에요</p>')
+           '<p class="hint">※ 회의에 참석했거나 관련 할 일이 있는 사람이에요 · 그 분야 전문가라는 뜻은 아니에요</p>')
 
 
 def _follow_ups(a: dict, i: int) -> None:

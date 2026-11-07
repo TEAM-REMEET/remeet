@@ -12,7 +12,6 @@ from state import actions
 from state import selectors as sel
 from state.store import AppState
 from ui.avatar import avatar
-from ui.buttons import button_group
 from ui.html import markup
 from ui.icons import icon
 from utils.browser import scroll_into_view
@@ -103,32 +102,14 @@ def _raw(s: AppState, m: Meeting) -> None:
         scroll_into_view(f"src-{s.highlight[0]}", nonce=s.highlight_key)
 
 
-def _ratio(s: AppState, m: Meeting) -> None:
-    markup('<p class="hint" style="font-size:13px;color:#5F646D">원문 글자 수 기준 발언 비율이에요.</p>')
-    rows = []
-    pids = {label: pid for pid, label in model.speaker_labels(m).items()}
-    for n, pct in model.speaking_ratio(m):
-        av, who = _speaker_html(s, m, n, pid=pids.get(n))
-        rows.append(f'<div class="ratio-row">{av}<span class="nm">{who}</span>'
-                    f'<span class="bar thick"><span style="width:{pct}%"></span></span><span class="pct">{pct}%</span></div>')
-    rows = "".join(rows)
-    markup(f'<div style="display:flex;flex-direction:column;gap:14px">{rows}</div>')
-
-
 def render_raw_panel(s: AppState, m: Meeting) -> None:
-    has_ratio = model.raw_locked(m) or bool(model.speakers(s, m))
     with st.container(horizontal=True, vertical_alignment="center"):
         markup('<h2 class="panel-title" id="raw-h">회의록 원문</h2>')
-        if has_ratio:  # 발화자가 없으면 발언 비율 탭을 보여 주지 않음
-            button_group([("raw", "원문"), ("ratio", "발언 비율")], s.left_tab,
-                         lambda v: actions.update(left_tab=v), key="left_tab", style="seg", gap=None)
 
     if model.raw_locked(m):
         markup(
             f'<div class="locked">{icon("lock", 26, "#80858E")}<b>원문은 공유되지 않았어요</b>'
             "<span>보낸 사람이 「요약·결정만」으로 공유해서, 정리된 내용만 볼 수 있어요.</span></div>"
         )
-    elif s.left_tab == "ratio" and has_ratio:
-        _ratio(s, m)
     else:
         _raw(s, m)
