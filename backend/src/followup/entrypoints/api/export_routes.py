@@ -1,4 +1,12 @@
-"""POST /api/exports/jira — 외부 도구 전송 · 회의 액션 아이템을 Jira 이슈로
+"""외부 도구 전송: POST /api/exports/jira (액션 아이템 → Jira 이슈) · POST /api/exports/mail (요약본 → 참석자 메일)
+
+POST /api/exports/mail
+body = {"meeting_title": "주간 회의", "body": "회의록 글", "recipients": ["u1", "u2"]}
+응답 = {"items": [{"key": "u1", "ok": true, "sent": true}, {"key": "u2", "ok": false, "error": "…"}]}
+    sent=false: 메일 주소가 없어 보내지 않음 · 일부만 실패해도 200 (실패한 사람만 다시 보내면 됨)
+    오류: 401 · 422 · 502 (메일 서버 접속 · 로그인 실패) · 503 (메일 연동 설정 없음)
+
+POST /api/exports/jira
 
 body = {"meeting_title": "주간 회의", "items": [{"key": "m1:0", "title": "…", "owners": ["u1"], "due": "2026-11-10"}]}
 응답 = {"project_key": "KAN", "created": 2, "total": 3,
@@ -14,12 +22,12 @@ body = {"meeting_title": "주간 회의", "items": [{"key": "m1:0", "title": "�
 """
 
 import logging
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from followup.application import export_jira
+from followup.application import export_jira, export_mail
 from followup.entrypoints.api.routes.auth import current_user
 
 logger = logging.getLogger(__name__)
@@ -48,3 +56,22 @@ def jira(body: JiraExport) -> dict[str, Any]:
     except export_jira.JiraUnavailable as e:
         logger.exception("Jira 연결 실패")  # 원인은 서버 로그에만
         raise HTTPException(status_code=502, detail="Jira 에 연결하지 못했어요 (인증 만료 · 권한). 관리자에게 문의해 주세요.") from e
+
+
+class MailExport(BaseModel):
+    meeting_title: str = Field(min_length=1, max_length=200)
+    body: str = Field(min_length=1, max_length=100_000)
+    recipients: list[Annotated[str, Field(min_length=1, max_length=100)]] = Field(min_length=1, max_length=100)
+
+
+# shortcut: 회의 주관자인지 · 본문이 그 회의의 회의록인지 확인하지 않음 (회의가 아직 화면 목업에만 있음),
+#   회의가 DB 로 옮겨지면 주관자 확인 + 본문을 서버에서 만들기 · 받는 사람은 구성원(이메일 있는 사람)으로만 제한됨
+@router.post("/mail")
+def mail(body: MailExport) -> dict[str, Any]:
+    try:
+        return export_mail.export(body.meeting_title, body.body, body.recipients)
+    except export_mail.MailNotConfigured as e:
+        raise HTTPException(status_code=503, detail="메일 연동 설정이 없어요. 관리자에게 문의해 주세요.") from e
+    except export_mail.MailUnavailable as e:
+        logger.exception("메일 서버 연결 실패")  # 원인은 서버 로그에만
+        raise HTTPException(status_code=502, detail="메일 서버에 연결하지 못했어요 (주소 · 비밀번호). 관리자에게 문의해 주세요.") from e

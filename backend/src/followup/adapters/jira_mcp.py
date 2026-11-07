@@ -23,7 +23,7 @@ async def connect(email: str, token: str):
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
 
-    async with httpx2.AsyncClient(auth=(email, token), timeout=httpx2.Timeout(settings.JIRA_CALL_TIMEOUT),
+    async with httpx2.AsyncClient(auth=(email, token), timeout=httpx2.Timeout(settings.EXPORT_CALL_TIMEOUT),
                                   follow_redirects=False) as http:
         async with streamable_http_client(ENDPOINT, http_client=http) as (read, write):
             async with ClientSession(read, write) as session:
