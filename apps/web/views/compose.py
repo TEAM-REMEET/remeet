@@ -121,7 +121,7 @@ def _info(html: str, tone: str = "info") -> None:
 def _current_text(s: AppState, n: int) -> str:
     """지금 입력칸에 있는 글 + 첨부 파일 내용 (형식 검사용)."""
     typed = st.session_state.get(f"cp_text_{n}_{s.cp_text_rev}", s.nn_text) or ""
-    file = st.session_state.get(f"cp_files_{n}")  # 파일은 한 개만 고를 수 있어요
+    file = st.session_state.get(f"cp_files_{n}_{s.cp_file_rev}")  # 파일은 한 개만 고를 수 있어요
     files = [file] if file else []
     bodies = [read_text(f.name, f.getvalue()) for f in files] if files else [b for _, b in s.nn_files]
     bodies = [b for b in bodies if b]  # 지원하지 않는 형식 · 읽을 수 없는 파일은 빼고
@@ -190,11 +190,12 @@ def _content(s: AppState, n: int) -> None:
         )
     with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
         with st.container(key="cp-attach", width="content"):
-            st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}",
-                             label_visibility="collapsed")
+            # TXT를 올리면 내용을 회의 내용 칸에 채우고 첨부 칸은 비움 (그 밖의 형식은 첨부로 둠)
+            st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}_{s.cp_file_rev}",
+                             label_visibility="collapsed", on_change=actions.compose_attach, args=(n,))
         markup(f'<span class="cp-types">{ALLOWED_LABEL}</span>')
         markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
-    if s.nn_files and not st.session_state.get(f"cp_files_{n}"):
+    if s.nn_files and not st.session_state.get(f"cp_files_{n}_{s.cp_file_rev}"):
         with st.container(horizontal=True, vertical_alignment="center", gap="small"):
             markup('<span class="cp-hint">앞에서 첨부한 파일: ' + esc(", ".join(nm for nm, _ in s.nn_files)) + "</span>")
             button("파일 빼기", key="cp_clear_files", variant="mini", on_click=actions.compose_clear_files)

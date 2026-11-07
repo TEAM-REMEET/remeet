@@ -19,7 +19,7 @@ from data import repository as repo
 from data.models import Todo
 from state import router
 from utils.dates import parse_due
-from utils.files import ALLOWED_LABEL, is_allowed, read_text
+from utils.files import ALLOWED_LABEL, INLINE_EXTS, ext, is_allowed, read_text
 from state import selectors as sel
 from state.store import Delivery, ExportRun, NewFolder, SentShare, get_state, reset_state
 
@@ -237,10 +237,32 @@ def compose_sync(nonce: int) -> None:
     s.nn_title = (ss.get(f"cp_title_{nonce}") or "").strip()
     s.nn_date = ss.get(f"cp_date_{nonce}")
     s.nn_text = ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or ""
-    file = ss.get(f"cp_files_{nonce}")  # 파일은 한 개만 고를 수 있어요
+    file = ss.get(f"cp_files_{nonce}_{s.cp_file_rev}")  # 파일은 한 개만 고를 수 있어요
     files = [file] if file else []
     if files:  # TXT · MD · DOCX · HWPX 는 글을 읽고, 그 밖의 형식 · 읽을 수 없는 파일은 None (발화자 확인 때 안내)
         s.nn_files = [(f.name, read_text(f.name, f.getvalue())) for f in files]
+
+
+def compose_attach(nonce: int) -> None:
+    """파일을 올림: TXT는 내용을 읽어 「회의 내용」 칸에 채움 (앞서 쓴 글은 파일 내용으로 바뀜) · 첨부 칸은 비움.
+
+    DOCX · HWPX · MD 등 그 밖의 형식은 지금처럼 첨부 파일로 둠 (「다음 단계」 때 compose_sync가 읽음).
+    """
+    s = get_state()
+    ss = st.session_state
+    file = ss.get(f"cp_files_{nonce}_{s.cp_file_rev}")
+    if not file or ext(file.name) not in INLINE_EXTS:
+        return
+    body = (read_text(file.name, file.getvalue()) or "").replace("\r\n", "\n").replace("\r", "\n")
+    s.cp_file_rev += 1  # 첨부 칸 비우기 (위젯 값은 직접 바꿀 수 없어 key를 바꿈)
+    if not body.strip():
+        s.toast = f"「{file.name}」 파일이 비어 있어요. 내용이 있는 파일을 올려 주세요."
+        return
+    typed = (ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or "").strip()
+    s.nn_text, s.nn_files, s.nn_error = body.strip("\n"), [], ""
+    s.cp_text_rev += 1  # 입력칸을 새 값으로 다시 그림
+    s.toast = (f"앞서 입력한 내용을 「{file.name}」 내용으로 바꿨어요." if typed and typed != body.strip()
+               else f"「{file.name}」 내용을 회의 내용 칸에 불러왔어요. 확인하고 필요하면 고쳐 주세요.")
 
 
 def compose_check() -> None:
