@@ -159,16 +159,26 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(res.status_code, 502)
         self.assertNotIn("비밀", res.text)
 
-    def test_assign(self):
-        target = "followup.entrypoints.api.recommend_routes.action_items.set_assignees"
-        with patch(target, return_value=[{"user_id": "u2", "name": "리처드", "source": "manual"}]) as setter:
-            res = self.client.put("/api/action-items/m1_a1_d3/assignee", json={"user_ids": ["u2", "u2"]})
+    def test_confirm(self):
+        target = "followup.entrypoints.api.recommend_routes.action_items.confirm_items"
+        body = {"items": [{"item_id": "m1_a1_d3", "user_ids": ["u2", "u2"], "due": "2026-11-20"}]}
+        with patch(target, return_value=[]) as confirm:
+            res = self.client.put("/api/meetings/m1/action-items", json=body)
         self.assertEqual(res.status_code, 200, res.text)
-        self.assertEqual(setter.call_args.args, ("m1_a1_d3", ["u2"]))  # 중복 제거
+        self.assertEqual(confirm.call_args.args, ("m1", [{"item_id": "m1_a1_d3", "user_ids": ["u2"], "due": "2026-11-20"}]))
         with patch(target, return_value=None):
-            self.assertEqual(self.client.put("/api/action-items/x/assignee", json={"user_ids": []}).status_code, 404)
-        with patch(target, side_effect=ValueError("없는 사람: u99")):
-            self.assertEqual(self.client.put("/api/action-items/x/assignee", json={"user_ids": ["u99"]}).status_code, 400)
+            self.assertEqual(self.client.put("/api/meetings/x/action-items", json=body).status_code, 404)
+        with patch(target, side_effect=ValueError("담당자 · 마감일이 빠진 액션 아이템: m1_a1_d4")):
+            res = self.client.put("/api/meetings/m1/action-items", json=body)
+        self.assertEqual((res.status_code, "m1_a1_d4" in res.text), (400, True))
+
+    def test_confirm_rejects_missing_owner_or_due(self):
+        # 담당자 없음 · 마감일 없음 · 날짜 형식 오류는 DB에 가기 전에 422
+        with patch("followup.entrypoints.api.recommend_routes.action_items.confirm_items") as confirm:
+            for item in ({"item_id": "a", "user_ids": [], "due": "2026-11-20"}, {"item_id": "a", "user_ids": ["u1"]},
+                         {"item_id": "a", "user_ids": ["u1"], "due": "11/20"}):
+                self.assertEqual(self.client.put("/api/meetings/m1/action-items", json={"items": [item]}).status_code, 422)
+            confirm.assert_not_called()
 
     def test_needs_login(self):
         app.dependency_overrides.clear()

@@ -39,20 +39,31 @@ RETURN ai.action_item_id AS item_id, ai.description AS text, ai.due AS due,
                         open_tasks: {_OPEN_TASKS}}} }} AS candidates
 ORDER BY ag.order, dn.order, item_id"""
 
-# 주관자가 고른 사람으로 바꾼다: 예전 manual 배정을 지우고 새로 잇는다 (회의록 명시 담당자는 그대로).
-# 추천 엣지에는 골랐는지 남긴다 (selected / not_selected, 비우면 pending으로) → 나중에 추천 품질을 볼 수 있게.
-SET_ASSIGNEES = """
-MATCH (ai:ActionItem {action_item_id: $id})
-OPTIONAL MATCH (:Person)-[old:ASSIGNED_TO {assign_source: 'manual'}]->(ai)
-DELETE old
-WITH DISTINCT ai
+# 담당자 · 마감일 확정 (「다음: 최종 회의록」 = 사람이 검토(HITL)해서 정한 값). 한 트랜잭션이라 전부 저장되거나 하나도 안 된다.
+#   ASSIGNED_TO  고른 사람에 없는 배정은 지움 (회의록 담당자도 · 원래 회의록 표기는 ActionItem.owner_raw에 남아 있음)
+#                그대로인 사람은 원래 assign_source(meeting_explicit · manual)를 남기고, 새 사람은 manual
+#                최종 담당자 전부에 confirmed_at (= 주관자가 확인 · 확정한 배정)
+#   RECOMMENDED_FOR.status  selected / not_selected → 나중에 추천 품질을 볼 수 있게
+#   ActionItem   due(YYYY-MM-DD) · confirmed_at
+CONFIRM_ITEMS = """
+UNWIND $items AS it
+MATCH (ai:ActionItem {action_item_id: it.item_id})
+SET ai.due = it.due, ai.confirmed_at = datetime()
+WITH ai, it
+OPTIONAL MATCH (old:Person)-[o:ASSIGNED_TO]->(ai) WHERE NOT old.user_id IN it.user_ids
+DELETE o
+WITH DISTINCT ai, it
 OPTIONAL MATCH (c:Person)-[r:RECOMMENDED_FOR]->(ai)
-SET r.status = CASE WHEN size($ids) = 0 THEN 'pending' WHEN c.user_id IN $ids THEN 'selected' ELSE 'not_selected' END
-WITH DISTINCT ai
-UNWIND $ids AS uid
+SET r.status = CASE WHEN c.user_id IN it.user_ids THEN 'selected' ELSE 'not_selected' END
+WITH DISTINCT ai, it
+UNWIND it.user_ids AS uid
 MATCH (p:Person {user_id: uid})
-WHERE NOT (p)-[:ASSIGNED_TO]->(ai)
-CREATE (p)-[:ASSIGNED_TO {work_status: 'in_work', assign_source: 'manual', assigned_at: datetime()}]->(ai)"""
+MERGE (p)-[a:ASSIGNED_TO]->(ai)
+ON CREATE SET a.work_status = 'in_work', a.assign_source = 'manual', a.assigned_at = datetime()
+SET a.confirmed_at = datetime()"""
+
+ITEM_IDS = """MATCH (:Meeting {meeting_id: $mid})-[:HAS_AGENDA]->()-[:HAS_DISCUSSION]->()-[:PRODUCED]->(ai:ActionItem)
+RETURN ai.action_item_id AS id"""
 
 READ_MEETING = """
 MATCH (mt:Meeting {meeting_id: $mid})-[:IN]->(pr:Project)
@@ -68,22 +79,31 @@ def meeting_items(meeting_id: str) -> list[dict[str, Any]]:
     return [r.data() for r in records]
 
 
-def set_assignees(item_id: str, user_ids: list[str]) -> list[dict[str, Any]] | None:
-    """담당자를 user_ids로 확정한다. 없는 액션아이템이면 None, 있으면 확정 뒤 담당자 목록."""
+def confirm_items(meeting_id: str, items: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    """items = [{item_id, user_ids, due(YYYY-MM-DD)}] — 이 회의의 액션아이템 전부. 없는 회의면 None.
+    빠진 액션아이템 · 다른 회의 액션아이템 · 없는 사람이 있으면 ValueError (아무것도 저장 안 함)."""
     def work(tx):
-        if not tx.run("MATCH (ai:ActionItem {action_item_id: $id}) RETURN ai", id=item_id).single():
+        if not tx.run("MATCH (m:Meeting {meeting_id: $mid}) RETURN m", mid=meeting_id).single():
             return None
-        unknown = set(user_ids) - {r["id"] for r in tx.run(
-            "MATCH (p:Person) WHERE p.user_id IN $ids RETURN p.user_id AS id", ids=user_ids)}
+        have = {r["id"] for r in tx.run(ITEM_IDS, mid=meeting_id)}
+        sent = {i["item_id"] for i in items}
+        errors = []
+        if have - sent:
+            errors.append(f"담당자 · 마감일이 빠진 액션 아이템: {', '.join(sorted(have - sent))}")
+        if sent - have:
+            errors.append(f"이 회의에 없는 액션 아이템: {', '.join(sorted(sent - have))}")
+        ids = sorted({u for i in items for u in i["user_ids"]})
+        unknown = set(ids) - {r["id"] for r in tx.run("MATCH (p:Person) WHERE p.user_id IN $ids RETURN p.user_id AS id", ids=ids)}
         if unknown:
-            raise ValueError(f"없는 사람: {', '.join(sorted(unknown))}")
-        tx.run(SET_ASSIGNEES, id=item_id, ids=user_ids).consume()
-        return tx.run("MATCH (p:Person)-[a:ASSIGNED_TO]->(:ActionItem {action_item_id: $id}) "
-                      "RETURN p.user_id AS user_id, p.name AS name, a.assign_source AS source ORDER BY user_id",
-                      id=item_id).data()
+            errors.append(f"없는 사람: {', '.join(sorted(unknown))}")
+        if errors:
+            raise ValueError(" / ".join(errors))
+        tx.run(CONFIRM_ITEMS, items=items).consume()
+        return True
 
     with get_driver().session() as session:
-        return session.execute_write(work)
+        found = session.execute_write(work)
+    return meeting_items(meeting_id) if found else None
 
 
 def minutes(meeting_id: str) -> dict[str, Any] | None:

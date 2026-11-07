@@ -15,9 +15,6 @@
 
 from __future__ import annotations
 
-import re
-from datetime import date
-
 import streamlit as st
 
 from data import repository as repo
@@ -31,6 +28,7 @@ from ui.html import markup
 from ui.layout import empty_state, page, page_header, step_header
 from ui.loading import loading_overlay
 from ui.tags import tag
+from utils.dates import parse_due
 from utils.text import esc
 from views.meeting import model
 from views.meeting.header import render_final_header
@@ -73,17 +71,6 @@ def _box(html: str, tone: str = "info") -> None:
 
 
 # ================================================================ 1단계: 담당자 추천
-def _due_date(due: str) -> date | None:
-    """「11/5」 · 「11/5까지」 → 날짜 (올해) · 「확인 필요」처럼 날짜가 아니면 None."""
-    m = re.match(r"\s*(\d{1,2})/(\d{1,2})", due or "")
-    if not m:
-        return None
-    try:
-        return date(date.today().year, int(m.group(1)), int(m.group(2)))
-    except ValueError:
-        return None
-
-
 def _todo_row(s: AppState, t: model.TodoView, recommend: bool) -> None:
     """할 일 · 담당자 태그 | 마감일(고치기) | 담당자 추천 보기(담당 미정) · 담당자 변경 — 모든 액션 아이템."""
     with st.container(key=f"fintodo-{t.index}", horizontal=True, vertical_alignment="center", gap="medium"):
@@ -96,7 +83,7 @@ def _todo_row(s: AppState, t: model.TodoView, recommend: bool) -> None:
                 f'<span class="sep"></span><span class="lbl">기한</span>{due}</div></div>', width="stretch")
         wk = f"fin_due_{t.key}"
         with st.container(key=f"findue-{t.index}", width=168, gap=None):
-            st.date_input("마감일", value=_due_date(t.raw_due), key=wk, format="YYYY/MM/DD",
+            st.date_input("마감일", value=parse_due(t.raw_due), key=wk, format="YYYY/MM/DD",
                           label_visibility="collapsed", on_change=actions.set_todo_due, args=(t.key, wk))
         if t.unassigned:
             button("담당자 추천 보기", key=f"fin_assign_{t.key}", variant="primary",
@@ -111,14 +98,18 @@ def _todo_row(s: AppState, t: model.TodoView, recommend: bool) -> None:
 
 
 def _restore_assigned(s: AppState, m: Meeting) -> None:
-    """새로고침 · 다시 들어옴: 앞서 「다음」으로 Neo4j에 저장한 담당자(manual)를 화면에 되살림.
-    이 세션에서 이미 고른 담당자가 있으면 그쪽이 우선."""
+    """새로고침 · 다시 들어옴: Neo4j에 저장된 담당자 · 마감일이 회의록 값과 다르면 화면에 되살림.
+    (앞서 「다음」으로 확정한 값 · 주관자가 지정한 사람) 이 세션에서 이미 고친 값이 있으면 그쪽이 우선."""
     recs = s.recommendations.get(m.id, {})
     for i, t in sel.todo_items(s, m.id):
-        key = sel.todo_key(m.id, i)
-        saved = [a["user_id"] for a in recs.get(t.item_id, {}).get("assignees", []) if a.get("source") == "manual"]
-        if t.item_id and not t.owners and saved and key not in s.assigned:
+        key, rec = sel.todo_key(m.id, i), recs.get(t.item_id)
+        if not rec:
+            continue
+        saved = [a["user_id"] for a in rec["assignees"]]
+        if saved and set(saved) != set(t.owners) and key not in s.assigned:
             s.assigned[key] = saved
+        if parse_due(rec.get("due")) and rec["due"] != t.due and key not in s.todo_due:
+            s.todo_due[key] = rec["due"]
 
 
 def _load_recommendations(s: AppState, m: Meeting) -> bool:
@@ -152,9 +143,12 @@ def _step_assign(s: AppState, m: Meeting) -> None:
         button("← 이전화면으로", key="fin_back", variant="secondary", on_click=actions.open_meeting, args=(m.id,))
         button("다음: 최종 회의록 →", key="fin_next", variant="primary", on_click=actions.confirm_assignees, args=(m.id,))
     with st.container(key="wz-card", gap="medium"):
-        if left:
-            _box(f"<b>담당 미정 {len(left)}건</b><span>「담당자 추천 보기」를 눌러 추천 후보 중에서 골라 주세요. "
-                 "모든 액션 아이템의 마감일과 담당자를 여기서 고칠 수 있고, 결과를 전달한 뒤에는 바꿀 수 없어요.</span>", "warn")
+        no_due = [t for t in items if not parse_due(t.raw_due)]
+        if left or no_due:
+            parts = [f"담당 미정 {len(left)}건"] * bool(left) + [f"마감일 없음 {len(no_due)}건"] * bool(no_due)
+            _box(f"<b>{' · '.join(parts)}</b><span>모든 액션 아이템에 담당자와 마감일을 정해야 최종 회의록으로 넘어갈 수 있어요. "
+                 "담당 미정은 「담당자 추천 보기」에서 고르고, 마감일은 오른쪽 날짜 칸에서 정해 주세요. "
+                 "「다음」을 누르면 저장되고 그 뒤에는 바꿀 수 없어요.</span>", "warn")
         elif items:
             _box("<b>모든 액션 아이템에 담당자가 있어요</b><span>마감일과 담당자를 고칠 게 없으면 다음 단계로 넘어가면 돼요.</span>", "ok")
         else:
