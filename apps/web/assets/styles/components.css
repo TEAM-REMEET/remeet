@@ -302,7 +302,8 @@ img.ico { display: inline-block; flex: none; vertical-align: middle; }
 @keyframes ld-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .ld-wheel { animation-duration: 3s; } }
 /* 액션 아이템 추가 모달: 담당자 칸 이름 (st.text_area 라벨과 같은 모양) */
-.todo-field-label { margin: 4px 0 -6px; font-size: 14px; color: var(--ink); }
+/* 액션 아이템 추가 창 「담당자」: 「액션 아이템 내용」·「마감일」 입력칸 라벨([data-testid="stWidgetLabel"] p · base.css)과 같은 글씨 */
+.todo-field-label { margin: 4px 0 -6px; font-size: 13px !important; font-weight: 600 !important; color: var(--ink); }
 
 /* 단계 화면 머리말: 제목(왼쪽) · 버튼(오른쪽, 제목 줄 높이에 맞춤) — ui/layout.step_header */
 .st-key-step-head { flex-wrap: nowrap !important; }

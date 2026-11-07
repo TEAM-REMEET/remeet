@@ -402,7 +402,7 @@ def breadcrumbs(state: AppState) -> list[str]:
     if s == "note":
         m = repo.meeting(state.meeting_id)
         if m.project_id in fs:
-            return ["회의록", fs[m.project_id].name, types[m.directory_id].name, m.title]
+            return ["회의록", types[m.directory_id].name, fs[m.project_id].name, m.title]  # 회의 종류 / 프로젝트 (머리말 폴더 이름과 같은 순서)
         return ["공유 받은 회의", m.title]
     if s == "deliver":
         return ["회의록", repo.meeting(state.delivery.meeting_id).title, "결과 전달"]

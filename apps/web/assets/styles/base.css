@@ -62,6 +62,9 @@ section[data-testid="stSidebar"] {
   max-width: 232px !important;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--line);
+  /* 접기 버튼을 숨겨 둬서 항상 펼친 상태로 고정.
+     브라우저에 '접힘'이 저장돼 있으면 Streamlit 이 translateX(-폭)으로 밀어내 빈 자리만 남으므로 이동을 막음 */
+  transform: none !important;
 }
 section[data-testid="stSidebar"] > div:first-child { width: 232px !important; }
 [data-testid="stSidebarContent"] { padding: 0; }
