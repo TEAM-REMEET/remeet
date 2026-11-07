@@ -15,7 +15,10 @@ meeting_info.participants는 attendees로 채움 — 주관자와 연결된 발�
     plain    빈 줄 제외 한 줄 = 발화 하나
     bracket  '[표기]'만 있는 줄 + 다음 줄 발화문 하나
     colon    '표기: 발화문'
-speaker_map은 표기 → user_id. 연결되지 않은 표기(미지정)는 허용하지 않음.
+발화자 표기는 attendees의 name 또는 '이름(직무)'와 같아야 하며, 그 사람의 user_id · job을 사용함.
+    같은 직무의 동명이인  이름 자체가 다름 (홍길동A · 홍길동B) → '홍길동A: 발화문'
+    다른 직무의 동명이인  이름이 같음 → '홍길동(마케팅 담당자): 발화문' (LLM 입력의 A · B는 파이프라인이 부여)
+참석자에 없는 표기 · 한 사람으로 정해지지 않는 표기는 허용하지 않음.
 오류는 모두 모아 TranscriptFormatError로 알림 (LLM 호출 전에 중단).
 """
 
@@ -27,7 +30,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from followup import settings as cfg
-from followup.analysis.summary.preprocessing import TranscriptFormatError, parse_transcript
+from followup.analysis.summary.preprocessing import TranscriptFormatError, normalize_label, parse_transcript
+from followup.domain.ulid import new_ulid
 
 _BRACKET_HEADER = re.compile(r"^\[\s*([^\[\]]+?)\s*\]$")        # [참석자1]
 _BRACKET_INLINE = re.compile(r"^\[[^\[\]]+\]\s*\S")             # [참석자1] 발화문 (한 줄에 쓰면 오류)
@@ -47,20 +51,27 @@ class Attendee(BaseModel):
 class MeetingSubmission(BaseModel):
     """POST /api/meetings 요청"""
     model_config = ConfigDict(extra="forbid")
-    project_id: NonEmpty
+    project_id: NonEmpty | None = None          # 기존 폴더의 ID (없으면 새 폴더로 보고 백엔드가 만듦)
+    directory_id: Literal["monthly", "weekly", "normal"]    # 회의 종류: 월간 · 주간 · 일반
     title: NonEmpty
     date: date
-    host_user_id: NonEmpty                      # 주관자 — 입력 텍스트에는 넣지 않음 (PostgreSQL 저장용)
+    host_user_id: NonEmpty                      # 주관자 — 입력 텍스트에는 넣지 않고 결과 JSON에만 저장
     attendees: list[Attendee] = Field(min_length=1)
     transcript_format: Literal["plain", "bracket", "colon"]
     transcript: str
-    speaker_map: dict[str, NonEmpty] = {}       # 표기 → user_id (plain은 비어 있어야 함)
 
 
-def make_meeting_id(submission: MeetingSubmission) -> str:
-    # m-20261105-a1b2 — 같은 요청은 같은 ID이므로, 실패 후 다시 보내면 실패한 단계부터 진행됨
-    digest = hashlib.sha256(submission.model_dump_json().encode("utf-8")).hexdigest()[:4]
-    return f"m-{submission.date:%Y%m%d}-{digest}"
+def new_project_id() -> str:
+    return f"P_{new_ulid()}"       # P_01JC8Z… (26자 ULID)
+
+
+def new_meeting_id() -> str:
+    return f"M_{new_ulid()}"       # M_01JC8Z… (26자 ULID)
+
+
+def submission_key(submission: MeetingSubmission) -> str:
+    # 요청 내용별 키 — 실패 후 같은 요청을 다시 보낼 때 같은 회의 · 프로젝트 ID를 찾는 데 씀
+    return hashlib.sha256(submission.model_dump_json().encode("utf-8")).hexdigest()[:32]
 
 
 def _lines(text: str) -> list[tuple[int, str]]:
@@ -107,20 +118,22 @@ def _body(submission: MeetingSubmission, by_id: dict[str, Attendee]) -> list[tup
     if not lines:
         raise TranscriptFormatError("전사문 구조 오류", ["전사문이 비어 있음"])
     if submission.transcript_format == "plain":
-        if submission.speaker_map:
-            raise TranscriptFormatError("입력 오류", ["발화자 없는 형식에는 발화자 연결을 넣을 수 없음"])
         return [(None, line) for _, line in lines]
 
     read = _labeled_colon if submission.transcript_format == "colon" else _labeled_bracket
+    speakers: dict[str, list[str]] = {}        # 표기(공백 제거) → user_id
+    for p in by_id.values():
+        for key in (p.name, f"{p.name}({p.job})"):
+            speakers.setdefault(normalize_label(key), []).append(p.user_id)
     body = []
     for no, label, text in read(lines, errors):
-        user_id = submission.speaker_map.get(label)
-        if user_id is None:
-            errors.append(f"{no}행: '{label}'이(가) 사람과 연결되지 않음")
-        elif user_id not in by_id:
-            errors.append(f"{no}행: '{label}'에 연결한 '{user_id}'이(가) 참석자 목록에 없음")
+        matched = speakers.get(normalize_label(label), [])
+        if not matched:
+            errors.append(f"{no}행: '{label}'이(가) 참석자 목록에 없음")
+        elif len(matched) > 1:
+            errors.append(f"{no}행: '{label}'이(가) 여러 명이라 구분할 수 없음 — '이름(직무)'로 적어 주세요")
         else:
-            body.append((user_id, text))
+            body.append((matched[0], text))
     if errors:
         raise TranscriptFormatError(f"전사문 구조 오류 (형식 {submission.transcript_format})", errors)
     return body

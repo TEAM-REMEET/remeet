@@ -85,7 +85,10 @@ def _todo_row(s: AppState, t: model.TodoView, recommend: bool) -> None:
                 f'<span class="sep"></span><span class="lbl">기한</span>{due}</div></div>', width="stretch")
         wk = f"fin_due_{t.key}"
         with st.container(key=f"findue-{t.index}", width=168, gap=None):
-            st.date_input("마감일", value=parse_due(t.raw_due), key=wk, format="YYYY/MM/DD",
+            first_day = sel.meeting_date(repo.meeting(t.key.rpartition(":")[0]))  # 회의 날짜 이전은 고를 수 없음
+            current = parse_due(t.raw_due)
+            st.date_input("마감일", value=current if current and current >= first_day else None, min_value=first_day,
+                          key=wk, format="YYYY/MM/DD",
                           label_visibility="collapsed", on_change=actions.set_todo_due, args=(t.key, wk))
         if t.unassigned:
             button("담당자 추천 보기", key=f"fin_assign_{t.key}", variant="primary",

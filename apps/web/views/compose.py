@@ -13,12 +13,11 @@
 
 from __future__ import annotations
 
-import json
-import time
 
 import streamlit as st
 
 from components.member_pills import member_pills
+from config import SUMMARY_POLL_SECONDS
 from state.store import me_id
 from data import repository as repo
 from state import actions
@@ -122,7 +121,8 @@ def _info(html: str, tone: str = "info") -> None:
 def _current_text(s: AppState, n: int) -> str:
     """지금 입력칸에 있는 글 + 첨부 파일 내용 (형식 검사용)."""
     typed = st.session_state.get(f"cp_text_{n}_{s.cp_text_rev}", s.nn_text) or ""
-    files = st.session_state.get(f"cp_files_{n}") or []
+    file = st.session_state.get(f"cp_files_{n}")  # 파일은 한 개만 고를 수 있어요
+    files = [file] if file else []
     bodies = [read_text(f.name, f.getvalue()) for f in files] if files else [b for _, b in s.nn_files]
     bodies = [b for b in bodies if b]  # 지원하지 않는 형식 · 읽을 수 없는 파일은 빼고
     return "\n".join(x.strip() for x in [typed, *bodies] if x and x.strip())
@@ -190,7 +190,7 @@ def _content(s: AppState, n: int) -> None:
         )
     with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
         with st.container(key="cp-attach", width="content"):
-            st.file_uploader("파일 첨부", accept_multiple_files=True, key=f"cp_files_{n}",
+            st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}",
                              label_visibility="collapsed")
         markup(f'<span class="cp-types">{ALLOWED_LABEL}</span>')
         markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
@@ -217,40 +217,48 @@ def _step1(s: AppState, n: int) -> None:
 
 
 # ================================================================ 2단계: 분석 및 검토 (회의 상세와 같은 화면)
-def _step2(s: AppState) -> None:
-    m = s.preview_meeting
-    if m is None:  # 새로고침 등으로 미리보기가 없으면 다시 만들기
-        actions.compose_goto(2)
-        m = s.preview_meeting
-    s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
-    parsed = ai.parse(actions.compose_text(s))
-    result = ai.analyze(parsed, s.nn_speaker_map, s.nn_title)
+@st.fragment(run_every=SUMMARY_POLL_SECONDS)
+def _poll_analysis() -> None:
+    """이 칸만 주기적으로 다시 그려 분석이 끝났는지 확인 (다른 화면에 있으면 돌지 않음)."""
+    s = get_state()
+    actions.compose_poll()
+    if not s.cp_job_running:
+        st.rerun(scope="app")
 
-    data = {
-        "title": s.nn_title, "date": str(s.nn_date), "host": sel.name_of(s.nn_host),
-        "speakers": {lb: sel.name_of(p) for lb, p in s.nn_speaker_map.items()},
-        "summary": result.summary,
-        "agendas": [{"title": t, "lines": list(b)} for t, b in result.agendas],
-        "todos": [{"text": t, "owners": [x.strip() for x in w.split(",")] if w != "담당 미정" else [], "due": d}
-                  for t, w, d in result.todos],
-    }
-    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · JSON 저장 · 확정하기)
+
+def _analyzing(s: AppState) -> None:
+    """분석 진행 중 화면: 입력을 다시 고치거나 새로 등록할 수 없고, 다른 화면으로는 자유롭게 이동해요."""
+    with st.container(key="wz-card-full", gap="medium"):
+        _card_head("회의를 분석하고 있어요", "진행 중")
+        _info(f"<b>「{esc(s.nn_title)}」의 요약과 액션 아이템을 정리하고 있어요</b>"
+              "<span>몇 분 걸릴 수 있어요. 다른 화면으로 이동해도 분석은 계속되고, 「새 회의록」으로 돌아오면 "
+              "이어서 확인할 수 있어요. 끝나기 전에는 새 회의록을 등록할 수 없어요.</span>")
+        _poll_analysis()
+
+
+def _step2(s: AppState) -> None:
+    if s.cp_job_running:  # 뒤에서 분석 중: 다른 화면에 다녀와도 이 화면으로 돌아옴
+        _analyzing(s)
+        return
+    if s.preview_meeting is None:
+        actions.compose_goto(1)
+        st.rerun()
+    m = s.preview_meeting
+    s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
+    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
             button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
-            with st.container(key="b-secondary-cp_json", width="content"):
-                st.download_button("결과 JSON 저장", json.dumps(data, ensure_ascii=False, indent=2),
-                                   file_name="meeting_result.json", mime="application/json", key="cp_json")
             # 주관자는 확정 · 주관자가 아니면 주관자에게 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
             button("확정하기" if s.nn_host == me_id() else "검토 요청하기", key="cp_finish", variant="primary",
                    icon=":material/task_alt:" if s.nn_host == me_id() else ":material/rate_review:",
                    on_click=actions.open_compose_confirm)
     with st.container(horizontal=True, vertical_alignment="center"):
         member_pills(f"{m.when} · 참석 {len(m.people)}명", m.host, list(m.people))
-        note = ("프로토타입 · AI 분석 예시 — 「확정하기」를 눌러야 저장돼요" if s.nn_host == me_id()
-                else f"프로토타입 · AI 분석 예시 — 「검토 요청하기」를 누르면 주관자 {sel.name_of(s.nn_host)}님에게 알림이 가요")
+        note = ("AI 분석 결과 — 「확정하기」를 눌러 회의록을 확정해 주세요" if s.nn_host == me_id()
+                else f"AI 분석 결과 — 「검토 요청하기」를 누르면 주관자 {sel.name_of(s.nn_host)}님에게 알림이 가요")
         st.html(f'<span class="read-note">{esc(note)}</span>', width="content")
 
     # 본문: 회의 상세와 같은 원문 · 인사이트 탭
@@ -266,13 +274,14 @@ def _step2(s: AppState) -> None:
             loading_overlay("회의록을 확정하고 있어요", "분석 결과로 회의록을 만들고 담당자 추천을 준비하는 중이에요")
         else:
             loading_overlay("검토를 요청하고 있어요", f"회의록을 만들어 주관자 {sel.name_of(s.nn_host)}님에게 보내는 중이에요")
-        time.sleep(ai.ANALYZE_DELAY_SECONDS)  # 실제 서비스에서는 AI 서버 호출
-        actions.compose_finish()
+        if actions.compose_review():  # 수정 반영 · 근거 연결 · 검증 (실패하면 안내 후 이 화면에 머무름)
+            actions.compose_finish()
         st.rerun()
 
 
 # ================================================================ 진입점
 def render() -> None:
+    actions.compose_resume()  # 서버에 분석 작업이 있으면 입력값 · 진행 상태 복원
     s = get_state()
     n = s.compose_nonce
     if s.nn_host and s.nn_host not in s.nn_people:  # 주관자는 참석자에 늘 들어 있음 (예전 세션 포함)

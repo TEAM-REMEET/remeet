@@ -38,7 +38,7 @@ def call(method: str, path: str, body: dict | None = None, token: str = "", time
     req = Request(f"{API_BASE_URL}{path}", data=data, method=method, headers=headers)
     try:
         with urlopen(req, timeout=timeout) as res:
-            return json.load(res)
+            return json.load(res) if res.status != 204 else None
     except HTTPError as e:
         raise ApiError(_detail(e), e.code) from e
     except TimeoutError as e:  # 서버는 켜져 있는데 응답이 늦음 (연결 실패와 구분)

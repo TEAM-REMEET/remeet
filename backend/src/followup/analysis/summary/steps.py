@@ -45,6 +45,8 @@ def generate(loaded: dict, call: StructuredCall) -> LLMMeetingSummary:
 def build(llm_out: LLMMeetingSummary, loaded: dict) -> MeetingSummary:
     summary = build_summary(llm_out, loaded)
     summary.project_id = loaded.get("project_id")
+    summary.directory_id = loaded.get("directory_id")
+    summary.host_user_id = loaded.get("host_user_id")
     summary.config["prompt_version"] = prompt_version()
     summary.verification = VerificationResult(max_rounds=cfg.MAX_VERIFY_ROUNDS)
     return summary

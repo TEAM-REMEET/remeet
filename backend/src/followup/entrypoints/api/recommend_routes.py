@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from followup.adapters.neo4j import action_items
+from followup.analysis.summary import ui_test
 from followup.analysis.summary.schemas import MeetingSummary
 from followup.application.recommend_assignees import recommend_for_meeting
 from followup.entrypoints.api.routes.auth import current_user
@@ -89,6 +90,8 @@ class Confirmation(BaseModel):
 def recommend(meeting_id: str, summary: MeetingSummary):
     if summary.meeting_id != meeting_id:
         raise HTTPException(status_code=422, detail=f"주소의 회의({meeting_id})와 본문의 meeting_id({summary.meeting_id})가 달라요.")
+    if ui_test.is_test_summary(summary):    # 화면 확인용 시험 모드: LLM 호출 · Neo4j 적재 없이 시험용 후보
+        return {"meeting_id": meeting_id, "items": ui_test.recommend_items(summary)}
     try:
         items = recommend_for_meeting(summary.model_dump(mode="json"))
     except Exception as e:
