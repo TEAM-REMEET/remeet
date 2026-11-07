@@ -1,0 +1,50 @@
+"""POST /api/exports/jira — 외부 도구 전송 · 회의 액션 아이템을 Jira 이슈로
+
+body = {"meeting_title": "주간 회의", "items": [{"key": "m1:0", "title": "…", "owners": ["u1"], "due": "2026-11-10"}]}
+응답 = {"project_key": "KAN", "created": 2, "total": 3,
+        "items": [{"key": "m1:0", "ok": true, "issue_key": "KAN-12", "assigned": true},
+                  {"key": "m1:1", "ok": false, "error": "…"}]}
+    일부만 실패해도 200 (실패한 key 만 다시 보내면 됨 · 이미 만든 이슈는 다시 만들지 않게)
+
+오류 응답 (아무것도 만들지 않음 · 사용자가 다시 보내도 해결 안 됨 → 관리자 문의)
+    401  로그인하지 않음
+    422  입력 형식 오류
+    502  Jira 에 연결하지 못함 (토큰 만료 · 권한)
+    503  Jira 연동 설정이 없음
+"""
+
+import logging
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+
+from followup.application import export_jira
+from followup.entrypoints.api.routes.auth import current_user
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api/exports", tags=["exports"], dependencies=[Depends(current_user)])
+
+
+class Item(BaseModel):
+    key: str = Field(min_length=1, max_length=100)
+    title: str = Field(min_length=1, max_length=255)  # Jira summary 최대 255자
+    owners: list[str] = Field(default_factory=list, max_length=20)
+    due: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+class JiraExport(BaseModel):
+    meeting_title: str = Field(min_length=1, max_length=200)
+    items: list[Item] = Field(min_length=1, max_length=100)
+
+
+# shortcut: 회의 주관자인지 확인하지 않음 (회의가 아직 화면 목업에만 있음), 회의가 DB 로 옮겨지면 주관자 확인 추가
+@router.post("/jira")
+def jira(body: JiraExport) -> dict[str, Any]:
+    try:
+        return export_jira.export(body.meeting_title, [i.model_dump() for i in body.items])
+    except export_jira.JiraNotConfigured as e:
+        raise HTTPException(status_code=503, detail="Jira 연동 설정이 없어요. 관리자에게 문의해 주세요.") from e
+    except export_jira.JiraUnavailable as e:
+        logger.exception("Jira 연결 실패")  # 원인은 서버 로그에만
+        raise HTTPException(status_code=502, detail="Jira 에 연결하지 못했어요 (인증 만료 · 권한). 관리자에게 문의해 주세요.") from e

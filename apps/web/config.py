@@ -61,6 +61,7 @@ SUMMARY_POLL_SECONDS = 3
 # 화면 확인용 시험 모드에서 회의 내용으로 넣는 값 (docs/ui-test-mode.md · backend settings.UI_TEST_TRANSCRIPT와 같음)
 UI_TEST_TRANSCRIPT = "test"
 ASK_TIMEOUT = 120  # 회의에 물어보기: LLM 2번 + 새 회의의 결정 정리 (보통 수 초)
+JIRA_EXPORT_TIMEOUT = 180  # Jira 전송: 액션 아이템마다 담당자 찾기 + 이슈 만들기
 
 # 브랜드 이미지 (assets/brand/)
 BRAND_DIR = Path(__file__).resolve().parent / "assets" / "icons"
