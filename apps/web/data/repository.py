@@ -64,8 +64,12 @@ def _token() -> str:
     return getattr(st.session_state.get("_app_state"), "token", "")
 
 
-# shortcut: 60초 캐시, 이 앱에서 바꾸면 바로 비우지만 다른 곳(DB 직접 수정)의 변경은 최대 60초 늦게 보임
-@st.cache_data(ttl=60, show_spinner=False)
+# shortcut: 10분 캐시 (클릭마다 Neo4j를 다녀오는 지연을 줄임). 이 앱에서 바꾸면 바로 비우지만,
+#   다른 곳(DB 직접 수정)의 변경은 최대 10분 늦게 보임 → 바로 보려면 프론트 재시작 또는 화면 메뉴의 Clear cache
+_PEOPLE_TTL = 600  # 초
+
+
+@st.cache_data(ttl=_PEOPLE_TTL, show_spinner=False)
 def _people_rows(token: str) -> list[dict]:
     return api.call("GET", "/api/people", token=token)
 
@@ -75,7 +79,7 @@ def people_rows() -> list[dict]:
     return _people_rows(_token())
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=_PEOPLE_TTL, show_spinner=False)
 def _catalog(kind: str, token: str) -> list[dict]:
     return api.call("GET", f"/api/{kind}", token=token)
 
