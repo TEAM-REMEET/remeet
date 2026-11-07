@@ -703,9 +703,11 @@ def open_delete(*target: str) -> None:
 
 
 def delete_meeting(mid: str) -> None:
-    """주관자: 회의 삭제 → 그 회의가 있던 폴더로."""
+    """주관자 · 작성자: 회의 삭제 → 그 회의가 있던 폴더로 (검토자는 못 함)."""
     s = get_state()
     m = repo.meeting(mid)
+    if not sel.owns(m):
+        return
     if repo.is_saved(mid):  # DB 회의 → 삭제 (DELETE /api/meetings/{id})
         try:
             repo.delete_record(mid)
@@ -889,10 +891,10 @@ def submit_todo(mid: str, text: str, owners: list[str], due: date | None, agenda
     src = () if mid == PREVIEW_ID else todo_ai.rescan(m, text.strip())
     todo = Todo(text.strip(), tuple(dict.fromkeys(owners)), f"{due.month}/{due.day}" if due else "", tuple(src),
                 due_iso=due.isoformat() if due else "", agenda=agenda)
-    if repo.is_saved(mid):  # DB 회의 → 저장 (POST /api/meetings/{id}/todos). shortcut: 고른 안건은 아직 DB 에 없어 저장 안 됨
+    if repo.is_saved(mid):  # DB 회의 → 저장 (POST /api/meetings/{id}/todos · 고른 안건도 · migrations/017)
         try:
             repo.add_record_todo(mid, {"text": todo.text, "owners": list(todo.owners), "due": todo.due,
-                                       "due_date": todo.due_iso or None, "src": list(todo.src)})
+                                       "due_date": todo.due_iso or None, "src": list(todo.src), "agenda": agenda})
         except api.ApiError as e:
             return _api_failed(e, "액션 아이템을 추가")
     else:
@@ -1022,6 +1024,8 @@ def branch_agenda() -> None:
 
 def open_share() -> None:
     s = get_state()
+    if not sel.owns(repo.meeting(s.meeting_id)):  # 공유는 주관자 · 작성자만 (검토자 X)
+        return
     open_modal("share", share_nonce=s.share_nonce + 1, share_scope="summary", share_team="", share_recipients=[])
 
 

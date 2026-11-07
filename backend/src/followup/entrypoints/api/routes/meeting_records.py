@@ -85,6 +85,7 @@ class TodoCreate(BaseModel):
     due_date: str | None = None                   # YYYY-MM-DD
     src: list[str] = []
     urgent: bool = False
+    agenda: str = ""                              # 고른 안건 제목 (그 안건 아래에 보여 줌)
 
 
 class TodoUpdate(BaseModel):
@@ -92,6 +93,7 @@ class TodoUpdate(BaseModel):
     owners: list[str] | None = None
     due: str | None = None
     due_date: str | None = None
+    agenda: str | None = None
 
 
 class Owners(BaseModel):
