@@ -18,7 +18,7 @@ from components import member_fields as mf
 from data import repository as repo
 from data.models import Todo
 from state import router
-from utils.dates import parse_due
+from utils.dates import parse_due, today
 from utils.files import ALLOWED_LABEL, INLINE_EXTS, ext, is_allowed, read_text
 from state import selectors as sel
 from state.store import Delivery, ExportRun, NewFolder, SentShare, get_state, reset_state
@@ -317,7 +317,9 @@ def compose_next(nonce: int) -> None:
 
     compose_sync(nonce)
     s = get_state()
-    missing = [n for n, ok in (("회의 제목", s.nn_title), ("회의 날짜", s.nn_date), ("주관자", s.nn_host)) if not ok]
+    if not s.nn_date:  # 회의 날짜는 선택: 고르지 않으면 오늘 (입력칸 아래 안내와 같음)
+        s.nn_date = today()
+    missing = [n for n, ok in (("회의 제목", s.nn_title), ("주관자", s.nn_host)) if not ok]
     if s.nn_topic not in sel.all_my_folder_ids(s) and not s.nn_name.strip():
         missing.append("프로젝트")
     parsed = compose_ai.parse(compose_text(s), s.cp_example)

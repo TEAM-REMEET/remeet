@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
+
+
+def today() -> date:
+    """한국 시간 기준 오늘 (서버가 UTC여도 밤 9시 이후에 날짜가 하루 밀리지 않게)."""
+    return datetime.now(ZoneInfo("Asia/Seoul")).date()
 
 
 def date_key(md: str) -> int:

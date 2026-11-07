@@ -29,7 +29,7 @@ from ui.html import markup
 from ui.layout import page, step_header
 from ui.loading import loading_overlay
 from ui.tags import tag
-from utils.dates import date_key
+from utils.dates import date_key, today
 from utils.files import ALLOWED_LABEL, read_text
 from utils.text import esc
 from views.finalize import flow_stepper
@@ -144,9 +144,11 @@ def _basic_info(s: AppState, n: int) -> None:
             st.text_input("회의 제목 (필수)", key=f"cp_title_{n}", value=s.nn_title, placeholder="예: 4분기 계획 회의",
                           label_visibility="collapsed")
         with c2:
-            _label("회의 날짜 *")
-            st.date_input("회의 날짜 (필수)", value=s.nn_date, key=f"cp_date_{n}", format="YYYY/MM/DD",
+            _label("회의 날짜")  # 선택: 고르지 않으면 「다음 단계」 때 오늘 날짜로 (actions.compose_next)
+            st.date_input("회의 날짜 (선택)", value=s.nn_date, key=f"cp_date_{n}", format="YYYY/MM/DD",
                           label_visibility="collapsed")
+            if st.session_state.get(f"cp_date_{n}") is None:
+                markup(f'<span class="cp-hint">날짜를 고르지 않으면 오늘({today():%Y/%m/%d})로 저장돼요.</span>')
         c1, c2 = st.columns(2, gap="medium")
         with c1:
             _field("주관자 *", "cp_host_field", _person_label(s.nn_host) if s.nn_host else "", "주관자 선택",
