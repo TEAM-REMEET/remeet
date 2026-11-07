@@ -65,19 +65,22 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
 
     deliver: 회의록 확정 2단계 — 아직 결과 전달 전이라 「결과 전달」 버튼
     """
-    host = model.is_host(m)
+    host = model.is_host(m)  # 확정 · 결과 전달 (주관자 · 검토자)
+    owner = sel.owns(m)  # 삭제 · 공유 (주관자 · 작성자 · 검토자는 못 함)
     role = sel.my_role(m)
     role_label, role_tone = ("내가 주관", "host") if role == "host" else sel.ROLE_TAGS[role]
     with st.container(horizontal=True, vertical_alignment="bottom"):
         with st.container(gap="small"):
             _title(s, m, tag("최종 회의록", "ok") + tag(role_label, role_tone), boxed=True)
         with st.container(horizontal=True, width="content", gap="small"):
-            if host:
+            if owner:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
                        on_click=actions.open_delete, args=("meeting", m.id))
-                _minutes_download(s, m)
+            _minutes_download(s, m)
+            if owner:
                 button("공유", key="md_share", variant="secondary", icon=":material/share:",
                        on_click=actions.open_share)
+            if host:
                 if deliver:  # → 결과 전달 화면 (그다음 외부 도구 전송)
                     button("결과 전달", key="md_deliver", variant="primary", icon=":material/send:",
                            on_click=actions.deliver_final, args=(m.id,))
@@ -90,7 +93,6 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
                     button("외부 도구 전송", key="md_export", variant="primary", icon=":material/output:",
                            on_click=actions.open_export, args=(m.id,))
             else:
-                _minutes_download(s, m)
                 st.html(f'<span class="read-note">{esc(model.read_note(m))}</span>', width="content")
     _people_row(m)
     _shared_notice(s)
@@ -106,8 +108,10 @@ def render_header(s: AppState, m: Meeting) -> None:
     if sel.status_of(s, m.id) != "review":
         render_final_header(s, m, deliver=False)
         return
-    host = model.is_host(m)
-    can_edit = host and sel.review_requested(s, m)  # 검토 요청을 받은 사람(주관자 · 신입이 고른 윗사람)만 편집
+    host = model.is_host(m)  # 편집 · 확정 (주관자 · 검토자)
+    owner = sel.owns(m)  # 삭제 · 공유 (주관자 · 작성자 · 검토자는 못 함)
+    # 편집: 검토 요청을 받은 사람(주관자 · 신입이 고른 윗사람) + 검토자를 둔 신입 주관자
+    can_edit = host and (sel.review_requested(s, m) or bool(m.reviewer))
     editing = s.editing and can_edit
     role = sel.my_role(m)
     role_label, role_tone = ("내가 주관", "host") if role == "host" else sel.ROLE_TAGS[role]
@@ -118,12 +122,13 @@ def render_header(s: AppState, m: Meeting) -> None:
             _title(s, m, tag(role_label, role_tone)
                    + (tag("검토 요청 받음", "warn") if host and sel.review_requested(s, m) else ""))
         with st.container(horizontal=True, width="content", gap="small"):
-            if host and not editing:
+            if owner and not editing:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
                        on_click=actions.open_delete, args=("meeting", m.id))
                 if s.fin_flow != m.id:  # 확정하기를 누른 뒤(확정 흐름 중)에는 공유 빼기
                     button("공유", key="md_share", variant="secondary", icon=":material/share:",
                            on_click=actions.open_share)
+            if host and not editing:
                 if can_edit:
                     button("편집", key="md_edit", variant="secondary", icon=":material/edit:", on_click=actions.start_edit)
                 # 가장 오른쪽 · 누르면 회의록 확정 화면(담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송)
@@ -153,7 +158,8 @@ def _export_notices(s: AppState, m: Meeting) -> None:
         tool = repo.tool(f.tool)
         n = len(sel.todo_items(s, m.id))
         if not sel.failure_open(s, f.id):
-            notice(f"액션 아이템 {n}건을 {esc(tool.name)}(으)로 다시 보냈어요. ({esc(tool.target)})", "success")
+            notice(f"액션 아이템 {n}건을 {esc(tool.name)}(으)로 다시 보냈어요."
+                   + (f" ({esc(tool.target)})" if tool.target else ""), "success")  # 보낼 곳이 비어 있으면 괄호 없이
             continue
         with st.container(key=f"export-{f.id}", horizontal=True, vertical_alignment="center", gap="small"):
             if f.kind == "simple":

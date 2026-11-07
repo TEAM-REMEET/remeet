@@ -44,7 +44,7 @@ def content(m: Meeting) -> dict:
 
 def todo(t: Todo) -> dict:
     return {"text": t.text, "owners": list(t.owners), "due": t.due, "due_date": (t.due_iso or "")[:10] or None,
-            "src": list(t.src), "urgent": t.urgent, "item_id": t.item_id or None}
+            "src": list(t.src), "urgent": t.urgent, "item_id": t.item_id or None, "agenda": t.agenda}
 
 
 def draft_payload(s, m: Meeting, gone: list[int] | None = None, summary_json: dict | None = None) -> dict:

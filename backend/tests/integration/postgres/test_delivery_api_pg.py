@@ -132,7 +132,7 @@ class DeliveryAndReviewApiTests(unittest.TestCase):
         self.assertNotIn(mid, [m['id'] for m in self.call('GET', '/api/meetings', self.U1)])
 
     def test_junior_needs_senior_reviewer(self):
-        """신입(u2)이 쓰고 본인이 주관 → 윗사람(검토자) 꼭 · 신입(u4)은 검토자가 될 수 없음 · 검토자만 확정."""
+        """신입(u2)이 쓰고 본인이 주관 → 윗사람(검토자) 꼭 · 신입(u4)은 검토자가 될 수 없음 · 신입 주관자 · 검토자 둘 다 고치고 확정 (019)."""
         pid = self.call('POST', '/api/projects', self.U2, {'name': '신입 회의', 'members': ['u3', 'u4']}, 201)['id']
         body = {**self._body(pid), 'attendees': ['u3']}
         mid = self.call('POST', '/api/drafts', self.U2, body, 201)['id']
@@ -142,10 +142,11 @@ class DeliveryAndReviewApiTests(unittest.TestCase):
         self.assertEqual(r['reviewer_id'], 'u3')
         d = self.call('GET', f'/api/meetings/{mid}', self.U3)
         self.assertEqual((d['author'], d['reviewer'], d['can_edit']), ('u2', 'u3', True))
-        self.assertFalse(self.call('GET', f'/api/meetings/{mid}', self.U2)['can_edit'])               # 제출 뒤 신입은 못 고침
+        self.assertTrue(self.call('GET', f'/api/meetings/{mid}', self.U2)['can_edit'])                # 신입 주관자도 고침
         self.assertIn('review', [n['kind'] for n in self.call('GET', '/api/notifications', self.U3)])
-        self.call('POST', f'/api/meetings/{mid}/confirm', self.U2, status=403)
-        self.call('POST', f'/api/meetings/{mid}/confirm', self.U3)
+        self.call('POST', f'/api/meetings/{mid}/confirm', self.U4, status=403)                         # 멤버는 X
+        self.call('POST', f'/api/meetings/{mid}/confirm', self.U2)                                     # 신입 주관자 확정 O
+        self.call('POST', f'/api/meetings/{mid}/confirm', self.U3, status=400)                         # 이미 확정
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
-"""회의 공유. 팀에게 보낸 공유(recipient_team_id)의 팀원 확인은 구성원 표(팀원 담당)가 생기면 연결."""
+"""회의 공유 (주관자 · 작성자만 · 검토자는 못 함 — migrations/018). 팀에게 보낸 공유(recipient_team_id)의 팀원 확인은 구성원 표(팀원 담당)가 생기면 연결."""
 from __future__ import annotations
 from followup.adapters.postgres.db import transaction
-from .common import (ValidationError, PermissionDenied, required, can_access_meeting,
+from .common import (ValidationError, PermissionDenied, required, can_manage_meeting,
                      get_one, is_admin, invalidate, person_label, require_user)
 
 
@@ -10,8 +10,8 @@ def create_share(*,actor_id: str,meeting_id: str,recipient_user_id: str | None =
     if bool(recipient_user_id) == bool(recipient_team_id):
         raise ValidationError('사용자 또는 팀 중 하나만 지정해야 합니다.')
     if scope not in {'summary','full'}: raise ValidationError('공유 범위가 잘못되었습니다.')
-    with transaction() as cur:
-        can_access_meeting(cur,meeting_id,actor_id,write=True)
+    with transaction(actor_id) as cur:
+        can_manage_meeting(cur,meeting_id,actor_id)
         cur.execute("""INSERT INTO meeting_shares
                        (meeting_id,sender_id,recipient_user_id,recipient_team_id,scope,lock_raw)
                        VALUES (%s,%s,%s,%s,%s,%s) RETURNING *""",
@@ -22,17 +22,17 @@ def create_share(*,actor_id: str,meeting_id: str,recipient_user_id: str | None =
 
 
 def list_shares(*,actor_id: str,meeting_id: str) -> list[dict]:
-    with transaction() as cur:
-        can_access_meeting(cur,meeting_id,actor_id,write=True)
+    with transaction(actor_id) as cur:
+        can_manage_meeting(cur,meeting_id,actor_id)
         cur.execute('SELECT * FROM meeting_shares WHERE meeting_id=%s ORDER BY id',(meeting_id,))
         return cur.fetchall()
 
 
 def update_share(*,actor_id: str,share_id: int,scope: str,lock_raw: bool) -> dict:
     if scope not in {'summary','full'}: raise ValidationError('공유 범위가 잘못되었습니다.')
-    with transaction() as cur:
+    with transaction(actor_id) as cur:
         sh=get_one(cur,'SELECT * FROM meeting_shares WHERE id=%s AND revoked_at IS NULL',(share_id,))
-        can_access_meeting(cur,sh['meeting_id'],actor_id,write=True)
+        can_manage_meeting(cur,sh['meeting_id'],actor_id)
         cur.execute("""UPDATE meeting_shares SET scope=%s,lock_raw=%s
                        WHERE id=%s AND revoked_at IS NULL RETURNING *""", (scope,lock_raw,share_id))
         row=cur.fetchone()
@@ -41,9 +41,9 @@ def update_share(*,actor_id: str,share_id: int,scope: str,lock_raw: bool) -> dic
 
 
 def revoke_share(*,actor_id: str,share_id: int) -> dict:
-    with transaction() as cur:
+    with transaction(actor_id) as cur:
         sh=get_one(cur,'SELECT * FROM meeting_shares WHERE id=%s AND revoked_at IS NULL',(share_id,))
-        can_access_meeting(cur,sh['meeting_id'],actor_id,write=True)
+        can_manage_meeting(cur,sh['meeting_id'],actor_id)
         cur.execute('UPDATE meeting_shares SET revoked_at=now() WHERE id=%s RETURNING *',(share_id,))
         row=cur.fetchone()
     invalidate('_base_meetings', 'base_folders')
