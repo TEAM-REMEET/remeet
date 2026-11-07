@@ -22,17 +22,20 @@ Neo4j 쪽 기준은 `playground/eunje/ontology` (`schema/schema.cypher`, `script
 
 | 데이터 | Neo4j | PostgreSQL |
 |---|:---:|:---:|
-| 사람 · 팀 · 역할 · 스킬(숙련도) — `Person` `Team` `Role` `Skill` | ✅ | |
+| 사람 · 팀 · 역할 · 스킬(숙련도) | | ✅ **구성원 표 (팀원 담당 · 이 폴더에는 없음)** |
 | 프로젝트 · 주제 — `Project` `Topic` | ✅ | |
-| 회의 제목 · 날짜 · 참석자 — `Meeting` `ATTENDED` | ✅ | |
-| 안건 (배경 · 결정 · 미해결 · 다음 주제) — `Agenda` | ✅ | |
-| 소주제별 논의 · 근거 발화 번호 — `Discussion` | ✅ | |
-| 할 일 · 완료 상태 · 담당 — `ActionItem` `ASSIGNED_TO` | ✅ | |
+| 회의 참석자 | | ✅ `meeting_attendees` |
+| 회의 상세: 요약 · 논의 · 결정 · 미해결 · 결과 · 안건(상세) · 근거 발화 | | ✅ `meeting_summaries` `summary_agendas` `summary_topics` `summary_points` |
+| 액션 아이템 · 담당자 · 삭제/되돌리기 | | ✅ `meeting_todos` `meeting_todo_owners` |
+| 안건 분리 요청 | | ✅ `branch_requests` |
 | 담당자 추천 — `RECOMMENDED_FOR` | ✅ | |
 | 위키 그래프 | ✅ | |
 | **로그인 계정** (이메일 · 비밀번호 해시) | | ✅ `accounts` |
 | **폴더** (회의 종류 · 주관자 · 멤버 · 브리프) — 폴더 id = `Project.project_id` | | ✅ `folders` … |
 | **회의 관리 정보** (폴더 · 주관자 · 진행 상태 · 파일 · 요약 · 안건 분리 · 삭제) | | ✅ `meetings` |
+| **회의 제목 · 날짜** (목록 정렬용) | | ✅ `meetings.title` `meetings.held_at` |
+| **회의 원본 파일** (올린 회의록 그대로, 버전별) | | ✅ `meeting_sources` |
+| **요약 회의록** (전체 요약 · 안건 · 논의 · 할 일, 버전별) | | ✅ `meeting_summaries` `summary_*` |
 | **회의 원문 발화** (`summary.json` 의 `transcript`) | | ✅ `transcript_lines` |
 | **화자 매핑** (A → 프로젝트 매니저 → u1) | | ✅ `meeting_speakers` |
 | **AI 분석 실행 기록** (모델 · 설정 · 원본 경로 · 검토 이력 · summary.json 전체) | | ✅ `meeting_analyses` |
@@ -90,6 +93,11 @@ erDiagram
     folders ||--o{ folder_briefs : ""
     folders ||--o{ meetings : "폴더 안 회의"
     meetings ||--o{ meeting_analyses : "AI 분석 실행"
+    meetings ||--o{ meeting_sources : "회의 원본"
+    meetings ||--o{ meeting_summaries : "요약 회의록"
+    meeting_summaries ||--o{ summary_agendas : "안건"
+    summary_agendas ||--o{ summary_discussions : "논의"
+    meeting_summaries ||--o{ summary_action_items : "할 일"
     meetings ||--o{ meeting_speakers : "화자 매핑"
     meetings ||--o{ transcript_lines : "원문 발화"
     meetings ||--o{ meeting_keywords : ""
@@ -160,6 +168,9 @@ python seed.py
 ✅ 시드 완료
 ```
 ⚠️ 이 스크립트는 **표를 전부 지우고 다시 만듭니다.** (STEP 6 으로 넣은 데이터도 지워져요)
+
+`seed.py` 가 표를 만든 뒤 마이그레이션(`migrations/*.sql` 전부: 제약조건 · RLS · 자동 알림 · 이름 맞춤 …)까지 알아서 적용해요.
+> 이미 데이터가 있는 DB 는 seed.py 를 돌리지 말고 **`python migrate.py` 만** 실행하세요. 아직 안 적용한 번호만 적용돼요 (데이터는 그대로).
 
 ### STEP 6. (선택) 실제 AI 분석 결과 넣기
 ontology 폴더의 `summary.json` 들에서 PostgreSQL 몫(원문 · 화자 · 분석 기록)을 넣어요.
@@ -242,6 +253,117 @@ SELECT meeting_id, model, meeting_info->>'title' AS title, created_at
 FROM meeting_analyses ORDER BY meeting_id, created_at;
 ```
 > **JOIN** = 외래 키로 이어진 두 표를 옆으로 붙이기. RDB 의 핵심이에요.
+
+---
+
+## 4-1. 회의 원본 · 회의록 트리 / 목록 (`crud/minutes.py`)
+
+web `components/sidebar.py` · `state/archive.py` 와 같은 구조예요. 사이드바는 토글로 두 트리를 바꿔 보여 주고, **같은 회의가 두 트리에 다 나와요.**
+
+```
+정기 회의 (list_regular_tree)   월간 회의 ─ 2026년 ─ 9월 (2026.09.26)              node: t:monthly · y:monthly:2026 · m:<id>
+                                 주간 회의 ─ 2026년 ─ 10월 ─ 4주차 (2026.10.27)     node: t:weekly · y:weekly:2026 · ym:weekly:2026:10 · m:<id>
+                                 일반 회의 ─ 2026.10.23                             node: t:normal · m:<id>
+프로젝트 (list_project_tree)     프로젝트 ─ 11월 릴리즈 준비 ─ 2026.10.29           node: proj · pf:<프로젝트 id> · m:<id>
+```
+- 회의 = 프로젝트(`meetings.project_id`) + 종류(`meetings.directory_id`: monthly · weekly · normal). web `Meeting.project_id` · `directory_id` 와 같은 이름.
+- 트리 · 목록 = **내 프로젝트(멤버 · 주관)의 회의 중 내가 볼 수 있는 것** (web `folder_note_ids`). 미리보기(draft)는 안 나와요.
+- 주간의 연도 · 월 · 주차는 **그 주 월요일 기준** (11/1 일요일 → 10/26 주 → 2026년 10월 4주차).
+- node id 는 web 트리 노드 id 와 같아서 펼침 상태 · 강조에 그대로 쓸 수 있어요.
+
+| 함수 | 하는 일 |
+|---|---|
+| `list_regular_tree` · `list_project_tree` | 사이드바 두 트리 (회의 수 · 회의 줄 이름까지 web 과 같게) |
+| `list_regular_meetings(directory_id)` | 「회의록」 페이지 월간 · 주간 · 일반 카드 → 그 종류의 회의 |
+| `list_project_folders` · `list_project_meetings(project_id)` | 프로젝트 · 그 안 회의 |
+| `list_all_meetings` | 볼 수 있는 회의 전부 (공유만 받은 회의 포함, `shared_to_me`) |
+
+## 4-2. 회의 상세 (`crud/detail.py`)
+
+> ⚠️ **구성원(사람 · 팀 · 역할 · 스킬)은 PostgreSQL 에 따로 만들기로 했고, 팀원 담당이에요.** 이 폴더의 `*_user_id` · `user_id` 칸은
+> 지금은 그냥 TEXT 예요. 구성원 표가 생기면 그 표를 가리키는 외래 키(REFERENCES)로 묶으면 돼요.
+> 로그인용 `accounts` 표와 구성원 표가 겹치니(이메일 · 비밀번호) 팀원과 하나로 합칠지 정하세요.
+> `schema.sql` 은 구성원 표를 **지우지 않아요** (DROP 목록에 넣지 마세요).
+
+`get_meeting_detail(actor_id, meeting_id)` 은 web 목업 `data/mock/meetings.json` 한 개와 **같은 모양**을 돌려줘요.
+web 의 `data/repository.py` 의 `_meeting(d)` 에 그대로 넣으면 `Meeting` 이 돼요 (`tests/test_front_detail_pg.py` 가 목업 11개 전부 확인).
+
+| 화면 | 표 | 함수 |
+|---|---|---|
+| 참석자 | `meeting_attendees` (주관자는 늘 포함) | `set_attendees` |
+| 요약 · 논의 · 결정 · 미해결 · 결과 · 안건(상세) | `meeting_summaries` + `summary_agendas` · `summary_topics` · `summary_points` | `save_summary` (버전 +1) · `list_summary_versions` |
+| 액션 아이템 | `meeting_todos` + `meeting_todo_owners` (요약 버전과 따로) | `add_todo` · `delete_todo` · `restore_todo` · `set_todo_owners` · `list_todos` |
+| 안건 분리 요청 | `branch_requests` | `request_branch` · `list_branch_requests` |
+
+- 근거(`src`) = `transcript_lines.line_id` 목록. 원문 권한이 없으면 `paragraphs` 는 빈 목록.
+- **참석자도 회의 · 원문을 볼 수 있어요** (화면 `can_see` 규칙). 목록(`list_all_meetings`)에도 나와요.
+- 화면이 할 일을 "순서 번호"(`mid:index`)로 기억하는데, DB 는 할 일마다 `id` 가 있어요. 화면을 `id` 로 바꾸면 삭제 · 되돌리기 · 담당자 지정이 안전해요.
+
+---
+
+## 4-3. 외부 연동 · 전송 실패 · 폴더 브리프 · 상태 이력 (`migrations/007`)
+
+| 기능 | 표 | 함수 | 누가 |
+|---|---|---|---|
+| 연동 연결 · 해제 · 다시 연결 | `integration_status` (+ `updated_by`) | `integrations.set_tool_status` | 관리자 |
+| 연동 목록 · 마지막 전송 시각 | `integration_tools.last_sync_at` | `integrations.list_tools` · `record_export` | 누구나 · 주관자 |
+| 전송 실패 기록 (종류 · 이유 · 코드 · 시각 · 해결) | `failed_exports` (실패마다 1행) | `integrations.record_failure` · `list_failures` | 주관자 (tech 면 관리자에게 알림) |
+| 전송 끝 → 회의 상태 | `meetings.status` | `integrations.finish_delivery` (실패 남음 = fail, 아니면 done) | 주관자 |
+| 다시 보내서 해결 | `failed_exports.resolved_at/by` | `integrations.resolve_failure` (남은 실패 없으면 fail → done) | simple = 주관자 · tech = 관리자 (주관자에게 「전달 완료」 알림) |
+| 폴더 브리프 수정 | `folder_briefs` | `folders.set_briefs` · `list_briefs` | 폴더 주관자 |
+| 회의 상태 변경 이력 | `meeting_status_history` (**DB 트리거가 자동 기록**) | `meetings.list_status_history` | 회의를 볼 수 있는 사람 |
+
+- 상태 이력의 "누가"(`changed_by`)는 `transaction(actor_id)` 로 넘긴 사람이에요. `crud/*` 함수는 다 넘기고, psql 로 직접 바꾸면 NULL 로 남아요.
+- 상태 전환 규칙(001)에 `fail → sending`(다시 보내기) · `fail → done`(다시 보내서 해결)을 추가했어요. 화면 흐름 그대로예요.
+- 알림 종류에 `delivered`(전달 완료) · `fail`(전송 실패, 관리자)를 추가했어요.
+- 비용 관리는 화면 목업으로 하기로 해서 DB 에 없어요.
+
+---
+
+## 4-4. 회의록 작성 흐름 (`crud/compose.py` · web `compose_finish` · `start_finalize`)
+
+```
+내가 주관자          미리보기 저장(draft) → 생성(review) → 확정(confirmed)                         검토 없음
+주관자가 다른 사람   미리보기 저장 → 생성 = 「검토 요청하기」 → 주관자 검토 · 수정 → 확정           reviewer_id = 주관자 (자동)
+신입이 주관자        미리보기 저장 → 생성 → 윗사람 검토 · 수정 → 확정                              reviewer_id = 윗사람 (지정)
+```
+- 생성하면 참석자에게 `created`(회의록이 생성됐어요), 검토자에게 `review`(검토 요청) 알림.
+- **생성 뒤 고치고 확정하는 사람 = 검토자, 없으면 주관자** (web: 주관자만 「확정하기」). 작성자는 검토를 요청하면 못 고쳐요.
+- 신입 판단은 구성원 표가 생기면 `compose.seniority()` 한 곳만.
+- 결과 전달: 최종 회의록 「결과 전달」 = `confirm_meeting` 다음 `update_meeting(status='sending')` → 끝나면 `integrations.finish_delivery`.
+
+## 4-5. 회의 검색 (`crud/search.py`, `migrations/009`)
+
+화면 검색 탭과 같아요. 검색 범위 = 트리와 같음 (내 프로젝트의 회의 중 볼 수 있는 것 · 미리보기 제외 · web `visible_note_ids`).
+
+| 탭 | 함수 | 찾는 곳 |
+|---|---|---|
+| 회의명 | `search_titles(q)` | 회의 제목 |
+| 폴더명 | `search_folders(q)` | 내 프로젝트 이름 (web 과 같이 정기 회의 폴더는 검색 안 함) |
+| 구성원 | `search_people(people={id: 이름})` | 그 사람이 주관 · 참석한 회의 + 그 사람 발언 2개. **이름 → id 는 구성원 표에서 찾아 넘겨 줘요** |
+| 회의 내용 | `search_content(q)` | 원문 발화(원문 권한 있을 때만) · 최신 요약 · 결정 사항 · 액션 아이템. 찾은 원문 줄 번호(`line_id`) 포함 |
+| (한 번에) | `search_all(q, people)` | 탭별 결과 수 + 결과 |
+
+- 한국어는 글자 일부 포함 검색(`ILIKE`)이 맞아서 그렇게 찾고, `pg_trgm` 인덱스로 빠르게 해요. `%` · `_` 도 글자 그대로 찾아요.
+
+---
+
+## 4-6. 프론트(web) 기준 맞춤 (`migrations/010`)
+
+| web | DB |
+|---|---|
+| `Meeting.project_id` · `directory_id` | `meetings.project_id` · `directory_id` (예전 `folder_id` · `type_id` 이름을 바꿈) |
+| `Folder` (= 프로젝트, 종류 없음) | `folders` (`type_id` 지움) |
+| 회의가 보이는 사람 `can_see` = 주관 · 참석 · 공유받음 | 같음 (+ 작성자 · 검토자). **프로젝트 멤버라는 것만으로는 안 보임** — 미참석 멤버는 공유받아야 |
+| `Todo.item_id` (백엔드 담당자 추천 · 지정 id) | `meeting_todos.item_id` · 상세 `todos[].item_id` |
+| `AppState.todo_due` (추천 단계에서 고친 마감일) | `detail.set_todo_due` |
+| `AppState.summaries` (검토 끝난 MeetingSummary JSON) | `meeting_summaries.summary_json` · `compose.save_draft(summary_json=…)` · `detail.get_summary_json` |
+| `AppState.ask_history` (회의에 물어보기) | `ask_history` · `crud/ask.py` (본인 것만) |
+| 공유한 회의 · 공유 받은 회의 | `shares.list_sent` · `shares.list_received` |
+| 알림 `budget` (관리자 예산) | 알림 종류에 추가 |
+| 상태 `review · confirmed · sending · done · fail` | 같음 (+ 작성 중 `draft`) |
+
+- `schema.sql` 은 기본 모양(예전 이름)이고 `migrate.py` 가 010 까지 적용해야 최종 이름이 돼요. `seed.py` 는 마이그레이션까지 알아서 돌려요.
 
 ---
 
@@ -328,6 +450,13 @@ def add_folder_members(fid: str, pids: list[str]) -> None:
 5. [ ] 새 회의록 저장 (`actions.compose_finish`) → `meetings` + `transcript_lines` + `meeting_speakers` (+ Neo4j 쪽 적재 호출)
 6. [ ] 외부 연동 연결/해제 → `integration_status`
 7. [ ] 로그인: `accounts.email` + 비밀번호 해시(`bcrypt` 등) → `config.CURRENT_USER_ID` 대신 로그인한 사람 id
+
+### 구성원 표(팀원 담당)가 완성되면 할 일 ⏸
+1. [ ] `accounts`(로그인 이메일 · 비밀번호 · 관리자 여부)와 구성원 표를 하나로 합칠지 정하고 정리
+2. [ ] 구성원 id 형식을 구성원 표에 맞추기 (목업 `yun` · 예전 Neo4j `u1`) → `seed.py` 의 `SEED_USER_ID` · 목업 id 도 맞추기
+3. [ ] 사람을 가리키는 TEXT 칸에 외래 키 걸기: `meetings.host_user_id` · `meeting_attendees.user_id` · `meeting_todo_owners.user_id`
+       · `folders.host_user_id` · `folder_members.user_id` · `meeting_shares.sender_id/recipient_user_id` · `notifications.user_id` …
+4. [ ] 공유 보낸 사람 표시: `get_meeting_detail()` 의 `shared.from`(id) → 구성원 표에서 "이름 · 팀" 으로
 
 ### Neo4j 담당과 같이 정할 것 ⚠️
 1. **id 체계 통일** — 지금 웹 목업은 `yun` · `m1` · `rel`, 온톨로지는 `u1` · `TS3003a` · `TS3003` 이에요. 어느 쪽 규칙으로 맞출지 정해야 두 DB 가 이어져요.
