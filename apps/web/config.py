@@ -54,6 +54,7 @@ APP_TITLE = "RE:MEET"
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 # 회의 요약 응답을 기다리는 시간 (초). 요약은 몇 분 이상 걸릴 수 있어 nginx의 proxy_read_timeout과 같게 둬요.
 MEETING_SUMMARY_TIMEOUT = 3600
+ASK_TIMEOUT = 120  # 회의에 물어보기: LLM 2번 + 새 회의의 결정 정리 (보통 수 초)
 
 # 브랜드 이미지 (assets/brand/)
 BRAND_DIR = Path(__file__).resolve().parent / "assets" / "icons"
