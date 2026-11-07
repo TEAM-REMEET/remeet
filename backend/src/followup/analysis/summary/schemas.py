@@ -455,6 +455,28 @@ class HitlEdits(BaseModel):
     edits: list[Annotated[HitlCreate | HitlUpdate | HitlDelete, Field(discriminator="op")]]
 
 
+# ── 담당자 추천 단계 수정 (PUT /api/meetings/{id}/final/assignees · 최종 JSON에 바로 반영, LLM · 근거 연결 없음) ──
+#   {"changes": [{"item_id": "M_…_a1_d5", "assignees": [{"user_id": "u7", "name": "홍길동", "job": "개발자"}], "due": "2026-11-20"}]}
+#   참석자가 아닌 담당자도 가능 (추천 후보) — 참석자면 회의 정보의 이름 · 직무를 쓰고, 아니면 보낸 이름 · 직무를 저장
+class AssignPerson(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    user_id: str
+    name: str
+    job: str | None = None
+
+
+class AssignChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    item_id: str
+    assignees: list[AssignPerson] | None = None     # 쓴 값만 변경 · 빈 배열이면 담당자 없음
+    due: str | None = None                          # 쓴 값만 변경 · null이면 일정을 비움
+
+
+class AssignChanges(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    changes: list[AssignChange]
+
+
 # ── 4-2. 근거 연결 · 검증 출력 (prompts/link_evidence.py · verify_evidence.py) ──
 class LLMEvidenceLink(_LLMModel):
     item_id: str

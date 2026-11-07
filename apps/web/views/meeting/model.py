@@ -217,6 +217,7 @@ class TodoView:
     speaker: str
     quote: str
     src: tuple[str, ...]
+    assignee_check: bool = False  # 담당자 확인 필요 (분석 및 검토에서 확인하기 전)
 
     @property
     def plain(self) -> str:
@@ -265,6 +266,7 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
                 "원문이 공유되지 않았어요" if t.src else "「확정하기」를 누르면 근거 발언을 찾아 연결해요" if pending
                 else "원문에서 관련 발언을 찾지 못했어요"),
             src=t.src,
+            assignee_check=t.assignee_check,
         ))
     return out
 

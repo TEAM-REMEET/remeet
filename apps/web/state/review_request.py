@@ -14,6 +14,8 @@ def _update(item: Todo, edit: dict) -> dict | None:
         changes["text"] = edit["text"]
     if list(edit["owners"]) != list(item.owners):
         changes["assignee_user_ids"] = list(edit["owners"])
+    if item.assignee_check and "assignee_user_ids" not in changes:  # 담당자 확인 필요: 그대로 저장해도 확인한 것으로 보냄
+        changes["assignee_user_ids"] = list(edit["owners"])
     if edit["due_iso"] != item.due_iso:
         changes["due"] = edit["due_iso"] or None
     return {"op": "update", "item_id": item.item_id, **changes} if changes else None

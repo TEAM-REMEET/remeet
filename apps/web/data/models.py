@@ -350,6 +350,7 @@ class Todo:
     item_id: str = ""  # MeetingSummary 액션 item_id (= Neo4j ActionItem.action_item_id) · 목업 · 직접 추가한 일은 빈 값
     due_iso: str = ""  # 연도까지 있는 마감일 (YYYY-MM-DD[ HH:MM]) · 화면 표기 due(11/6)로는 연도를 알 수 없어요
     agenda: str = ""  # 직접 추가할 때 고른 안건 제목 (AI가 만든 할 일은 빈 값)
+    assignee_check: bool = False  # AI가 적은 담당자를 참석자와 연결하지 못함 → 수정 창에서 담당자를 확인해야 확정 가능
 
 
 @dataclass(frozen=True)

@@ -7,6 +7,7 @@ from dataclasses import replace
 from data.models import NO_SPEAKER, Agenda, AgendaTopic, Evidence, Meeting, MeetingResult, Paragraph, TaggedPoint, Todo
 
 
+_ASSIGNEE_CHECK = "담당자 확인 필요"  # review_reasons 앞부분: AI가 적은 담당자를 참석자와 연결하지 못함 (backend postprocess.ASSIGNEE_REVIEW_PREFIX)
 _VERIFY_FAILED = "검증 미통과"  # review_reasons 앞부분: 재수정 후에도 검증 오류가 남은 문장 (backend revision.REVIEW_PREFIX)
 
 
@@ -80,7 +81,8 @@ def apply_summary(meeting: Meeting, summary: dict) -> Meeting:
         results += [MeetingResult("결정", e.text, (number,), e.src) for e in view.decisions]
         results += [MeetingResult("미해결", e.text, (number,), e.src) for e in view.open_issues]
         todos += [Todo(d["text"], tuple(u for u in d["assignee_user_ids"] if u), _due(d["due"]),
-                       _src(d["evidence_utterance_indices"]), item_id=d["item_id"], due_iso=d["due"] or "")
+                       _src(d["evidence_utterance_indices"]), item_id=d["item_id"], due_iso=d["due"] or "",
+                       assignee_check=any(r.startswith(_ASSIGNEE_CHECK) for r in d.get("review_reasons") or []))
                   for d in _active(raw["major_discussions"]) if d["discussion_tag"] == "액션"]
     return replace(
         meeting,

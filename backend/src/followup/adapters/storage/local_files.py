@@ -47,6 +47,10 @@ class LocalFileStore:
         _write_atomic(path, summary.model_dump_json(indent=2))
         return str(path)
 
+    def read_final(self, meeting_id: str) -> str | None:
+        path = self.root / meeting_id / f"{meeting_id}_summary_final.json"
+        return path.read_text(encoding="utf-8") if path.is_file() else None
+
     def save_edits(self, meeting_id: str, content: str) -> str:
         path = self.root / meeting_id / f"{meeting_id}_hitl_edits.json"
         _write_atomic(path, content)

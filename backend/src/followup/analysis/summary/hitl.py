@@ -26,7 +26,8 @@ from followup.analysis.summary.preprocessing import llm_metadata, llm_names
 from followup.analysis.summary.prompts import link_evidence as link_prompt
 from followup.analysis.summary.prompts import verify_evidence as verify_prompt
 from followup.analysis.summary.revision import _next_number, _set, misc_agenda, rebuild_subtopics
-from followup.analysis.summary.schemas import (ACTION_DECISION, ACTION_TAG, DiscussionItem, HitlEditRecord, HitlEdits,
+from followup.analysis.summary.schemas import (ACTION_DECISION, ACTION_TAG, AssignChanges, AssignPerson, DiscussionItem,
+                                               HitlEditRecord, HitlEdits, HitlResult,
                                                HitlEvidenceIssue, ItemRevision, LLMEvidenceLinks, LLMEvidenceVerification,
                                                MeetingSummary, make_item_id)
 
@@ -154,8 +155,10 @@ def _update(summary: MeetingSummary, e) -> HitlEditRecord:
     if "due" in fields:
         values["due"], note = _due_value(e.due, item.item_id, item.history, summary)
     changed = [f for f, v in values.items() if _set(item, f, v, item.history, STAGE, "사용자 수정")]
-    if "assignees" in changed or "assignee_user_ids" in changed:    # 사용자가 고른 담당자이므로 담당자 대조 사유는 해소
+    if "assignee_user_ids" in fields:     # 사용자가 담당자를 확인함 (값이 같아도) → 담당자 대조 사유는 해소
         item.review_reasons = [r for r in item.review_reasons if not r.startswith(ASSIGNEE_REVIEW_PREFIX)]
+        if item.status == "REVIEW_REQUIRED" and not item.review_reasons:
+            _set(item, "status", "ACTIVE", item.history, STAGE, "사용자가 담당자 확인")
     return HitlEditRecord(op="update", item_id=item.item_id, agenda_id=item.agenda_id, changed_fields=changed,
                           evidence_before=list(item.evidence_utterance_indices),
                           evidence_status="LINKED" if changed else "NOT_NEEDED",
@@ -179,6 +182,85 @@ def apply_edits(summary: MeetingSummary, edits: HitlEdits) -> tuple[list[HitlEdi
         rebuild_subtopics(agenda)
     refresh_derived(summary)
     return records, [r.item_id for r in records if r.evidence_status != "NOT_NEEDED"]
+
+
+# ── 담당자 추천 단계 수정 (최종 JSON에 바로 반영 · LLM 없음) ──
+ASSIGN_STAGE = "assign"
+ASSIGN_REASON = "담당자 추천 단계 수정"
+
+
+def validate_assignments(summary: MeetingSummary, changes: AssignChanges) -> None:
+    errors, seen = [], set()
+    for n, c in enumerate(changes.changes, 1):
+        label = f"{n}번째 변경"
+        item = summary.find_item(c.item_id)
+        if item is None or item.status == "DELETED":
+            errors.append(f"{label}: 회의록에 없거나 삭제된 항목 {c.item_id!r}")
+        elif not (isinstance(item, DiscussionItem) and item.is_action):
+            errors.append(f"{label}: 액션이 아닌 항목 {c.item_id!r}")
+        if c.item_id in seen:
+            errors.append(f"{label}: 같은 항목을 두 번 변경 {c.item_id!r}")
+        seen.add(c.item_id)
+        fields = c.model_fields_set
+        if not fields & {"assignees", "due"}:
+            errors.append(f"{label}: 변경할 값이 없음")
+        if "assignees" in fields:
+            if c.assignees is None:
+                errors.append(f"{label}: 담당자는 배열로 씀 (담당자 없음은 빈 배열)")
+            elif any(not p.user_id.strip() or not p.name.strip() for p in c.assignees):
+                errors.append(f"{label}: 담당자의 user_id · 이름이 비어 있음")
+    if errors:
+        raise HitlEditError(errors)
+
+
+def _assigned_people(people: list[AssignPerson], summary: MeetingSummary) -> dict:
+    # 참석자는 회의 정보의 값, 아니면 보낸 이름 · 직무 (참석자 · 다른 담당자와 이름이 겹치면 표시 이름에 직무를 붙임)
+    attendees = {p.user_id: p for p in summary.meeting_info.participants}
+    chosen = list({p.user_id: p for p in reversed(people)}.values())[::-1]     # 같은 사람은 처음 것만
+    outside = [p.name.strip() for p in chosen if p.user_id not in attendees]
+    taken = {a.name for a in attendees.values()} | {a.display_name for a in attendees.values()}
+    values = {"assignees": [], "assignee_user_ids": [], "assignee_names": [], "assignee_jobs": []}
+    for p in chosen:
+        if p.user_id in attendees:
+            a = attendees[p.user_id]
+            shown, name, job = a.display_name, a.name, a.job
+        else:
+            name, job = p.name.strip(), (p.job or "").strip() or None
+            clash = name in taken or outside.count(name) > 1
+            shown = f"{name}({job})" if clash and job else name
+        for key, value in zip(values, (shown, p.user_id, name, job)):
+            values[key].append(value)
+    return values
+
+
+def apply_assignments(summary: MeetingSummary, changes: AssignChanges) -> list[HitlEditRecord]:
+    # 담당자 · 마감일만 바꿈 (근거는 그대로) → 변경 기록을 summary.hitl.edits에 덧붙임
+    records = []
+    for c in changes.changes:
+        item, fields, values, note = summary.find_item(c.item_id), c.model_fields_set, {}, None
+        if "assignees" in fields:
+            values.update(_assigned_people(c.assignees, summary))
+        if "due" in fields:
+            raw = _empty_to_none(c.due)
+            values["due"] = _normalize_due(raw, item.item_id, item.history, summary.postprocess_log, ASSIGN_STAGE)
+            if raw is not None and values["due"] is None:
+                note = f"날짜로 확인되지 않아 빈 일정으로 저장: {raw!r}"
+        changed = [f for f, v in values.items() if _set(item, f, v, item.history, ASSIGN_STAGE, ASSIGN_REASON)]
+        if "assignees" in fields:   # 사용자가 고른 담당자이므로 담당자 대조 사유는 해소
+            item.review_reasons = [r for r in item.review_reasons if not r.startswith(ASSIGNEE_REVIEW_PREFIX)]
+            if item.status == "REVIEW_REQUIRED" and not item.review_reasons:
+                _set(item, "status", "ACTIVE", item.history, ASSIGN_STAGE, ASSIGN_REASON)
+        if changed:
+            records.append(HitlEditRecord(op="update", item_id=item.item_id, agenda_id=item.agenda_id,
+                                          changed_fields=changed, evidence_status="NOT_NEEDED",
+                                          note=ASSIGN_REASON + (f" · {note}" if note else "")))
+    refresh_derived(summary)
+    if records:
+        if summary.hitl is None:
+            summary.hitl = HitlResult(status="COMPLETED", applied_at="", max_rounds=cfg.HITL_MAX_VERIFY_ROUNDS)
+        summary.hitl.status = "COMPLETED"
+        summary.hitl.edits += records
+    return records
 
 
 # ── LLM 입력 (전사문과 같은 이름 사용: 동명이인은 A · B) ──

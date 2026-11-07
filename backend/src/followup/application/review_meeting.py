@@ -31,10 +31,11 @@ from langgraph.graph import END, START, StateGraph
 
 from followup import settings as cfg
 from followup.analysis.summary import hitl, ui_test
-from followup.analysis.summary.schemas import (HitlEditRecord, HitlEdits, HitlEvidenceIssue, HitlEvidenceRound, HitlResult,
-                                               MeetingSummary)
+from followup.analysis.summary.schemas import (AssignChanges, HitlEditRecord, HitlEdits, HitlEvidenceIssue,
+                                               HitlEvidenceRound, HitlResult, MeetingSummary)
 from followup.application.ports import StructuredLLM, SummaryStore
 from followup.application.summarize_meeting import _MEETING_ID, _StepRunner
+from followup.application.time_limit import run_with_limit
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +132,7 @@ def review_meeting(meeting_id: str, edits: HitlEdits, *, llm: StructuredLLM, sto
     """저장된 summary.json + 사용자 수정 목록 → 최종 JSON ({회의 ID}_summary_final.json, 원본은 그대로 둠)
 
     회의가 없으면 MeetingNotFoundError, 수정 목록이 잘못되면 hitl.HitlEditError (둘 다 LLM 호출 전)
+    settings.REVIEW_TIMEOUT_SECONDS 안에 끝나지 않으면 TimeLimitExceeded (다시 요청하면 저장된 단계부터 진행)
     """
     if not _MEETING_ID.fullmatch(meeting_id):
         raise MeetingNotFoundError(meeting_id)
@@ -146,10 +148,33 @@ def review_meeting(meeting_id: str, edits: HitlEdits, *, llm: StructuredLLM, sto
         store.save_edits(meeting_id, edits.model_dump_json(indent=2, exclude_unset=True))
     runner = _StepRunner(llm, store, meeting_id, cfg.USE_LLM_CACHE if use_cache is None else use_cache,
                          max_calls=cfg.hitl_max_llm_calls())
-    state = _build_graph(edits, runner, store, save).invoke(
-        {"summary": summary, "round": 0, "issues": [], "rounds": []},
-        config={"run_name": f"summary_action_hitl_{meeting_id}", "recursion_limit": RECURSION_LIMIT,
-                "tags": [*cfg.LANGSMITH_TAGS, "hitl"]})
+    def work(deadline: float) -> dict:
+        runner.deadline = deadline
+        return _build_graph(edits, runner, store, save).invoke(
+            {"summary": summary, "round": 0, "issues": [], "rounds": []},
+            config={"run_name": f"summary_action_hitl_{meeting_id}", "recursion_limit": RECURSION_LIMIT,
+                    "tags": [*cfg.LANGSMITH_TAGS, "hitl"]})
+
+    state = run_with_limit(work, cfg.REVIEW_TIMEOUT_SECONDS)
     result: MeetingSummary = state["summary"]
     logger.info("[%s] HITL 완료: 수정 %d건 · API 호출 %d회", meeting_id, len(result.hitl.edits), runner.api_calls)
     return result
+
+
+def save_assignments(meeting_id: str, changes: AssignChanges, *, store: SummaryStore) -> MeetingSummary:
+    """담당자 추천 단계에서 바꾼 담당자 · 마감일 → 최종 JSON에 반영해 다시 저장 (LLM · 근거 연결 없음)
+
+    최종 JSON이 없으면 MeetingNotFoundError, 변경 목록이 잘못되면 hitl.HitlEditError (저장 전)
+    """
+    if not _MEETING_ID.fullmatch(meeting_id):
+        raise MeetingNotFoundError(meeting_id)
+    content = store.read_final(meeting_id)
+    if content is None:
+        raise MeetingNotFoundError(meeting_id)
+    summary = MeetingSummary.model_validate_json(content)
+    hitl.validate_assignments(summary, changes)
+    records = hitl.apply_assignments(summary, changes)
+    if records:
+        store.save_final(summary)
+    logger.info("[%s] 담당자 추천 단계 수정 %d건 반영", meeting_id, len(records))
+    return summary

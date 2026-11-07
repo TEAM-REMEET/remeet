@@ -21,10 +21,12 @@ from followup.analysis.summary.preprocessing import TranscriptFormatError
 from followup.analysis.summary.transcript_builder import MeetingSubmission, build_meeting_text
 from followup.application.ports import StructuredLLM, SummaryStore
 from followup.application.summarize_meeting import summarize_submission
+from followup.application.time_limit import TimeLimitExceeded, run_with_limit
 
 logger = logging.getLogger(__name__)
 
 FAILED_MESSAGE = "요약 실행에 실패했어요. 같은 내용으로 다시 시도하면 이어서 진행해요."
+TIMEOUT_MESSAGE = "분석이 제한 시간(30분) 안에 끝나지 않았어요. 같은 내용으로 다시 시도하면 이어서 진행해요."
 INTERRUPTED_MESSAGE = "서버가 다시 시작되어 분석이 중단됐어요. 같은 내용으로 다시 시도하면 이어서 진행해요."
 
 _lock = threading.Lock()
@@ -41,8 +43,12 @@ def _run(user_id: str, job: dict, submission: MeetingSubmission, llm: Structured
         if ui_test.is_test_transcript(submission.transcript):   # 시험 모드: LLM 없이 저장된 결과 사용
             summary = ui_test.run_summary(submission, store)
         else:
-            summary = summarize_submission(submission, llm=llm, store=store)
+            summary = run_with_limit(lambda deadline: summarize_submission(submission, llm=llm, store=store, deadline=deadline),
+                                     cfg.SUMMARY_TIMEOUT_SECONDS)
         job = {**job, "status": "done", "meeting_id": summary.meeting_id}
+    except TimeLimitExceeded:
+        logger.warning("요약 작업 시간 초과 (%s)", user_id)
+        job = {**job, "status": "failed", "message": TIMEOUT_MESSAGE}
     except Exception:
         logger.exception("요약 작업 실패 (%s)", user_id)      # 원인은 서버 로그에만 남김
         job = {**job, "status": "failed", "message": FAILED_MESSAGE}

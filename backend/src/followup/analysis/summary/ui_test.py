@@ -3,7 +3,8 @@
 .env에 UI_TEST_MODE=true가 있을 때만, 회의 내용이 settings.UI_TEST_TRANSCRIPT('test')이면 동작함.
     요약 · 액션 추출    tests/fixtures/ui_test_summary.json을 기다렸다가 사용 (제목 · 날짜 · 참석자 · 프로젝트는 입력값으로 바꿈)
     근거 연결 · 검증    UiTestLLM이 대신 응답 (근거 연결은 간단한 낱말 검색, 품질 확인용이 아님)
-시험 결과는 config.ui_test = true로 표시되어, 확정 단계에서도 LLM을 호출하지 않음.
+    담당자 추천         recommend_items가 참석자로 후보를 만듦 (Neo4j 적재 · LLM 호출 없음, 점수는 시험용 값)
+시험 결과는 config.ui_test = true로 표시되어, 확정 · 담당자 추천 단계에서도 LLM과 공용 Neo4j를 쓰지 않음.
 """
 
 import json
@@ -49,6 +50,25 @@ def run_summary(submission: MeetingSubmission, store) -> MeetingSummary:
     summary = build_summary(submission)
     store.save_summary(summary)
     return summary
+
+
+def recommend_items(summary: MeetingSummary | dict) -> list[dict]:
+    """POST /api/meetings/{id}/recommendations 응답과 같은 모양의 시험용 추천 (점수는 화면 확인용 고정 값)."""
+    summary = MeetingSummary.model_validate(summary) if isinstance(summary, dict) else summary
+    people = summary.meeting_info.participants
+    candidates = [{"user_id": p.user_id, "name": p.name, "team": None, "role": p.job, "score": 90 - n * 10, "skill_score": 90 - n * 10,
+                   "role_team_score": 80, "workload_score": 70, "attended": True, "skills": ["시험용 스킬"], "open_tasks": n}
+                  for n, p in enumerate(people[:6])]
+    items = []
+    for agenda in summary.active_agendas():
+        for it in agenda.major_discussions:
+            if not it.is_action or it.status != "ACTIVE":     # 실제 적재와 같이 ACTIVE만
+                continue
+            assignees = [{"user_id": u, "name": n, "source": "meeting_explicit"}
+                         for u, n in zip(it.assignee_user_ids, it.assignee_names) if u]
+            items.append({"item_id": it.item_id, "text": it.text, "due": it.due, "recommend_status": None, "missing_skills": None,
+                          "assignees": assignees, "predecessors": [], "candidates": [] if assignees else candidates})
+    return items
 
 
 def _words(text: str) -> list[str]:

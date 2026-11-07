@@ -28,6 +28,10 @@ class SummaryStore(Protocol):
         """사용자 수정까지 반영한 최종 JSON을 저장하고 위치를 반환 (원본 summary.json은 그대로 둠)"""
         ...
 
+    def read_final(self, meeting_id: str) -> str | None:
+        """저장된 최종 JSON 내용 (없으면 None)"""
+        ...
+
     def save_edits(self, meeting_id: str, content: str) -> str:
         """사용자 수정 목록(hitl_edits)을 저장하고 위치를 반환"""
         ...

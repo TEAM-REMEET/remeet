@@ -409,9 +409,22 @@ def compose_clear_files() -> None:
     _set(nn_files=[])
 
 
+def unchecked_assignees(mid: str = PREVIEW_ID) -> list[str]:
+    """담당자 확인이 필요한데 아직 수정 창에서 확인하지 않은 액션 아이템 (삭제한 것은 제외)."""
+    return [t.text for _, t in sel.todo_items(get_state(), mid) if t.assignee_check]
+
+
 def open_compose_confirm() -> None:
-    """2단계 「확정하기」(주관자) · 「검토 요청하기」(주관자가 아닌 사람) → 한 번 더 묻는 창."""
-    open_modal("cp_confirm" if get_state().nn_host == me_id() else "cp_review")
+    """2단계 「확정하기」(주관자) · 「검토 요청하기」(주관자가 아닌 사람) → 한 번 더 묻는 창.
+
+    주관자: 담당자 확인이 필요한 액션이 남아 있으면 막음 (그대로 확정하면 담당자 추천 · 적재에서 빠지기 때문).
+    """
+    s = get_state()
+    if s.nn_host == me_id() and (left := unchecked_assignees()):
+        more = f" 외 {len(left) - 1}건" if len(left) > 1 else ""
+        _set(insight_tab="todo", toast=f"담당자를 확인해 주세요: 「{left[0]}」{more}. 액션 아이템을 눌러 담당자를 고르거나 삭제하면 확정할 수 있어요.")
+        return
+    open_modal("cp_confirm" if s.nn_host == me_id() else "cp_review")
 
 
 def compose_confirm() -> None:
@@ -458,6 +471,7 @@ def compose_finish() -> None:
 
         meeting = summary_view.apply_summary(meeting, s.cp_final)
         s.final_summaries[mid] = s.cp_final
+        s.summaries[mid] = s.cp_final  # 담당자 추천의 입력 (사용자 수정 · 근거 연결까지 끝난 최종 JSON)
         for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
             changes.pop(PREVIEW_ID, None)
     s.new_meetings[mid] = meeting
@@ -693,7 +707,8 @@ def submit_todo_edit(mid: str, index: int, text: str, owners: list[str], due: da
         shown, iso = t.due, t.due_iso
     else:
         shown, iso = (f"{due.month}/{due.day}", due.isoformat()) if due else ("", "")
-    edit = {"text": text.strip(), "owners": tuple(dict.fromkeys(owners)), "due": shown, "due_iso": iso}
+    edit = {"text": text.strip(), "owners": tuple(dict.fromkeys(owners)), "due": shown, "due_iso": iso,
+            "assignee_check": False}  # 수정 창에서 저장 = 담당자를 확인함
     if mid == PREVIEW_ID and (edit["text"], edit["owners"], iso) != (t.text, t.owners, t.due_iso):
         edit["src"] = ()  # 값이 바뀌면 「확정하기」 때 근거를 다시 연결 (그 전까지 이전 근거를 보여 주지 않음)
     s.edited_todos = {**s.edited_todos, mid: {**s.edited_todos.get(mid, {}), index: edit}}
@@ -966,8 +981,10 @@ def set_todo_due(key: str, widget_key: str) -> None:
     d = st.session_state.get(widget_key)
     if d:
         s.todo_due[key] = f"{d.month}/{d.day}"
+        s.todo_due_iso[key] = d.isoformat()
     else:
         s.todo_due.pop(key, None)
+        s.todo_due_iso.pop(key, None)
 
 
 # ---------------------------------------------------------------- 결과 전달
@@ -991,19 +1008,51 @@ def finalize_goto(step: int) -> None:
     _set(fin_step=step)
 
 
+def _final_assignments(s, mid: str, final: dict) -> list[dict]:
+    """담당자 추천 화면의 지금 담당자 · 마감일 중 최종 JSON과 다른 것 → 최종 JSON 변경 목록 (참석자가 아닌 담당자도 이름 · 직무를 함께 보냄)."""
+    items = {d["item_id"]: d for a in final["agendas"] for d in a["major_discussions"]}
+    rows = {r["user_id"]: r for r in repo.people_rows()} if s.assigned else {}
+    changes = []
+    for i, t in sel.todo_items(s, mid):
+        item = items.get(t.item_id)
+        if item is None:
+            continue
+        key = sel.todo_key(mid, i)
+        change: dict = {}
+        owners = list(sel.todo_owner_ids(s, key, t))
+        if owners != [u for u in item["assignee_user_ids"] if u]:
+            change["assignees"] = [{"user_id": u, "name": (rows.get(u) or {}).get("name") or sel.assignee_name(u),
+                                    "job": (rows.get(u) or {}).get("job")} for u in owners]
+        due = s.todo_due_iso.get(key)
+        if due and due != (item["due"] or "")[:10]:  # 같은 날이면 원래 시각 표기를 그대로 둠
+            change["due"] = due
+        if change:
+            changes.append({"item_id": t.item_id, **change})
+    return changes
+
+
 def confirm_assignees(mid: str) -> None:
     """「다음: 최종 회의록」: 주관자가 고른 담당자를 Neo4j에 확정하고 2단계로. 실패하면 1단계에 남아 다시 누르게 함.
 
     모든 일의 지금 담당자를 보냄 (바꾼 사람 · 회의록 담당자 · 비운 일은 빈 목록 → 앞서 저장한 지정도 덮어씀). 목업 회의는 저장 없이 넘어감.
+    최종 JSON이 있으면 바꾼 담당자 · 마감일을 최종 JSON에도 저장 (회의록 TXT에 반영).
     """
     s = get_state()
-    if mid in s.summaries:
+    if mid in s.summaries and not s.summaries[mid].get("config", {}).get("ui_test"):  # 시험 모드는 Neo4j에 저장하지 않음
         try:
             for i, t in sel.todo_items(s, mid):
                 if t.item_id:
                     repo.set_assignees(t.item_id, list(sel.todo_owner_ids(s, sel.todo_key(mid, i), t)))
         except api.ApiError as e:
             s.toast = f"담당자를 저장하지 못했어요. 다시 눌러 주세요. ({e})"
+            return
+    final = s.final_summaries.get(mid)
+    if final:
+        try:
+            if changes := _final_assignments(s, mid, final):
+                s.final_summaries[mid] = s.summaries[mid] = repo.save_final_assignees(mid, changes)
+        except api.ApiError as e:
+            s.toast = f"최종 회의록에 담당자 · 마감일을 저장하지 못했어요. 다시 눌러 주세요. ({e})"
             return
     _set(fin_step=2)
 

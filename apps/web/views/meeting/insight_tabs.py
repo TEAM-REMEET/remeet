@@ -289,7 +289,8 @@ def _todo_tab(s: AppState, m: Meeting, mode: str = "edit") -> None:
                                on_click=actions.open_assign, args=(t.key, t.text))
                         st.html(due, width="content")
                 else:
-                    markup(f'<div class="todo-meta">{"".join(tag(name, tone) for name, tone in t.who_tags)}{due}</div>')
+                    check = tag("담당자 확인 필요", "warn") if t.assignee_check and mode == "preview" else ""
+                    markup(f'<div class="todo-meta">{check}{"".join(tag(name, tone) for name, tone in t.who_tags)}{due}</div>')
                 with st.container(key=f"quotewrap-{t.index}"):
                     _pick(f"`{md_escape(t.speaker)}` “{md_escape(t.quote)}”", f"quote{t.index}", s, t.src)
         if can_edit:  # 액션 아이템 직접 추가는 주관자만 (최종 회의록 제외)

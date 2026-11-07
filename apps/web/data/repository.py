@@ -13,7 +13,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from config import ASK_TIMEOUT, MEETING_SUMMARY_TIMEOUT
+from config import ASK_TIMEOUT, MEETING_SUMMARY_TIMEOUT, REVIEW_TIMEOUT
 from data import api
 
 from data.models import (
@@ -130,7 +130,7 @@ def clear_summary_job() -> None:
 
 def review_meeting(meeting_id: str, edits: list[dict]) -> dict:
     """사용자 수정 반영 · 근거 연결 · 검증 → 최종 JSON (POST /api/meetings/{id}/review). 실패하면 api.ApiError."""
-    return api.call("POST", f"/api/meetings/{meeting_id}/review", {"edits": edits}, _token(), timeout=MEETING_SUMMARY_TIMEOUT)
+    return api.call("POST", f"/api/meetings/{meeting_id}/review", {"edits": edits}, _token(), timeout=REVIEW_TIMEOUT)
 
 
 def recommend_assignees(summary: dict) -> dict[str, dict]:
@@ -139,6 +139,12 @@ def recommend_assignees(summary: dict) -> dict[str, dict]:
     res = api.call("POST", f"/api/meetings/{summary['meeting_id']}/recommendations", summary, _token(),
                    timeout=MEETING_SUMMARY_TIMEOUT)
     return {item["item_id"]: item for item in res["items"]}
+
+
+def save_final_assignees(meeting_id: str, changes: list[dict]) -> dict:
+    """담당자 추천 단계에서 바꾼 담당자 · 마감일 → 최종 JSON에 반영 (PUT /api/meetings/{id}/final/assignees).
+    돌려줌: 고쳐진 최종 JSON. 실패하면 api.ApiError."""
+    return api.call("PUT", f"/api/meetings/{meeting_id}/final/assignees", {"changes": changes}, _token())
 
 
 def set_assignees(item_id: str, user_ids: list[str]) -> list[dict]:

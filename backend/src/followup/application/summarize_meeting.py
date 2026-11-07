@@ -35,6 +35,7 @@ import hashlib
 import json
 import logging
 import re
+import time
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -47,6 +48,7 @@ from followup.analysis.summary.schemas import LLMMeetingSummary, MeetingSummary,
 from followup.analysis.summary.transcript_builder import (MeetingSubmission, build_meeting_text, new_meeting_id,
                                                           new_project_id, submission_key)
 from followup.application.ports import StructuredLLM, SummaryStore
+from followup.application.time_limit import TimeLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +75,10 @@ class _StepRunner:
     """실행 1회 전용 LLM 호출기 — 호출 상한과 단계별 응답 재사용을 담당 (동시 실행 간에 값을 공유하지 않음)"""
 
     def __init__(self, llm: StructuredLLM, store: SummaryStore, meeting_id: str, use_cache: bool,
-                 max_calls: int | None = None):
+                 max_calls: int | None = None, deadline: float | None = None):
         self.llm, self.store, self.meeting_id, self.use_cache = llm, store, meeting_id, use_cache
         self.max_calls = cfg.max_llm_calls() if max_calls is None else max_calls
+        self.deadline = deadline    # time.monotonic() 기준 — 지나면 새 LLM 호출을 하지 않음
         self.api_calls = 0
 
     def _key(self, system: str, user: str, schema: type[BaseModel], step: str, effort: str | None) -> str:
@@ -102,6 +105,8 @@ class _StepRunner:
         if cached is not None:
             logger.info("[%s] %s: 저장된 응답 사용", self.meeting_id, step)
             return cached
+        if self.deadline is not None and time.monotonic() >= self.deadline:
+            raise TimeLimitExceeded(f"제한 시간 초과 — {step} 호출하지 않고 중단")
         if self.api_calls >= self.max_calls:
             raise LLMCallLimitError(f"LLM 호출 상한 초과 — 실행 1회당 최대 {self.max_calls}회, 호출하지 않고 중단")
         self.api_calls += 1     # 실패해도 센 횟수로 둠
@@ -184,7 +189,7 @@ def _build_graph(runner: _StepRunner, store: SummaryStore, save: bool):
 def summarize_meeting(meeting_id: str, transcript_text: str, *, llm: StructuredLLM, store: SummaryStore,
                       source_name: str | None = None, save: bool = True, use_cache: bool | None = None,
                       project_id: str | None = None, directory_id: str | None = None,
-                      host_user_id: str | None = None) -> MeetingSummary:
+                      host_user_id: str | None = None, deadline: float | None = None) -> MeetingSummary:
     """전사문 텍스트 → MeetingSummary (save=True면 summary.json 저장)
 
     source_name: summary.json에 남길 입력 이름 (파일 이름 등) / use_cache: None이면 settings.USE_LLM_CACHE
@@ -198,7 +203,7 @@ def summarize_meeting(meeting_id: str, transcript_text: str, *, llm: StructuredL
               "directory_id": directory_id, "host_user_id": host_user_id}
     logger.info("[%s] 입력: 발화 %d개 · 화자 모드 %s (%s) · 경고 %d건", meeting_id, len(loaded["transcript"]),
                 loaded["speaker_mode"], loaded["transcript_format"], len(loaded["warnings"]))
-    runner = _StepRunner(llm, store, meeting_id, cfg.USE_LLM_CACHE if use_cache is None else use_cache)
+    runner = _StepRunner(llm, store, meeting_id, cfg.USE_LLM_CACHE if use_cache is None else use_cache, deadline=deadline)
     state = _build_graph(runner, store, save).invoke(
         {"loaded": loaded, "round": 0, "issues": []},
         config={"run_name": f"summary_action_{meeting_id}", "recursion_limit": RECURSION_LIMIT,
@@ -221,7 +226,7 @@ def _remembered_id(store: SummaryStore, key: str, step: str, make, remember: boo
 
 
 def summarize_submission(submission: MeetingSubmission, *, llm: StructuredLLM, store: SummaryStore,
-                         save: bool = True, use_cache: bool | None = None) -> MeetingSummary:
+                         save: bool = True, use_cache: bool | None = None, deadline: float | None = None) -> MeetingSummary:
     """POST /api/meetings 입력 → MeetingSummary
 
     project_id가 없으면 새 폴더로 보고 P_ULID를 만듦.
@@ -235,7 +240,7 @@ def summarize_submission(submission: MeetingSubmission, *, llm: StructuredLLM, s
     project_id = submission.project_id or _remembered_id(store, key, _PROJECT_ID_STEP, new_project_id, resumable)
     summary = summarize_meeting(meeting_id, text, llm=llm, store=store, save=save, use_cache=use_cache,
                                 project_id=project_id, directory_id=submission.directory_id,
-                                host_user_id=submission.host_user_id)
+                                host_user_id=submission.host_user_id, deadline=deadline)
     if resumable:
         store.clear_steps(key)
     return summary

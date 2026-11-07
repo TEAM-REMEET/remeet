@@ -119,6 +119,7 @@ class AppState:
     agenda_jump_n: int = 0
     assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 user_id들 (여러 명 · 동명이인 구분 · 회의록 담당자 대신)
     todo_due: dict[str, str] = field(default_factory=dict)  # "mid:index" → 담당자 추천에서 고친 마감일 ("11/5")
+    todo_due_iso: dict[str, str] = field(default_factory=dict)  # "mid:index" → 같은 마감일의 연도까지 표기 ("2026-11-05", 최종 JSON 저장용)
     final_summaries: dict[str, dict] = field(default_factory=dict)  # 회의 id → 최종 JSON (담당자 추천 연결 전까지는 보관만)
     summaries: dict[str, dict] = field(default_factory=dict)  # 회의 id → 액션 아이템까지 검토가 끝난 MeetingSummary JSON
     recommendations: dict[str, dict] = field(default_factory=dict)  # 회의 id → {item_id: 추천 결과} (POST .../recommendations)
