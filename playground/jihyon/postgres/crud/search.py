@@ -154,9 +154,20 @@ def search_content(*, actor_id: str, q: str, limit: int = MAX_RESULTS) -> list[d
         return cur.fetchall()
 
 
+def find_people(*, actor_id: str, q: str) -> dict[str, str]:
+    """이름에 검색어가 들어간 구성원 {user_id: 이름} (구성원 표 people · 비활성 포함)."""
+    q = _q(q)
+    with transaction(actor_id) as cur:
+        require_user(cur, actor_id)
+        cur.execute("SELECT user_id, name FROM people WHERE name ILIKE %s ORDER BY name, user_id", (_like(q),))
+        return {r["user_id"]: r["name"] for r in cur.fetchall()}
+
+
 def search_all(*, actor_id: str, q: str, people: dict[str, str] | None = None) -> dict:
-    """탭별 결과 한 번에 (people 은 구성원 표에서 이름으로 찾은 {user_id: 이름})."""
+    """탭별 결과 한 번에. people 을 안 주면 구성원 표에서 이름으로 찾음 (find_people)."""
+    if people is None:
+        people = find_people(actor_id=actor_id, q=q)
     res = {"title": search_titles(actor_id=actor_id, q=q), "folder": search_folders(actor_id=actor_id, q=q),
-           "people": search_people(actor_id=actor_id, people=people or {}),
+           "people": search_people(actor_id=actor_id, people=people),
            "content": search_content(actor_id=actor_id, q=q)}
     return {"counts": {k: len(v) for k, v in res.items()}, **res}
