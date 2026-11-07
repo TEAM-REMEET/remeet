@@ -1,7 +1,7 @@
 """회의록 확정 화면 — 새 회의록 · 회의 상세의 「확정하기」 → 4단계.
 
   1) 담당자 추천: 액션 아이템마다 담당자 확인 · 담당자가 없던 일은 추천 후보(담당자 지정 창)에서 고르기
-  1) 회의록에서 담당자가 없던 일을 맨 위에 (고른 뒤에도 그 자리) · 제목 줄 오른쪽 「← 이전화면으로」 · 「다음: 최종 회의록 →」
+  1) 회의록에서 담당자가 없던 일을 맨 위에 (고른 뒤에도 그 자리) · 제목 줄 오른쪽 「최종 회의록 →」 (확정하기를 누른 뒤라 이전화면으로 버튼 없음)
   2) 최종 회의록: 회의 상세와 같은 화면(원문 · 요약 · 액션 아이템 …) · 고칠 수 없음 (추가 · 삭제 · 담당자 지정 없음)
      오른쪽 위 삭제 · 공유 · 결과 전달
      → 「결과 전달」 → 3단계
@@ -55,12 +55,14 @@ def flow_stepper(step: int) -> None:
 def flow_step_of(s: AppState, mid: str) -> int:
     """확정 흐름 중 회의 상세로 왔을 때 단계 표시에서 지금 차례인 단계.
 
-    확정 전: 담당자 추천(3) · 최종 회의록(4) 중 보던 단계 / 결과 전달 중: 5 / 결과 전달이 끝남: 다음 차례인 외부 도구 전송(6)
+    확정 전: 분석 및 검토(2) — 회의 상세가 곧 분석 및 검토 화면이라 (사이드바 등으로 회의 상세를 열었을 때)
+    결과 전달 중: 5 / 결과 전달이 끝남: 최종 회의록(4) — 결과 전달 · 외부 도구 전송에서 「← 이전화면으로」로 돌아온 회의 상세는
+    최종 회의록 화면이라 4단계 (머리말에서 결과 전달 · 외부 도구 전송으로 다시 넘어감)
     """
     status = sel.status_of(s, mid)
     if status == "review":
-        return s.fin_step + FIN_OFFSET
-    return 5 if status == "sending" else 6
+        return 2
+    return 5 if status == "sending" else 4
 
 
 def in_flow(s: AppState, mid: str) -> bool:
@@ -138,10 +140,9 @@ def _step_assign(s: AppState, m: Meeting) -> None:
         return
     items = model.todos(s, m)
     left = [t for t in items if t.unassigned]
-    # 현재 단계 제목과 같은 줄 오른쪽: 이전화면으로 · 다음 단계 (모든 단계 화면에서 같은 자리)
+    # 현재 단계 제목과 같은 줄 오른쪽: 다음 단계만 (「확정하기」를 누른 뒤라 분석 및 검토로 되돌아가지 않음)
     with step_header("담당자 추천", f"{m.title} · 액션 아이템 {len(items)}건 · 담당자와 마감일을 확인한 뒤 최종 회의록으로 넘어가요"):
-        button("← 이전화면으로", key="fin_back", variant="secondary", on_click=actions.open_meeting, args=(m.id,))
-        button("다음: 최종 회의록 →", key="fin_next", variant="primary", on_click=actions.confirm_assignees, args=(m.id,))
+        button("최종 회의록 →", key="fin_next", variant="primary", icon=":material/description:", on_click=actions.confirm_assignees, args=(m.id,))
     with st.container(key="wz-card", gap="medium"):
         if left:
             _box(f"<b>담당 미정 {len(left)}건</b><span>「담당자 추천 보기」를 눌러 추천 후보 중에서 골라 주세요. "

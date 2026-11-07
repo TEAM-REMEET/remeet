@@ -5,7 +5,8 @@ from db import transaction
 from .common import (ValidationError, PermissionDenied, required, account,
                      can_access_meeting, can_access_folder, invalidate)
 
-KINDS={'review','shared','integration','member'}
+# web Notification.kind + 자동 알림 (migrations/010 의 notifications_kind_check 와 같음)
+KINDS={'review','shared','integration','member','delivered','fail','created','budget'}
 
 
 def create_notification(*,actor_id: str,user_id: str,kind: str,text: str,

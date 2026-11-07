@@ -1,8 +1,8 @@
-"""Meeting shares. Neo4j team membership must be checked upstream for team recipients."""
+"""회의 공유. 팀에게 보낸 공유(recipient_team_id)의 팀원 확인은 구성원 표(팀원 담당)가 생기면 연결."""
 from __future__ import annotations
 from db import transaction
 from .common import (ValidationError, PermissionDenied, required, can_access_meeting,
-                     get_one, is_admin, invalidate)
+                     get_one, is_admin, invalidate, require_user)
 
 
 def create_share(*,actor_id: str,meeting_id: str,recipient_user_id: str | None = None,
@@ -48,3 +48,33 @@ def revoke_share(*,actor_id: str,share_id: int) -> dict:
         row=cur.fetchone()
     invalidate('_base_meetings', 'base_folders')
     return row
+
+
+def list_sent(*, actor_id: str) -> list[dict]:
+    """[공유한 회의] 내가 보낸 공유 (최근 순 · 취소한 것 제외). web SentShare(meeting_id, to, scope, date).
+    받는 사람은 recipient_user_id 또는 recipient_team_id — 이름은 구성원 표에서."""
+    with transaction(actor_id) as cur:
+        require_user(cur, actor_id)
+        cur.execute("""SELECT s.id, s.meeting_id, m.title, s.recipient_user_id, s.recipient_team_id, s.scope,
+                              s.lock_raw, s.shared_on
+                       FROM meeting_shares s JOIN meetings m ON m.id = s.meeting_id AND m.deleted_at IS NULL
+                       WHERE s.sender_id = %s AND s.revoked_at IS NULL
+                       ORDER BY s.shared_on DESC, s.id DESC""", (actor_id,))
+        return cur.fetchall()
+
+
+def list_received(*, actor_id: str) -> list[dict]:
+    """[공유 받은 회의] 나에게 온 공유 (최근 받은 순 · 회의마다 1줄 · 원문까지 볼 수 있는 공유를 우선).
+    web received_meeting_ids · ShareInfo(sender, scope, received, lock_raw)."""
+    with transaction(actor_id) as cur:
+        require_user(cur, actor_id)
+        cur.execute("""SELECT DISTINCT ON (s.meeting_id)
+                              s.meeting_id, m.title, m.project_id, m.directory_id, m.held_at,
+                              s.sender_id, s.scope, s.lock_raw, s.shared_on
+                       FROM meeting_shares s JOIN meetings m ON m.id = s.meeting_id
+                            AND m.deleted_at IS NULL AND m.status <> 'draft'
+                       WHERE s.recipient_user_id = %s AND s.revoked_at IS NULL
+                       ORDER BY s.meeting_id, (s.scope = 'full' AND NOT s.lock_raw) DESC, s.id DESC""",
+                    (actor_id,))
+        rows = cur.fetchall()
+    return sorted(rows, key=lambda r: (r["shared_on"], r["meeting_id"]), reverse=True)

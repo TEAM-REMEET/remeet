@@ -652,6 +652,11 @@ html {
 .ld-up:hover {
   background: #3a3d44;
 }
+/* '로그인하러 위로' 링크가 #login-title 에서 멈추지 않고 페이지 맨 위(로고까지)로 가도록.
+   여백이 실제 스크롤 거리보다 크면 브라우저가 맨 위(0)로 맞춤 */
+#login-title {
+  scroll-margin-top: 100vh;
+}
 .ld-foot {
   display: flex;
   flex-wrap: wrap;

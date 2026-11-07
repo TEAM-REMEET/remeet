@@ -49,5 +49,19 @@ class ValidationTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             meetings.replace_transcript(actor_id='u1',meeting_id='m1',lines=[
                 {'line_id':'a','text':'first'}, {'line_id':'a','text':'second'}])
+    def test_person_rows_from_backend_person(self):
+        from crud.people import person_rows
+        p={'user_id':'u49','name':'새사람','email':'new@remeet.example','permission':'member',
+           'position':'junior','is_active':None,'team_id':'t-pm','role_id':'r-x','job':'기획자',
+           'skills':[{'skill_id':'PM-01','name':'일정','level':2}]}
+        r=person_rows(p)
+        self.assertEqual(r['account'],('u49','new@remeet.example','USER'))
+        self.assertEqual(r['role'],('r-x','기획자','t-pm'))
+        self.assertTrue(r['person'][-1], 'is_active 가 없으면 활성으로')
+        self.assertEqual(r['skills'],[('u49','PM-01',2)])
+        self.assertEqual(person_rows({**p,'permission':'admin'})['account'][2],'ADMIN')
+        for bad in ({'email':None},{'team_id':None},{'position':'intern'}):
+            with self.subTest(bad=bad), self.assertRaises(ValidationError):
+                person_rows({**p,**bad})
 
 if __name__=='__main__': unittest.main()

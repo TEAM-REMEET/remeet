@@ -2074,11 +2074,13 @@ hr.cp-divider {
   border-radius: 4px 4px 0 0;
 }
 
-/* 관리자에게 문의 모달 */
-.ca-lead {
-  margin: 0 0 4px;
+/* 관리자에게 문의 모달
+   안내 세 줄은 줄 간격을 넉넉히 · 아래 회색 상자(.ca-info)와 한 칸 띄움
+   (.stHtml p { margin: 0 } (base.css) 보다 구체적이어야 아래 여백이 먹어요) */
+.stHtml p.ca-lead {
+  margin: 0 0 18px;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.85;
   color: #3a3e45;
 }
 .ca-info {
@@ -2860,4 +2862,22 @@ hr.cp-divider {
 /* 구성원 관리 · 수정(연필) 버튼: 아이콘만 있는 정사각형 */
 [class*="st-key-b-secondary-adm_edit_"] button {
   width: 34px; height: 34px; min-height: 34px; padding: 0 !important;
+}
+
+/* ---------- 사이드바 구분선: 「공유」 위 · 「회의에 물어보기」 위 ----------
+   사이드바를 꽉 채우지 않고 양옆을 살짝 띄운 1px 선 (그룹 맨 위에 그림 · 자리를 차지하지 않음) */
+.st-key-navgroup-share,
+.st-key-navgroup-ask {
+  position: relative;
+  padding-top: 12px;
+}
+.st-key-navgroup-share::before,
+.st-key-navgroup-ask::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: var(--line);
 }

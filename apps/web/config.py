@@ -58,6 +58,7 @@ MEETING_SUMMARY_TIMEOUT = 3600
 SUMMARY_POLL_SECONDS = 3
 # 화면 확인용 시험 모드에서 회의 내용으로 넣는 값 (docs/ui-test-mode.md · backend settings.UI_TEST_TRANSCRIPT와 같음)
 UI_TEST_TRANSCRIPT = "test"
+ASK_TIMEOUT = 120  # 회의에 물어보기: LLM 2번 + 새 회의의 결정 정리 (보통 수 초)
 
 # 브랜드 이미지 (assets/brand/)
 BRAND_DIR = Path(__file__).resolve().parent / "assets" / "icons"

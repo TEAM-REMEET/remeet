@@ -7,7 +7,7 @@ import streamlit as st
 from components.member_pills import member_pills
 from data import repository as repo
 from data.models import Meeting
-from state import actions
+from state import actions, delivery
 from state import minutes_text
 from state import selectors as sel
 from state.store import AppState
@@ -19,10 +19,14 @@ from utils.text import esc
 from views.meeting import model
 
 
-def _title(s: AppState, m: Meeting, tag_html: str) -> None:
+def _title(s: AppState, m: Meeting, tag_html: str, *, boxed: bool = False) -> None:
+    """boxed: 최종 회의록 머리말 — 제목 · 태그를 왼쪽 주황 줄 상자로 감싸 눈에 띄게 (.md-title-box · pages.css)
+    (폴더 이름은 상자 밖 위에 · 상자와 살짝 띄움)
+    """
     folder = sel.folder_label(s, m)  # 제목을 크게 · 위에 폴더(어느 회의인지)를 작은 글씨로
+    row = f'<div class="md-title-row"><h1 class="md-title">{esc(m.title)}</h1>{tag_html}</div>'
     markup((f'<div class="md-eyebrow">{esc(folder)}</div>' if folder else "")
-           + f'<div class="md-title-row"><h1 class="md-title">{esc(m.title)}</h1>{tag_html}</div>')
+           + (f'<div class="md-title-box">{row}</div>' if boxed else row))
 
 
 def _people_row(m: Meeting) -> None:
@@ -48,6 +52,14 @@ def _minutes_download(s: AppState, m: Meeting) -> None:
                            mime="text/plain", key="md_minutes", icon=":material/download:")
 
 
+def _delivery_failed(s: AppState, mid: str) -> int:
+    """이 회의의 마지막 결과 전달에서 전송에 실패한 참석자 수 (전달 중이거나 기록이 없으면 0)."""
+    if s.delivery.meeting_id != mid or s.delivery.started_at is None:
+        return 0
+    p = delivery.progress(s)
+    return p.failed if p.ended else 0
+
+
 def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
     """최종 회의록 머리말 (편집 없음): 삭제 · 회의록 다운로드 · 공유 · (deliver) 결과 전달 / (전달 뒤) 외부 도구 전송.
 
@@ -58,7 +70,7 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
     role_label, role_tone = ("내가 주관", "host") if role == "host" else sel.ROLE_TAGS[role]
     with st.container(horizontal=True, vertical_alignment="bottom"):
         with st.container(gap="small"):
-            _title(s, m, tag("최종 회의록", "ok") + tag(role_label, role_tone))
+            _title(s, m, tag("최종 회의록", "ok") + tag(role_label, role_tone), boxed=True)
         with st.container(horizontal=True, width="content", gap="small"):
             if host:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
@@ -70,6 +82,11 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
                     button("결과 전달", key="md_deliver", variant="primary", icon=":material/send:",
                            on_click=actions.deliver_final, args=(m.id,))
                 elif sel.status_of(s, m.id) in ("done", "fail"):  # 결과 전달이 끝난 회의: 외부 도구(MCP)로 (다시) 보내기
+                    failed = _delivery_failed(s, m.id)
+                    if failed:  # 결과 전달에서 한 명이라도 실패: 실패한 참석자에게만 다시 보내기 (모두 성공이면 안 보임)
+                        button("결과 전달", key="md_redeliver", variant="secondary", icon=":material/send:",
+                               help=f"전송에 실패한 {failed}명에게만 다시 보내요",
+                               on_click=actions.start_delivery, args=(m.id, 2))
                     button("외부 도구 전송", key="md_export", variant="primary", icon=":material/output:",
                            on_click=actions.open_export, args=(m.id,))
             else:
@@ -104,8 +121,9 @@ def render_header(s: AppState, m: Meeting) -> None:
             if host and not editing:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
                        on_click=actions.open_delete, args=("meeting", m.id))
-                button("공유", key="md_share", variant="secondary", icon=":material/share:",
-                       on_click=actions.open_share)
+                if s.fin_flow != m.id:  # 확정하기를 누른 뒤(확정 흐름 중)에는 공유 빼기
+                    button("공유", key="md_share", variant="secondary", icon=":material/share:",
+                           on_click=actions.open_share)
                 if can_edit:
                     button("편집", key="md_edit", variant="secondary", icon=":material/edit:", on_click=actions.start_edit)
                 # 가장 오른쪽 · 누르면 회의록 확정 화면(담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송)

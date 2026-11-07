@@ -63,16 +63,22 @@ def pool() -> ConnectionPool:
 
 
 @contextmanager
-def transaction():
+def transaction(actor_id: str | None = None):
     """여러 SQL 을 '전부 성공 아니면 전부 취소' 로 묶을 때.
 
         with transaction() as cur:
             cur.execute("INSERT ...")
             cur.execute("UPDATE ...")
         # with 블록이 에러 없이 끝나면 COMMIT, 에러가 나면 자동 ROLLBACK
+
+    actor_id 를 주면 이 트랜잭션 동안만 remeet.user_id 를 설정합니다 (migrations/002_rls.sql 의 RLS 가 읽는 값).
+    remeet_app 처럼 RLS 가 걸린 역할로 접속할 때 필요하고, 테이블 소유자로 접속하면 무시돼요.
+    ⚠️ actor_id 는 서버가 로그인 세션에서 확인한 값만 넘기세요.
     """
     with pool().connection() as conn:
         with conn.cursor() as cur:
+            if actor_id:
+                cur.execute("SELECT set_config('remeet.user_id', %s, true)", (actor_id,))
             yield cur
 
 

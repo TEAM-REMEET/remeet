@@ -42,9 +42,9 @@ def _assign_card(s: AppState, m: Meeting, items: list, *, host: bool, editable: 
 
     editable 이 아니면 지정 버튼 없이 보기만 · pending: 담당 미정 옆 안내 (없으면 「주관자가 지정할 예정」)
     """
-    unassigned = any(not who for _, _, who, _, _ in items)
+    unassigned = sum(1 for _, _, who, _, _ in items if not who)  # 지금 담당 미정인 액션 아이템 개수
     with card("unassigned", tone="warn"):
-        title = "담당자가 아직 없는 일" if unassigned else "담당자를 정한 일"
+        title = f"담당자가 아직 없는 일 - {unassigned}개" if unassigned else "담당자를 정한 일"
         markup(f'<h3 style="font-size:13px;font-weight:700;color:#7A5200">{title}'
                + ('<span style="font-weight:500;color:#9A7A3A"> · 확정하기 전까지 바꿀 수 있어요</span>' if editable else "")
                + "</h3>")
