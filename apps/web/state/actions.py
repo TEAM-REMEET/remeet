@@ -194,7 +194,7 @@ def close_modal() -> None:
 def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
-                cp_example="plain", cp_format_note="", cp_format_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
+                cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
 
 
 def open_new_note() -> None:
@@ -210,7 +210,7 @@ def open_new_note() -> None:
 
 
 def compose_text(s) -> str:
-    """직접 쓴 내용 + 첨부한 TXT · MD · DOCX · HWPX 내용."""
+    """직접 쓴 내용 + 첨부한 TXT · MD · DOCX · HWP · HWPX 내용."""
     parts = [s.nn_text.strip()] + [body.strip() for _, body in s.nn_files if body]  # 읽지 못한 파일은 빼고
     return "\n\n".join(p for p in parts if p)  # 직접 쓴 내용 · 파일 사이도 한 줄 띄움 (빈 줄 규칙)
 
@@ -263,22 +263,31 @@ def compose_sync(nonce: int) -> None:
     s.nn_text = ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or ""
     file = ss.get(f"cp_files_{nonce}_{s.cp_file_rev}")  # 파일은 한 개만 고를 수 있어요
     files = [file] if file else []
-    if files:  # TXT · MD · DOCX · HWPX 는 글을 읽고, 그 밖의 형식 · 읽을 수 없는 파일은 None (발화자 확인 때 안내)
+    if files:  # TXT · MD · DOCX · HWP · HWPX 는 글을 읽고, 그 밖의 형식 · 읽을 수 없는 파일은 None (발화자 확인 때 안내)
         s.nn_files = [(f.name, read_text(f.name, f.getvalue())) for f in files]
 
 
 def compose_attach(nonce: int) -> None:
-    """파일을 올림: TXT · MD는 내용을 읽어 「회의 내용」 칸에 채움 (앞서 쓴 글은 파일 내용으로 바뀜) · 첨부 칸은 비움.
+    """파일을 올림: TXT · MD · DOCX · HWP · HWPX는 내용을 읽어 「회의 내용」 칸에 채움 (앞서 쓴 글은 파일 내용으로 바뀜) · 첨부 칸은 비움.
 
-    DOCX · HWPX 등 그 밖의 형식은 지금처럼 첨부 파일로 둠 (「다음 단계」 때 compose_sync가 읽음).
+    그 밖의 형식은 받지 않음: 내용을 읽지 않고 첨부 칸을 비운 뒤 경고 (입력해 둔 회의 내용은 그대로).
     """
     s = get_state()
     ss = st.session_state
     file = ss.get(f"cp_files_{nonce}_{s.cp_file_rev}")
-    if not file or ext(file.name) not in INLINE_EXTS:
+    s.cp_file_warn = ""
+    if not file:
         return
-    body = (read_text(file.name, file.getvalue()) or "").replace("\r\n", "\n").replace("\r", "\n")
+    if ext(file.name) not in INLINE_EXTS:
+        s.cp_file_rev += 1
+        s.cp_file_warn = f"「{file.name}」은(는) 지원하지 않는 파일 형식이라 올리지 않았어요. {ALLOWED_LABEL} 파일만 올릴 수 있어요."
+        return
+    read = read_text(file.name, file.getvalue())
+    body = (read or "").replace("\r\n", "\n").replace("\r", "\n")
     s.cp_file_rev += 1  # 첨부 칸 비우기 (위젯 값은 직접 바꿀 수 없어 key를 바꿈)
+    if read is None:  # 손상된 DOCX 등
+        s.toast = f"「{file.name}」 파일을 읽을 수 없어요. 파일이 손상되었거나 암호 · 배포용 문서가 아닌지 확인해 주세요."
+        return
     if not body.strip():
         s.toast = f"「{file.name}」 파일이 비어 있어요. 내용이 있는 파일을 올려 주세요."
         return
@@ -293,7 +302,7 @@ def compose_attach(nonce: int) -> None:
 def compose_check(nonce: int) -> None:
     """회의 내용 칸을 바꿀 때마다(칸을 벗어나면) 형식 검사 결과를 새로 · 형식을 자동으로 고름."""
     s = get_state()
-    s.nn_error = ""
+    s.nn_error = s.cp_file_warn = ""
     _auto_format(s, st.session_state.get(f"cp_text_{nonce}_{s.cp_text_rev}") or "")
 
 
@@ -322,14 +331,14 @@ def compose_next(nonce: int) -> None:
     if s.nn_text.strip() and s.nn_files:
         _format_error("회의 내용은 직접 입력과 파일 첨부 중 하나만 쓸 수 있어요. 입력한 글을 지우거나 첨부한 파일을 빼 주세요.")
         return
-    # 첨부 파일: TXT · MD · DOCX · HWPX 만 (그 밖의 형식이면 다음 단계로 못 감)
+    # 첨부 파일: TXT · MD · DOCX · HWP · HWPX 만 (그 밖의 형식이면 다음 단계로 못 감)
     wrong = [name for name, _ in s.nn_files if not is_allowed(name)]
     if wrong:
         _format_error(f"지원하지 않는 파일 형식이에요: {', '.join(wrong)} · {ALLOWED_LABEL} 파일만 첨부할 수 있어요.")
         return
     broken = [name for name, body in s.nn_files if body is None]
     if broken:
-        _format_error(f"파일을 읽을 수 없어요: {', '.join(broken)} · 파일이 손상되지 않았는지 확인해 주세요.")
+        _format_error(f"파일을 읽을 수 없어요: {', '.join(broken)} · 파일이 손상되었거나 암호 · 배포용 문서가 아닌지 확인해 주세요.")
         return
     if parsed.error or parsed.format != s.cp_example:  # 고른 형식에서 벗어나면 다음 단계로 못 감
         _format_error(f"회의 내용이 「{compose_ai.FORMAT_LABEL[s.cp_example]}」 형식에 맞지 않아요. "

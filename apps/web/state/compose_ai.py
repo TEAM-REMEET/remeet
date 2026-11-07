@@ -23,6 +23,7 @@ from datetime import date
 
 from data import repository as repo
 from data.models import Agenda, Discussion, Evidence, Meeting, Paragraph, Todo
+from utils.files import ALLOWED_LABEL
 from utils.text import find_date_token
 
 FORMAT_LABEL = {"plain": "발화자 없는 텍스트", "bracket": "[발화자] 형식", "colon": "발화자: 형식"}
@@ -194,7 +195,7 @@ def _parse(text: str) -> Parsed:
     raw = [(i + 1, ln.strip()) for i, ln in enumerate((text or "").splitlines())]
     raw = [(no, ln) for no, ln in raw if ln]
     if not raw:
-        return Parsed(None, error="회의 내용을 적거나 TXT · MD · DOCX · HWPX 파일을 첨부해 주세요.")
+        return Parsed(None, error=f"회의 내용을 적거나 {ALLOWED_LABEL} 파일을 첨부해 주세요.")
     if sum(len(ln) for _, ln in raw) < 10:
         return Parsed(None, error="내용이 너무 짧아요. 회의에서 나눈 말을 한 문장 이상 적어 주세요.")
 

@@ -227,7 +227,8 @@ class AppState:
     cp_text_rev: int = 0  # 예시를 넣을 때마다 바뀌어 입력칸을 새로 그림
     cp_format_note: str = ""  # 회의 내용을 보고 형식을 자동으로 골랐다는 안내 (초록)
     cp_format_warn: str = ""  # 어느 형식에도 맞지 않거나 빈 줄 규칙이 틀렸다는 경고 (주황)
-    cp_file_rev: int = 0  # TXT · MD 내용을 입력칸으로 옮길 때마다 바뀌어 파일 첨부 칸을 비움
+    cp_file_warn: str = ""  # 지원하지 않는 파일을 올렸다는 경고 (주황 · 다른 파일을 올리거나 글을 고치면 사라짐)
+    cp_file_rev: int = 0  # 첨부한 파일(TXT · MD · DOCX · HWP · HWPX) 내용을 입력칸으로 옮길 때마다 바뀌어 파일 첨부 칸을 비움
     nn_title: str = ""
     nn_date: object = None  # datetime.date
     nn_text: str = ""  # 직접 쓴 회의 내용
