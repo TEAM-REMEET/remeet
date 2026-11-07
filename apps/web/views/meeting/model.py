@@ -12,6 +12,7 @@ from state import selectors as sel
 from state.review_request import PREVIEW_ID
 from state.store import AppState
 from ui.theme import SEGMENT_COLORS
+from utils.dates import due_label
 
 
 def current(s: AppState) -> Meeting:
@@ -257,7 +258,7 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
             who_tone="mine" if mine else ("att" if t.owners else "warn"),  # (안 씀) 한 덩어리 태그 색
             who_tags=tags,
             unassigned=not t.owners and not s.assigned.get(key),
-            due=(f"{t.due}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent else ""),
+            due=(f"{due_label(t.due)}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent else ""),
             raw_due=t.due,
             urgent=t.urgent,
             speaker=speaker_name(para.speaker) if para else (

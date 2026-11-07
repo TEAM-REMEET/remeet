@@ -1,11 +1,7 @@
-"""web 폴더를 찾아서 파이썬이 import 할 수 있게 하고, 이 폴더의 .env 를 읽습니다.
+"""이 폴더의 .env 를 읽고, 이 폴더를 import 경로에 넣습니다.
 
-이 폴더(playground/<이름>/postgres)의 모든 스크립트는 맨 위에서 `import paths` 를 먼저 합니다.
-그러면 web 폴더의 코드(config, data.models, data.repository …)를 고치지 않고 그대로 가져다 쓸 수 있어요.
-
-web 폴더 위치
-    1) .env 의 WEB_DIR 이 있으면 그 경로
-    2) 없으면 저장소 맨 위의 web 폴더  (이 폴더 → ../../../web)
+이 폴더(playground/<이름>/postgres)의 스크립트는 맨 위에서 `import paths` 를 먼저 합니다.
+web 폴더(프론트 목업)에는 더 이상 기대지 않아요 — 데이터는 백엔드 · seed_people.py 가 넣습니다.
 """
 
 from __future__ import annotations
@@ -32,10 +28,5 @@ def _load_dotenv() -> None:
 
 _load_dotenv()
 
-WEB_DIR = Path(os.environ.get("WEB_DIR") or HERE.parents[2] / "web").resolve()
-if not (WEB_DIR / "app.py").exists():
-    sys.exit(f"web 폴더를 찾지 못했어요: {WEB_DIR}\n→ .env 에 WEB_DIR=web폴더경로 를 적어 주세요.")
-
-for p in (str(HERE), str(WEB_DIR)):
-    if p not in sys.path:
-        sys.path.insert(0, p)
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))

@@ -147,9 +147,10 @@ def save_final_assignees(meeting_id: str, changes: list[dict]) -> dict:
     return api.call("PUT", f"/api/meetings/{meeting_id}/final/assignees", {"changes": changes}, _token())
 
 
-def set_assignees(item_id: str, user_ids: list[str]) -> list[dict]:
-    """주관자가 고른 담당자를 Neo4j에 확정 (PUT /api/action-items/{id}/assignee). 실패하면 api.ApiError."""
-    return api.call("PUT", f"/api/action-items/{item_id}/assignee", {"user_ids": user_ids}, _token())
+def confirm_action_items(meeting_id: str, items: list[dict]) -> list[dict]:
+    """「다음: 최종 회의록」: 이 회의 액션 아이템 전부의 담당자 · 마감일을 한 번에 확정 (PUT /api/meetings/{id}/action-items).
+    items = [{item_id, user_ids, due: "YYYY-MM-DD"}]. 하나라도 틀리면 아무것도 저장 안 되고 api.ApiError."""
+    return api.call("PUT", f"/api/meetings/{meeting_id}/action-items", {"items": items}, _token())
 
 
 def recommendation_config(item: dict) -> dict:

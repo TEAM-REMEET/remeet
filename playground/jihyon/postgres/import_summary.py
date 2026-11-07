@@ -154,6 +154,8 @@ def _read_source(path: Path, raw: dict) -> tuple[str, str] | None:
 
 
 def import_one(path: Path, *, folder: str | None, host: str | None, speakers: dict[str, str]) -> None:
+    if not host:  # meetings.host_user_id 는 accounts 를 가리킴 (migrations/012) → 빈 값 X
+        raise SystemExit(f"{path.name}: 주관자(--host 또는 화자 A 매핑)가 필요해요.")
     raw = json.loads(path.read_text(encoding="utf-8"))
     mid = raw["meeting_id"]
     info = raw.get("meeting_info", {})
@@ -175,9 +177,9 @@ def import_one(path: Path, *, folder: str | None, host: str | None, speakers: di
                ON CONFLICT (id) DO UPDATE SET
                    title   = CASE WHEN meetings.title = '' THEN EXCLUDED.title ELSE meetings.title END,
                    held_at = COALESCE(meetings.held_at, EXCLUDED.held_at)""",
-            (mid, folder, host or "", _text(info.get("title")), _held_at(info),
+            (mid, folder, host, _text(info.get("title")), _held_at(info),
              re.split(r"[\\\\/]", raw.get("source_document", {}).get("input_path", ""))[-1],  # 윈도우 경로(\\)도 파일 이름만
-             info.get("duration", ""), host or None),
+             info.get("duration", ""), host),
         )
         cur.execute(
             """INSERT INTO meeting_analyses (meeting_id, created_at, model, reasoning_effort, config,
@@ -206,7 +208,7 @@ def import_one(path: Path, *, folder: str | None, host: str | None, speakers: di
                                                     sha256, uploaded_by)
                        VALUES (%s, (SELECT COALESCE(MAX(version), 0) + 1 FROM meeting_sources WHERE meeting_id = %s),
                                %s, %s, %s, %s, %s) RETURNING id""",
-                    (mid, mid, name, content, len(content.encode("utf-8")), digest, host or "import"),
+                    (mid, mid, name, content, len(content.encode("utf-8")), digest, host),
                 )
                 source_id, src_note = cur.fetchone()["id"], "원본 저장"
         # 요약 회의록: 새 버전으로 쌓음
