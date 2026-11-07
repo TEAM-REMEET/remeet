@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from data import api, repository as repo  # noqa: E402
 from state import export  # noqa: E402
-from state.delivery import recipients  # noqa: E402
+
 from state.store import AppState, ExportRun  # noqa: E402
 
 MID = "m1"  # 목업 회의 (액션 아이템 · 참석자 여러 명)
@@ -64,7 +64,8 @@ class RetryOnlyFailed(unittest.TestCase):
     def test_mail_retry_sends_only_failed_people(self):
         s, sent = AppState(), []
         s.final_summaries[MID] = {}  # 최종 회의록이 있어야 실제로 보냄 (본문은 아래에서 가짜로)
-        to = recipients(MID)
+        to = export.mail_recipients(MID)
+        self.assertEqual(to[0], repo.meeting(MID).host)  # 보내는 주관자도 사본을 받음
         self.assertGreater(len(to), 1)
         with patch("state.minutes_text.render_minutes", return_value="회의록"):
             with patch.object(repo, "export_mail", fake_mail(sent, fail_keys={to[0]})):

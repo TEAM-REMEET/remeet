@@ -83,16 +83,21 @@ def _jira_items(state: AppState, mid: str, only: set[str] | None = None) -> list
 
 def _request(state: AppState, t: str, only: set[str] | None) -> dict | None:
     """백엔드로 보냄 (only: 이 key 만 · 다시 보내기). 보낼 게 없으면 None."""
-    from state.delivery import recipients
     from state.minutes_text import render_minutes
 
     mid = state.export.meeting_id
-    title = repo.meeting(mid).title
+    m = repo.meeting(mid)
     if t == "jira":
         items = _jira_items(state, mid, only)
-        return repo.export_jira(title, items) if items else None
-    to = [p for p in recipients(mid) if only is None or p in only]  # 참석자 (보내는 나는 빼고)
-    return repo.export_mail(title, render_minutes(state.final_summaries[mid]), to) if to else None
+        return repo.export_jira(m.title, items) if items else None
+    to = [p for p in mail_recipients(mid) if only is None or p in only]
+    return repo.export_mail(m.title, render_minutes(state.final_summaries[mid]), to) if to else None
+
+
+def mail_recipients(mid: str) -> list[str]:
+    """요약본 메일을 받을 사람: 주관자(보내는 나 · 기록용 사본) + 참석자."""
+    m = repo.meeting(mid)
+    return list(dict.fromkeys((m.host, *m.people)))
 
 
 def send(state: AppState) -> None:
