@@ -17,22 +17,13 @@ from state.store import get_state
 from ui.avatar import avatar
 from ui.buttons import button
 from ui.html import markup
-from ui.layout import page, page_header
+from ui.layout import page, step_header
 from ui.tags import tag
 from utils.text import esc
 from views import finalize
 
 _STEP_VIEW = {"wait": ("", "대기", "wait"), "run": ("", "진행 중", "run"), "done": ("✓", "완료", "ok"), "fail": ("!", "일부 실패", "fail")}
 _RC_VIEW = {"wait": ("대기", "wait"), "sending": ("보내는 중", "run"), "ok": ("전달됨", "ok"), "fail": ("전송 실패", "fail")}
-
-
-def _app_button(label: str, key: str, variant: str, fn, *args, icon: str | None = None) -> None:
-    """이 영역(fragment) 안의 버튼이 화면 이동 · 모달처럼 전체 화면을 바꿀 때: 누른 뒤 전체를 다시 그림."""
-    def _cb() -> None:
-        fn(*args)
-        st.session_state["_dv_need_app"] = True
-
-    button(label, key=key, variant=variant, on_click=_cb, icon=icon)
 
 
 def _banner(p: delivery.Progress, total: int, mid: str) -> None:
@@ -51,16 +42,6 @@ def _banner(p: delivery.Progress, total: int, mid: str) -> None:
         markup(f'<div class="dv-banner" role="status" aria-live="polite">'
                f'<span class="dot{"" if p.ended else " pulse"}" style="background:{dot}"></span>'
                f'<span class="tx"><b>{esc(head)}</b><span>{esc(sub)}</span></span></div>')
-        if not p.ended:
-            return
-        host = repo.meeting(mid).host == me_id()
-        _app_button("회의 상세로 돌아가기", "dv_back", "secondary", actions.open_meeting, mid)
-        if p.failed and host:  # 다시 보내기는 주관자만: 실패한 참석자에게만 (다시 보내기 버튼은 여기 하나만)
-            _app_button(f"실패한 {p.failed}건 다시 보내기", "dv_retry", "danger", actions.start_delivery, mid, 2,
-                        icon=":material/refresh:")
-        if host:  # 결과 전달이 끝나면 외부 도구(MCP)로 따로 보내기
-            label = "다음: 외부 도구 전송 →" if finalize.in_flow(get_state(), mid) else "외부 도구 전송"
-            _app_button(label, "dv_export", "primary", actions.open_export, mid, icon=":material/send:")
 
 
 def _steps(p: delivery.Progress, rc_total: int, todo_n: int) -> None:
@@ -85,7 +66,8 @@ def _recipients(p: delivery.Progress, mid: str) -> None:
         markup(f'<h2 class="panel-h">참석자별 전달 ({p.ok}/{len(p.recipients)})</h2>')
         for pid, st_ in p.recipients.items():
             person = sel.person(pid)
-            n = sum(1 for _, t in sel.todo_items(get_state(), mid) if pid in t.owners)
+            s = get_state()
+            n = sum(1 for i, t in sel.todo_items(s, mid) if pid in sel.todo_owner_ids(s, sel.todo_key(mid, i), t))
             sub = delivery.TIMEOUT_TEXT if st_ == "fail" else "요약 · 결정" + (f" · 할 일 {n}건" if n else "")
             label, tone = _RC_VIEW[st_]
             markup(f'<div class="dv-rc">{avatar(person.initial, size=32)}'
@@ -96,8 +78,6 @@ def _recipients(p: delivery.Progress, mid: str) -> None:
 
 def _live() -> None:
     s = get_state()
-    if st.session_state.pop("_dv_need_app", False):  # 이 영역의 버튼이 화면 이동 · 모달 · 다시 보내기를 시작함
-        st.rerun(scope="app")
     delivery.sync(s)
     mid = s.delivery.meeting_id
     p = delivery.progress(s)
@@ -118,9 +98,20 @@ def render() -> None:
     s = get_state()
     mid = s.delivery.meeting_id
     with page("deliver"):
-        page_header("결과 전달", f"{repo.meeting(mid).title} · 확정한 내용을 참석자에게 보내고 위키에 반영해요")
-        if finalize.in_flow(s, mid):  # 「확정하기」로 들어온 흐름: 3단계
-            finalize.flow_stepper(3)
-        running = not delivery.progress(s).ended
+        if finalize.in_flow(s, mid):  # 「확정하기」로 들어온 흐름: 전체 흐름(5단계)이 맨 위
+            finalize.flow_stepper(5)
+        p = delivery.progress(s)
+        # 현재 단계 제목과 같은 줄 오른쪽: 전달이 끝나면 이전화면으로 · (실패) 다시 보내기 · 외부 도구 전송
+        with step_header("결과 전달", f"{repo.meeting(mid).title} · 확정한 내용을 참석자에게 보내고 위키에 반영해요"):
+            if p.ended:
+                host = repo.meeting(mid).host == me_id()
+                button("← 이전화면으로", key="dv_back", variant="secondary", on_click=actions.open_meeting, args=(mid,))
+                if p.failed and host:  # 다시 보내기는 주관자만: 실패한 참석자에게만
+                    button(f"실패한 {p.failed}건 다시 보내기", key="dv_retry", variant="danger", icon=":material/refresh:",
+                           on_click=actions.start_delivery, args=(mid, 2))
+                if host:  # 결과 전달이 끝나면 외부 도구(MCP)로 따로 보내기
+                    button("다음: 외부 도구 전송 →" if finalize.in_flow(s, mid) else "외부 도구 전송", key="dv_export",
+                           variant="primary", icon=":material/send:", on_click=actions.open_export, args=(mid,))
+        running = not p.ended
         st.session_state["_dv_polling"] = running
         st.fragment(_live, run_every=DELIVERY_POLL_INTERVAL if running else None)()

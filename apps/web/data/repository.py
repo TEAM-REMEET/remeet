@@ -117,6 +117,40 @@ def summarize_meeting(body: dict) -> dict:
     return api.call("POST", "/api/meetings", body, _token(), timeout=MEETING_SUMMARY_TIMEOUT)
 
 
+def recommend_assignees(summary: dict) -> dict[str, dict]:
+    """검토가 끝난 MeetingSummary → Neo4j 적재 · 담당자 추천 (POST /api/meetings/{id}/recommendations).
+    돌려줌: {item_id: 추천 결과}. 몇십 초 ~ 몇 분 걸림. 실패하면 api.ApiError (같은 요청을 다시 보내도 됨)."""
+    res = api.call("POST", f"/api/meetings/{summary['meeting_id']}/recommendations", summary, _token(),
+                   timeout=MEETING_SUMMARY_TIMEOUT)
+    return {item["item_id"]: item for item in res["items"]}
+
+
+def set_assignees(item_id: str, user_ids: list[str]) -> list[dict]:
+    """주관자가 고른 담당자를 Neo4j에 확정 (PUT /api/action-items/{id}/assignee). 실패하면 api.ApiError."""
+    return api.call("PUT", f"/api/action-items/{item_id}/assignee", {"user_ids": user_ids}, _token())
+
+
+def recommendation_config(item: dict) -> dict:
+    """추천 결과 한 건 → 담당자 지정 창이 쓰는 모양 (assignee_config()와 같은 키)."""
+    def candidate(c: dict) -> Candidate:
+        match = " · ".join(x for x in (", ".join(c["skills"]), f"{c['team']} 소속" if c["team"] else "",
+                                       f"진행 중 업무 {c['open_tasks']}건") if x)
+        return Candidate(c["user_id"], c["name"], c["team"] or "", c["role"] or "", round(c["score"]),
+                         round(c["skill_score"]), round(c["role_team_score"] or 0), round(c["workload_score"]),
+                         c["open_tasks"], c["attended"], tuple(c["skills"]), match)
+
+    def md(day: str | None) -> str:  # 2026-11-05 → 11/5
+        return f"{int(day[5:7])}/{int(day[8:10])}" if day else ""
+
+    return {
+        "candidates": [candidate(c) for c in item["candidates"]],
+        "predecessors": [Predecessor(p["name"], p["team"] or "", p["role"] or "", p["task"], p["meeting"] or "", md(p["date"]),
+                                     p["user_id"])
+                         for p in item["predecessors"]],
+        "needed_skills": set(), "related_teams": set(), "reasons": {},
+    }
+
+
 def people() -> dict[str, Person]:
     """조직 구성원 (Neo4j). short는 원문 화자 이름인데 Neo4j에 따로 없어서 이름을 그대로 써요."""
     return {r["user_id"]: Person(r["user_id"], r["name"], r["name"], r["team"] or "") for r in people_rows()}
@@ -163,7 +197,8 @@ def _meeting(d: dict) -> Meeting:
         title=d["title"],
         when=d["when"],
         date=d["date"],
-        topic=d.get("topic"),
+        project_id=d.get("project_id"),
+        directory_id=d["directory_id"],
         host=d["host"],
         people=tuple(d["people"]),
         deep=d["deep"],
@@ -263,7 +298,6 @@ def base_folders() -> dict[str, Folder]:
         k: Folder(
             id=k,
             name=v["name"],
-            type=v["type"],
             host=v["host"],
             members=tuple(v["members"]),
             notes=tuple(v["notes"]),
@@ -311,6 +345,19 @@ def _graph(raw: dict) -> KnowledgeGraph:
 @lru_cache(maxsize=1)
 def folder_wiki() -> KnowledgeGraph:
     return _graph(_load("wiki_folder"))
+
+
+# ---------------------------------------------------------------- 회의에 물어보기
+def ask(question: str) -> dict:
+    """회의 기록에 묻고 근거가 달린 답을 받음. 형식은 온보딩 에이전트 ask 결과 JSON 그대로.
+
+    shortcut: 목업 답변에서 낱말로 골라 줌, 백엔드에 온보딩 에이전트 API 가 생기면 api.call 로 교체
+    """
+    data = _load("ask")
+    q = question.replace(" ", "").lower()
+    hit = next((a["answer"] for a in data["answers"] if any(w.replace(" ", "").lower() in q for w in a["match"])),
+               data["no_evidence"])
+    return {**hit, "question": question}
 
 
 # ---------------------------------------------------------------- integrations

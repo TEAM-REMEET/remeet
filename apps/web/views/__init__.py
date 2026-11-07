@@ -34,6 +34,7 @@ AppState.screen 값 → 렌더 함수. app.py 가 이 표를 보고 화면을 �
 
 from views import (
     archive,
+    ask,
     compose,
     delivery,
     export,
@@ -59,6 +60,7 @@ ROUTES = {
     "export": export.render,
     "sent": shared_sent.render,
     "recv": shared_received.render,
+    "ask": ask.render,
     "adm_cost": admin_cost.render,
     "adm_members": admin_members.render,
     "adm_mcp": admin_mcp.render,

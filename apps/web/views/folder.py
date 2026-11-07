@@ -126,9 +126,9 @@ def info_tip(lines: tuple[str, ...]) -> str:
 
 @dataclass
 class FolderPage:
-    """폴더처럼 보이는 화면 한 장의 내용 (프로젝트 폴더 · 기간 폴더 공통)."""
+    """프로젝트 화면 한 장의 내용."""
 
-    key: str  # 위젯 key 접두어: folder | period
+    key: str  # 위젯 key 접두어
     title: str
     host: str  # 멤버 알약에서 '주관'으로 표시할 사람
     is_host: bool  # 내가 만든 폴더인지 → 멤버 관리 / 폴더 삭제
@@ -147,13 +147,7 @@ def _wiki_tab(s: AppState, fp: FolderPage) -> None:
     if not fids:
         empty_state("아직 위키를 만들 회의록이 없어요.", pad=40)
         return
-    fid = s.period_wiki_folder if s.period_wiki_folder in fids else fids[0]
-    if len(fids) > 1:  # 기간 폴더: 프로젝트마다 위키가 따로 있어요
-        with st.container(horizontal=True, vertical_alignment="center", gap="small"):
-            markup('<span class="inline-label">프로젝트</span>')
-            button_group([(k, fs[k].name) for k in fids], fid, lambda v: actions.update(period_wiki_folder=v),
-                         key=f"{fp.key}_wiki_folder")
-    _folder_wiki(s, fid)
+    _folder_wiki(s, fids[0])
 
 
 def render_folder_page(s: AppState, fp: FolderPage) -> None:
@@ -174,7 +168,7 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
                    on_click=fn, args=args)
             if fp.is_host:
                 fn, args = fp.on_delete
-                button("폴더 삭제", key="open_delete", variant="dangerline", on_click=fn, args=args)
+                button("폴더 삭제", key="open_delete", variant="dangerline", icon=":material/delete:", on_click=fn, args=args)
             button("회의록 올리기", key="folder_upload", variant="primary", on_click=actions.open_new_note)
 
     button_group(
@@ -221,7 +215,7 @@ def _folder_screen(s: AppState, fid: str) -> None:
 def render() -> None:
     s = get_state()
     with page("folder"):
-        if s.folder_id in sel.folder_ids_of_type(s, s.folder_type):
+        if s.folder_id in sel.all_my_folder_ids(s):
             _folder_screen(s, s.folder_id)
         else:
             empty_state("이 폴더를 볼 수 없어요. 삭제됐거나 멤버가 아닌 폴더예요.", title="폴더를 찾을 수 없어요", pad=48)

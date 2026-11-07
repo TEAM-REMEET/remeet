@@ -341,6 +341,7 @@ class Todo:
     due: str
     src: tuple[str, ...]
     urgent: bool = False
+    item_id: str = ""  # MeetingSummary 액션 item_id (= Neo4j ActionItem.action_item_id) · 목업 · 직접 추가한 일은 빈 값
 
 
 @dataclass(frozen=True)
@@ -357,7 +358,7 @@ class Meeting:
     title: str
     when: str
     date: str  # M/D
-    topic: str | None
+    project_id: str | None  # 프로젝트(폴더) id · 공유받은 회의는 None
     host: str
     people: tuple[str, ...]
     deep: bool
@@ -372,6 +373,7 @@ class Meeting:
     open_issues: tuple[Evidence, ...]
     agendas: tuple[Agenda, ...]
     todos: tuple[Todo, ...]
+    directory_id: str = "normal"  # 회의 종류: weekly | monthly | normal
     shared: ShareInfo | None = None
     branch_of: str | None = None  # 안건 분리로 생긴 회의라면 원래 회의 id
     results: tuple[MeetingResult, ...] = ()  # 회의 결과 (없으면 결정·미해결로 대신 만듦)
@@ -402,9 +404,9 @@ class BriefItem:
 
 @dataclass(frozen=True)
 class Folder:
+    """프로젝트. 회의 종류(월간 · 주간 · 일반)는 프로젝트가 아니라 회의마다(Meeting.directory_id)."""
     id: str
     name: str
-    type: str
     host: str
     members: tuple[str, ...]
     notes: tuple[str, ...]
@@ -438,6 +440,7 @@ class Predecessor:
     task: str  # 맡았던 선행 업무
     meeting: str  # 그 업무가 나온 회의
     date: str  # M/D
+    user_id: str = ""  # 구성원 id (목업은 비어 있음 → 이름으로 찾음)
 
 
 @dataclass(frozen=True)

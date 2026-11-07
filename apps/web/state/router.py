@@ -5,17 +5,15 @@
 
   /                              새 회의록 (로그인 후 첫 화면)
   /meetings                      회의록 (월간·주간·일반 고르기)
-  /meetings-weekly               회의 종류 (weekly | monthly | normal) → 주차별 / 프로젝트별 고르기
-  /meetings-weekly-period        주차별(월별·일별) 묶음 목록
-  /meetings-weekly-period-w1027  한 주(달·날)의 회의 목록
-  /meetings-weekly-project       프로젝트(폴더) 목록
+  /meetings-weekly               회의 종류 (weekly | monthly | normal)의 회의 목록
   /search                        검색 결과 (회의록 첫 화면 검색칸에서)
-  /folder-rel                    폴더
+  /folder-rel                    프로젝트
   /meeting-m1                    회의 상세
   /finalize-m1                   회의록 확정 (담당자 추천 → 최종 회의록 → 결과 전달로)
   /deliver-m1                    결과 전달 (참석자에게 보내기)
   /export-m1                     외부 도구(MCP) 전송 (결과 전달 뒤 도구를 골라 보내기)
   /shared-sent · /shared-received
+  /ask                           회의에 물어보기 (온보딩 에이전트)
   /admin-cost · /admin-members · /admin-mcp   관리자 화면 (관리자 계정만)
 
 흐름
@@ -44,6 +42,7 @@ STATIC = {
     "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),
     "recv": ("shared-received", "공유 받은 회의"),
+    "ask": ("ask", "회의에 물어보기"),
     "adm_cost": ("admin-cost", "비용 관리"),
     "adm_members": ("admin-members", "구성원 관리"),
     "adm_mcp": ("admin-mcp", "MCP 관리"),
@@ -58,11 +57,11 @@ class Route:
     screen: str
     path: str
     title: str
-    param: tuple[str, ...] = ()  # 회의 id / 폴더 id / (회의 종류, 보기 방식, 기간)
+    param: tuple[str, ...] = ()  # 회의 id / 프로젝트 id / (회의 종류,)
 
 
-def _archive_path(t: str = "", g: str = "", p: str = "") -> str:
-    return "-".join(x for x in ("meetings", t, g, p) if x)
+def _archive_path(t: str = "") -> str:
+    return f"meetings-{t}" if t else "meetings"
 
 
 def _archive_routes(state: AppState) -> list[Route]:
@@ -71,10 +70,6 @@ def _archive_routes(state: AppState) -> list[Route]:
     for t in sel.TYPE_ORDER:
         name = types[t].name
         routes.append(Route("archive", _archive_path(t), name, (t,)))
-        for g in archive.GROUPS:
-            routes.append(Route("archive", _archive_path(t, g), f"{name} · {archive.group_label(t, g)}", (t, g)))
-        for pr in archive.periods(state, t):
-            routes.append(Route("archive", _archive_path(t, "period", pr.key), f"{name} · {pr.label}", (t, "period", pr.key)))
     return routes
 
 
@@ -93,10 +88,7 @@ def all_routes(state: AppState) -> list[Route]:
 def path_for(state: AppState, screen: str) -> str:
     """현재 상태 기준으로 screen 의 URL 경로."""
     if screen == "archive":
-        t = state.archive_type
-        g = state.archive_group if t else ""
-        p = state.archive_period if g == "period" else ""
-        return _archive_path(t, g, p)
+        return _archive_path(state.archive_type)
     if screen == "folder":
         return f"folder-{state.folder_id}"
     if screen == "note":
@@ -160,11 +152,9 @@ def sync_from_url(current_path: str) -> str:
     route = next((r for r in all_routes(s) if r.path == current_path), Route("compose", "", "새 회의록"))
 
     if route.screen == "archive":
-        t, g, p = (*route.param, "", "", "")[:3]
-        s.archive_type, s.archive_group, s.archive_period = t, g, p
+        s.archive_type = route.param[0] if route.param else ""
     elif route.screen == "folder":
         s.folder_id = route.param[0]
-        s.folder_type = sel.folders(s)[s.folder_id].type
     elif route.screen == "note":
         s.meeting_id = route.param[0]
     elif route.screen == "finalize":

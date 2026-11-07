@@ -1,0 +1,163 @@
+{
+  "_note": "회의에 물어보기 목업 답변. answer 는 온보딩 에이전트(playground/junbyong/onboarding_agent) ask 결과 JSON 과 같은 형식. match 의 낱말이 질문에 들어 있으면 그 답을 씀",
+  "answers": [
+    {
+      "match": ["PG", "수수료", "결제 대행"],
+      "answer": {
+        "answer_status": "grounded",
+        "summary": "아직 최종 PG사는 정하지 않았어요. 후보를 A사·B사 두 곳으로 유지하고, 최종 결정 전에 재무팀 의견을 받기로 했어요. 기술 조건은 두 곳 모두 통과했어요.",
+        "sentences": [
+          {
+            "text": "아직 최종 PG사는 정하지 않았어요. 후보를 A사·B사 두 곳으로 유지하고, 최종 결정 전에 재무팀 의견을 받기로 했어요.",
+            "source_ids": ["m2_a1-d1", "m2_a2-d1"],
+            "citations": [
+              {"meeting_id": "m2", "meeting_title": "PG사 선정 — 수수료 비교", "agenda_id": "m2_a1", "agenda_no": 1,
+               "discussion_id": "m2_a1_st1", "discussion_title": "수수료 구조", "tags": ["정보"],
+               "point": "카드 수수료는 A사 2.5%, B사 2.8%이고 간편결제 수수료는 같음", "utterances": [2, 3]},
+              {"meeting_id": "m2", "meeting_title": "PG사 선정 — 수수료 비교", "agenda_id": "m2_a1", "agenda_no": 1,
+               "discussion_id": "m2_a1_st2", "discussion_title": "후보 유지", "tags": ["제안", "결정"],
+               "point": "후보는 A사·B사 두 곳으로 유지하고 비교표는 도윤이 정리", "utterances": [4]}
+            ]
+          },
+          {
+            "text": "기술 조건은 두 곳 모두 통과했어요.",
+            "source_ids": ["m4_a1-d1"],
+            "citations": [
+              {"meeting_id": "m4", "meeting_title": "PG사 선정 — 기술 검토", "agenda_id": "m4_a1", "agenda_no": 1,
+               "discussion_id": "m4_a1_st1", "discussion_title": "API·웹훅", "tags": ["정보", "결정"],
+               "point": "두 곳 모두 SLA 99.9%, 웹훅 재전송·멱등키 지원 → 기술 조건 통과", "utterances": [2, 3]}
+            ]
+          }
+        ],
+        "badge": {"status": "active", "confidence": 0.86, "verified_by": "auto"},
+        "decision_timeline": [
+          {"decision_id": "m4_a1-d1", "content": "기술 조건은 두 곳 모두 통과", "status": "active", "superseded_by": null,
+           "decided_at": "2026-10-24", "meeting_id": "m4", "meeting_title": "PG사 선정 — 기술 검토", "agenda_no": 1},
+          {"decision_id": "m2_a1-d1", "content": "후보는 A사·B사 두 곳으로 유지", "status": "active", "superseded_by": null,
+           "decided_at": "2026-10-29", "meeting_id": "m2", "meeting_title": "PG사 선정 — 수수료 비교", "agenda_no": 1},
+          {"decision_id": "m2_a2-d1", "content": "최종 결정 전 재무팀 의견 받기", "status": "active", "superseded_by": null,
+           "decided_at": "2026-10-29", "meeting_id": "m2", "meeting_title": "PG사 선정 — 수수료 비교", "agenda_no": 2}
+        ],
+        "sources": [
+          {"meeting_id": "m4", "meeting_title": "PG사 선정 — 기술 검토", "held_at": "2026-10-24", "agenda_id": "m4_a1", "agenda_title": "API·웹훅", "agenda_no": 1},
+          {"meeting_id": "m2", "meeting_title": "PG사 선정 — 수수료 비교", "held_at": "2026-10-29", "agenda_id": "m2_a1", "agenda_title": "수수료 구조", "agenda_no": 1},
+          {"meeting_id": "m2", "meeting_title": "PG사 선정 — 수수료 비교", "held_at": "2026-10-29", "agenda_id": "m2_a2", "agenda_title": "정산 주기", "agenda_no": 2}
+        ],
+        "transcripts": {
+          "m2": [
+            {"i": 2, "speaker": "도윤", "role": "백엔드 개발", "text": "카드 기준으로 A사가 2.5%, B사가 2.8%예요."},
+            {"i": 3, "speaker": "태현", "role": "백엔드 개발", "text": "간편결제 수수료는 두 곳이 같아요."},
+            {"i": 4, "speaker": "도윤", "role": "백엔드 개발", "text": "후보는 계속 A사, B사 두 곳으로 가죠. 비교표는 제가 정리할게요."}
+          ],
+          "m4": [
+            {"i": 2, "speaker": "태현", "role": "백엔드 개발", "text": "두 곳 모두 SLA 99.9%이고 웹훅 재전송, 멱등키를 지원해요."},
+            {"i": 3, "speaker": "도윤", "role": "백엔드 개발", "text": "기술 조건은 둘 다 통과로 보죠."}
+          ]
+        },
+        "contacts": [
+          {"user_id": "doy", "name": "도윤", "position": "senior", "roles": ["백엔드 개발"], "why": "PG사 비교표 담당 · 수수료 비교 회의 참석"},
+          {"user_id": "tae", "name": "태현", "position": "mid", "roles": ["백엔드 개발"], "why": "기술 검토 회의 참석"}
+        ],
+        "follow_ups": ["A사와 B사의 정산 주기는 어떻게 달라요?"],
+        "warnings": []
+      }
+    },
+    {
+      "match": ["4주차", "주간 회의", "가입", "온보딩 플로우"],
+      "answer": {
+        "answer_status": "partial",
+        "summary": "10월 4주차 주간 회의에서는 가입 단계를 5단계에서 3단계로 줄이고, 관심사 선택을 가입 이후로 옮기기로 했어요. 참고: '가입 단계 5단계' 안은 이후 '3단계로 축소'(으)로 변경됐어요.",
+        "sentences": [
+          {
+            "text": "10월 4주차 주간 회의에서는 가입 단계를 5단계에서 3단계로 줄이고, 관심사 선택을 가입 이후로 옮기기로 했어요.",
+            "source_ids": ["m1_a1-d1", "m1_a1-d2"],
+            "citations": [
+              {"meeting_id": "m1", "meeting_title": "주간 회의 — 10월 4주차", "agenda_id": "m1_a1", "agenda_no": 1,
+               "discussion_id": "m1_a1_st1", "discussion_title": "신규 온보딩 플로우", "tags": ["정보", "제안", "결정"],
+               "point": "A/B 테스트에서 B안 전환율이 12% 높아 5단계를 3단계로 줄이고 관심사 선택은 가입 후로", "utterances": [2, 3]}
+            ]
+          },
+          {
+            "text": "참고: '가입 단계 5단계' 안은 이후 '3단계로 축소'(으)로 변경됐어요.",
+            "source_ids": ["m1_a1-d1"],
+            "citations": []
+          }
+        ],
+        "badge": {"status": "active", "confidence": 0.78, "verified_by": "auto"},
+        "decision_timeline": [
+          {"decision_id": "m3_a1-d1", "content": "가입 단계는 기존 5단계 유지", "status": "superseded", "superseded_by": "m1_a1-d1",
+           "decided_at": "2026-10-20", "meeting_id": "m3", "meeting_title": "주간 회의 — 10월 3주차", "agenda_no": 1},
+          {"decision_id": "m1_a1-d1", "content": "가입 단계 5단계 → 3단계로 축소", "status": "active", "superseded_by": null,
+           "decided_at": "2026-10-27", "meeting_id": "m1", "meeting_title": "주간 회의 — 10월 4주차", "agenda_no": 1},
+          {"decision_id": "m1_a1-d2", "content": "관심사 선택은 가입 이후로 이동", "status": "active", "superseded_by": null,
+           "decided_at": "2026-10-27", "meeting_id": "m1", "meeting_title": "주간 회의 — 10월 4주차", "agenda_no": 1}
+        ],
+        "sources": [
+          {"meeting_id": "m1", "meeting_title": "주간 회의 — 10월 4주차", "held_at": "2026-10-27", "agenda_id": "m1_a1", "agenda_title": "신규 온보딩 플로우", "agenda_no": 1}
+        ],
+        "transcripts": {
+          "m1": [
+            {"i": 2, "speaker": "하린", "role": "UX 디자인", "text": "A/B 테스트에서 B안 전환율이 12% 더 높았어요. 5단계는 너무 길다는 의견이 많았고요."},
+            {"i": 3, "speaker": "서윤", "role": "프로젝트 매니저", "text": "그럼 3단계로 줄이고, 관심사 선택은 가입 후로 미루는 걸로 하죠."}
+          ]
+        },
+        "contacts": [
+          {"user_id": "har", "name": "하린", "position": "mid", "roles": ["UX 디자인"], "why": "3단계 안내 문구 담당 · 온보딩 플로우 안건 참석"}
+        ],
+        "follow_ups": ["3단계 안내 문구는 언제까지 나와요?", "결제 오류 재발 건은 어떻게 하기로 했어요?"],
+        "warnings": ["근거가 확인되지 않은 문장 1개를 뺐습니다."]
+      }
+    },
+    {
+      "match": ["중복 결제", "결제 오류", "누구한테", "누구에게"],
+      "answer": {
+        "answer_status": "grounded",
+        "summary": "중복 결제 오류는 지우님에게 먼저 물어보세요. 10/13 이후 재시도를 1회로 줄인 뒤에도 중복 결제가 2건 재현된 내용을 공유했어요.",
+        "sentences": [
+          {
+            "text": "중복 결제 오류는 지우님에게 먼저 물어보세요.",
+            "source_ids": ["jiw"],
+            "citations": []
+          },
+          {
+            "text": "10/13 이후 재시도를 1회로 줄인 뒤에도 중복 결제가 2건 재현된 내용을 공유했어요.",
+            "source_ids": ["m1_a2"],
+            "citations": [
+              {"meeting_id": "m1", "meeting_title": "주간 회의 — 10월 4주차", "agenda_id": "m1_a2", "agenda_no": 2,
+               "discussion_id": "m1_a2_st1", "discussion_title": "결제 오류 재발", "tags": ["공유"],
+               "point": "재시도를 1회로 줄였는데도 중복 결제 2건 재현", "utterances": [5]}
+            ]
+          }
+        ],
+        "badge": null,
+        "decision_timeline": [],
+        "sources": [
+          {"meeting_id": "m1", "meeting_title": "주간 회의 — 10월 4주차", "held_at": "2026-10-27", "agenda_id": "m1_a2", "agenda_title": "결제 오류 재발", "agenda_no": 2}
+        ],
+        "transcripts": {
+          "m1": [
+            {"i": 5, "speaker": "지우", "role": "QA", "text": "10/13 이후 재시도를 1회로 줄였는데도 중복 결제가 2건 재현됐어요."}
+          ]
+        },
+        "contacts": [
+          {"user_id": "jiw", "name": "지우", "position": "mid", "roles": ["QA"], "why": "QA · 결제 오류 재발 안건 공유"},
+          {"user_id": "tae", "name": "태현", "position": "mid", "roles": ["백엔드 개발"], "why": "백엔드 개발 · 같은 회의 참석"}
+        ],
+        "follow_ups": [],
+        "warnings": []
+      }
+    }
+  ],
+  "no_evidence": {
+    "answer_status": "no_evidence",
+    "summary": "관련 회의 기록이 없어요. 담당자에게 문의해 주세요.",
+    "sentences": [],
+    "badge": null,
+    "decision_timeline": [],
+    "sources": [],
+    "transcripts": {},
+    "contacts": [],
+    "follow_ups": [],
+    "warnings": []
+  }
+}

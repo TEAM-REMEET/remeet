@@ -30,7 +30,6 @@ class SentShare:
 class NewFolder:
     id: str
     name: str
-    type: str
 
 
 @dataclass
@@ -92,9 +91,7 @@ class AppState:
     home_role: str = "all"
 
     # --- 폴더
-    folder_type: str = "weekly"
     folder_id: str = "all"  # all 이면 회의 종류 화면
-    folder_owner_filter: str = "all"  # all | mine | member
     folder_tab: str = "all"  # all(회의록 목록) | wiki
     folder_role: str = "all"  # all | host | att
     show_brief: bool = False
@@ -110,7 +107,7 @@ class AppState:
     raw_query: str = ""
     highlight: list[str] = field(default_factory=list)
     highlight_key: str = ""
-    todo_scope: str = "mine"
+    todo_scope: str = "all"  # 액션 아이템 탭: all(전체 · 기본) | mine(내 할 일)
     editing: bool = False
     just_shared: bool = False
     branched: bool = False
@@ -120,7 +117,10 @@ class AppState:
     agenda_open: list[str] = field(default_factory=list)  # 요약 탭 「안건별 상세」에서 펼친 안건 ("mid:index")
     agenda_jump: str = ""  # 안건 목차를 눌러 스크롤해 갈 안건 앵커 id (한 번 스크롤하면 비움)
     agenda_jump_n: int = 0
-    assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 이름들 (여러 명)
+    assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 user_id들 (여러 명 · 동명이인 구분 · 회의록 담당자 대신)
+    todo_due: dict[str, str] = field(default_factory=dict)  # "mid:index" → 담당자 추천에서 고친 마감일 ("11/5")
+    summaries: dict[str, dict] = field(default_factory=dict)  # 회의 id → 액션 아이템까지 검토가 끝난 MeetingSummary JSON
+    recommendations: dict[str, dict] = field(default_factory=dict)  # 회의 id → {item_id: 추천 결과} (POST .../recommendations)
     status_override: dict[str, str] = field(default_factory=dict)
     added_todos: dict[str, list[Todo]] = field(default_factory=dict)  # 주관자가 직접 추가한 액션 아이템 (회의 id → 할 일들)
     deleted_todos: dict[str, list[int]] = field(default_factory=dict)  # 삭제한 액션 아이템 (회의 id → 원래 순서 번호 · 되돌리기 가능)
@@ -150,7 +150,7 @@ class AppState:
     assign_sort: str = "score"
     assign_pending: str = ""
     assign_prev: dict[str, list[str]] = field(default_factory=dict)  # 마지막으로 바꾸기 전 담당자 ("누구 → 누구" 안내용)
-    assign_draft: list[str] = field(default_factory=list)  # 담당자 모달에서 고르는 중인 이름들 (「맡기기」를 눌러야 반영)
+    assign_draft: list[str] = field(default_factory=list)  # 담당자 모달에서 고르는 중인 user_id들 (「맡기기」를 눌러야 반영)
     assign_team: str = ""  # 담당자 지정 · 팀에서 직접 고르기 (빈 값이면 추천 1순위의 팀)
 
     # --- 폴더 멤버 추가 (팀 → 팀원)
@@ -165,7 +165,7 @@ class AppState:
     # --- 회의록 확정 (확정하기 → 1 담당자 추천 → 2 최종 회의록 → 3 결과 전달 → 4 외부 도구 전송)
     fin_step: int = 1
     review_requested: set[str] = field(default_factory=set)  # 주관자가 아닌 사람이 등록해 주관자에게 검토를 요청한 회의
-    fin_flow: str = ""  # 확정 흐름 중인 회의 id (결과 전달 · 외부 도구 전송 화면에 단계 표시)
+    fin_flow: str = ""  # 확정 흐름 중인 회의 id (회의 상세 · 결과 전달 · 외부 도구 전송에도 단계 표시 · 외부 도구 전송을 마치면 끝)
 
     # --- 위키
     folder_wiki_node: str = "c"
@@ -206,8 +206,6 @@ class AppState:
     nn_type: str = "weekly"
     nn_topic: str = "rel"
     nn_name: str = ""
-    nn_group: str = "project"  # 폴더를 고른 보기: project(프로젝트별) | period(주차별·월별·일별)
-    nn_period: str = ""  # 기간 폴더 키 (w1026 · m10 · d1023) · 아직 없는 기간이면 새로 만들어질 폴더
     nn_error: str = ""  # 작성 화면 오류 안내 (빈 값이면 없음)
     # 3단계 작성: 1 회의 내용 입력 → 2 발화자 확인 → 3 분석 및 결과
     cp_step: int = 1  # 1 회의 내용 입력 · 2 분석 및 검토
@@ -234,20 +232,16 @@ class AppState:
     pick_folder: str = ""  # 고른 폴더 id 또는 "new"
     pick_name: str = ""  # 새 폴더 이름
     pick_type: str = "weekly"  # 폴더 모달에서 고른 회의 종류
-    pick_group: str = "project"  # 폴더 모달에서 고른 보기
-    pick_period: str = ""  # 폴더 모달에서 고른 기간 폴더 키 또는 "new"
     pick_query: str = ""  # 폴더 모달 검색어
     pick_nonce: int = 0  # 모달을 열 때마다 바뀌어 위젯 선택값을 새로 맞춤
     compose_nonce: int = 0  # 생성하기 후 입력칸을 비우기 위해 바뀜
 
     # --- 회의록 보관함 (사이드바 트리 · 회의록 페이지)
     archive_type: str = ""  # "" | weekly | monthly | normal
-    archive_group: str = ""  # "" | period | project
-    archive_period: str = ""  # 기간 키 (w1027 · m10 · d1023)
     # --- 모달 대상
     members_folder: str = ""  # 멤버 모달에서 다루는 폴더 (빈 값이면 folder_id)
     members_scope: list[str] = field(default_factory=list)  # 기간 폴더에서 연 경우: 고를 수 있는 프로젝트 폴더들
-    delete_target: tuple[str, ...] = ()  # ("folder", fid) | ("period", 회의 종류, 기간 키) | ("meeting", mid)
+    delete_target: tuple[str, ...] = ()  # ("folder", fid) | ("meeting", mid)
     deleted_meetings: set[str] = field(default_factory=set)  # 주관자가 삭제한 회의
 
     # --- 미참석 공유: 회의 id → 주관자가 이 회의록을 보내 준 미참석(조퇴·불참) 멤버
@@ -259,12 +253,13 @@ class AppState:
     search_tab: str = ""  # 회의명 | 폴더명 | 구성원 | 회의 내용 (빈 값이면 결과가 있는 첫 버튼)
     search_nonce: int = 0  # 검색 페이지로 새로 들어올 때마다 바뀜 (입력칸 새로 · 커서 맞추기)
     archive_qnonce: int = 0  # 화면을 옮길 때마다 바뀌어 검색칸을 비움
-    archive_owner: str = "all"  # 기간별 목록의 전체 / 내가 만든 폴더 / 멤버 (기간 폴더 화면까지 이어짐)
-    period_wiki_folder: str = ""  # 기간 폴더 화면 · 위키 탭에서 보고 있는 프로젝트 폴더
     todo_group: str = ""  # 회의 목록 판넬: left(내 할 일이 있음) · 빈 값이면 회의가 있는 첫 판넬
     archive_role: str = "all"  # 기간별 목록의 전체 / 내가 주관 / 참석
     tree_open: set[str] = field(default_factory=lambda: {"root"})  # 사이드바에서 펼친 노드
     tree_mode: str = "time"  # 사이드바 회의록 트리: time(정기 회의) | project(프로젝트 단위)
+    ask_history: list[dict] = field(default_factory=list)  # 회의에 물어보기 기록: 받은 답 + asked_at (최근 것이 앞) · 형식은 repo.ask()
+    ask_current: str = ""  # 지금 보고 있는 기록의 질문
+    ask_nonce: int = 0  # 질문 입력칸 비우기용
 
 
 def me_id() -> str:
