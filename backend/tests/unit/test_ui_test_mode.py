@@ -102,6 +102,32 @@ class EnabledTests(Base):
         self.assertEqual(self.llm.calls, 1)
 
 
+class RecommendTests(Base):
+    def test_recommendations_use_neither_llm_nor_neo4j(self):
+        self.start()
+        final = self.client.post(f'/api/meetings/{self.finished()["result"]["meeting_id"]}/review', json={"edits": []}).json()
+        with patch("followup.entrypoints.api.recommend_routes.recommend_for_meeting", side_effect=AssertionError("추천 호출됨")) as real, \
+                patch("followup.adapters.neo4j.driver.get_driver", side_effect=AssertionError("Neo4j 접근")):
+            response = self.client.post(f'/api/meetings/{final["meeting_id"]}/recommendations', json=final)
+        self.assertEqual(response.status_code, 200)
+        real.assert_not_called()
+        items = response.json()["items"]
+        self.assertTrue(items)
+        active = {d["item_id"] for a in final["agendas"] for d in a["major_discussions"] if d["discussion_tag"] == "액션" and d["status"] == "ACTIVE"}
+        self.assertEqual({i["item_id"] for i in items}, active)
+        unassigned = [i for i in items if not i["assignees"]]
+        self.assertTrue(all(i["candidates"] for i in unassigned))
+        self.assertEqual(self.llm.calls, 0)
+
+    def test_real_meeting_still_uses_real_recommendation(self):
+        self.start()
+        final = self.finished()["result"]
+        final["config"].pop("ui_test")
+        with patch("followup.entrypoints.api.recommend_routes.recommend_for_meeting", return_value=[]) as real:
+            self.assertEqual(self.client.post(f'/api/meetings/{final["meeting_id"]}/recommendations', json=final).status_code, 200)
+        real.assert_called_once()
+
+
 class DisabledTests(Base):
     mode = "false"
 

@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from followup import settings as cfg
 from followup.adapters.storage.local_files import LocalFileStore
 from followup.application import meeting_jobs
 from followup.entrypoints.api.main import app
@@ -70,6 +71,23 @@ class JobBase(unittest.TestCase):
                 return job
             time.sleep(0.05)
         self.fail("작업이 끝나지 않음")
+
+
+class TimeLimitTests(JobBase):
+    def test_summary_over_limit_fails_with_message_and_releases_user(self):
+        with patch.object(cfg, "SUMMARY_TIMEOUT_SECONDS", 0.2):
+            self.start()
+            job = self.wait_finished()
+        self.assertEqual(job["status"], "failed")
+        self.assertIn("30분", job["message"])
+        self.assertNotIn("user", meeting_jobs._active)
+        self.llm.gate.set()
+        calls = len(self.llm.calls)
+        time.sleep(0.2)                                     # 멈춰 있던 호출 1건만 끝나고 새 LLM 호출은 없음
+        self.assertLessEqual(len(self.llm.calls), calls + 1)
+
+    def test_settings_default_to_30_and_10_minutes(self):
+        self.assertEqual((cfg.SUMMARY_TIMEOUT_SECONDS, cfg.REVIEW_TIMEOUT_SECONDS), (1800, 600))
 
 
 class JobTests(JobBase):

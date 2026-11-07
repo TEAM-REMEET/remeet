@@ -1,6 +1,7 @@
 """사용자 수정(HITL) → 근거 연결 · 검증 → 최종 JSON (가짜 LLM, 실제 API 호출 없음)"""
 import json
 import os
+import time
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,7 +13,8 @@ from followup import settings as cfg
 from followup.adapters.storage.local_files import LocalFileStore
 from followup.analysis.summary.hitl import HitlEditError
 from followup.analysis.summary.schemas import (HitlEdits, LLMAgenda, LLMDiscussionItem, LLMEvidenceIssue, LLMEvidenceLink,
-                                               LLMEvidenceLinks, LLMEvidenceVerification, LLMMeetingSummary, LLMVerification)
+                                               LLMEvidenceLinks, LLMEvidenceVerification, LLMMeetingSummary, LLMVerification,
+                                               MeetingSummary)
 from followup.application.review_meeting import MeetingNotFoundError, review_meeting
 from followup.entrypoints.api.main import app
 from followup.entrypoints.api.routes.auth import current_user
@@ -105,6 +107,17 @@ class ApplyTests(ReviewBase):
         item = self.run_review({"op": "update", "item_id": self.action["item_id"], "assignee_user_ids": ["u2"]}).find_item(self.action["item_id"])
         self.assertEqual((item.assignees, item.assignee_user_ids, item.assignee_names, item.assignee_jobs),
                          (["리처드"], ["u2"], ["리처드"], ["산업 디자이너"]))
+
+    def test_confirming_unmatched_assignee_clears_review_even_with_same_value(self):
+        summary = MeetingSummary.model_validate_json(self.store.read_summary(self.mid))
+        item = summary.find_item(self.action["item_id"])
+        item.status, item.review_reasons = "REVIEW_REQUIRED", ["담당자 확인 필요: 참여자에 없음 (홍길동)"]
+        self.store.save_summary(summary)
+        llm = FakeLLM()
+        result = self.run_review({"op": "update", "item_id": item.item_id, "assignee_user_ids": item.assignee_user_ids}, llm=llm)
+        after = result.find_item(item.item_id)
+        self.assertEqual((after.status, after.review_reasons), ("ACTIVE", []))
+        self.assertEqual(llm.calls, [])                     # 값이 같으면 근거를 다시 연결하지 않음
 
     def test_delete_needs_no_llm_and_updates_results(self):
         llm = FakeLLM()
@@ -242,6 +255,71 @@ class StorageTests(ReviewBase):
         self.run_review({"op": "delete", "item_id": self.action["item_id"]})
         result = self.run_review({"op": "update", "item_id": self.action["item_id"], "text": "다시 수정"})
         self.assertEqual(result.find_item(self.action["item_id"]).status, "ACTIVE")
+
+
+class TimeLimitTests(ReviewBase):
+    def test_over_limit_is_504_and_nothing_final_is_saved(self):
+        import threading
+
+        gate = threading.Event()
+        self.addCleanup(gate.set)
+
+        class Slow(FakeLLM):
+            def parse(self, system, user, schema, effort):
+                gate.wait(5)
+                return super().parse(system, user, schema, effort)
+
+        slow = Slow()
+        app.dependency_overrides[get_llm] = lambda: slow
+        with patch.object(cfg, "REVIEW_TIMEOUT_SECONDS", 0.2):
+            response = self.client.post(f"/api/meetings/{self.mid}/review",
+                                        json={"edits": [{"op": "update", "item_id": self.action["item_id"], "text": "새"}]})
+        self.assertEqual(response.status_code, 504)
+        self.assertIn("10분", response.json()["detail"])
+        self.assertFalse(self.final_path().exists())
+        gate.set()
+        time.sleep(0.2)
+        self.assertEqual(slow.calls, ["LLMEvidenceLinks"])      # 기한이 지나 검증은 호출하지 않음
+
+
+class FinalAssigneeTests(ReviewBase):
+    def put(self, *changes, mid=None):
+        return self.client.put(f"/api/meetings/{mid or self.mid}/final/assignees", json={"changes": list(changes)})
+
+    def test_saves_assignees_and_due_into_final_json_without_llm(self):
+        self.run_review()
+        app.dependency_overrides[get_llm] = lambda: (_ for _ in ()).throw(AssertionError("LLM 호출"))
+        response = self.put({"item_id": self.action["item_id"], "due": "2026-12-24",
+                             "assignees": [{"user_id": "u2", "name": "아무개", "job": "x"},
+                                           {"user_id": "u99", "name": "홍길동", "job": "개발자"},
+                                           {"user_id": "u98", "name": "리처드", "job": "기획자"}]})
+        self.assertEqual(response.status_code, 200)
+        saved = json.loads(self.final_path().read_text(encoding="utf-8"))
+        item = next(d for a in saved["agendas"] for d in a["major_discussions"] if d["item_id"] == self.action["item_id"])
+        self.assertEqual(item["assignees"], ["리처드", "홍길동", "리처드(기획자)"])       # 참석자는 회의 정보 값 · 이름이 겹치면 직무
+        self.assertEqual(item["assignee_user_ids"], ["u2", "u99", "u98"])
+        self.assertEqual(item["assignee_jobs"], ["산업 디자이너", "개발자", "기획자"])
+        self.assertEqual(item["due"], "2026-12-24")
+        self.assertEqual(item["evidence_utterance_indices"], self.action["evidence_utterance_indices"])
+        self.assertTrue(any(h["stage"] == "assign" for h in item["history"]))
+        record = saved["hitl"]["edits"][-1]
+        self.assertEqual((record["item_id"], record["evidence_status"]), (self.action["item_id"], "NOT_NEEDED"))
+        self.assertEqual(response.json()["agendas"], saved["agendas"])
+
+    def test_same_values_do_not_add_records(self):
+        self.run_review()
+        before = self.final_path().read_text(encoding="utf-8")
+        response = self.put({"item_id": self.action["item_id"], "assignees": [{"user_id": "u1", "name": "?"}]})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.final_path().read_text(encoding="utf-8"), before)
+
+    def test_needs_final_json_and_valid_items(self):
+        self.assertEqual(self.put({"item_id": self.action["item_id"], "due": None}).status_code, 404)
+        self.run_review()
+        not_action = next(d for d in self.original["agendas"][0]["major_discussions"] if d["discussion_tag"] != "액션")
+        self.assertEqual(self.put({"item_id": not_action["item_id"], "due": None}).status_code, 422)
+        self.assertEqual(self.put({"item_id": self.action["item_id"]}).status_code, 422)
+        self.assertEqual(self.put({"item_id": self.action["item_id"], "assignees": [{"user_id": "", "name": "a"}]}).status_code, 422)
 
 
 class ValidationTests(ReviewBase):
