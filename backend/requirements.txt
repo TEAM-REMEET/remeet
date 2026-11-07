@@ -9,3 +9,6 @@ langchain-openai>=1.7.3
 openai>=3.35.1
 pydantic>=2.14.1
 python-dotenv>=1.2.4
+
+# 외부 도구 전송 · Jira (Atlassian MCP)
+mcp>=2.3.0

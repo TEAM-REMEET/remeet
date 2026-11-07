@@ -26,6 +26,9 @@ _VIEW = {"wait": ("대기", "wait"), "sending": ("보내는 중", "run"), "ok": 
 
 
 def _tool_sub(tool, mid: str) -> str:
+    x = get_state().export
+    if x.results.get(tool.id):  # 실제로 보낸 결과 (Jira: 만든 이슈 · 메일: 보낸 사람)
+        return export.summary(x, tool.id)
     n = len(sel.todo_items(get_state(), mid))
     base = f"액션 아이템 {n}건 → 이슈" if tool.id == "jira" else tool.desc
     return base + (f" · {tool.target}" if tool.target else "")
