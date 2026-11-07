@@ -8,6 +8,8 @@
 |---|---|
 | `crud/folders.py` | 폴더 생성·조회·수정·소프트 삭제, 멤버 추가·삭제 |
 | `crud/meetings.py` | 회의 관리 정보 CRUD 및 원문 저장·조회 |
+| `crud/minutes.py` | 회의 원본(버전) · 전체(월간/주간/일반) · 프로젝트별 회의 목록 (README 4-1) |
+| `crud/detail.py` | 회의 상세: 요약(버전) · 참석자 · 액션 아이템 · 안건 분리 요청 (README 4-2) |
 | `crud/shares.py` | 회의 공유 생성·조회·변경·철회 |
 | `crud/notifications.py` | 알림 생성·조회·읽음 상태 변경·삭제 |
 | `crud/accounts.py` | 계정 생성·조회·수정·삭제, 비밀번호 검증 |

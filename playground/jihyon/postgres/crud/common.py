@@ -116,6 +116,21 @@ def meeting(cur, meeting_id: str) -> dict:
     )
 
 
+def is_editor(m: dict, actor_id: str) -> bool:
+    """이 회의(행)를 지금 고칠 · 확정할 수 있는 사람인지 (migrations/010 의 meeting_editor 와 같음).
+    draft: 작성자 · 주관자
+    생성 뒤: 검토자(reviewer_id), 없으면 주관자 (web start_finalize: 주관자만 확정)"""
+    if m["status"] == "draft":
+        return actor_id in (m["created_by"], m["host_user_id"])
+    return actor_id == (m["reviewer_id"] or m["host_user_id"])
+
+
+def attended(cur, meeting_id: str, actor_id: str) -> bool:
+    """참석자인지 (meeting_attendees)."""
+    cur.execute("SELECT 1 FROM meeting_attendees WHERE meeting_id = %s AND user_id = %s", (meeting_id, actor_id))
+    return cur.fetchone() is not None
+
+
 def can_access_meeting(
     cur,
     meeting_id: str,
@@ -123,26 +138,33 @@ def can_access_meeting(
     *,
     write: bool = False,
 ) -> dict:
-    """회의 주관자만 수정할 수 있고, 읽기는 권한에 따라 허용."""
+    """수정(write=True)은 is_editor() 한 사람만, 읽기는 주관 · 작성 · 검토 · 참석 · 공유받은 사람.
+
+    미리보기(draft)는 작성자 · 주관자만 보고 고침. 생성(review) 뒤에는 is_editor() 규칙.
+    """
 
     require_user(cur, actor_id)
     m = meeting(cur, meeting_id)
 
-    if m["host_user_id"] == actor_id:
-        return m
+    if m["status"] == "draft":
+        if actor_id in (m["created_by"], m["host_user_id"]):
+            return m
+        raise PermissionDenied("아직 작성 중인 회의록입니다.")
 
     if write:
+        if is_editor(m, actor_id):
+            return m
+        if actor_id == m["created_by"]:
+            raise PermissionDenied("검토를 요청한 회의록은 검토자(주관자)만 수정할 수 있습니다.")
         raise PermissionDenied("회의 수정 권한이 없습니다.")
 
-    if m["folder_id"]:
-        try:
-            can_access_folder(
-                cur, m["folder_id"], actor_id
-            )
-            return m
-        except (PermissionDenied, NotFoundError):
-            pass
+    if actor_id in (m["host_user_id"], m["created_by"], m["reviewer_id"]):
+        return m
 
+    if attended(cur, meeting_id, actor_id):
+        return m
+
+    # 프로젝트 멤버라는 것만으로는 안 보임 (web can_see: 주관 · 참석 · 공유받음). 미참석 멤버는 공유받아야 봄
     cur.execute(
         """
         SELECT 1
@@ -169,8 +191,8 @@ def can_view_raw(
 
     m = can_access_meeting(cur, meeting_id, actor_id)
 
-    if m["host_user_id"] == actor_id:
-        return True
+    if actor_id in (m["host_user_id"], m["created_by"], m["reviewer_id"]) or attended(cur, meeting_id, actor_id):
+        return True  # 작성 · 검토 · 주관하거나 회의에 있었던 사람은 원문을 봄 (화면 can_see 규칙)
 
     # 직접 공유된 내역이 있으면 해당 공유 범위를 우선 적용
     cur.execute(
@@ -186,30 +208,10 @@ def can_view_raw(
 
     shares = cur.fetchall()
 
-    if shares:
-        return any(
-            s["scope"] == "full" and not s["lock_raw"]
-            for s in shares
-        )
-
-    # 직접 공유가 없다면 폴더 멤버 여부 확인
-    if m["folder_id"]:
-        cur.execute(
-            """
-            SELECT 1
-            FROM folders f
-            JOIN folder_members fm
-              ON fm.folder_id = f.id
-            WHERE f.id = %s
-              AND f.deleted_at IS NULL
-              AND fm.user_id = %s
-            """,
-            (m["folder_id"], actor_id),
-        )
-
-        return cur.fetchone() is not None
-
-    return False
+    return any(
+        s["scope"] == "full" and not s["lock_raw"]
+        for s in shares
+    )
 
 
 def ensure_updated(cur):
