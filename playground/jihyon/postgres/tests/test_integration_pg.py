@@ -192,6 +192,29 @@ class PostgresCRUDIntegrationTests(unittest.TestCase):
         original=meetings.get_transcript(actor_id='u1',meeting_id=m['id'])
         self.assertEqual([p['line_id'] for p in original],['original'])
 
+    def test_people_sync_add_update_deactivate(self):
+        from crud.people import sync_people
+        people_sql = Path(__file__).resolve().parents[1] / 'migrations' / '011_people.sql'
+        with self.transaction() as cur:  # 구성원 표는 schema.sql 이 아니라 011 마이그레이션에 있음
+            cur.execute(people_sql.read_text(encoding='utf-8'))
+            cur.execute("TRUNCATE person_skills, people, roles, skills, teams CASCADE")
+            cur.execute("INSERT INTO teams (team_id,name) VALUES ('t-pm','관리팀')")
+            cur.execute("INSERT INTO skills (skill_id,name,domain) VALUES ('PM-01','일정','PM'),('PM-02','배분','PM')")
+        p={'user_id':'u90','name':'새사람','email':'u90@test.local','permission':'member','position':'junior',
+           'is_active':True,'team_id':'t-pm','role_id':'r-new','job':'새 직무',
+           'skills':[{'skill_id':'PM-01','level':2},{'skill_id':'PM-02','level':3}]}
+        sync_people([p])  # 추가: 계정 · 새 직무 · 프로필 · 스킬
+        sync_people([{**p,'position':'mid','is_active':False,'skills':[{'skill_id':'PM-02','level':4}]}])  # 수정
+        with self.transaction() as cur:
+            cur.execute("SELECT position,is_active FROM people WHERE user_id='u90'")
+            self.assertEqual(cur.fetchone(),{'position':'mid','is_active':False})
+            cur.execute("SELECT skill_id,level FROM person_skills WHERE user_id='u90'")
+            self.assertEqual(cur.fetchall(),[{'skill_id':'PM-02','level':4}], '목록에서 빠진 스킬은 지운다')
+            cur.execute("SELECT team_id FROM roles WHERE role_id='r-new'")
+            self.assertEqual(cur.fetchone()['team_id'],'t-pm')
+            cur.execute("SELECT email,role FROM accounts WHERE user_id='u90'")
+            self.assertEqual(cur.fetchone(),{'email':'u90@test.local','role':'USER'})
+
     def test_transaction_rolls_back_on_sql_error(self):
         from psycopg.errors import UniqueViolation
         with self.assertRaises(UniqueViolation):
