@@ -16,7 +16,7 @@ from utils.dates import due_label
 
 
 def current(s: AppState) -> Meeting:
-    return repo.meetings().get(s.meeting_id) or repo.meeting("m1")
+    return repo.meeting(s.meeting_id)  # 없는 회의 주소는 router 가 404 화면으로 보냄
 
 
 def is_host(m: Meeting) -> bool:

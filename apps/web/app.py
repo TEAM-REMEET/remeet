@@ -13,7 +13,7 @@ import streamlit as st
 from components.dialogs import render_active_dialog
 from components.live import watch_notifications
 from components.sidebar import render_sidebar
-from components.toast import render_toast
+from components.toast import render_data_errors, render_toast
 from components.topbar import render_topbar
 from config import APP_ICON, APP_TITLE, LOGIN_COOKIE
 from data import api
@@ -72,6 +72,7 @@ def main() -> None:
         actions.check_budget_alert()  # 이번 달 예산 알림 기준을 넘으면 관리자 알림 (한 번만)
     with st.container(key="content", gap="medium"):
         render_toast()
+        render_data_errors()  # 회의 · 프로젝트를 백엔드에서 못 불러왔으면 이유 안내 (빈 화면만 보이지 않게)
         if state.not_found:
             not_found.render()  # 없는 주소 → 404
         else:
