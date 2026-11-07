@@ -23,6 +23,7 @@ from datetime import date
 
 from data import repository as repo
 from data.models import Agenda, Discussion, Evidence, Meeting, Paragraph, Todo
+from utils.files import ALLOWED_LABEL
 from utils.text import find_date_token
 
 FORMAT_LABEL = {"plain": "발화자 없는 텍스트", "bracket": "[발화자] 형식", "colon": "발화자: 형식"}
@@ -164,6 +165,23 @@ def parse(text: str, fmt: str | None = None) -> Parsed:
     return _spacing(_parse_plain(text) if fmt == "plain" else _parse(text), kinds_all)
 
 
+def detect(text: str) -> tuple[str | None, str]:
+    """회의 내용 → (자동으로 고를 형식, 문제 종류). 판별할 게 없으면(빈 값 · 너무 짧음 · 시험용 값) (None, "").
+
+    문제 종류: "" 문제 없음 · "mixed" [발화자] 형식과 발화자: 형식을 섞어 씀 (형식 없음)
+              · "check" 형식은 골랐지만 규칙(빈 줄 등)이 틀림, 또는 일부 줄에만 발화자 표기 등 (형식 없음)
+    """
+    raw = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    if not raw or sum(map(len, raw)) < 10 or text.strip().lower() == UI_TEST_TRANSCRIPT:
+        return None, ""
+    found = _parse(text)
+    if found.format is None:
+        used = {_kind(ln)[0] for ln in raw}
+        return None, "mixed" if used & {"B", "b"} and "c" in used else "check"
+    checked = parse(text, found.format)  # 빈 줄 규칙
+    return found.format, "check" if checked.error else ""
+
+
 def _parse_plain(text: str) -> Parsed:
     raw = [(i + 1, ln.strip()) for i, ln in enumerate((text or "").splitlines())]
     raw = [(no, ln) for no, ln in raw if ln]
@@ -177,7 +195,7 @@ def _parse(text: str) -> Parsed:
     raw = [(i + 1, ln.strip()) for i, ln in enumerate((text or "").splitlines())]
     raw = [(no, ln) for no, ln in raw if ln]
     if not raw:
-        return Parsed(None, error="회의 내용을 적거나 TXT · MD · DOCX · HWPX 파일을 첨부해 주세요.")
+        return Parsed(None, error=f"회의 내용을 적거나 {ALLOWED_LABEL} 파일을 첨부해 주세요.")
     if sum(len(ln) for _, ln in raw) < 10:
         return Parsed(None, error="내용이 너무 짧아요. 회의에서 나눈 말을 한 문장 이상 적어 주세요.")
 

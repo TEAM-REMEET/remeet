@@ -1,6 +1,6 @@
 """새 회의록 작성 (로그인 후 첫 화면) — 2단계.
 
-  1) 회의 내용 입력: 기본 정보(제목 · 날짜 · 주관자 · 참석자 · 회의 종류·폴더) + 회의 내용(직접 쓰기 / TXT · MD · DOCX · HWPX 첨부)
+  1) 회의 내용 입력: 기본 정보(제목 · 날짜 · 주관자 · 참석자 · 회의 종류·폴더) + 회의 내용(직접 쓰기 / TXT · MD · DOCX · HWP · HWPX 첨부)
      · 지원하는 입력 형식: 발화자 없는 텍스트(기본) · [발화자] 형식 · 발화자: 형식 중 하나를 고름
        고른 형식의 규칙은 회색 안내글로, 예시는 입력칸의 회색 글씨(placeholder)로 보여 줌
      · 주관자는 참석자에 늘 들어가요 (참석자 고르기에서 체크된 채로 · 뺄 수 없음)
@@ -36,8 +36,8 @@ from views.finalize import flow_stepper
 from views.meeting.insight_tabs import render_insights
 from views.meeting.raw_panel import render_raw_panel
 
-# 회의 내용으로 읽을 수 있는 형식: TXT · MD · DOCX · HWPX (utils/files.py)
-# 파일 고르는 창은 형식을 막지 않고, 「발화자 확인」 때 아니면 빨간 안내 + 다음 단계로 못 가게 함
+# 회의 내용으로 읽을 수 있는 형식: TXT · MD · DOCX · HWP · HWPX (utils/files.py)
+# 올리면 내용을 회의 내용 칸에 채움 · 그 밖의 형식은 받지 않고 경고 (state/actions.compose_attach)
 _NEW = "new"
 
 
@@ -121,7 +121,7 @@ def _info(html: str, tone: str = "info") -> None:
 def _current_text(s: AppState, n: int) -> str:
     """지금 입력칸에 있는 글 + 첨부 파일 내용 (형식 검사용)."""
     typed = st.session_state.get(f"cp_text_{n}_{s.cp_text_rev}", s.nn_text) or ""
-    file = st.session_state.get(f"cp_files_{n}")  # 파일은 한 개만 고를 수 있어요
+    file = st.session_state.get(f"cp_files_{n}_{s.cp_file_rev}")  # 파일은 한 개만 고를 수 있어요
     files = [file] if file else []
     bodies = [read_text(f.name, f.getvalue()) for f in files] if files else [b for _, b in s.nn_files]
     bodies = [b for b in bodies if b]  # 지원하지 않는 형식 · 읽을 수 없는 파일은 빼고
@@ -184,17 +184,26 @@ def _content(s: AppState, n: int) -> None:
             value=s.nn_text,
             height=320,
             label_visibility="collapsed",
-            on_change=actions.compose_check,
+            on_change=actions.compose_check,  # 칸을 벗어나면 형식을 자동으로 고름
+            args=(n,),
             # 예시는 값이 아니라 회색 안내글(placeholder)로만 보여 줌 → 수정 불가, 입력칸을 누르면 사라짐
             placeholder=ai.EXAMPLES[s.cp_example],
         )
     with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
         with st.container(key="cp-attach", width="content"):
-            st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}",
-                             label_visibility="collapsed")
+            # 올리면 compose_attach가 형식을 확인: TXT · MD · DOCX · HWP · HWPX는 내용을 회의 내용 칸에 채우고,
+            # 그 밖의 형식은 받지 않고(첨부 칸 비움) 경고. type= 을 쓰면 Streamlit이 영어 오류만 띄우고 경고를 못 띄워서 안 씀
+            st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}_{s.cp_file_rev}",
+                             label_visibility="collapsed", on_change=actions.compose_attach, args=(n,))
         markup(f'<span class="cp-types">{ALLOWED_LABEL}</span>')
         markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
-    if s.nn_files and not st.session_state.get(f"cp_files_{n}"):
+    if s.cp_file_warn:  # 지원하지 않는 파일을 올림 (받지 않음)
+        _info(esc(s.cp_file_warn), "warn")
+    if s.cp_format_warn:  # 자동 판별 결과: 경고(주황)가 있으면 경고만, 없으면 고른 형식 안내(초록)
+        _info(esc(s.cp_format_warn), "warn")
+    elif s.cp_format_note:
+        _info(esc(s.cp_format_note), "ok")
+    if s.nn_files and not st.session_state.get(f"cp_files_{n}_{s.cp_file_rev}"):
         with st.container(horizontal=True, vertical_alignment="center", gap="small"):
             markup('<span class="cp-hint">앞에서 첨부한 파일: ' + esc(", ".join(nm for nm, _ in s.nn_files)) + "</span>")
             button("파일 빼기", key="cp_clear_files", variant="mini", on_click=actions.compose_clear_files)
