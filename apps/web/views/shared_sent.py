@@ -25,11 +25,12 @@ def render() -> None:
         with c2:
             markup(f'<div class="scope-help">{tag("원문 포함", "host")}<span>정리된 내용과 함께 <b>회의록 원문 전체</b>를 볼 수 있어요.</span></div>')
 
-        if not s.sent_shares:
+        shares = sel.sent_shares(s)  # DB 공유 (GET /api/shares/sent) + 이 화면에서만 만든 공유
+        if not shares:
             empty_state("아직 공유한 회의가 없어요. 내가 주관한 회의의 상세 화면에서 「공유」를 누르세요.", pad=40)
             return
         with st.container(key="share-list", gap=None):
-            for i, item in enumerate(s.sent_shares):
+            for i, item in enumerate(shares):
                 m = repo.meeting(item.meeting_id)
                 with st.container(key=f"srow-sent-{i}", horizontal=True, vertical_alignment="center"):
                     with st.container(gap=None):

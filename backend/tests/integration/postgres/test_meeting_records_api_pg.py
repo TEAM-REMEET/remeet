@@ -149,9 +149,29 @@ class MeetingRecordApiTests(unittest.TestCase):
         self.call('DELETE', f"/api/todos/{t['id']}", self.U1, status=204)
         self.assertEqual([x['id'] for x in self.call('GET', f'/api/meetings/{mid}/todos?deleted=true', self.U1)],
                          [t['id']])
+        self.assertEqual([x['id'] for x in self.call('GET', f'/api/meetings/{mid}', self.U1)['deleted_todos']], [t['id']])
         self.call('POST', f"/api/todos/{t['id']}/restore", self.U1, status=204)
         self.assertEqual(len(self.call('GET', f'/api/meetings/{mid}/todos', self.U1)), 2)
         self.call('DELETE', '/api/todos/999999', self.U1, status=404)
+        # 「수정」 창: 내용 · 담당자 · 마감일 한 번에 (보낸 것만 바뀜)
+        e = self.call('PATCH', f"/api/todos/{t['id']}", self.U1,
+                      {'text': '정산 일정 공유 (수정)', 'owners': ['u1'], 'due': '11/12', 'due_date': '2026-11-12'})
+        self.assertEqual((e['text'], e['owners'], e['due'], e['due_date']), ('정산 일정 공유 (수정)', ['u1'], '11/12', '2026-11-12'))
+        self.assertEqual(self.call('PATCH', f"/api/todos/{t['id']}", self.U1, {'owners': []})['text'], '정산 일정 공유 (수정)')
+        self.call('PATCH', f"/api/todos/{t['id']}", self.U2, {'text': 'x'}, status=403)
+        d = self.call('GET', f'/api/meetings/{mid}', self.U1)
+        self.assertEqual([(x['text'], x['due_date']) for x in d['todos']][-1], ('정산 일정 공유 (수정)', '2026-11-12'))
+
+    def test_draft_keeps_given_meeting_id(self):
+        """AI 요약이 정한 회의 id(M_...) · 프로젝트 id(P_...)로 만들 수 있음 (Neo4j · 요약 파일과 같은 id)."""
+        pid = self.call('POST', '/api/projects', self.U1, {'name': '새 프로젝트', 'id': 'P_01TEST', 'members': ['u2']}, 201)['id']
+        self.assertEqual(pid, 'P_01TEST')
+        self.call('POST', '/api/projects', self.U1, {'name': '같은 id', 'id': 'P_01TEST'}, status=409)
+        mid = self._draft(pid, meeting_id='M_01TESTULID')
+        self.assertEqual(mid, 'M_01TESTULID')
+        self.assertEqual(self._draft(pid, meeting_id='M_01TESTULID', title='다시 저장'), 'M_01TESTULID')
+        self.call('POST', f'/api/meetings/{mid}/submit', self.U1, {})
+        self.call('POST', '/api/drafts', self.U1, self._body(pid, meeting_id=mid), status=400)  # 생성된 뒤엔 미리보기 X
 
     # ------------------------------------------------------------ C. 프론트에서 빠졌던 것
     def test_project_members_and_meeting_types(self):

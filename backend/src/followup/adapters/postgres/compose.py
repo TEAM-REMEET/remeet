@@ -68,6 +68,7 @@ def save_draft(*, actor_id: str, content: dict, meeting_id: str | None = None, t
 
     meeting_id 없음 → 새 회의를 draft 로 만듦 (작성자 = actor, 주관자 = host_id 또는 actor)
     meeting_id 있음 → 그 draft 를 고쳐 저장 (작성자 · 주관자만, draft 일 때만)
+                      아직 없는 id 면 그 id 로 새로 만듦 (AI 요약이 정한 회의 id 를 그대로 쓰기 · Neo4j 와 같은 id)
     content    = 요약 (web 목업 meetings.json 모양: summary · discussion · decisions · open_issues · results · agendas)
     transcript = [{line_id, speaker, speaker_role?, text, source_line?}] (주면 원문을 통째로 바꿈)
     attendees  = 참석자 id (주관자는 늘 포함) · todos = AI 액션 아이템 (주면 바꿈 · item_id 포함)
@@ -90,8 +91,12 @@ def save_draft(*, actor_id: str, content: dict, meeting_id: str | None = None, t
         if cur.fetchone() is None:
             raise ValidationError(f"없는 회의 종류입니다: {directory_id}")
 
-        if meeting_id is None:
-            meeting_id = f"m-{uuid4().hex[:12]}"
+        existing = None
+        if meeting_id is not None:
+            cur.execute("SELECT * FROM meetings WHERE id = %s FOR UPDATE", (meeting_id,))
+            existing = cur.fetchone()
+        if existing is None:
+            meeting_id = meeting_id or f"m-{uuid4().hex[:12]}"
             cur.execute(
                 """INSERT INTO meetings (id, project_id, directory_id, host_user_id, title, held_at, time_label, file_name,
                                          status, created_by)
@@ -99,9 +104,8 @@ def save_draft(*, actor_id: str, content: dict, meeting_id: str | None = None, t
                 (meeting_id, project_id, directory_id, host, title.strip(), held_at, time_label, file_name, actor_id),
             )
         else:
-            cur.execute("SELECT * FROM meetings WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (meeting_id,))
-            m = cur.fetchone()
-            if m is None:
+            m = existing
+            if m["deleted_at"] is not None:
                 raise NotFoundError("회의를 찾을 수 없습니다.")
             if m["status"] != "draft":
                 raise ValidationError("이미 생성된 회의록은 미리보기로 저장할 수 없습니다.")
@@ -182,6 +186,8 @@ def submit_meeting(*, actor_id: str, meeting_id: str, reviewer_id: str | None = 
             _check_user(cur, reviewer_id, "검토자")
             if reviewer_id == m["created_by"]:
                 raise ValidationError("작성자 본인을 검토자로 지정할 수 없습니다.")
+            if seniority(cur, reviewer_id) == "junior":
+                raise ValidationError("검토자는 신입이 아닌 윗사람이어야 합니다.")
         elif m["created_by"] != m["host_user_id"]:
             reviewer_id = m["host_user_id"]          # 주관자가 아닌 사람이 씀 → 주관자에게 검토 요청 (web)
         elif level == "junior":

@@ -184,10 +184,11 @@ def render() -> None:
         if m.id in s.deleted_meetings:  # 최종 회의록에서 「삭제」
             empty_state("주관자가 삭제한 회의예요. 회의록과 정리된 내용을 더 볼 수 없어요.", title="삭제된 회의예요", pad=48)
             return
-        if sel.my_role(m) != "host" or sel.status_of(s, m.id) != "review":
+        # 확정 흐름 중(fin_flow)이면 담당자 확정 뒤 DB 상태가 confirmed 여도 최종 회의록 단계를 그대로 보여 줘요
+        if not sel.manages(m) or (sel.status_of(s, m.id) != "review" and s.fin_flow != m.id):
             page_header("회의록 확정", m.title)
-            if sel.my_role(m) != "host":
-                markup('<p class="hint" style="font-size:14px">회의록은 주관자만 확정할 수 있어요.</p>')
+            if not sel.manages(m):
+                markup('<p class="hint" style="font-size:14px">회의록은 주관자(검토자가 있으면 검토자)만 확정할 수 있어요.</p>')
             else:
                 markup('<p class="hint" style="font-size:14px">이미 확정한 회의록이에요.</p>')
                 button("← 이전화면으로", key="fin_done_back", variant="secondary", on_click=actions.open_meeting,

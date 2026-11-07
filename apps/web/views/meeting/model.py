@@ -20,7 +20,7 @@ def current(s: AppState) -> Meeting:
 
 
 def is_host(m: Meeting) -> bool:
-    return sel.my_role(m) == "host"
+    return sel.manages(m)  # 고치고 확정할 수 있는 사람 (검토자가 있으면 검토자, 없으면 주관자)
 
 
 def raw_locked(m: Meeting) -> bool:
@@ -277,7 +277,7 @@ def assignable(s: AppState, m: Meeting) -> list[tuple[str, str, list[str], list[
 
 def deleted_todos(s: AppState, m: Meeting) -> list[tuple[int, str]]:
     """삭제한 액션 아이템 [(원래 순서 번호, 할 일)] · 지운 순서대로 (되돌리기 목록)."""
-    return [(i, m.todos[i].text) for i in s.deleted_todos.get(m.id, []) if i < len(m.todos)]
+    return [(i, m.todos[i].text) for i in sel.deleted_todo_indexes(s, m.id) if i < len(m.todos)]
 
 
 def assignee_editable(s: AppState, m: Meeting) -> bool:

@@ -1,7 +1,8 @@
 """회의록 저장 · 조회 (PostgreSQL). AI 요약(summary_routes · meeting-jobs)이 만든 결과를 회의록으로 남기고 화면에 보여 줌.
 
 작성 흐름 (adapters/postgres/compose.py · 화면 「새 회의록」)
-    POST /api/drafts                          미리보기 저장 (새로 만들기 · meeting_id 를 주면 그 미리보기를 고쳐 저장)
+    POST /api/drafts                          미리보기 저장 (새로 만들기 · meeting_id 를 주면 그 미리보기를 고쳐 저장,
+                                              아직 없는 id 면 그 id 로 새로 만듦 — AI 요약의 meeting_id 를 그대로)
                                               ⚠️ 고쳐 저장할 때도 전체(프로젝트 · 참석자 · 원문 …)를 다시 보내요. 빠진 값은 비워짐
     GET  /api/drafts                          내가 쓰다 만 미리보기, 최근 저장 순
     POST /api/meetings/{meeting_id}/submit    회의록 생성 (draft → review) · 참석자에게 알림 · 검토자에게 검토 요청
@@ -16,10 +17,16 @@
     PUT  /api/meetings/{meeting_id}/attendees 참석자 바꾸기 (주관자는 늘 포함)
     GET  /api/meetings/{meeting_id}/sources   원본 파일 버전 목록 · GET .../sources/latest 최신 원본 내용 (원문 볼 권한)
     POST /api/meetings/{meeting_id}/branch-requests  안건 분리 요청 · GET 받은 요청 (주관자)
+    DELETE /api/meetings/{meeting_id}         회의 삭제 (고칠 수 있는 사람 · 목록에서 사라짐)
+
+결과 전달 (상태: confirmed → sending → done | fail · 다시 보내면 done → sending)
+    PUT  /api/meetings/{meeting_id}/status    상태 바꾸기 {status: sending | done | fail}
+    POST /api/meetings/{meeting_id}/delivery/finish  외부 도구 전송이 끝남 → 남은 실패가 있으면 fail, 없으면 done
 
 액션 아이템
     GET    /api/meetings/{meeting_id}/todos?deleted=  목록 (deleted=true 면 삭제한 것)
     POST   /api/meetings/{meeting_id}/todos           직접 추가
+    PATCH  /api/todos/{todo_id}                       고치기 (내용 · 담당자 · 마감일, 보낸 것만)
     DELETE /api/todos/{todo_id}                       삭제 (되돌리기 가능)
     POST   /api/todos/{todo_id}/restore               되돌리기
     PUT    /api/todos/{todo_id}/owners                담당자 (여러 명 · 빈 목록이면 비우기)
@@ -30,12 +37,12 @@ AI 결과(MeetingSummary)를 화면 모양으로 바꾸는 건 web state/summary
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
-from followup.adapters.postgres import compose, detail, minutes
+from followup.adapters.postgres import compose, detail, integrations, meetings, minutes
 from followup.entrypoints.api.routes.actor import actor
 
 router = APIRouter(prefix="/api", tags=["meeting-records"])
@@ -80,6 +87,13 @@ class TodoCreate(BaseModel):
     urgent: bool = False
 
 
+class TodoUpdate(BaseModel):
+    text: str | None = Field(default=None, min_length=1)
+    owners: list[str] | None = None
+    due: str | None = None
+    due_date: str | None = None
+
+
 class Owners(BaseModel):
     owners: list[str]
 
@@ -87,6 +101,10 @@ class Owners(BaseModel):
 class Due(BaseModel):
     due: str
     due_date: str | None = None
+
+
+class Status(BaseModel):
+    status: Literal["sending", "done", "fail"]
 
 
 # ---------------------------------------------------------------- 작성 흐름
@@ -172,6 +190,11 @@ def add_todo(meeting_id: str, body: TodoCreate, me: str = Depends(actor)):
     return detail.add_todo(actor_id=me, meeting_id=meeting_id, **body.model_dump())
 
 
+@router.patch("/todos/{todo_id}")
+def update_todo(todo_id: int, body: TodoUpdate, me: str = Depends(actor)):
+    return detail.update_todo(actor_id=me, todo_id=todo_id, **body.model_dump())
+
+
 @router.delete("/todos/{todo_id}", status_code=204)
 def delete_todo(todo_id: int, me: str = Depends(actor)):
     detail.delete_todo(actor_id=me, todo_id=todo_id)
@@ -191,3 +214,20 @@ def set_owners(todo_id: int, body: Owners, me: str = Depends(actor)):
 def set_due(todo_id: int, body: Due, me: str = Depends(actor)):
     row = detail.set_todo_due(actor_id=me, todo_id=todo_id, due=body.due, due_date=body.due_date)
     return {"id": row["id"], "due": row["due_label"], "due_date": row["due_date"]}   # 목록과 같은 이름(due)
+
+
+# ---------------------------------------------------------------- 삭제 · 결과 전달 상태
+@router.delete("/meetings/{meeting_id}", status_code=204)
+def delete_meeting(meeting_id: str, me: str = Depends(actor)):
+    meetings.delete_meeting(actor_id=me, meeting_id=meeting_id)
+
+
+@router.put("/meetings/{meeting_id}/status")
+def set_status(meeting_id: str, body: Status, me: str = Depends(actor)):
+    row = meetings.update_meeting(actor_id=me, meeting_id=meeting_id, status=body.status)
+    return {"id": row["id"], "status": row["status"]}
+
+
+@router.post("/meetings/{meeting_id}/delivery/finish")
+def finish_delivery(meeting_id: str, me: str = Depends(actor)):
+    return {"id": meeting_id, "status": integrations.finish_delivery(actor_id=me, meeting_id=meeting_id)}

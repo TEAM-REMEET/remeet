@@ -6,7 +6,7 @@ GET    /api/meeting-types/{type_id}/meetings     정기 회의(weekly · monthly
 GET    /api/meetings                             내가 볼 수 있는 전체 회의, 최신순   (POST /api/meetings 는 요약 생성)
 GET    /api/meetings/{meeting_id}/status-history 상태 변경 이력 (누가 · 언제)
 GET    /api/projects                             내 프로젝트 목록
-POST   /api/projects                             프로젝트 만들기 (만든 사람 = 주관자)
+POST   /api/projects                             프로젝트 만들기 (만든 사람 = 주관자 · id 를 주면 그 id 로 — AI 요약의 project_id)
 GET    /api/projects/{project_id}                프로젝트 하나 (+ members: 멤버 user_id, 주관자 먼저)
 GET    /api/projects/{project_id}/members        멤버 user_id 목록
 PATCH  /api/projects/{project_id}                이름 바꾸기 (주관자)
@@ -32,6 +32,7 @@ router = APIRouter(prefix="/api", tags=["projects"])
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1)
     members: list[str] = []
+    id: str | None = Field(default=None, min_length=1, max_length=64)   # 없으면 서버가 만듦
 
 
 class ProjectUpdate(BaseModel):
@@ -82,7 +83,7 @@ def list_projects(me: str = Depends(actor)):
 
 @router.post("/projects", status_code=201)
 def create_project(body: ProjectCreate, me: str = Depends(actor)):
-    return folders.create_folder(actor_id=me, name=body.name, members=body.members)
+    return folders.create_folder(actor_id=me, name=body.name, members=body.members, folder_id=body.id)
 
 
 @router.get("/projects/{project_id}")

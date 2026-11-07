@@ -9,7 +9,7 @@ get_meeting_detail() 은 web 목업 data/mock/meetings.json 한 개와 **같은 
      agendas[{title, status, tone, deep, src, points[…],
               (안건별 상세가 있으면) background[…], topics[{title, points[{kind, text, src}]}],
               decisions[…], open_issues[…], next[…]}],
-     todos[{id, item_id, text, owners[], due, src, urgent}], shared{from, scope, received, lock_raw} | None,
+     todos[{id, item_id, text, owners[], due, due_date, src, urgent}], deleted_todos[같은 모양], shared{from, scope, received, lock_raw} | None,
      branch_of{meeting, agenda_index} | None}
     + 화면에 없던 것: summary_version, can_view_raw, is_host, author, reviewer, can_edit
 
@@ -332,9 +332,12 @@ def _todos(cur, meeting_id: str, *, deleted: bool = False) -> list[dict]:
         (meeting_id,),
     )
     return [{"id": t["id"], "item_id": t["item_id"] or "", "text": t["text"], "owners": list(t["owners"]),
-             "due": t["due_label"],
+             "due": t["due_label"], "due_date": t["due_date"].isoformat() if t["due_date"] else "",
              "src": list(t["src"]), "urgent": t["urgent"], "origin": t["origin"], "owner_raw": t["owner_raw"],
              "deleted_at": t["deleted_at"]} for t in cur.fetchall()]
+
+
+_TODO_KEYS = ("id", "item_id", "text", "owners", "due", "due_date", "src", "urgent")
 
 
 def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = None) -> dict:
@@ -375,6 +378,7 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
             who = cur.fetchone()
             sender = f"{who['name']} · {who['team']}" if who and who["team"] else (who["name"] if who else sh["sender_id"])
         todos = _todos(cur, meeting_id)
+        gone = _todos(cur, meeting_id, deleted=True)
 
     when, md = _when(m["held_at"])
     return {
@@ -386,7 +390,9 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
                     "src": list(summ["overview_src"] if summ else m["summary_src"])},
         **content,
         "keywords": keywords,
-        "todos": [{k: t[k] for k in ("id", "item_id", "text", "owners", "due", "src", "urgent")} for t in todos],
+        "todos": [{k: t[k] for k in _TODO_KEYS} for t in todos],
+        # 「삭제한 액션 아이템」 (되돌리기 목록) — 화면은 todos 뒤에 붙이고 삭제 표시
+        "deleted_todos": [{k: t[k] for k in _TODO_KEYS} for t in gone],
         # from: 보낸 사람 id → 화면에서 구성원 표로 "이름 · 팀" 으로 바꿔 보여 주기
         "shared": ({"from": sender, "sender_id": sh["sender_id"], "scope": sh["scope"], "lock_raw": sh["lock_raw"],
                     "received": f"{sh['shared_on'].month}/{sh['shared_on'].day}"} if sh else None),
@@ -425,6 +431,23 @@ def _todo_for_write(cur, todo_id: int, actor_id: str) -> dict:
         raise NotFoundError("액션 아이템을 찾을 수 없습니다.")
     can_access_meeting(cur, t["meeting_id"], actor_id, write=True)
     return t
+
+
+def update_todo(*, actor_id: str, todo_id: int, text: str | None = None, owners: list[str] | None = None,
+                due: str | None = None, due_date: str | date | None = None) -> dict:
+    """액션 아이템 고치기 (화면 「수정」 창: 내용 · 담당자 · 마감일을 한 번에). 준 것만 바꿈. 주관자(검토자)만."""
+    with transaction(actor_id) as cur:
+        t = _todo_for_write(cur, todo_id, actor_id)
+        if text is not None:
+            cur.execute("UPDATE meeting_todos SET text = %s WHERE id = %s", (required(text, "할 일 내용"), todo_id))
+        if due is not None:
+            cur.execute("UPDATE meeting_todos SET due_label = %s, due_date = %s WHERE id = %s",
+                        (due.strip(), _iso(due_date) if due_date else None, todo_id))
+        if owners is not None:
+            _replace_owners(cur, todo_id, owners, actor_id)
+        row = next(x for x in _todos(cur, t["meeting_id"]) if x["id"] == todo_id)
+    invalidate("_base_meetings")
+    return row
 
 
 def set_todo_due(*, actor_id: str, todo_id: int, due: str, due_date: str | date | None = None) -> dict:

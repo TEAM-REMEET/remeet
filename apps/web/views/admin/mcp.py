@@ -83,12 +83,12 @@ def _failures(s: AppState) -> None:
                 with col:
                     markup(f'<span class="adm-th">{h}</span>')
         for f in items:
-            m = repo.meeting(f.meeting)
+            title = f.title or f.meeting  # 관리자는 회의를 직접 못 봐서 실패 기록에 같이 온 제목으로
             tool = repo.tool(f.tool)
             with st.container(key=f"adm-frow-{f.id}", gap=None):
                 c = st.columns(_FCOLS, vertical_alignment="center", gap="small")
                 with c[0]:
-                    markup(f'<span class="adm-cell"><b>{esc(m.title)}</b><span>{esc(tool.name)} · {esc(f.when)}</span></span>')
+                    markup(f'<span class="adm-cell"><b>{esc(title)}</b><span>{esc(tool.name)} · {esc(f.when)}</span></span>')
                 with c[1]:
                     markup(f'<span class="adm-cell">{esc(f.reason)}<span class="code">{esc(f.code)}</span></span>')
                 with c[2]:
