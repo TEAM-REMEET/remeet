@@ -35,9 +35,13 @@ from .detail import insert_summary
 
 
 def seniority(cur, user_id: str) -> str | None:
-    """'junior'(신입) | 'senior' | None(모름).
-    TODO(구성원 표 완성 후): 구성원 표의 직급 · 연차로 판단. 지금은 정보가 없어서 None."""
-    return None
+    """'junior'(신입) | 'senior' | None(모름) — 구성원 표 people.position (migrations/011 · seed_people.py).
+    junior → 'junior' · mid · senior → 'senior' · 구성원 표에 없으면 None (넘긴 reviewer_id 를 따름)."""
+    cur.execute("SELECT position FROM people WHERE user_id = %s", (user_id,))
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return "junior" if row["position"] == "junior" else "senior"
 
 
 def _notify(cur, user_id: str, kind: str, text: str, meeting_id: str) -> None:

@@ -107,7 +107,7 @@ def _by_people(s: AppState, q: str) -> list[Hit]:
                 continue
             p = sel.person(pid)
             role = "주관" if pid == m.host else "참석"
-            said = [x.text for x in m.paragraphs if not x.is_heading and sel.speaker_id(x.speaker) == pid][:2]
+            said = [x.text for x in m.paragraphs if not x.is_heading and sel.paragraph_speaker(x) == pid][:2]
             snippets = tuple(f"<b>{_hl(p.name, q)}</b> · {esc(t[:70])}{'…' if len(t) > 70 else ''}" for t in said) \
                 or (f"<b>{_hl(p.name, q)}</b> 님의 발언은 원문에 없어요",)
             hits.append(Hit(f"u_{pid}_{mid}", esc(m.title), f"{p.name} · {role} · {_meta(s, mid)}", snippets,

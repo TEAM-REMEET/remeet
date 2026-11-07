@@ -18,7 +18,7 @@ from components.dialogs.compose_pickers import (
 from components.dialogs.folder import delete_folder_dialog, delete_meeting_dialog, members_dialog
 from components.dialogs.meeting_people import people_dialog
 from components.dialogs.share import share_dialog
-from components.dialogs.todo import add_todo_dialog, owner_change_dialog, todo_owner_dialog
+from components.dialogs.todo import add_todo_dialog, edit_todo_dialog, owner_change_dialog, todo_owner_dialog
 from state.store import get_state
 
 _DIALOGS = {
@@ -29,6 +29,7 @@ _DIALOGS = {
     "assign": assign_dialog,
     "share": share_dialog,
     "add_todo": add_todo_dialog,
+    "edit_todo": edit_todo_dialog,
     "todo_owner": todo_owner_dialog,
     "owner_change": owner_change_dialog,
     "cp_host": host_picker_dialog,

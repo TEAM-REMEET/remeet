@@ -119,14 +119,19 @@ class AppState:
     agenda_jump_n: int = 0
     assigned: dict[str, list[str]] = field(default_factory=dict)  # "mid:index" → 담당자 user_id들 (여러 명 · 동명이인 구분 · 회의록 담당자 대신)
     todo_due: dict[str, str] = field(default_factory=dict)  # "mid:index" → 담당자 추천에서 고친 마감일 ("11/5")
+    todo_due_iso: dict[str, str] = field(default_factory=dict)  # "mid:index" → 같은 마감일의 연도까지 표기 ("2026-11-05", 최종 JSON 저장용)
+    final_summaries: dict[str, dict] = field(default_factory=dict)  # 회의 id → 최종 JSON (담당자 추천 연결 전까지는 보관만)
     summaries: dict[str, dict] = field(default_factory=dict)  # 회의 id → 액션 아이템까지 검토가 끝난 MeetingSummary JSON
     recommendations: dict[str, dict] = field(default_factory=dict)  # 회의 id → {item_id: 추천 결과} (POST .../recommendations)
     status_override: dict[str, str] = field(default_factory=dict)
     added_todos: dict[str, list[Todo]] = field(default_factory=dict)  # 주관자가 직접 추가한 액션 아이템 (회의 id → 할 일들)
+    edited_todos: dict[str, dict[int, dict]] = field(default_factory=dict)  # 회의 id → {할 일 번호: 수정한 text · owners · due · due_iso}
+    todo_edit_index: int | None = None  # 수정 중인 할 일 번호 (None이면 추가 모달)
     deleted_todos: dict[str, list[int]] = field(default_factory=dict)  # 삭제한 액션 아이템 (회의 id → 원래 순서 번호 · 되돌리기 가능)
     todo_nonce: int = 0  # 「액션 아이템 추가」 모달을 열 때마다 바뀌어 입력칸을 비움
     todo_draft_text: str = ""  # 추가 모달에 적은 내용 (담당자 고르기 창에 다녀와도 남도록)
     todo_draft_owners: list[str] = field(default_factory=list)  # 추가 모달에서 고른 담당자들 (사람 id · 비어 있으면 담당 미정)
+    todo_draft_agenda: str = ""  # 추가 모달에서 고른 안건 제목
     todo_draft_due: object = None  # 추가 모달에서 고른 마감일 (datetime.date · 없으면 None)
     copied: str = ""
 
@@ -209,6 +214,12 @@ class AppState:
     nn_error: str = ""  # 작성 화면 오류 안내 (빈 값이면 없음)
     # 3단계 작성: 1 회의 내용 입력 → 2 발화자 확인 → 3 분석 및 결과
     cp_step: int = 1  # 1 회의 내용 입력 · 2 분석 및 검토
+    cp_request: dict | None = None  # 보낸 분석 요청 (POST /api/meeting-jobs)
+    cp_job_running: bool = False  # 뒤에서 분석 중 (다른 화면에 다녀와도 유지)
+    cp_job_synced: bool = False  # 이번 세션에서 서버의 분석 작업을 확인했는지 (브라우저를 닫았다 와도 복원)
+    cp_result: dict | None = None  # 백엔드가 돌려준 요약 결과 (저장된 summary.json과 같은 내용)
+    cp_final: dict | None = None  # 사용자 수정 · 근거 연결까지 반영한 최종 결과 (저장된 summary_final.json과 같은 내용)
+    cp_result_request: dict | None = None  # cp_result를 만든 요청 (같으면 AI를 다시 호출하지 않음)
     cp_finishing: bool = False  # 2단계 「확정하기」를 눌러 회의록을 만드는 중 (로딩 화면)
     cp_text_rev: int = 0  # 예시를 넣을 때마다 바뀌어 입력칸을 새로 그림
     nn_title: str = ""

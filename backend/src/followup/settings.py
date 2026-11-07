@@ -76,6 +76,14 @@ USE_LLM_CACHE = True                 # 단계별 LLM 응답을 저장 · 재사�
 MAX_VERIFY_ROUNDS = 3                # 검증 최대 횟수 (1~3) — 재수정은 최대 MAX_VERIFY_ROUNDS-1회 (무한 루프 방지)
 # 개선 유형: 1회차에만 재수정, 2회차부터는 검증 기록에만 남김 (통과를 막지 않고 '검토 필요'로 표시하지 않음)
 # 그 외 유형은 오류: 회차와 관계없이 재수정 대상이고, 마지막 검증까지 남으면 '검토 필요'
+UI_TEST_TRANSCRIPT = "test"          # 화면 확인용 시험 모드에서 회의 내용으로 넣는 값 (docs/ui-test-mode.md)
+UI_TEST_DELAY_SECONDS = 5            # 시험 모드에서 진행 중 화면을 볼 수 있도록 기다리는 시간 (초)
+SUMMARY_TIMEOUT_SECONDS = 1800       # 요약 · 액션 추출 전체 제한 시간 (30분) — 넘으면 실패 처리, 다시 시도하면 이어서 진행
+REVIEW_TIMEOUT_SECONDS = 600         # 확정 후 근거 연결 · 검증 전체 제한 시간 (10분)
+MAX_SUMMARY_JOBS = 4                 # 동시에 실행할 요약 작업 수 (사람마다 1건 · application/meeting_jobs.py)
+# 사용자 수정(HITL) 반영 (application/review_meeting.py)
+HITL_MAX_VERIFY_ROUNDS = 2           # 근거 검증 최대 횟수 (1~3) — 근거 연결도 같은 횟수까지 (무한 루프 방지)
+HITL_EFFORT = None                   # 근거 연결 · 검증 추론 강도 / None이면 REASONING_EFFORT
 IMPROVEMENT_ISSUE_TYPES = {"깊이 부족", "논의 흐름 단절", "세부 정보 누락", "결정 고려사항 누락", "중복 요약",
                            "요약 범위 오류", "안건 구성 오류", "기타 안건 분류 오류"}
 
@@ -121,6 +129,12 @@ def load_env() -> None:
     load_dotenv(find_dotenv(usecwd=True), override=False, encoding="utf-8-sig")
 
 
+def ui_test_enabled() -> bool:
+    # 화면 확인용 시험 모드 (.env의 UI_TEST_MODE=true · 기본 꺼짐, 서버에는 켜지 않음)
+    load_env()
+    return os.getenv("UI_TEST_MODE", "").strip().lower() == "true"
+
+
 def openai_key_set() -> bool:
     return bool(os.getenv("OPENAI_API_KEY"))
 
@@ -147,6 +161,11 @@ def max_llm_calls() -> int:
     return sum(llm_call_plan().values()) + LLM_CALL_MARGIN
 
 
+def hitl_max_llm_calls() -> int:
+    # HITL 실행 1회당 실제 API 호출 상한 = 회차마다 근거 연결 1 + 검증 1
+    return HITL_MAX_VERIFY_ROUNDS * 2
+
+
 def llm_call_plan_text() -> str:
     # '생성 1 + 생성 재호출 1 + 검증 3 + 재수정 2 + 여유 2 = 9'
     steps = " + ".join(f"{name} {count}" for name, count in llm_call_plan().items())
@@ -164,7 +183,12 @@ def validate() -> None:
     unknown = IMPROVEMENT_ISSUE_TYPES - set(get_args(IssueType))
     if unknown:
         errors.append(f"IMPROVEMENT_ISSUE_TYPES에 없는 유형: {sorted(unknown)} — schemas.IssueType의 이름과 같아야 함")
-    for name, value in (("VERIFY_EFFORT", VERIFY_EFFORT), ("REVISE_EFFORT", REVISE_EFFORT)):
+    for name, value in (("SUMMARY_TIMEOUT_SECONDS", SUMMARY_TIMEOUT_SECONDS), ("REVIEW_TIMEOUT_SECONDS", REVIEW_TIMEOUT_SECONDS)):
+        if not isinstance(value, (int, float)) or value <= 0:
+            errors.append(f"{name}={value!r} — 0보다 커야 함")
+    if not isinstance(HITL_MAX_VERIFY_ROUNDS, int) or not 1 <= HITL_MAX_VERIFY_ROUNDS <= 3:
+        errors.append(f"HITL_MAX_VERIFY_ROUNDS={HITL_MAX_VERIFY_ROUNDS!r} — 1~3 (LLM 반복은 최대 3회)")
+    for name, value in (("VERIFY_EFFORT", VERIFY_EFFORT), ("REVISE_EFFORT", REVISE_EFFORT), ("HITL_EFFORT", HITL_EFFORT)):
         if value is not None and value not in ALLOWED_EFFORTS:
             errors.append(f"{name}={value!r} — {sorted(ALLOWED_EFFORTS)} 또는 None")
     if not isinstance(LLM_CALL_MARGIN, int) or not 0 <= LLM_CALL_MARGIN <= 3:
