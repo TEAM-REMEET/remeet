@@ -13,7 +13,6 @@
 
 from __future__ import annotations
 
-import json
 import time
 
 import streamlit as st
@@ -23,6 +22,7 @@ from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import compose_ai as ai
+from state import minutes_text
 from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button, button_group
@@ -222,16 +222,16 @@ def _step2(s: AppState) -> None:
         st.rerun()
     m = s.preview_meeting
     s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
-    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · JSON 저장 · 확정하기)
+    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · 회의록 다운로드 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
             button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
-            with st.container(key="b-secondary-cp_json", width="content"):
-                st.download_button("결과 JSON 저장", json.dumps(s.cp_result, ensure_ascii=False, indent=2),
-                                   file_name=f'{s.cp_result["meeting_id"]}_summary.json', mime="application/json",
-                                   key="cp_json")
+            with st.container(key="b-secondary-cp_minutes", width="content"):
+                st.download_button("회의록 다운로드", minutes_text.render_minutes(s.cp_result),
+                                   file_name=minutes_text.minutes_filename(s.cp_result), mime="text/plain",
+                                   key="cp_minutes")
             # 주관자는 확정 · 주관자가 아니면 주관자에게 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
             button("확정하기" if s.nn_host == me_id() else "검토 요청하기", key="cp_finish", variant="primary",
                    icon=":material/task_alt:" if s.nn_host == me_id() else ":material/rate_review:",

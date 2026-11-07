@@ -264,11 +264,15 @@ class Person:
         return self.name[:1]
 
 
+NO_SPEAKER = "발화자"  # 발화자 없는 회의록의 원문 화자 표기 (화면에는 이름 없이 문장만 보여 줌)
+
+
 @dataclass(frozen=True)
 class Paragraph:
     id: str
     speaker: str  # 빈 문자열이면 안건 제목 줄
     text: str
+    speaker_id: str = ""  # 화자의 user_id (AI 요약 결과) · 목업은 비어 있음 → 이름으로 찾음
 
     @property
     def is_heading(self) -> bool:

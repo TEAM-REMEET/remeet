@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from data.models import Meeting
+from data.models import NO_SPEAKER, Meeting
 from state import actions
 from state import selectors as sel
 from state.store import AppState
@@ -26,8 +26,13 @@ def _sync_query() -> None:
     actions.update(raw_query=st.session_state.get(_QUERY_KEY, ""))
 
 
-def _speaker_html(s: AppState, m: Meeting, label: str, size: int = 28) -> tuple[str, str]:
-    """(아바타, 이름 html) — 사람으로 연결되지 않은 화자는 원문 표기 그대로."""
+def _speaker_html(s: AppState, m: Meeting, label: str, size: int = 28, pid: str | None = None) -> tuple[str, str]:
+    """(아바타, 이름 html) — 사람으로 연결되지 않은 화자는 원문 표기 그대로.
+
+    pid: 화자의 user_id를 이미 알면 넘김 (원문 표시 이름 그대로 보여 줌 · 다른 직무의 동명이인은 홍길동(직무)).
+    """
+    if pid:
+        return avatar(sel.person(pid).initial, size=size, host=pid == m.host), esc(label)
     pid = model.speaker_pid(s, m, label)
     if pid:
         p = sel.person(pid)
@@ -45,7 +50,11 @@ def _paragraphs_html(s: AppState, m: Meeting, query: str) -> str:
         if p.is_heading:
             rows.append(f'<div id="src-{p.id}" class="{cls}">{esc(p.text)}</div>')
             continue
-        av, who = _speaker_html(s, m, p.speaker)
+        if p.speaker == NO_SPEAKER:  # 발화자 없는 회의록: 문장만
+            rows.append(f'<div id="src-{p.id}" class="{cls}"><div class="line"><div>'
+                        f'<span class="tx">{esc(p.text)}</span></div></div></div>')
+            continue
+        av, who = _speaker_html(s, m, p.speaker, pid=p.speaker_id)
         rows.append(
             f'<div id="src-{p.id}" class="{cls}"><div class="line">{av}'
             f'<div><span class="who">{who}</span>'
@@ -55,8 +64,12 @@ def _paragraphs_html(s: AppState, m: Meeting, query: str) -> str:
 
 
 def _speaker_bar(s: AppState, m: Meeting) -> None:
-    """발화자: 이 회의에 나온 사람."""
-    chips = "".join(f'<span class="spk-chip">{esc(sel.name_of(pid))}</span>' for pid, _ in model.speakers(s, m))
+    """발화자: 이 회의에 나온 사람. 없으면 줄 전체를 숨겨요."""
+    labels = model.speaker_labels(m)
+    chips = "".join(f'<span class="spk-chip">{esc(labels.get(pid) or sel.name_of(pid))}</span>'
+                    for pid, _ in model.speakers(s, m))
+    if not chips:
+        return
     with st.container(key="spk-bar", horizontal=True, vertical_alignment="center", gap="xsmall"):
         markup(f'<div class="spk-list"><span class="inline-label">발화자</span>{chips}</div>')
 
@@ -93,8 +106,9 @@ def _raw(s: AppState, m: Meeting) -> None:
 def _ratio(s: AppState, m: Meeting) -> None:
     markup('<p class="hint" style="font-size:13px;color:#5F646D">원문 글자 수 기준 발언 비율이에요.</p>')
     rows = []
+    pids = {label: pid for pid, label in model.speaker_labels(m).items()}
     for n, pct in model.speaking_ratio(m):
-        av, who = _speaker_html(s, m, n)
+        av, who = _speaker_html(s, m, n, pid=pids.get(n))
         rows.append(f'<div class="ratio-row">{av}<span class="nm">{who}</span>'
                     f'<span class="bar thick"><span style="width:{pct}%"></span></span><span class="pct">{pct}%</span></div>')
     rows = "".join(rows)
@@ -102,17 +116,19 @@ def _ratio(s: AppState, m: Meeting) -> None:
 
 
 def render_raw_panel(s: AppState, m: Meeting) -> None:
+    has_ratio = model.raw_locked(m) or bool(model.speakers(s, m))
     with st.container(horizontal=True, vertical_alignment="center"):
         markup('<h2 class="panel-title" id="raw-h">회의록 원문</h2>')
-        button_group([("raw", "원문"), ("ratio", "발언 비율")], s.left_tab,
-                     lambda v: actions.update(left_tab=v), key="left_tab", style="seg", gap=None)
+        if has_ratio:  # 발화자가 없으면 발언 비율 탭을 보여 주지 않음
+            button_group([("raw", "원문"), ("ratio", "발언 비율")], s.left_tab,
+                         lambda v: actions.update(left_tab=v), key="left_tab", style="seg", gap=None)
 
     if model.raw_locked(m):
         markup(
             f'<div class="locked">{icon("lock", 26, "#80858E")}<b>원문은 공유되지 않았어요</b>'
             "<span>보낸 사람이 「요약·결정만」으로 공유해서, 정리된 내용만 볼 수 있어요.</span></div>"
         )
-    elif s.left_tab == "ratio":
+    elif s.left_tab == "ratio" and has_ratio:
         _ratio(s, m)
     else:
         _raw(s, m)

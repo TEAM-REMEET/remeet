@@ -25,8 +25,6 @@ def build_request(s, transcript: str) -> dict:
         "transcript_format": s.cp_example,
         "transcript": transcript,
     }
-    if s.nn_group == "period":
-        body["project_id"] = f"{sel.PERIOD_PREFIX}{s.nn_type}"
-    elif s.nn_topic in sel.folder_ids_of_type(s, s.nn_type):
+    if s.nn_topic in sel.all_my_folder_ids(s):
         body["project_id"] = s.nn_topic
     return body

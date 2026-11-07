@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from data.models import Agenda, AgendaTopic, Evidence, Meeting, MeetingResult, Paragraph, TaggedPoint, Todo
+from data.models import NO_SPEAKER, Agenda, AgendaTopic, Evidence, Meeting, MeetingResult, Paragraph, TaggedPoint, Todo
+
+
+_VERIFY_FAILED = "검증 미통과"  # review_reasons 앞부분: 재수정 후에도 검증 오류가 남은 문장 (backend revision.REVIEW_PREFIX)
+
+
+def is_shown(item: dict) -> bool:
+    """사용자에게 보여 줄 문장: 삭제됐거나 검증 오류가 남은 문장은 빼고, 근거 · 담당자 확인만 필요한 문장은 보여 줘요."""
+    return item["status"] != "DELETED" and not any(r.startswith(_VERIFY_FAILED) for r in item.get("review_reasons") or [])
 
 
 def _src(indices: list[int]) -> tuple[str, ...]:
@@ -12,7 +20,7 @@ def _src(indices: list[int]) -> tuple[str, ...]:
 
 
 def _active(items: list[dict]) -> list[dict]:
-    return [it for it in items if it["status"] != "DELETED"]
+    return [it for it in items if is_shown(it)]
 
 
 def _evidence(items: list[dict]) -> tuple[Evidence, ...]:
@@ -76,7 +84,8 @@ def apply_summary(meeting: Meeting, summary: dict) -> Meeting:
                   for d in _active(raw["major_discussions"]) if d["discussion_tag"] == "액션"]
     return replace(
         meeting,
-        paragraphs=tuple(Paragraph(f'p{u["utterance_index"]}', u["speaker_display"] or "발화자", u["text"])
+        paragraphs=tuple(Paragraph(f'p{u["utterance_index"]}', u["speaker_display"] or NO_SPEAKER, u["text"],
+                                   u.get("speaker_user_id") or "")
                          for u in summary["transcript"]),
         summary=Evidence("", ()),
         discussion=None,

@@ -20,7 +20,7 @@ from state.store import get_state
 from ui.avatar import avatar
 from ui.buttons import button
 from ui.html import markup
-from utils.text import esc
+from utils.text import esc, md_escape
 
 def _footer(kind: str, label: str, *, disabled: bool = False) -> None:
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):

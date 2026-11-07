@@ -40,10 +40,15 @@ def speakers(s: AppState, m: Meeting) -> list[tuple[str, int]]:
     counts: dict[str, int] = {}
     for p in m.paragraphs:
         if not p.is_heading:
-            pid = speaker_pid(s, m, p.speaker)
+            pid = sel.paragraph_speaker(p)
             if pid:
                 counts[pid] = counts.get(pid, 0) + 1
     return list(counts.items())
+
+
+def speaker_labels(m: Meeting) -> dict[str, str]:
+    """사람 id → 원문 표시 이름 (AI 요약 결과만 · 다른 직무의 동명이인은 홍길동(직무))."""
+    return {p.speaker_id: p.speaker for p in m.paragraphs if p.speaker_id}
 
 
 def speaker_initial(short: str) -> str:
@@ -111,7 +116,7 @@ def speaking_ratio(m: Meeting) -> list[tuple[str, int]]:
     """[(원문 화자, %)] · 사람으로 인식된 화자만 (비율도 그 사람들 발언 합 기준)."""
     counts: dict[str, int] = {}
     for p in m.paragraphs:
-        if p.speaker and sel.speaker_id(p.speaker):
+        if p.speaker and sel.paragraph_speaker(p):
             counts[p.speaker] = counts.get(p.speaker, 0) + len(p.text)
     total = sum(counts.values()) or 1
     return [(name, round(n * 100 / total)) for name, n in sorted(counts.items(), key=lambda x: -x[1])]

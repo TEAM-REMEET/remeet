@@ -38,6 +38,11 @@ def speaker_id(short_name: str) -> str | None:
     return repo.people_by_short_name().get(short_name)
 
 
+def paragraph_speaker(p) -> str | None:
+    """원문 한 줄의 화자 id. user_id가 있으면 그대로 써요 (다른 직무의 동명이인은 이름으로 구분되지 않음)."""
+    return p.speaker_id or speaker_id(p.speaker)
+
+
 def me() -> Person:
     return person(me_id())
 
