@@ -175,6 +175,51 @@ def by_date_desc(ids: list[str]) -> list[str]:
     return sorted(ids, key=lambda i: date_key(repo.meeting(i).date), reverse=True)
 
 
+def manages(m: Meeting) -> bool:
+    """이 회의록을 고치고 확정 · 전달할 수 있는 사람 (DB 규칙과 같음): 검토자가 있으면 검토자, 없으면 주관자.
+    신입이 쓴 회의록은 윗사람(검토자)이, 주관자가 아닌 사람이 쓴 회의록은 주관자가 맡아요."""
+    return (m.reviewer or m.host) == me_id()
+
+
+def review_requested(state: AppState, m: Meeting) -> bool:
+    """다른 사람이 써서 나에게 검토를 요청한 회의록 (내가 검토자 · 아직 확정 전)."""
+    return m.id in state.review_requested or (
+        m.reviewer == me_id() and m.author not in ("", me_id()) and m.initial_status == "review")
+
+
+def position_of(pid: str) -> str:
+    """직급 senior | mid | junior (구성원 GET /api/people). 모르면 빈 값."""
+    return next((r.get("position") or "" for r in repo.people_rows() if r["user_id"] == pid), "")
+
+
+def needs_reviewer(state: AppState) -> bool:
+    """새 회의록: 내가 신입이고 내가 주관자 → 검토할 윗사람을 꼭 골라야 해요 (주관자가 다른 사람이면 주관자가 검토)."""
+    return bool(state.nn_host) and state.nn_host == me_id() and position_of(me_id()) == "junior"
+
+
+def reviewer_candidates(state: AppState) -> list[str]:
+    """검토자 후보: 신입이 아닌 활성 구성원 (같은 팀 → 시니어 → 이름 순)."""
+    rows = [r for r in repo.people_rows() if r["user_id"] != me_id() and r.get("is_active") is not False
+            and (r.get("position") or "") in ("mid", "senior")]
+    team = person(me_id()).team
+    rows.sort(key=lambda r: ((r.get("team") or "") != team, r.get("position") != "senior", r["name"]))
+    return [r["user_id"] for r in rows]
+
+
+def sent_shares(state: AppState) -> list:
+    """[공유한 회의] DB 에 저장된 공유 (GET /api/shares/sent) + 이 화면에서만 만든 공유."""
+    from state.store import SentShare
+
+    out = []
+    names = {t["team_id"]: t["name"] for t in repo.catalog("teams")} if repo.sent_share_rows() else {}
+    for r in repo.sent_share_rows():
+        to = person(r["recipient_user_id"]).name if r.get("recipient_user_id") else names.get(r.get("recipient_team_id"), "팀")
+        day = str(r.get("shared_on") or "")
+        out.append(SentShare(r["meeting_id"], to, r["scope"],
+                             f"{int(day[5:7])}/{int(day[8:10])}" if len(day) >= 10 else "", r["id"]))
+    return out + list(state.sent_shares)
+
+
 def my_role(m: Meeting) -> str:
     """host(주관) | att(참석) | shared(공유받음) | member(미참석 폴더 멤버)"""
     if m.shared:
@@ -192,12 +237,18 @@ ROLE_TAGS = {
 }
 
 
+def deleted_todo_indexes(state: AppState, mid: str) -> list[int]:
+    """삭제한 할 일 번호: 이 세션에서 지운 것(작성 중 미리보기) + DB 에서 지운 것 (Todo.deleted)."""
+    session = list(state.deleted_todos.get(mid, []))
+    return session + [i for i in repo.deleted_todo_indexes(mid) if i not in session]
+
+
 def todo_items(state: AppState, mid: str) -> list[tuple[int, Todo]]:
     """이 회의의 액션 아이템 [(원래 순서 번호, 할 일)] · 사용자가 삭제한 것은 뺌.
 
     번호는 지우기 전 그대로라서, 번호로 저장한 완료 체크 · 담당자 지정 기록이 다른 할 일에 붙지 않아요.
     """
-    gone = set(state.deleted_todos.get(mid, []))
+    gone = set(deleted_todo_indexes(state, mid))
     out = []
     for i, t in enumerate(repo.meeting(mid).todos):
         if i in gone:

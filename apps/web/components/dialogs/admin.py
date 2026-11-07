@@ -28,13 +28,13 @@ from utils.text import esc
 def contact_admin_dialog() -> None:
     s = get_state()
     f = next(x for x in repo.export_failures() if x.id == s.contact_failure)
-    m = repo.meeting(f.meeting)
+    title = f.title or f.meeting  # 실패 기록에 같이 온 회의 제목
     tool = repo.tool(f.tool)
     markup(
         '<p class="ca-lead"><b>API · 인증 같은 기술 문제</b>라서 직접 다시 보낼 수 없어요.<br>'
         "아래 내용을 관리자 이메일로 알려 주세요.<br>연동이 복구되면 관리자가 다시 보내 드려요.</p>"
         '<dl class="ca-info">'
-        f"<dt>회의록</dt><dd>{esc(m.title)}</dd>"
+        f"<dt>회의록</dt><dd>{esc(title)}</dd>"
         f"<dt>보낼 곳</dt><dd>{esc(tool.name)}" + (f" · {esc(tool.target)}" if tool.target else "") + "</dd>"
         f"<dt>실패 시각</dt><dd>{esc(f.when)}</dd>"
         f"<dt>원인</dt><dd>{esc(f.reason)}<span class=\"code\">{esc(f.code)}</span></dd>"
@@ -50,8 +50,8 @@ def contact_admin_dialog() -> None:
         with st.container(key="ca-js"):
             copy_to_clipboard(ADMIN_EMAIL, nonce="admin_mail")
 
-    subject = f"[RE:MEET] {tool.name} 전송 실패 문의 — {m.title}"
-    body = (f"회의록: {m.title}\n보낼 곳: {tool.name} {tool.target}\n실패 시각: {f.when}\n"
+    subject = f"[RE:MEET] {tool.name} 전송 실패 문의 — {title}"
+    body = (f"회의록: {title}\n보낼 곳: {tool.name} {tool.target}\n실패 시각: {f.when}\n"
             f"원인: {f.reason} ({f.code})\n")
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
         if button("닫기", key="ca_close", variant="secondary"):

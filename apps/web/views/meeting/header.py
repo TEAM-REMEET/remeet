@@ -107,7 +107,7 @@ def render_header(s: AppState, m: Meeting) -> None:
         render_final_header(s, m, deliver=False)
         return
     host = model.is_host(m)
-    can_edit = host and m.id in s.review_requested  # 검토 요청을 받은 주관자만 편집
+    can_edit = host and sel.review_requested(s, m)  # 검토 요청을 받은 사람(주관자 · 신입이 고른 윗사람)만 편집
     editing = s.editing and can_edit
     role = sel.my_role(m)
     role_label, role_tone = ("내가 주관", "host") if role == "host" else sel.ROLE_TAGS[role]
@@ -116,7 +116,7 @@ def render_header(s: AppState, m: Meeting) -> None:
     with st.container(horizontal=True, vertical_alignment="bottom"):
         with st.container(gap="small"):
             _title(s, m, tag(role_label, role_tone)
-                   + (tag("검토 요청 받음", "warn") if host and m.id in s.review_requested else ""))
+                   + (tag("검토 요청 받음", "warn") if host and sel.review_requested(s, m) else ""))
         with st.container(horizontal=True, width="content", gap="small"):
             if host and not editing:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",

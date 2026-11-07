@@ -19,9 +19,9 @@ from utils.text import esc
 
 
 def _host_only(m) -> bool:
-    if sel.my_role(m) == "host":
+    if sel.manages(m):
         return True
-    markup('<p class="hint" style="font-size:13px">액션 아이템은 회의 주관자만 추가 · 수정할 수 있어요.</p>')
+    markup('<p class="hint" style="font-size:13px">액션 아이템은 회의 주관자(검토자가 있으면 검토자)만 추가 · 수정할 수 있어요.</p>')
     return False
 
 

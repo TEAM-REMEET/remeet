@@ -90,6 +90,26 @@ def _project_field(s: AppState, n: int) -> None:
                  key="cp_type", style="seg", gap=None)
 
 
+_POSITION = {"senior": "시니어", "mid": "미드"}
+
+
+def _reviewer_field(s: AppState, n: int) -> None:
+    """신입이 주관한 회의록은 윗사람이 검토 · 확정해요 (백엔드 규칙). 후보: 신입이 아닌 구성원 (같은 팀이 먼저)."""
+    cands = sel.reviewer_candidates(s)
+    _label("검토자 (윗사람) *")
+    key = f"cp_reviewer_{n}"
+
+    def label(pid: str) -> str:
+        p = sel.person(pid)
+        return " · ".join(x for x in (p.name, p.team, _POSITION.get(sel.position_of(pid), "")) if x)
+
+    st.selectbox("검토자 (필수)", cands, index=cands.index(s.nn_reviewer) if s.nn_reviewer in cands else None,
+                 key=key, format_func=label, placeholder="검토할 윗사람을 골라 주세요", label_visibility="collapsed",
+                 on_change=actions.set_compose_reviewer, args=(key,))
+    markup('<span class="cp-hint">신입이 주관한 회의록은 윗사람이 검토 · 확정해요. '
+           '「검토 요청하기」를 누르면 고른 사람에게 알림이 가요.</span>')
+
+
 def _label(label: str) -> None:
     """입력칸 이름 · 끝이 「 *」면 필수 표시(*)만 주황색."""
     text, req = (label[:-2], True) if label.endswith(" *") else (label, False)
@@ -154,6 +174,8 @@ def _basic_info(s: AppState, n: int) -> None:
         with c2:
             _field("참석자", "cp_people_field", _people_text(s.nn_people), "참석자 선택",
                    ":material/group:", "cp_people")
+        if sel.needs_reviewer(s):  # 내가 신입이고 내가 주관자 → 검토할 윗사람 (꼭)
+            _reviewer_field(s, n)
         _project_field(s, n)
     t = types[s.nn_type].name
     topic = s.nn_topic if s.nn_topic in sel.all_my_folder_ids(s) else _NEW
@@ -254,20 +276,23 @@ def _step2(s: AppState) -> None:
         st.rerun()
     m = s.preview_meeting
     s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
+    direct = s.nn_host == me_id() and not sel.needs_reviewer(s)  # 바로 확정 (아니면 검토 요청)
+    reviewer = s.nn_reviewer if sel.needs_reviewer(s) else s.nn_host
+    who = f"{'검토자' if sel.needs_reviewer(s) else '주관자'} {sel.name_of(reviewer)}님"
     # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
             button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
-            # 주관자는 확정 · 주관자가 아니면 주관자에게 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
-            button("확정하기" if s.nn_host == me_id() else "검토 요청하기", key="cp_finish", variant="primary",
-                   icon=":material/task_alt:" if s.nn_host == me_id() else ":material/rate_review:",
+            # 주관자는 확정 · 주관자가 아니거나 신입이면 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
+            button("확정하기" if direct else "검토 요청하기", key="cp_finish", variant="primary",
+                   icon=":material/task_alt:" if direct else ":material/rate_review:",
                    on_click=actions.open_compose_confirm)
     with st.container(horizontal=True, vertical_alignment="center"):
         member_pills(f"{m.when} · 참석 {len(m.people)}명", m.host, list(m.people))
-        note = ("AI 분석 결과 — 「확정하기」를 눌러 회의록을 확정해 주세요" if s.nn_host == me_id()
-                else f"AI 분석 결과 — 「검토 요청하기」를 누르면 주관자 {sel.name_of(s.nn_host)}님에게 알림이 가요")
+        note = ("AI 분석 결과 — 「확정하기」를 눌러 회의록을 확정해 주세요" if direct
+                else f"AI 분석 결과 — 「검토 요청하기」를 누르면 {who}에게 알림이 가요")
         st.html(f'<span class="read-note">{esc(note)}</span>', width="content")
 
     # 본문: 회의 상세와 같은 원문 · 인사이트 탭
@@ -279,10 +304,10 @@ def _step2(s: AppState) -> None:
             render_insights(s, m, mode="preview")  # 담당자 지정은 확정 뒤 담당자 추천에서
 
     if s.cp_finishing:  # 확인 창에서 확정 · 검토 요청: 화면을 다 그린 뒤 로딩 화면을 덮고 회의록을 만듦
-        if s.nn_host == me_id():
+        if direct:
             loading_overlay("회의록을 확정하고 있어요", "분석 결과로 회의록을 만들고 담당자 추천을 준비하는 중이에요")
         else:
-            loading_overlay("검토를 요청하고 있어요", f"회의록을 만들어 주관자 {sel.name_of(s.nn_host)}님에게 보내는 중이에요")
+            loading_overlay("검토를 요청하고 있어요", f"회의록을 만들어 {who}에게 보내는 중이에요")
         if actions.compose_review():  # 수정 반영 · 근거 연결 · 검증 (실패하면 안내 후 이 화면에 머무름)
             actions.compose_finish()
         st.rerun()

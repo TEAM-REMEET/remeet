@@ -351,6 +351,8 @@ class Todo:
     due_iso: str = ""  # 연도까지 있는 마감일 (YYYY-MM-DD[ HH:MM]) · 화면 표기 due(11/6)로는 연도를 알 수 없어요
     agenda: str = ""  # 직접 추가할 때 고른 안건 제목 (AI가 만든 할 일은 빈 값)
     assignee_check: bool = False  # AI가 적은 담당자를 참석자와 연결하지 못함 → 수정 창에서 담당자를 확인해야 확정 가능
+    todo_id: int = 0  # DB(PostgreSQL)에 저장된 할 일 id · 미리보기 · 직접 추가 중인 일은 0 → 0이면 화면(세션)에서만 고침
+    deleted: bool = False  # DB 에서 삭제한 할 일 (「삭제한 액션 아이템」에서 되돌릴 수 있음 · 번호는 그대로)
 
 
 @dataclass(frozen=True)
@@ -387,6 +389,8 @@ class Meeting:
     shared: ShareInfo | None = None
     branch_of: str | None = None  # 안건 분리로 생긴 회의라면 원래 회의 id
     results: tuple[MeetingResult, ...] = ()  # 회의 결과 (없으면 결정·미해결로 대신 만듦)
+    author: str = ""  # 회의록을 쓴 사람 (DB · 미리보기는 빈 값)
+    reviewer: str = ""  # 검토자 (DB). 있으면 이 사람이, 없으면 주관자가 고치고 확정해요 (신입이 쓴 회의록 → 윗사람)
 
     @property
     def weekday(self) -> str:
@@ -524,6 +528,7 @@ class ExportFailure:
     reason: str
     code: str
     when: str
+    title: str = ""  # 회의 제목 (DB 기록에 같이 옴 · 관리자는 회의 자체를 못 봐서 이걸로 보여 줘요)
 
 
 @dataclass(frozen=True)

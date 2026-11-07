@@ -320,6 +320,8 @@ def compose_next(nonce: int) -> None:
     missing = [n for n, ok in (("회의 제목", s.nn_title), ("회의 날짜", s.nn_date), ("주관자", s.nn_host)) if not ok]
     if s.nn_topic not in sel.all_my_folder_ids(s) and not s.nn_name.strip():
         missing.append("프로젝트")
+    if sel.needs_reviewer(s) and s.nn_reviewer not in sel.reviewer_candidates(s):
+        missing.append("검토자(윗사람)")  # 신입이 주관자면 윗사람 검토를 꼭 거쳐요
     parsed = compose_ai.parse(compose_text(s), s.cp_example)
     if missing:
         _format_error(" · ".join(missing) + "을(를) 입력해 주세요.")
@@ -479,11 +481,11 @@ def open_compose_confirm() -> None:
     주관자: 담당자 확인이 필요한 액션이 남아 있으면 막음 (그대로 확정하면 담당자 추천 · 적재에서 빠지기 때문).
     """
     s = get_state()
-    if s.nn_host == me_id() and (left := unchecked_assignees()):
+    if s.nn_host == me_id() and not sel.needs_reviewer(s) and (left := unchecked_assignees()):
         more = f" 외 {len(left) - 1}건" if len(left) > 1 else ""
         _set(insight_tab="todo", toast=f"담당자를 확인해 주세요: 「{left[0]}」{more}. 액션 아이템을 눌러 담당자를 고르거나 삭제하면 확정할 수 있어요.")
         return
-    open_modal("cp_confirm" if s.nn_host == me_id() else "cp_review")
+    open_modal("cp_confirm" if s.nn_host == me_id() and not sel.needs_reviewer(s) else "cp_review")
 
 
 def compose_confirm() -> None:
@@ -508,8 +510,12 @@ def compose_review() -> bool:
 
 
 def compose_finish() -> None:
-    """확정하기 로딩이 끝나면: 완성된 회의록을 만들어 폴더에 넣고, 회의록 확정 1단계(담당자 추천)로 이동."""
-    from state import compose_ai
+    """확정하기 로딩이 끝나면: 완성된 회의록을 DB 에 저장(미리보기 저장 → 회의록 생성)하고, 회의록 확정 1단계(담당자 추천)로 이동.
+
+    회의 id · 새 프로젝트 id 는 AI 요약이 정한 값을 그대로 써요 (Neo4j · 요약 파일과 같은 id).
+    저장에 실패하면 이 화면에 남고 다시 누르면 돼요 (같은 id 로 다시 저장).
+    """
+    from state import compose_ai, record_payload
 
     s = get_state()
     parsed = compose_ai.parse(compose_text(s), s.cp_example)
@@ -518,49 +524,52 @@ def compose_finish() -> None:
         _set(cp_step=1, nn_error="회의 내용 형식을 확인해 주세요.")
         return
     # 프로젝트: 고른 프로젝트, 없으면 적은 이름으로 새로 만들기 (회의 종류는 프로젝트가 아니라 이 회의에)
-    if s.nn_topic in sel.all_my_folder_ids(s):
-        fid = s.nn_topic
-    else:
-        fid = s.cp_result["project_id"]  # 새 프로젝트 ID는 백엔드가 만든 값
-        s.new_folders.append(NewFolder(fid, s.nn_name.strip() or "새 프로젝트"))
+    picked = s.nn_topic in sel.all_my_folder_ids(s)
+    fid = s.nn_topic if picked else s.cp_result["project_id"]  # 새 프로젝트 ID는 백엔드가 만든 값
+    project_name = sel.folders(s)[fid].name if picked and fid in sel.folders(s) else (s.nn_name.strip() or "새 프로젝트")
     mid = s.cp_result["meeting_id"]
-    meeting = replace(s.preview_meeting, id=mid, project_id=fid, directory_id=s.nn_type)
+    gone: list[int] = []
     if s.cp_final:  # 최종 JSON으로 회의록을 만듦 (수정 · 추가 · 삭제가 이미 들어 있으므로 화면 수정값은 버림)
         from state import summary_view
 
-        meeting = summary_view.apply_summary(meeting, s.cp_final)
+        meeting = summary_view.apply_summary(replace(s.preview_meeting, id=mid, project_id=fid, directory_id=s.nn_type),
+                                             s.cp_final)
+    else:  # 미리보기에서 직접 추가 · 수정한 할 일까지 반영된 미리보기 (삭제한 할 일은 gone 으로 빼고 저장)
+        meeting = replace(repo.meeting(PREVIEW_ID), id=mid, project_id=fid, directory_id=s.nn_type)
+        gone = list(s.deleted_todos.get(PREVIEW_ID, []))
+    try:
+        if not repo.project_exists(fid):  # 새 프로젝트 (또는 아직 DB 에 없는 목업 프로젝트) → 같은 id 로 만듦
+            repo.create_project(project_name, [p for p in s.nn_people if p != me_id()], project_id=fid)
+        repo.save_record(record_payload.draft_payload(s, meeting, gone, s.cp_final or s.cp_result))
+        # 참석자 알림 · 검토 요청(주관자가 다른 사람이면 주관자, 신입이 주관자면 고른 윗사람)은 서버가 보냄
+        repo.submit_record(mid, s.nn_reviewer if sel.needs_reviewer(s) else None)
+    except api.ApiError as e:
+        _set(toast=f"회의록을 저장하지 못했어요. 다시 눌러 주세요. ({e})")
+        return
+    if s.cp_final:
         s.final_summaries[mid] = s.cp_final
         s.summaries[mid] = s.cp_final  # 담당자 추천의 입력 (사용자 수정 · 근거 연결까지 끝난 최종 JSON)
-        for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
-            changes.pop(PREVIEW_ID, None)
-    s.new_meetings[mid] = meeting
-    s.created_notes.append((fid, mid))
+    for changes in (s.added_todos, s.edited_todos, s.deleted_todos):  # 할 일 변경은 DB 에 저장됨
+        changes.pop(PREVIEW_ID, None)
+    # 새 회의 · 새 프로젝트는 목록 API 에서 다시 받아요 (meetings_changed) — 화면 상태(created_notes)에 따로 넣지 않음
     for store in (s.assigned, s.todo_due):  # 미리보기에서 정한 담당자 · 마감일을 새 회의로 옮김
         for key in [k for k in store if k.startswith(f"{PREVIEW_ID}:")]:
             store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
-    if PREVIEW_ID in s.added_todos:  # 미리보기에서 직접 추가한 액션 아이템도 새 회의로
-        s.added_todos[mid] = s.added_todos.pop(PREVIEW_ID)
-    if PREVIEW_ID in s.edited_todos:  # 미리보기에서 수정한 액션 아이템도
-        s.edited_todos[mid] = s.edited_todos.pop(PREVIEW_ID)
-    if PREVIEW_ID in s.deleted_todos:  # 미리보기에서 삭제한 액션 아이템도
-        s.deleted_todos[mid] = s.deleted_todos.pop(PREVIEW_ID)
     s.preview_meeting = None
     title = s.nn_title
-    if s.nn_host == me_id():  # 확정 → 담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송
+    if sel.needs_reviewer(s):  # 신입이 주관자 → 고른 윗사람이 검토 · 편집한 뒤 확정 (알림은 서버가 보냄)
+        open_meeting(mid)
+        toast = f"검토자 {sel.name_of(s.nn_reviewer)}님에게 「{title}」 회의록 검토를 요청했어요."
+    elif s.nn_host == me_id():  # 확정 → 담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송
         start_finalize(mid)
         toast = f"「{title}」 회의록을 확정했어요. 담당자를 확인해 주세요."
-    else:  # 다른 사람을 주관자로 정함 → 주관자에게 검토 요청 알림 (주관자가 검토 · 편집한 뒤 확정)
-        from state.delivery import now_text
-
-        host = sel.name_of(s.nn_host)
-        s.review_requested.add(mid)
-        repo.push_notification("user", "review", f"{sel.me().name}님이 「{title}」 회의록 검토를 요청했어요. "
-                               f"주관자 {host}님이 검토한 뒤 확정해 주세요.", now_text(), mid)
+    else:  # 다른 사람을 주관자로 정함 → 주관자에게 검토 요청 알림 (서버가 보냄 · 주관자가 검토 · 편집한 뒤 확정)
         open_meeting(mid)
-        toast = f"주관자 {host}님에게 「{title}」 회의록 검토를 요청했어요."
+        toast = f"주관자 {sel.name_of(s.nn_host)}님에게 「{title}」 회의록 검토를 요청했어요."
     _clear_job()
     _set(toast=toast,
-         compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
+         compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", nn_reviewer="",
+         **_wizard_reset())
 
 
 # ---------------------------------------------------------------- 작성 화면 · 선택 모달
@@ -574,6 +583,11 @@ def open_picker(kind: str) -> None:
     open_modal(kind, pick_draft=draft, pick_team=sel.person(first).team, pick_folder=s.nn_topic,
                pick_name=s.nn_name, pick_type=s.nn_type,
                pick_query="", pick_nonce=s.pick_nonce + 1)
+
+
+def set_compose_reviewer(widget_key: str) -> None:
+    """새 회의록: 검토자(윗사람) 고르기 (내가 신입이고 내가 주관자일 때만 보이는 칸)."""
+    _set(nn_reviewer=st.session_state.get(widget_key) or "", nn_error="")
 
 
 def set_compose_type(mtype: str) -> None:
@@ -640,8 +654,20 @@ def confirm_pick(kind: str) -> None:
 
 
 # ---------------------------------------------------------------- 폴더
+def _saved_project(fid: str) -> bool:
+    return fid in repo.base_folders()
+
+
 def add_member(fid: str, pid: str = "dw") -> None:
     s = get_state()
+    if _saved_project(fid):  # DB 프로젝트 → 바로 저장 (POST /api/projects/{id}/members · 그 사람에게 알림)
+        if pid in sel.members_of(s, fid):
+            return
+        try:
+            repo.add_project_member(fid, pid)
+        except api.ApiError as e:
+            _api_failed(e, "멤버를 추가")
+        return
     cur = s.members_added.setdefault(fid, [])
     if pid not in cur and pid not in sel.members_of(s, fid):
         cur.append(pid)
@@ -655,6 +681,12 @@ def add_members(fid: str, pids: list[str]) -> None:
 
 
 def remove_member(fid: str, pid: str) -> None:
+    if _saved_project(fid):
+        try:
+            repo.remove_project_member(fid, pid)
+        except api.ApiError as e:
+            _api_failed(e, "멤버를 빼")
+        return
     get_state().members_removed.add(f"{fid}:{pid}")
 
 
@@ -672,6 +704,13 @@ def delete_meeting(mid: str) -> None:
     """주관자: 회의 삭제 → 그 회의가 있던 폴더로."""
     s = get_state()
     m = repo.meeting(mid)
+    if repo.is_saved(mid):  # DB 회의 → 삭제 (DELETE /api/meetings/{id})
+        try:
+            repo.delete_record(mid)
+        except api.ApiError as e:
+            _api_failed(e, "회의를 삭제")
+            _set(modal=None, delete_target=())
+            return
     s.deleted_meetings.add(mid)
     if m.project_id in sel.folders(s):
         open_folder(m.project_id)
@@ -683,6 +722,13 @@ def delete_meeting(mid: str) -> None:
 def delete_folder(fid: str) -> None:
     s = get_state()
     name = sel.folders(s)[fid].name
+    if _saved_project(fid):  # DB 프로젝트 → 삭제 (주관자만)
+        try:
+            repo.delete_project(fid)
+        except api.ApiError as e:
+            _api_failed(e, "폴더를 삭제")
+            _set(modal=None, delete_target=())
+            return
     s.deleted_folders.add(fid)
     open_archive()
     _set(modal=None, delete_target=(), toast=f"「{name}」 폴더를 삭제했어요.")
@@ -725,10 +771,21 @@ def jump_to_agenda(mid: str, index: int) -> None:
 def open_add_todo() -> None:
     """「+ 액션 아이템 추가」: 주관자만."""
     s = get_state()
-    if sel.my_role(repo.meeting(s.meeting_id)) != "host":
+    if not sel.manages(repo.meeting(s.meeting_id)):
         return
     open_modal("add_todo", todo_edit_index=None, todo_nonce=s.todo_nonce + 1, todo_draft_text="", todo_draft_owners=[],
                todo_draft_due=None, todo_draft_agenda="")
+
+
+def _saved_todo(mid: str, index: int) -> int:
+    """DB 에 저장된 회의의 할 일이면 그 id (목업 · 미리보기는 0 → 화면(세션)에서만 고침)."""
+    todos = repo.meeting(mid).todos
+    return todos[index].todo_id if 0 <= index < len(todos) else 0
+
+
+def _api_failed(e: api.ApiError, what: str) -> bool:
+    _set(toast=f"{what}하지 못했어요. 다시 해 주세요. ({e})")
+    return False
 
 
 def _due_date(t: Todo) -> date | None:
@@ -747,7 +804,7 @@ def _due_date(t: Todo) -> date | None:
 def open_edit_todo(mid: str, index: int) -> None:
     """액션 아이템을 누름 → 수정 모달 (내용 · 담당자 · 마감일) · 주관자만."""
     s = get_state()
-    if sel.my_role(repo.meeting(mid)) != "host":
+    if not sel.manages(repo.meeting(mid)):
         return
     t = dict(sel.todo_items(s, mid))[index]
     open_modal("edit_todo", todo_edit_index=index, todo_nonce=s.todo_nonce + 1, todo_draft_text=t.text,
@@ -758,7 +815,7 @@ def submit_todo_edit(mid: str, index: int, text: str, owners: list[str], due: da
     """액션 아이템 수정 저장 (주관자만). 근거 연결은 「확정하기」 때 하고, 날짜를 바꾸지 않았으면 원래 시각 표기도 유지해요."""
     s = get_state()
     m = repo.meeting(mid)
-    if sel.my_role(m) != "host" or not text.strip() or (due and due < sel.meeting_date(m)):
+    if not sel.manages(m) or not text.strip() or (due and due < sel.meeting_date(m)):
         return False
     key = sel.todo_key(mid, index)
     t = dict(sel.todo_items(s, mid))[index]
@@ -770,7 +827,14 @@ def submit_todo_edit(mid: str, index: int, text: str, owners: list[str], due: da
             "assignee_check": False}  # 수정 창에서 저장 = 담당자를 확인함
     if mid == PREVIEW_ID and (edit["text"], edit["owners"], iso) != (t.text, t.owners, t.due_iso):
         edit["src"] = ()  # 값이 바뀌면 「확정하기」 때 근거를 다시 연결 (그 전까지 이전 근거를 보여 주지 않음)
-    s.edited_todos = {**s.edited_todos, mid: {**s.edited_todos.get(mid, {}), index: edit}}
+    if todo_id := _saved_todo(mid, index):  # DB 회의 → 저장 (PATCH /api/todos/{id})
+        try:
+            repo.update_record_todo(todo_id, {"text": edit["text"], "owners": list(edit["owners"]),
+                                              "due": shown, "due_date": iso[:10] or None})
+        except api.ApiError as e:
+            return _api_failed(e, "액션 아이템을 수정")
+    else:
+        s.edited_todos = {**s.edited_todos, mid: {**s.edited_todos.get(mid, {}), index: edit}}
     s.assigned.pop(key, None)  # 수정한 담당자 · 마감일이 앞서 지정한 값보다 우선
     s.todo_due.pop(key, None)
     _set(modal=None, todo_edit_index=None, toast="액션 아이템을 수정했어요.")
@@ -816,14 +880,21 @@ def submit_todo(mid: str, text: str, owners: list[str], due: date | None, agenda
 
     s = get_state()
     m = repo.meeting(mid)
-    if sel.my_role(m) != "host" or not text.strip() or agenda not in sel.agenda_options(m):
+    if not sel.manages(m) or not text.strip() or agenda not in sel.agenda_options(m):
         return False
     if due and due < sel.meeting_date(m):
         return False
     src = () if mid == PREVIEW_ID else todo_ai.rescan(m, text.strip())
     todo = Todo(text.strip(), tuple(dict.fromkeys(owners)), f"{due.month}/{due.day}" if due else "", tuple(src),
                 due_iso=due.isoformat() if due else "", agenda=agenda)
-    s.added_todos = {**s.added_todos, mid: [*s.added_todos.get(mid, []), todo]}
+    if repo.is_saved(mid):  # DB 회의 → 저장 (POST /api/meetings/{id}/todos). shortcut: 고른 안건은 아직 DB 에 없어 저장 안 됨
+        try:
+            repo.add_record_todo(mid, {"text": todo.text, "owners": list(todo.owners), "due": todo.due,
+                                       "due_date": todo.due_iso or None, "src": list(todo.src)})
+        except api.ApiError as e:
+            return _api_failed(e, "액션 아이템을 추가")
+    else:
+        s.added_todos = {**s.added_todos, mid: [*s.added_todos.get(mid, []), todo]}
     note = "「확정하기」를 누르면 근거 발언을 찾아 연결해요." if mid == PREVIEW_ID else (
         f"근거 발언 {len(src)}개를 찾았어요." if src else "원문에서 관련 발언을 찾지 못했어요.")
     _set(modal=None, todo_scope="all", toast=f"액션 아이템을 추가했어요. {note}")
@@ -849,28 +920,50 @@ def search_keyword(keyword: str) -> None:
 def delete_todo(mid: str, index: int) -> None:
     """액션 아이템 삭제 (주관자만) · 아래 「삭제한 액션 아이템」에서 되돌릴 수 있음. 체크(완료)와는 별개."""
     s = get_state()
-    if sel.my_role(repo.meeting(mid)) != "host":
+    if not sel.manages(repo.meeting(mid)):
         return
-    gone = s.deleted_todos.get(mid, [])
-    if index not in gone:
-        s.deleted_todos = {**s.deleted_todos, mid: [*gone, index]}
     text = repo.meeting(mid).todos[index].text
+    if todo_id := _saved_todo(mid, index):  # DB 회의 → 삭제 (되돌리기 가능 · 번호는 그대로 · Todo.deleted 로 표시)
+        try:
+            repo.delete_record_todo(todo_id)
+        except api.ApiError as e:
+            _api_failed(e, "액션 아이템을 삭제")
+            return
+    else:  # 작성 중 미리보기 → 화면(세션)에서만
+        gone = s.deleted_todos.get(mid, [])
+        if index not in gone:
+            s.deleted_todos = {**s.deleted_todos, mid: [*gone, index]}
     _set(highlight=[], highlight_key="", toast=f"「{text}」을(를) 삭제했어요. 목록 아래에서 되돌릴 수 있어요.")
 
 
 def restore_todo(mid: str, index: int) -> None:
     s = get_state()
-    if sel.my_role(repo.meeting(mid)) != "host":
+    if not sel.manages(repo.meeting(mid)):
         return
-    s.deleted_todos = {**s.deleted_todos, mid: [i for i in s.deleted_todos.get(mid, []) if i != index]}
+    if todo_id := _saved_todo(mid, index):
+        try:
+            repo.restore_record_todo(todo_id)
+        except api.ApiError as e:
+            _api_failed(e, "액션 아이템을 되돌리")
+            return
+    else:
+        s.deleted_todos = {**s.deleted_todos, mid: [i for i in s.deleted_todos.get(mid, []) if i != index]}
 
 
 def restore_all_todos(mid: str) -> None:
     """삭제한 액션 아이템 모두 되돌리기 (리셋)."""
     s = get_state()
-    if sel.my_role(repo.meeting(mid)) != "host":
+    if not sel.manages(repo.meeting(mid)):
         return
-    n = len(s.deleted_todos.get(mid, []))
+    gone = sel.deleted_todo_indexes(s, mid)
+    n = len(gone)
+    for index in gone:
+        if todo_id := _saved_todo(mid, index):
+            try:
+                repo.restore_record_todo(todo_id)
+            except api.ApiError as e:
+                _api_failed(e, "액션 아이템을 되돌리")
+                return
     s.deleted_todos = {k: v for k, v in s.deleted_todos.items() if k != mid}
     _set(toast=f"삭제한 액션 아이템 {n}개를 모두 되돌렸어요.")
 
@@ -911,6 +1004,12 @@ def remove_agenda(mid: str, index: int) -> None:
 def request_branch(mid: str) -> None:
     """주관자가 아닐 때 「주관자에게 요청」: 안건 분리 요청을 보내고 알림."""
     s = get_state()
+    if repo.is_saved(mid):  # DB 회의 → 주관자에게 요청 저장 (같은 사람이 다시 눌러도 1번)
+        try:
+            repo.request_record_branch(mid)
+        except api.ApiError as e:
+            _api_failed(e, "안건 분리를 요청")
+            return
     s.branch_requests.add(mid)
     host = sel.person(repo.meeting(mid).host).name
     s.toast = f"{host} 님에게 안건 분리를 요청했어요. 주관자가 분리하면 알려드릴게요."
@@ -959,13 +1058,30 @@ def confirm_share(recipients: dict[str, list[str]]) -> None:
     if absent:
         cur = s.absent_shares.setdefault(s.meeting_id, [])
         cur.extend(pid for pid in absent if pid not in cur)
-    s.sent_shares.insert(0, SentShare(s.meeting_id, to, s.share_scope, "11/1"))
+    if repo.is_saved(s.meeting_id):  # DB 회의 → 받는 사람마다 공유 저장 (받는 사람에게 알림은 서버가 보냄)
+        try:
+            for pid in s.share_recipients:
+                repo.share_record(s.meeting_id, pid, s.share_scope)
+        except api.ApiError as e:
+            _api_failed(e, "공유")
+            return
+    else:
+        s.sent_shares.insert(0, SentShare(s.meeting_id, to, s.share_scope, "11/1"))
     _set(modal=None, just_shared=True, last_share_to=to)
 
 
 def revoke_share(index: int) -> None:
+    """[공유한 회의] index 번째 공유 취소 (sel.sent_shares 순서). DB 공유면 DELETE /api/shares/{id}."""
     s = get_state()
-    item = s.sent_shares.pop(index)
+    item = sel.sent_shares(s)[index]
+    if item.share_id:
+        try:
+            repo.revoke_record_share(item.share_id)
+        except api.ApiError as e:
+            _api_failed(e, "공유를 취소")
+            return
+    else:
+        s.sent_shares.remove(item)
     s.toast = f"「{repo.meeting(item.meeting_id).title}」 공유를 취소했어요."
 
 
@@ -1050,13 +1166,38 @@ def start_delivery(mid: str, attempt: int = 1) -> None:
     s = get_state()
     s.delivery = Delivery(meeting_id=mid, attempt=attempt, started_at=time.time(), finished=False)
     s.status_override[mid] = "sending"
+    _save_status(mid, "sending")
     go("deliver")
+
+
+def _save_status(mid: str, status: str) -> None:
+    """결과 전달 상태를 DB 에도 (PUT /api/meetings/{id}/status). 실패해도 화면 흐름은 이어가요."""
+    if not repo.is_saved(mid):
+        return
+    try:
+        repo.set_record_status(mid, status)
+    except api.ApiError as e:
+        get_state().toast = f"진행 상태를 서버에 저장하지 못했어요. ({e})"
 
 
 def start_finalize(mid: str) -> None:
     """회의 상세 「확정하기」 → 회의록 확정 화면 1단계(담당자 추천) (주관자 · 확정 전만)."""
-    if sel.my_role(repo.meeting(mid)) != "host" or sel.status_of(get_state(), mid) != "review":
+    s = get_state()
+    if not sel.manages(repo.meeting(mid)) or sel.status_of(s, mid) != "review":
         return
+    added = [t for t in s.added_agendas.get(mid, []) if t]
+    if added and repo.is_saved(mid):  # 「편집」에서 추가한 안건 → 요약 새 버전으로 저장 (이전 버전은 남음)
+        from state import record_payload
+
+        content = record_payload.content(repo.meeting(mid))
+        content["agendas"] += [{"title": t, "status": "논의됨", "tone": "info", "deep": False, "src": [],
+                                "points": [], "detailed": True} for t in added]
+        try:
+            repo.save_record_summary(mid, content)
+        except api.ApiError as e:
+            _api_failed(e, "편집한 안건을 저장")
+            return
+        s.added_agendas.pop(mid, None)
     go("finalize", meeting_id=mid, fin_step=1, fin_flow=mid)
 
 
@@ -1122,12 +1263,25 @@ def confirm_assignees(mid: str) -> None:
         except api.ApiError as e:
             s.toast = f"최종 회의록에 담당자 · 마감일을 저장하지 못했어요. 다시 눌러 주세요. ({e})"
             return
+    if repo.is_saved(mid):  # DB 회의: 정한 담당자 · 마감일을 할 일에 저장하고 회의록 확정 (review → confirmed)
+        try:
+            for i, t in sel.todo_items(s, mid):
+                key = sel.todo_key(mid, i)
+                due = parse_due(s.todo_due.get(key) or t.due_iso or t.due)
+                if t.todo_id:
+                    repo.update_record_todo(t.todo_id, {"owners": list(sel.todo_owner_ids(s, key, t)),
+                                                        "due": f"{due.month}/{due.day}", "due_date": due.isoformat()})
+            if repo.meeting(mid).initial_status == "review":
+                repo.confirm_record(mid)
+        except api.ApiError as e:
+            s.toast = f"회의록을 확정하지 못했어요. 다시 눌러 주세요. ({e})"
+            return
     _set(fin_step=2)
 
 
 def deliver_final(mid: str) -> None:
     """최종 회의록 「결과 전달」 → 결과 전달 화면 (참석자에게 보내기 · 그다음 외부 도구 전송)."""
-    if sel.my_role(repo.meeting(mid)) != "host":
+    if not sel.manages(repo.meeting(mid)):
         return
     close_modal()
     start_delivery(mid, 1)
@@ -1138,7 +1292,7 @@ def open_export(mid: str) -> None:
     """결과 전달 화면 → 「외부 도구 전송」 화면 (도구 고르기부터)."""
     from state import export
 
-    if sel.my_role(repo.meeting(mid)) != "host":
+    if not sel.manages(repo.meeting(mid)):
         return
     s = get_state()
     s.export = ExportRun(meeting_id=mid, picked=export.default_pick(mid))
@@ -1158,12 +1312,13 @@ def start_export() -> None:
     s = get_state()
     x = s.export
     # 이미 시작한 전송이면 무시: 전송을 기다리는 동안 「보내기」를 또 누르면 이슈 · 메일이 두 벌 나감
-    if sel.my_role(repo.meeting(x.meeting_id)) != "host" or not x.picked or x.started_at is not None:
+    if not sel.manages(repo.meeting(x.meeting_id)) or not x.picked or x.started_at is not None:
         return
     s.export = ExportRun(meeting_id=x.meeting_id, picked=x.picked, attempt=1, started_at=time.time(),
                          fids=export.open_ids(s, x.meeting_id),
                          expired=tuple(k for k, v in repo.tool_statuses().items() if v == "expired"))
     s.status_override[x.meeting_id] = "sending"
+    _save_status(x.meeting_id, "sending")
     with st.spinner("외부 도구로 보내고 있어요…"):
         export.send(s)  # 실제 전송 (Jira · 메일을 골랐고 연결된 경우만)
 
@@ -1180,6 +1335,7 @@ def retry_export() -> None:
                          fids=export.open_ids(s, x.meeting_id),  # 첫 전송에서 새로 생긴 실패 기록(Jira · 메일)까지
                          expired=x.expired, contact_shown=True, results=x.results, errors=x.errors)
     s.status_override[x.meeting_id] = "sending"
+    _save_status(x.meeting_id, "sending")
     with st.spinner("실패한 것만 다시 보내고 있어요…"):
         export.send(s)  # 연결 · 설정 실패(errors)는 건너뜀 (관리자 문의)
 
@@ -1216,16 +1372,19 @@ def set_integration(tool_id: str) -> None:
     s = get_state()
     tool = repo.tool(tool_id)
     cur = repo.tool_status(tool_id)
-    if cur == "on":
-        repo.set_tool_status(tool_id, "off")
-        s.toast = f"{tool.name} 연결을 해제했어요."
-    elif cur == "expired":
-        repo.set_tool_status(tool_id, "on")  # 인증 갱신 → 아래 「전송 실패 기록」에서 다시 보낼 수 있음
-        s.toast = f"{tool.name}을(를) 다시 연결했어요. 보내지 못한 회의 결과를 다시 보낼 수 있어요."
-    elif tool.phase2:
+    if tool.phase2 and cur == "off":
         s.toast = f"{tool.name} 연동은 2단계(Phase 2)에서 제공될 예정이에요."
+        return
+    try:  # PUT /api/integrations/tools/{id}/status (관리자 · 모든 사용자에게 적용)
+        repo.set_tool_status(tool_id, "off" if cur == "on" else "on")
+    except api.ApiError as e:
+        s.toast = f"{tool.name} 연결 상태를 바꾸지 못했어요. ({e})"
+        return
+    if cur == "on":
+        s.toast = f"{tool.name} 연결을 해제했어요."
+    elif cur == "expired":  # 인증 갱신 → 아래 「전송 실패 기록」에서 다시 보낼 수 있음
+        s.toast = f"{tool.name}을(를) 다시 연결했어요. 보내지 못한 회의 결과를 다시 보낼 수 있어요."
     else:
-        repo.set_tool_status(tool_id, "on")
         s.toast = f"{tool.name}을(를) 연결했어요."
 
 
@@ -1233,6 +1392,11 @@ def resend_export(fid: str) -> None:
     """단순 이슈: 주관자가 회의록 안에서 「다시 보내기」."""
     s = get_state()
     f = next(x for x in repo.export_failures() if x.id == fid)
+    try:  # 해결 기록 (POST /api/integrations/failures/{id}/resolve) · 남은 실패가 없으면 서버가 done 으로
+        repo.resolve_failure(fid)
+    except api.ApiError as e:
+        _api_failed(e, "다시 보내")
+        return
     s.export_resent.add(fid)
     if not any(sel.failure_open(s, x.id) for x in repo.export_failures(f.meeting)):
         s.status_override[f.meeting] = "done"  # 남은 실패가 없으면 「전달 완료」
@@ -1241,15 +1405,15 @@ def resend_export(fid: str) -> None:
 
 def admin_resend(fid: str) -> None:
     """관리자 · MCP 관리: 기술 이슈를 다시 보냄 → 실패 해결 · 사용자 회의 「전달 완료」 · 사용자에게 알림."""
-    from state import delivery
-
     s = get_state()
     f = next(x for x in repo.export_failures() if x.id == fid)
     tool = repo.tool(f.tool)
-    title = repo.meeting(f.meeting).title
-    repo.resolve_failure(f.id)
-    repo.push_notification("user", "delivered", f"관리자가 「{title}」 결과를 {tool.name}(으)로 다시 보냈어요. 전달 완료!",
-                           delivery.now_text(), f.meeting)
+    title = f.title or f.meeting
+    try:  # 해결 기록 · 주관자에게 「전달 완료」 알림 · 회의 done 은 서버가 해요
+        repo.resolve_failure(f.id)
+    except api.ApiError as e:
+        _api_failed(e, "다시 보내")
+        return
     s.toast = f"「{title}」 결과를 {tool.name}(으)로 보냈어요. 사용자에게 전달 완료 알림을 보냈어요."
 
 
@@ -1483,6 +1647,7 @@ def open_bell() -> None:
 def open_notification(nid: str) -> None:
     s = get_state()
     s.read_notifications.add(nid)
+    repo.mark_notification_read(nid)  # 서버에도 읽음 (PATCH /api/notifications/{id})
     n = next(x for x in sel.notifications(s) if x.id == nid)
     if n.kind == "fail":  # 관리자: 사용자 전송 실패 → MCP 관리
         go("adm_mcp")
