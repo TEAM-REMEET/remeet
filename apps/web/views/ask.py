@@ -1,7 +1,7 @@
 """회의에 물어보기 (온보딩 에이전트).
 
 회의 기록에 자연어로 물으면, 회의 · 안건 · 원문 발화를 근거로 단 답을 보여 줘요.
-답 형식은 온보딩 에이전트 ask 결과 JSON 그대로예요 (data/repository.py 의 ask, 명세는
+답 형식은 온보딩 에이전트 ask 결과 JSON 그대로예요 (POST /api/ask → data/repository.py 의 ask, 명세는
 playground/junbyong/onboarding_agent/온보딩 에이전트 화면·출력 보고서.md). 빈 칸은 화면에서 숨겨요.
 """
 
@@ -145,7 +145,7 @@ def _answer(a: dict, i: int) -> None:
         markup(f'<div class="ask-q"><span class="mark">Q</span>{esc(a["question"])}</div>')
         status = a.get("answer_status")
         if status == "error":
-            notice("답을 만들지 못했어요. 잠시 후 다시 물어봐 주세요.", "danger")
+            notice(esc(a.get("summary") or "답을 만들지 못했어요. 잠시 후 다시 물어봐 주세요."), "danger")
             return
         if status == "no_evidence":
             markup(f'<p class="ask-none">{esc(a["summary"])}</p>')
