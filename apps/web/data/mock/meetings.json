@@ -6,8 +6,8 @@
     "date": "10/27",
     "project_id": "rel",
     "directory_id": "weekly",
-    "host": "yun",
-    "people": ["yun", "doy", "har", "jiw", "min", "tae"],
+    "host": "u1",
+    "people": ["u1", "doy", "har", "jiw", "min", "tae"],
     "deep": false,
     "time": "10:00 – 10:48",
     "file": "주간회의_1027.txt",
@@ -376,14 +376,14 @@
     "todos": [
       {
         "text": "릴리즈 후보일 2안 비교표",
-        "owners": ["yun"],
+        "owners": ["u1"],
         "due": "11/2",
         "src": ["c2"],
         "urgent": true
       },
       {
         "text": "「결제 오류 대응」 회의 일정 잡기",
-        "owners": ["yun"],
+        "owners": ["u1"],
         "due": "10/31",
         "src": ["b5"],
         "urgent": true
@@ -438,8 +438,8 @@
     "date": "10/27",
     "project_id": "rel",
     "directory_id": "weekly",
-    "host": "yun",
-    "people": ["yun", "doy", "jiw", "tae"],
+    "host": "u1",
+    "people": ["u1", "doy", "jiw", "tae"],
     "deep": true,
     "time": "안건 분리로 생성",
     "file": "주간회의_1027.txt (안건 2)",
@@ -518,7 +518,7 @@
       },
       {
         "text": "다음 회의 일정 잡기",
-        "owners": ["yun"],
+        "owners": ["u1"],
         "due": "10/31",
         "src": ["a5"],
         "urgent": true
@@ -537,7 +537,7 @@
     "project_id": "rel",
     "directory_id": "weekly",
     "host": "doy",
-    "people": ["doy", "yun", "jiw", "tae"],
+    "people": ["doy", "u1", "jiw", "tae"],
     "deep": true,
     "time": "14:00 – 14:32",
     "file": "PG수수료비교_1029.docx",
@@ -666,7 +666,7 @@
     "todos": [
       {
         "text": "재무팀에 정산 주기 의견 요청",
-        "owners": ["yun"],
+        "owners": ["u1"],
         "due": "오늘",
         "src": ["b2"],
         "urgent": true
@@ -688,7 +688,7 @@
     "project_id": "rel",
     "directory_id": "weekly",
     "host": "doy",
-    "people": ["doy", "yun", "tae"],
+    "people": ["doy", "u1", "tae"],
     "deep": true,
     "time": "16:00 – 16:44",
     "file": "PG기술검토_1024.md",
@@ -842,8 +842,8 @@
     "date": "10/20",
     "project_id": "rel",
     "directory_id": "weekly",
-    "host": "yun",
-    "people": ["yun", "doy", "har", "jiw", "min", "tae"],
+    "host": "u1",
+    "people": ["u1", "doy", "har", "jiw", "min", "tae"],
     "deep": false,
     "time": "10:00 – 10:41",
     "file": "주간회의_1020.txt",
@@ -929,7 +929,7 @@
     "todos": [
       {
         "text": "온보딩 B안 결과 공유",
-        "owners": ["yun"],
+        "owners": ["u1"],
         "due": "10/22",
         "src": ["b1"],
         "urgent": false
@@ -944,7 +944,7 @@
     "project_id": "cs",
     "directory_id": "weekly",
     "host": "min",
-    "people": ["min", "yun", "har"],
+    "people": ["min", "u1", "har"],
     "deep": false,
     "time": "14:00 – 14:30",
     "file": "안내문개선_1028.hwpx",
@@ -1011,7 +1011,7 @@
     "todos": [
       {
         "text": "CS 의견 받아 안내문 확정",
-        "owners": ["yun"],
+        "owners": ["u1"],
         "due": "10/31",
         "src": ["a2"],
         "urgent": true
@@ -1033,7 +1033,7 @@
     "project_id": "q4",
     "directory_id": "monthly",
     "host": "min",
-    "people": ["min", "yun", "doy", "har", "jiw", "tae"],
+    "people": ["min", "u1", "doy", "har", "jiw", "tae"],
     "deep": false,
     "time": "15:00 – 16:02",
     "file": "월간회의_9월.docx",
@@ -1104,7 +1104,7 @@
     "todos": [
       {
         "text": "주간 회의에서 개편 진행 공유",
-        "owners": ["yun"],
+        "owners": ["u1"],
         "due": "매주",
         "src": ["a3"],
         "urgent": false
@@ -1119,7 +1119,7 @@
     "project_id": "des",
     "directory_id": "normal",
     "host": "har",
-    "people": ["har", "yun", "min"],
+    "people": ["har", "u1", "min"],
     "deep": false,
     "time": "16:00 – 16:40",
     "file": "온보딩디자인리뷰.md",

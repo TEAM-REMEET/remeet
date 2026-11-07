@@ -13,7 +13,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from config import ASK_TIMEOUT, MEETING_SUMMARY_TIMEOUT
+from config import ASK_TIMEOUT, JIRA_EXPORT_TIMEOUT, MEETING_SUMMARY_TIMEOUT
 from data import api
 
 from data.models import (
@@ -357,6 +357,14 @@ def ask(question: str) -> dict:
         return api.call("POST", "/api/ask", {"question": question}, _token(), timeout=ASK_TIMEOUT)
     except api.ApiError as e:
         return {"question": question, "answer_status": "error", "summary": str(e)}
+
+
+# ---------------------------------------------------------------- 외부 도구 전송 · Jira
+def export_jira(meeting_title: str, items: list[dict]) -> dict:
+    """액션 아이템 → Jira 이슈 (POST /api/exports/jira). items: [{key, title, owners, due}]
+    → {project_key, created, total, items: [{key, ok, issue_key | error, assigned}]} · 연결 · 설정 실패는 ApiError."""
+    return api.call("POST", "/api/exports/jira", {"meeting_title": meeting_title, "items": items}, _token(),
+                    timeout=JIRA_EXPORT_TIMEOUT)
 
 
 # ---------------------------------------------------------------- integrations

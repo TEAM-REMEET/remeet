@@ -69,7 +69,7 @@
     "slack": "on",
     "mail": "on",
     "cal": "on",
-    "jira": "expired",
+    "jira": "on",
     "notion": "on",
     "teams": "off",
     "conf": "off"
