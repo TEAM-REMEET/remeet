@@ -71,6 +71,31 @@ class ExportTests(unittest.TestCase):
                          ("acc-a", "작업", {"duedate": "2026-11-10"}))
         self.assertNotIn("assignee", fake.created[1])
 
+    def test_assignee_falls_back_to_next_owner_in_jira(self):
+        fake = FakeJira(accounts={"b@x.com": "acc-b"})
+        res = export_jira.export("회의", [item("m1:0", "같이 할 일", ["u1", "u2"])],
+                                 connect=connect_to(fake), emails=lambda ids: {"u1": "a@x.com", "u2": "b@x.com"})
+        self.assertTrue(res["items"][0]["assigned"])
+        self.assertEqual(fake.created[0]["assignee"], "acc-b")  # 첫 담당자가 Jira 에 없으면 다음 담당자
+
+    def test_lookup_error_still_creates_issue(self):
+        fake = FakeJira()
+
+        async def broken(cloud_id, email):
+            raise RuntimeError("lookupJiraAccountId 입력 형식이 바뀌었어요")
+        fake.find_account = broken
+        res = export_jira.export("회의", [item("m1:0", "할 일", ["u1"])],
+                                 connect=connect_to(fake), emails=lambda ids: {"u1": "a@x.com"})
+        self.assertEqual(res["items"][0], {"key": "m1:0", "ok": True, "issue_key": "KAN-1", "assigned": False})
+
+    def test_over_budget_leaves_rest_for_retry(self):
+        fake = FakeJira()
+        with patch("followup.settings.JIRA_EXPORT_BUDGET_SECONDS", -1):
+            res = export_jira.export("회의", [item("m1:0", "할 일"), item("m1:1", "할 일 2")],
+                                     connect=connect_to(fake), emails=lambda ids: {})
+        self.assertEqual((res["created"], fake.created), (0, []))
+        self.assertTrue(all(not r["ok"] and "시간 초과" in r["error"] for r in res["items"]))
+
     def test_connection_failure(self):
         @asynccontextmanager
         async def broken(email, token):

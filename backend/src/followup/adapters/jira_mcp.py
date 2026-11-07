@@ -11,6 +11,8 @@ import re
 from contextlib import asynccontextmanager
 from typing import Any
 
+from followup import settings
+
 ENDPOINT = "https://mcp.atlassian.com/v2/mcp?tools=all"
 ISSUE_KEY = re.compile(r"^[A-Z][A-Z0-9_]+-\d+$")
 
@@ -21,7 +23,7 @@ async def connect(email: str, token: str):
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
 
-    async with httpx2.AsyncClient(auth=(email, token), timeout=httpx2.Timeout(30, read=120),
+    async with httpx2.AsyncClient(auth=(email, token), timeout=httpx2.Timeout(settings.JIRA_CALL_TIMEOUT),
                                   follow_redirects=False) as http:
         async with streamable_http_client(ENDPOINT, http_client=http) as (read, write):
             async with ClientSession(read, write) as session:
@@ -103,7 +105,7 @@ class Jira:
             seen.add(cursor)
 
     async def find_account(self, cloud_id: str, email: str) -> str | None:
-        return pick_account(await self._call("lookupJiraAccountId", {"cloudId": cloud_id, "searchString": email}), email)
+        return pick_account(await self._call("lookupJiraAccountId", {"cloudId": cloud_id, "query": email}), email)
 
     async def create_issue(self, args: dict) -> str:
         key = pick_issue_key(await self._call("createJiraIssue", args))

@@ -52,6 +52,10 @@ def missing() -> list[str]:
 # 외부 도구 전송 · Jira (Atlassian MCP). 토큰은 id.atlassian.com 에서 앱을 「Atlassian MCP V2」로 발급
 JIRA_KEYS = ("ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN", "JIRA_CLOUD_ID", "JIRA_PROJECT_KEY")
 JIRA_ISSUE_TYPE = "작업"  # JIRA_ISSUE_TYPE 이 없을 때 · Jira 프로젝트에 실제로 있는 유형 이름이어야 함
+JIRA_CALL_TIMEOUT = 30  # MCP 호출 하나를 기다리는 최대 시간 (초)
+# 이 시간이 지나면 남은 아이템은 만들지 않고 '시간 초과'로 돌려줌 (다시 보내기 대상).
+# 접속(30) + 이 시간 + 마지막 아이템(호출 2번 · 60)이 화면이 기다리는 시간(apps/web config.JIRA_EXPORT_TIMEOUT=180) 안에 들게
+JIRA_EXPORT_BUDGET_SECONDS = 80
 
 
 def jira_config() -> dict[str, str] | None:

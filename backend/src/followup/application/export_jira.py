@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from typing import Any, Callable
 
 from followup import settings
@@ -46,14 +47,22 @@ def _description(meeting_title: str, item: dict) -> str:
 async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict], emails: dict[str, str]) -> list[dict]:
     accounts: dict[str, str | None] = {}  # 이메일 → accountId (한 번만 찾음)
     out = []
+    deadline = time.monotonic() + settings.JIRA_EXPORT_BUDGET_SECONDS
     for item in items:
+        if time.monotonic() > deadline:  # 화면이 기다리다 포기하기 전에 끝냄 · 남은 건 다시 보내기로
+            out.append({"key": item["key"], "ok": False, "error": "시간 초과 (다시 보내 주세요)"})
+            continue
         try:
             account = None
-            email = next((emails[u] for u in item["owners"] if u in emails), None)  # Jira 담당자는 한 명: 첫 담당자
-            if email:
+            for email in (emails[u] for u in item["owners"] if u in emails):  # Jira 담당자는 한 명: Jira 에 있는 첫 담당자
                 if email not in accounts:
-                    accounts[email] = await jira.find_account(cfg["JIRA_CLOUD_ID"], email)
-                account = accounts[email]
+                    try:
+                        accounts[email] = await jira.find_account(cfg["JIRA_CLOUD_ID"], email)
+                    except Exception as e:  # 담당자 조회만 실패 → 담당자 없이 이슈는 만듦
+                        logger.warning("Jira 담당자 조회 실패 (%s): %s", item["key"], e)
+                        accounts[email] = None
+                if account := accounts[email]:
+                    break
             args = {"cloudId": cfg["JIRA_CLOUD_ID"], "projectKey": project_key(cfg), "issueType": cfg["JIRA_ISSUE_TYPE"],
                     "summary": item["title"], "description": _description(meeting_title, item)}
             if account:
