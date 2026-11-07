@@ -1099,19 +1099,19 @@ def start_export() -> None:
 
     s = get_state()
     x = s.export
-    # 이미 시작한 전송이면 무시: Jira 전송을 기다리는 동안 「보내기」를 또 누르면 이슈가 두 벌 생김
+    # 이미 시작한 전송이면 무시: 전송을 기다리는 동안 「보내기」를 또 누르면 이슈 · 메일이 두 벌 나감
     if sel.my_role(repo.meeting(x.meeting_id)) != "host" or not x.picked or x.started_at is not None:
         return
     s.export = ExportRun(meeting_id=x.meeting_id, picked=x.picked, attempt=1, started_at=time.time(),
                          fids=export.open_ids(s, x.meeting_id),
                          expired=tuple(k for k, v in repo.tool_statuses().items() if v == "expired"))
     s.status_override[x.meeting_id] = "sending"
-    with st.spinner("Jira 로 액션 아이템을 보내고 있어요…"):
-        export.send_jira(s)  # 실제 전송 (Jira 를 골랐고 연결된 경우만)
+    with st.spinner("외부 도구로 보내고 있어요…"):
+        export.send(s)  # 실제 전송 (Jira · 메일을 골랐고 연결된 경우만)
 
 
 def retry_export() -> None:
-    """단순 이슈로 실패한 도구만 다시 보내기 (Jira 는 실패한 아이템만)."""
+    """단순 이슈로 실패한 도구만 다시 보내기 (Jira · 메일은 실패한 아이템 · 사람만)."""
     from state import export
 
     s = get_state()
@@ -1119,12 +1119,11 @@ def retry_export() -> None:
     if x.attempt != 1:  # 다시 보내기는 한 번만 (기다리는 동안 또 누른 클릭 무시)
         return
     s.export = ExportRun(meeting_id=x.meeting_id, picked=x.picked, attempt=2, started_at=time.time(),
-                         fids=export.open_ids(s, x.meeting_id),  # 첫 전송에서 새로 생긴 실패 기록(Jira)까지
-                         expired=x.expired, contact_shown=True, jira=x.jira, jira_error=x.jira_error)
+                         fids=export.open_ids(s, x.meeting_id),  # 첫 전송에서 새로 생긴 실패 기록(Jira · 메일)까지
+                         expired=x.expired, contact_shown=True, results=x.results, errors=x.errors)
     s.status_override[x.meeting_id] = "sending"
-    if not x.jira_error:  # 연결 · 설정 실패는 다시 보내도 안 됨 (관리자 문의)
-        with st.spinner("실패한 액션 아이템을 Jira 로 다시 보내고 있어요…"):
-            export.send_jira(s)
+    with st.spinner("실패한 것만 다시 보내고 있어요…"):
+        export.send(s)  # 연결 · 설정 실패(errors)는 건너뜀 (관리자 문의)
 
 
 def finish_export() -> None:

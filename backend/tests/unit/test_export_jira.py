@@ -90,7 +90,7 @@ class ExportTests(unittest.TestCase):
 
     def test_over_budget_leaves_rest_for_retry(self):
         fake = FakeJira()
-        with patch("followup.settings.JIRA_EXPORT_BUDGET_SECONDS", -1):
+        with patch("followup.settings.EXPORT_BUDGET_SECONDS", -1):
             res = export_jira.export("회의", [item("m1:0", "할 일"), item("m1:1", "할 일 2")],
                                      connect=connect_to(fake), emails=lambda ids: {})
         self.assertEqual((res["created"], fake.created), (0, []))

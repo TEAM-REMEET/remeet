@@ -47,7 +47,7 @@ def _description(meeting_title: str, item: dict) -> str:
 async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict], emails: dict[str, str]) -> list[dict]:
     accounts: dict[str, str | None] = {}  # 이메일 → accountId (한 번만 찾음)
     out = []
-    deadline = time.monotonic() + settings.JIRA_EXPORT_BUDGET_SECONDS
+    deadline = time.monotonic() + settings.EXPORT_BUDGET_SECONDS
     for item in items:
         if time.monotonic() > deadline:  # 화면이 기다리다 포기하기 전에 끝냄 · 남은 건 다시 보내기로
             out.append({"key": item["key"], "ok": False, "error": "시간 초과 (다시 보내 주세요)"})

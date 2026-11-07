@@ -54,8 +54,9 @@ class ExportRun:
     fids: tuple[str, ...] = ()  # 보내기 시작할 때 남아 있던 전송 실패 id (결과 고정용)
     expired: tuple[str, ...] = ()  # 보내기 시작할 때 인증이 만료돼 있던 도구 (기술 이슈로 실패)
     contact_shown: bool = False  # 기술 이슈로 끝나 「관리자에게 문의」 모달을 띄웠는지
-    jira: dict | None = None  # 실제 Jira 전송 결과 (POST /api/exports/jira · 다시 보내면 아이템별로 합침)
-    jira_error: str = ""  # Jira 연결 · 설정 실패 (아무것도 못 만듦 → 관리자 문의)
+    # 실제로 보낸 도구(Jira · 메일)의 결과 {도구: {"items": [{key, ok, …}], …}} · 다시 보내면 key 별로 합침
+    results: dict[str, dict] = field(default_factory=dict)
+    errors: dict[str, str] = field(default_factory=dict)  # 도구 → 연결 · 설정 실패 (아무것도 못 보냄 → 관리자 문의)
 
 
 @dataclass
