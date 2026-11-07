@@ -125,18 +125,24 @@ def can_see(state: AppState, mid: str) -> bool:
     if mid in state.new_meetings:  # 내가 새로 만든 회의록은 항상 보임
         return True
     m = repo.meeting(mid)
-    return m.host == me_id() or me_id() in m.people or me_id() in state.absent_shares.get(mid, [])
+    return m.host == me_id() or me_id() in m.people or _shared_to_me(state, m)
+
+
+def _shared_to_me(state: AppState, m: Meeting) -> bool:
+    """백엔드 공유(GET /api/meetings/{id} 의 shared) 또는 이 세션에서 주관자가 보내 준 미참석 공유."""
+    return m.shared is not None or me_id() in state.absent_shares.get(m.id, [])
 
 
 def is_absent_shared(state: AppState, mid: str) -> bool:
     """미참석(조퇴·불참)했는데 주관자가 공유해 줘서 보이는 회의."""
     m = repo.meeting(mid)
-    return m.host != me_id() and me_id() not in m.people and me_id() in state.absent_shares.get(mid, [])
+    return m.host != me_id() and me_id() not in m.people and _shared_to_me(state, m)
 
 
 def folder_note_ids(state: AppState, fid: str) -> list[str]:
-    """폴더 안에서 나에게 보이는 회의록 (최근 순)."""
-    return by_date_desc([i for i in folders(state)[fid].notes if can_see(state, i)])
+    """폴더 안에서 나에게 보이는 회의록 (최근 순). 프로젝트 · 회의는 따로 받아서(캐시 시점이 달라) 상세가 없는 회의는 뺌."""
+    loaded = repo.meetings()
+    return by_date_desc([i for i in folders(state)[fid].notes if i in loaded and can_see(state, i)])
 
 
 def folder_ids_by_owner(state: AppState, owner: str) -> list[str]:

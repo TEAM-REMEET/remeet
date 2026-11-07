@@ -144,9 +144,8 @@ class AppState:
     share_team: str = ""  # 공유 모달에서 보고 있는 팀
     share_recipients: list[str] = field(default_factory=list)  # 받는 사람 (사람 id, 추가한 순서)
     last_share_to: str = ""
-    sent_shares: list[SentShare] = field(
-        default_factory=lambda: [SentShare("m3", "재무팀", "summary", "10/21")]
-    )
+    # 이 세션에서 보낸 공유 (목업 회의 m3 를 가리키던 예시는 회의를 백엔드에서 읽게 되면서 뺐어요)
+    sent_shares: list[SentShare] = field(default_factory=list)
 
     # --- 담당자 지정
     assign_key: str = ""
@@ -257,8 +256,8 @@ class AppState:
 
     # --- 미참석 공유: 회의 id → 주관자가 이 회의록을 보내 준 미참석(조퇴·불참) 멤버
     #     미참석한 회의는 원래 보이지 않고, 여기 들어 있을 때만 '미참석 · 공유받음'으로 보여요.
-    #     (목업: 박도윤님이 10/22 회의를 빠진 나에게 공유해 둔 상태)
-    absent_shares: dict[str, list[str]] = field(default_factory=lambda: {"m5": ["yun"]})
+    #     (목업 회의 m5 를 가리키던 예시는 회의를 백엔드에서 읽게 되면서 뺐어요. 백엔드 공유는 Meeting.shared 로 옴)
+    absent_shares: dict[str, list[str]] = field(default_factory=dict)
     archive_query: str = ""  # (예전) 보관함 검색어
     search_query: str = ""  # 검색 결과 페이지의 검색어
     search_tab: str = ""  # 회의명 | 폴더명 | 구성원 | 회의 내용 (빈 값이면 결과가 있는 첫 버튼)

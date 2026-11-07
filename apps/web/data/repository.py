@@ -1,12 +1,18 @@
 """데이터 저장소.
 
-구성원 · 팀 · 직무는 백엔드 API(Neo4j)에서, 나머지는 아직 data/mock/*.json 에서 읽어요.
+백엔드 API 에서 읽는 것
+    구성원 · 팀 · 직무          GET /api/people · /api/teams · /api/roles · /api/skills   (Neo4j)
+    회의 종류                   GET /api/meeting-types                                   (PostgreSQL)
+    회의 목록 · 상세            GET /api/meetings → GET /api/meetings/{id}               (PostgreSQL)
+    프로젝트 · 멤버 · 회의 · 브리프  GET /api/projects → /api/projects/{id}/members · /meetings · /briefs
+나머지(알림 · 공유 · 위키 · 연동 · 비용 …)는 아직 data/mock/*.json 에서 읽어요.
 실제 API 로 바꿀 때는 이 파일의 함수 시그니처만 유지하고 내부 구현을 교체하면 됩니다.
 """
 
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from functools import lru_cache
 from pathlib import Path
@@ -253,9 +259,106 @@ def _meeting(d: dict) -> Meeting:
     )
 
 
-@lru_cache(maxsize=1)
+# ---------------------------------------------------------------- 회의 · 프로젝트 (백엔드 → PostgreSQL)
+# shortcut: 1분 캐시 (화면을 그릴 때마다 회의 수만큼 상세를 다시 받지 않게). 다른 사람이 바꾼 내용은 최대 1분 늦게 보임
+#   → 바로 보려면 meetings_changed() (이 앱에서 회의를 바꾸는 API 를 연결하면 그 뒤에 부르기)
+_MEETINGS_TTL = 60  # 초
+_PAGE = 200  # 목록 API 한 번에 받는 최대 개수 (백엔드 MAX_PAGE)
+_DETAIL_WORKERS = 8  # 회의 상세를 동시에 받는 수
+_DEFAULT_TYPES = {"weekly": "주간 회의", "monthly": "월간 회의", "normal": "일반 회의"}  # 못 불러왔을 때 화면 뼈대용
+
+
+def _pages(path: str, token: str) -> list[dict]:
+    """limit · offset 목록 API 를 끝까지 받아요."""
+    rows: list[dict] = []
+    while True:
+        page = api.call("GET", f"{path}?limit={_PAGE}&offset={len(rows)}", token=token)
+        rows += page
+        if len(page) < _PAGE:
+            return rows
+
+
+def _md(dotted: str | None) -> str:
+    """'2026.10.27' → '10/27' (목록의 날짜 · 회의 날짜가 비어 있으면 만든 날 기준)"""
+    if not dotted:
+        return ""
+    _, month, day = dotted.split(".")
+    return f"{int(month)}/{int(day)}"
+
+
+def _detail(row: dict, token: str) -> dict | None:
+    """회의 상세 (GET /api/meetings/{id}, 목업 meetings.json 한 개와 같은 모양). 그사이 지워졌거나 권한이 없어졌으면 None."""
+    try:
+        d = api.call("GET", f"/api/meetings/{row['id']}", token=token)
+    except api.ApiError as e:
+        if e.status in (403, 404):
+            return None
+        raise
+    if not d["date"]:  # 회의 날짜(held_at)가 없는 회의 → 목록과 같은 날짜(만든 날)로
+        d["date"] = _md(row.get("date_label"))
+    return d
+
+
+# cache_resource: 같은 객체를 그대로 돌려줌 (cache_data 처럼 부를 때마다 복사하지 않음 · Meeting 은 바뀌지 않는 객체라 공유해도 됨)
+# token 이 캐시 키라서 사람마다 따로 저장돼요.
+@st.cache_resource(ttl=_MEETINGS_TTL, show_spinner="회의록을 불러오는 중…")
+def _api_meetings(token: str) -> dict[str, Meeting]:
+    rows = _pages("/api/meetings", token)  # 내가 볼 수 있는 회의 (내 프로젝트 + 공유받은 회의), 최신순
+    with ThreadPoolExecutor(_DETAIL_WORKERS) as pool:
+        details = pool.map(lambda r: _detail(r, token), rows)
+        return {d["id"]: _meeting(d) for d in details if d}
+
+
+@st.cache_resource(ttl=_MEETINGS_TTL, show_spinner=False)
+def _api_meeting_types(token: str) -> dict[str, MeetingType]:
+    rows = api.call("GET", "/api/meeting-types", token=token)
+    return {r["id"]: MeetingType(r["id"], r["name"], r["meta"] or "", r["hidden_count"]) for r in rows}
+
+
+@st.cache_resource(ttl=_MEETINGS_TTL, show_spinner="프로젝트를 불러오는 중…")
+def _api_folders(token: str) -> dict[str, Folder]:
+    def folder(p: dict) -> Folder:
+        pid = p["id"]
+        members = api.call("GET", f"/api/projects/{pid}/members", token=token)  # 주관자가 맨 앞
+        notes = [r["id"] for r in _pages(f"/api/projects/{pid}/meetings", token)]  # 최신순
+        brief = api.call("GET", f"/api/projects/{pid}/briefs", token=token)
+        return Folder(pid, p["name"], p["host_user_id"], tuple(members), tuple(notes),
+                      tuple(BriefItem(b["label"], b["text"]) for b in brief))
+
+    projects = api.call("GET", "/api/projects", token=token)  # 내가 멤버 · 주관인 프로젝트
+    with ThreadPoolExecutor(_DETAIL_WORKERS) as pool:
+        return {f.id: f for f in pool.map(folder, projects)}
+
+
+def _from_api(source: str, loader, default):
+    """로그인 전이면 조용히 default. 실패하면 화면 위에 안내(data_errors)를 남기고 default."""
+    token = _token()
+    if not token:
+        return default
+    errors = st.session_state.setdefault("_data_errors", {})
+    try:
+        out = loader(token)
+    except api.ApiError as e:
+        errors[source] = str(e)
+        return default
+    errors.pop(source, None)
+    return out
+
+
+def data_errors() -> dict[str, str]:
+    """백엔드에서 못 불러온 데이터 {무엇: 이유} (화면 위 안내용)."""
+    return dict(st.session_state.get("_data_errors", {}))
+
+
+def meetings_changed() -> None:
+    """회의 · 프로젝트 캐시 비우기 (다음 화면에서 백엔드에서 다시 받음)."""
+    _api_meetings.clear()
+    _api_meeting_types.clear()
+    _api_folders.clear()
+
+
 def _base_meetings() -> dict[str, Meeting]:
-    return {d["id"]: _meeting(d) for d in _load("meetings")}
+    return _from_api("회의록", _api_meetings, {})
 
 
 def _session_meetings() -> dict[str, Meeting]:
@@ -363,26 +466,16 @@ def received_meeting_ids() -> list[str]:
 
 
 # ---------------------------------------------------------------- folders
-@lru_cache(maxsize=1)
 def meeting_types() -> dict[str, MeetingType]:
-    raw = _load("folders")["types"]
-    return {k: MeetingType(k, v["name"], v["meta"], v["hidden_count"]) for k, v in raw.items()}
+    """회의 종류 (GET /api/meeting-types). 못 불러와도 월간 · 주간 · 일반 칸은 있어야 화면(주소 · 카드)이 그려져요."""
+    out = {k: MeetingType(k, name, "", 0) for k, name in _DEFAULT_TYPES.items()}
+    out.update(_from_api("회의 종류", _api_meeting_types, {}))
+    return out
 
 
-@lru_cache(maxsize=1)
 def base_folders() -> dict[str, Folder]:
-    raw = _load("folders")["folders"]
-    return {
-        k: Folder(
-            id=k,
-            name=v["name"],
-            host=v["host"],
-            members=tuple(v["members"]),
-            notes=tuple(v["notes"]),
-            brief=tuple(BriefItem(b["label"], b["text"]) for b in v.get("brief", [])),
-        )
-        for k, v in raw.items()
-    }
+    """내 프로젝트 (GET /api/projects + 멤버 · 회의 · 브리프)."""
+    return _from_api("프로젝트", _api_folders, {})
 
 
 # ---------------------------------------------------------------- assignee candidates
