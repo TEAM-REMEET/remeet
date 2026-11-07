@@ -14,9 +14,11 @@ from fastapi import FastAPI
 
 from followup import settings
 from followup.adapters.neo4j.driver import close_driver
+from followup.adapters.postgres.db import close_pool
+from followup.entrypoints.api import errors
 from followup.entrypoints.api.ask_routes import router as ask_router
 from followup.entrypoints.api.recommend_routes import router as recommend_router
-from followup.entrypoints.api.routes import auth, people
+from followup.entrypoints.api.routes import auth, integrations, notifications, people, projects, search, shares
 from followup.entrypoints.api.summary_routes import router as summary_router
 
 
@@ -27,6 +29,7 @@ async def lifespan(_: FastAPI):
         raise RuntimeError(f"필수 환경변수가 비어 있습니다: {', '.join(settings.missing())} (deploy/.env 확인)")
     yield
     close_driver()
+    close_pool()
 
 app = FastAPI(
     title="RE:MEET API",
@@ -41,6 +44,13 @@ app.include_router(people.router)
 app.include_router(summary_router)
 app.include_router(recommend_router)
 app.include_router(ask_router)
+# PostgreSQL (프로젝트 · 회의 목록 · 공유 · 알림 · 검색 · 연동). 어댑터 예외 → HTTP 상태는 errors.py
+app.include_router(projects.router)
+app.include_router(shares.router)
+app.include_router(notifications.router)
+app.include_router(search.router)
+app.include_router(integrations.router)
+errors.install(app)
 
 
 @app.get("/api/health")
