@@ -110,7 +110,7 @@ def render() -> None:
                     button(f"실패한 {p.failed}건 다시 보내기", key="dv_retry", variant="danger", icon=":material/refresh:",
                            on_click=actions.start_delivery, args=(mid, 2))
                 if host:  # 결과 전달이 끝나면 외부 도구(MCP)로 따로 보내기
-                    button("다음: 외부 도구 전송 →" if finalize.in_flow(s, mid) else "외부 도구 전송", key="dv_export",
+                    button("외부 도구 전송 →" if finalize.in_flow(s, mid) else "외부 도구 전송", key="dv_export",
                            variant="primary", icon=":material/send:", on_click=actions.open_export, args=(mid,))
         running = not p.ended
         st.session_state["_dv_polling"] = running

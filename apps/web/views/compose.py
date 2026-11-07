@@ -201,16 +201,19 @@ def _content(s: AppState, n: int) -> None:
 
 
 def _step1(s: AppState, n: int) -> None:
-    # 현재 단계 제목과 같은 줄 오른쪽: 초기화 · 다음 단계 (모든 단계 화면에서 같은 자리)
     with step_header("회의 내용 입력", "기본 정보와 회의 내용을 적은 뒤 「다음 단계」를 눌러 주세요"):
-        button("초기화", key="cp_reset", variant="secondary", icon=":material/restart_alt:", on_click=actions.compose_reset)
-        button("다음 단계 →", key="cp_next1", variant="primary", on_click=actions.compose_next, args=(n,))
+        pass
     with st.container(key="wz-card", gap="medium"):
         _basic_info(s, n)
         markup('<hr class="cp-divider">')
         _content(s, n)
         if s.nn_error:
             markup(f'<span role="alert" class="cp-error">{esc(s.nn_error)}</span>')
+        # 회의 내용을 적은 뒤 바로 누를 수 있게 카드 오른쪽 아래: 초기화 · 다음 단계
+        with st.container(key="cp-step1-btns", horizontal=True, horizontal_alignment="right", gap="small"):
+            button("초기화", key="cp_reset", variant="secondary", icon=":material/restart_alt:",
+                   on_click=actions.compose_reset)
+            button("다음 단계 →", key="cp_next1", variant="primary", on_click=actions.compose_next, args=(n,))
 
 
 # ================================================================ 2단계: 분석 및 검토 (회의 상세와 같은 화면)
