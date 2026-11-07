@@ -376,6 +376,7 @@ web 의 `data/repository.py` 의 `_meeting(d)` 에 그대로 넣으면 `Meeting`
 | `db.py` | DB 접속 (커넥션 풀) + `query()`, `execute()`, `transaction()` 도우미 |
 | `seed.py` | web 목업 JSON 중 PostgreSQL 몫 → 표에 INSERT |
 | `import_summary.py` | AI 분석 결과(summary.json) 중 PostgreSQL 몫 → 표에 INSERT |
+| `seed_people.py` · `crud/people.py` | 구성원(사람 · 팀 · 직무 · 스킬): `backend/seed/users.json` 시드 · 웹 추가/수정 반영. 표는 `migrations/011_people.sql`. 설명: [PEOPLE_SEED_GUIDE.md](PEOPLE_SEED_GUIDE.md) |
 | `repository_pg.py` | PostgreSQL 에서 읽고, Neo4j 쪽 내용과 **회의 id 로 합쳐서** web 목업과 똑같은 `Meeting` · `Folder` 를 만듦 |
 | `graph_source.py` | **Neo4j 담당 데이터 입구.** 지금은 web 목업 JSON 을 돌려줌 → Neo4j 담당자가 이 파일만 Cypher 로 바꾸면 됨 |
 | `web_patch.py` | web 의 `data.repository` 함수들을 위 PostgreSQL 함수로 바꿔 끼움 (web 파일은 안 고침) |
