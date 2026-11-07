@@ -41,6 +41,11 @@ class PostgresCRUDIntegrationTests(unittest.TestCase):
         with transaction() as cur:
             cur.execute(schema.read_text(encoding='utf-8'))
 
+        import io, migrate                                   # 010 이 컬럼 이름을 바꾸므로 마이그레이션까지
+        from contextlib import redirect_stdout
+        with redirect_stdout(io.StringIO()):
+            migrate.main()
+
     @classmethod
     def tearDownClass(cls):
         from db import pool
@@ -64,12 +69,12 @@ class PostgresCRUDIntegrationTests(unittest.TestCase):
 
     def _folder(self, members=None):
         from crud.folders import create_folder
-        return create_folder(actor_id='u1', name='주간회의', type_id='normal',
+        return create_folder(actor_id='u1', name='주간회의',
                              members=members or [])
 
-    def _meeting(self, folder_id=None):
+    def _meeting(self, project_id=None):
         from crud.meetings import create_meeting
-        return create_meeting(actor_id='u1', meeting_id='m-test-001', folder_id=folder_id)
+        return create_meeting(actor_id='u1', meeting_id='m-test-001', project_id=project_id)
 
     def test_folder_lifecycle_and_membership(self):
         from crud import folders
@@ -142,7 +147,7 @@ class PostgresCRUDIntegrationTests(unittest.TestCase):
         for call in (
             lambda: folders.get_folder(actor_id='u4', folder_id=f['id']),
             lambda: folders.list_folders(actor_id='u4'),
-            lambda: folders.create_folder(actor_id='u4', name='관리자폴더',type_id='normal'),
+            lambda: folders.create_folder(actor_id='u4', name='관리자폴더'),
             lambda: meetings.get_meeting(actor_id='u4',meeting_id=m['id']),
             lambda: meetings.list_meetings(actor_id='u4'),
             lambda: meetings.get_transcript(actor_id='u4',meeting_id=m['id']),

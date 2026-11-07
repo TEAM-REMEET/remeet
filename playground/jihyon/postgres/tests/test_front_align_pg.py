@@ -97,6 +97,8 @@ class FrontAlignTests(unittest.TestCase):
     def test_sent_and_received_lists(self):
         from crud import shares
         from crud.meetings import create_meeting
+        with self.transaction() as cur:   # 팀 공유는 teams 를 가리킴 (migrations/012)
+            cur.execute("INSERT INTO teams (team_id, name) VALUES ('fin', '재무팀') ON CONFLICT DO NOTHING")
         create_meeting(actor_id='u1', meeting_id='m1', title='주간')
         create_meeting(actor_id='u1', meeting_id='m2', title='월간')
         shares.create_share(actor_id='u1', meeting_id='m1', recipient_user_id='u2', scope='summary')
@@ -107,6 +109,27 @@ class FrontAlignTests(unittest.TestCase):
                          [('m1', 'u1', 'summary')])
         shares.revoke_share(actor_id='u1', share_id=s2['id'])
         self.assertEqual(len(shares.list_sent(actor_id='u1')), 1)
+
+    def test_foreign_keys_block_unknown_people(self):
+        """012: 없는 사람 id 는 DB 가 막음 · 기존 데이터에 있으면 012 가 목록을 보여 주며 멈춤."""
+        import psycopg
+        from crud.meetings import create_meeting
+        with self.assertRaises(psycopg.errors.ForeignKeyViolation):
+            with self.transaction() as cur:
+                cur.execute("INSERT INTO meetings (id, host_user_id) VALUES ('x', 'ghost')")
+        create_meeting(actor_id='u1', meeting_id='m1')
+        with self.assertRaises(psycopg.errors.ForeignKeyViolation):       # 계정 삭제는 막힘 (비활성화 규칙)
+            with self.transaction() as cur:
+                cur.execute("DELETE FROM accounts WHERE user_id = 'u1'")
+        sql = (Path(__file__).resolve().parents[1] / 'migrations' / '012_user_foreign_keys.sql').read_text(encoding='utf-8')
+        with self.assertRaisesRegex(psycopg.errors.RaiseException, "notifications.user_id.*'ghost'"):
+            with self.transaction() as cur:       # 예전 데이터 흉내: 외래 키를 빼고 없는 사람 알림을 넣은 뒤 012 를 다시
+                cur.execute('ALTER TABLE notifications DROP CONSTRAINT notifications_user_id_account_fk')
+                cur.execute("INSERT INTO notifications (id, user_id, kind, text) VALUES ('n-x', 'ghost', 'review', 'x')")
+                cur.execute(sql)
+        with self.transaction() as cur:           # 위 트랜잭션은 통째로 취소됐으니 외래 키는 그대로
+            cur.execute("SELECT 1 FROM pg_constraint WHERE conname = 'notifications_user_id_account_fk'")
+            self.assertIsNotNone(cur.fetchone())
 
     def test_budget_notification_kind(self):
         from crud import notifications

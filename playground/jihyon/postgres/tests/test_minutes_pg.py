@@ -70,12 +70,12 @@ class MinutesIntegrationTests(unittest.TestCase):
     # ------------------------------------------------------------ helpers
     def _folder(self, name='프로젝트A', members=()):
         from crud.folders import create_folder
-        return create_folder(actor_id='u1', name=name, type_id='normal', members=list(members))
+        return create_folder(actor_id='u1', name=name, members=list(members))
 
-    def _meeting(self, mid, folder_id=None, day=None, title='', type_id='normal'):
+    def _meeting(self, mid, project_id=None, day=None, title='', directory_id='normal'):
         from crud.meetings import create_meeting
-        return create_meeting(actor_id='u1', meeting_id=mid, folder_id=folder_id, title=title,
-                              held_at=_at(day) if day else None, type_id=type_id)
+        return create_meeting(actor_id='u1', meeting_id=mid, project_id=project_id, title=title,
+                              held_at=_at(day) if day else None, directory_id=directory_id)
 
     # web 목업 meetings.json 과 같은 모양
     CONTENT = {
@@ -243,9 +243,9 @@ class MinutesIntegrationTests(unittest.TestCase):
         detail.save_summary(actor_id='u1', meeting_id='new', content={'summary': {'text': '요약 미리보기', 'src': []}})
         rows = minutes.list_all_meetings(actor_id='u1')
         self.assertEqual([r['id'] for r in rows], ['new', 'mid', 'old'])
-        self.assertEqual(rows[0]['folder_name'], '프로젝트A')
+        self.assertEqual(rows[0]['project_name'], '프로젝트A')
         self.assertEqual(rows[0]['summary_preview'], '요약 미리보기')
-        self.assertIsNone(rows[1]['folder_name'])
+        self.assertIsNone(rows[1]['project_name'])
         self.assertEqual([r['id'] for r in minutes.list_all_meetings(actor_id='u1', limit=1, offset=1)], ['mid'])
         # u2 는 공유받은 것만
         self.assertEqual(minutes.list_all_meetings(actor_id='u2'), [])
@@ -253,7 +253,8 @@ class MinutesIntegrationTests(unittest.TestCase):
         self.assertEqual([r['id'] for r in minutes.list_all_meetings(actor_id='u2')], ['old'])
 
     def test_project_folders_and_meetings(self):
-        from crud import minutes
+        """프로젝트 목록 · 프로젝트 안 회의 (최신순). 멤버라는 것만으로는 회의가 안 보임 — 참석 · 공유받아야 (web can_see)."""
+        from crud import detail, minutes, shares
         from crud.common import PermissionDenied
         a = self._folder('프로젝트A', members=['u2'])
         b = self._folder('프로젝트B')
@@ -263,49 +264,74 @@ class MinutesIntegrationTests(unittest.TestCase):
         self._meeting('b1', b['id'], day=3)
         folders = minutes.list_project_folders(actor_id='u1')
         self.assertEqual([(x['name'], x['meeting_count']) for x in folders], [('프로젝트A', 3), ('프로젝트B', 1)])
-        self.assertEqual([r['id'] for r in minutes.list_project_meetings(actor_id='u1', folder_id=a['id'])],
+        self.assertEqual([r['id'] for r in minutes.list_project_meetings(actor_id='u1', project_id=a['id'])],
                          ['a0', 'a2', 'a1'])
-        # u2 는 A 멤버만
-        self.assertEqual([x['name'] for x in minutes.list_project_folders(actor_id='u2')], ['프로젝트A'])
-        self.assertEqual(len(minutes.list_project_meetings(actor_id='u2', folder_id=a['id'])), 3)
+        # u2 는 A 멤버지만 참석 · 공유가 없으면 회의는 안 보임
+        self.assertEqual([(x['name'], x['meeting_count']) for x in minutes.list_project_folders(actor_id='u2')],
+                         [('프로젝트A', 0)])
+        self.assertEqual(minutes.list_project_meetings(actor_id='u2', project_id=a['id']), [])
         with self.assertRaises(PermissionDenied):
-            minutes.list_project_meetings(actor_id='u2', folder_id=b['id'])
+            detail.get_meeting_detail(actor_id='u2', meeting_id='a1')
+        detail.set_attendees(actor_id='u1', meeting_id='a1', user_ids=['u2'])                       # 참석
+        shares.create_share(actor_id='u1', meeting_id='a2', recipient_user_id='u2', scope='summary')  # 미참석 공유
+        self.assertEqual([r['id'] for r in minutes.list_project_meetings(actor_id='u2', project_id=a['id'])],
+                         ['a2', 'a1'])
+        with self.assertRaises(PermissionDenied):
+            minutes.list_project_meetings(actor_id='u2', project_id=b['id'])
         with self.assertRaises(PermissionDenied):
             minutes.list_project_folders(actor_id='u4')    # 관리자는 회의 기능 접근 불가 (기존 규칙)
 
-    def test_all_by_type_and_project_structure(self):
-        """전체 > 월간/주간/일반, 프로젝트별 > 폴더. 프로젝트 회의는 두 곳에 다 보임."""
+    def test_regular_tree_and_project_tree(self):
+        """web sidebar 와 같은 트리. 같은 회의가 정기 회의(종류별) · 프로젝트 두 트리에 다 나옴 (토글).
+        정기: 월간 ─ 년 ─ 「9월 (날짜)」 / 주간 ─ 년 ─ 월 ─ 「4주차 (날짜)」 / 일반 ─ 「날짜」 · 프로젝트: 프로젝트 ─ 폴더 ─ 「날짜」."""
         from crud import minutes
         from crud.common import ValidationError
         from crud.meetings import update_meeting
         p = self._folder('결제 프로젝트')
-        self._meeting('w-proj', p['id'], day=4, type_id='weekly')   # 프로젝트 + 주간
-        self._meeting('w-solo', None, day=5, type_id='weekly')      # 프로젝트 없는 주간
-        self._meeting('w-old', None, day=1, type_id='weekly')
-        self._meeting('mon', None, day=2, type_id='monthly')
-        self._meeting('n-proj', p['id'], day=3)                     # 프로젝트 + 일반
+        q = self._folder('기획')
+        self._meeting('w-thu', p['id'], day=5, directory_id='weekly')    # 11/5(목) → 11/2 주 → 11월 1주차
+        self._meeting('w-sun', q['id'], day=1, directory_id='weekly')    # 11/1(일) → 10/26 주 → 2026년 10월 4주차
+        self._meeting('mon', p['id'], day=2, directory_id='monthly')
+        self._meeting('n-1', p['id'], day=3)
+        self._meeting('solo', None, day=4)                               # 프로젝트 없는 회의 → 트리에 안 나옴
 
-        types = minutes.list_meeting_types(actor_id='u1')
-        self.assertEqual([(t['id'], t['name'], t['meeting_count']) for t in types],
-                         [('monthly', '월간 회의', 1), ('weekly', '주간 회의', 3), ('normal', '일반 회의', 1)])
-        weekly = minutes.list_all_meetings(actor_id='u1', type_id='weekly')
-        self.assertEqual([r['id'] for r in weekly], ['w-solo', 'w-proj', 'w-old'])
-        self.assertEqual(weekly[1]['folder_name'], '결제 프로젝트')
-        self.assertEqual(weekly[0]['type_name'], '주간 회의')
+        tree = {t['node']: t for t in minutes.list_regular_tree(actor_id='u1')}
+        self.assertEqual(list(tree), ['t:monthly', 't:weekly', 't:normal'])
+
+        def flat(n):
+            return [(c['node'], c['label'], c.get('count')) for c in n['children']] + \
+                [x for c in n['children'] for x in flat(c)]
+
+        self.assertEqual(flat(tree['t:monthly']), [('y:monthly:2026', '2026년', 1), ('m:mon', '11월 (2026.11.02)', None)])
+        self.assertEqual(flat(tree['t:weekly']),
+                         [('y:weekly:2026', '2026년', 2),
+                          ('ym:weekly:2026:11', '11월', 1), ('ym:weekly:2026:10', '10월', 1),
+                          ('m:w-thu', '1주차 (2026.11.05)', None), ('m:w-sun', '4주차 (2026.11.01)', None)])
+        self.assertEqual(flat(tree['t:normal']), [('m:n-1', '2026.11.03', None)])
+        self.assertEqual([t['count'] for t in tree.values()], [1, 2, 1])
+        leaf = tree['t:normal']['children'][0]
+        self.assertEqual((leaf['meeting_id'], leaf['project_id'], leaf['date']), ('n-1', p['id'], '2026.11.03'))
+
+        pt = minutes.list_project_tree(actor_id='u1')
+        self.assertEqual((pt['node'], pt['label'], pt['count']), ('proj', '프로젝트', 2))
+        self.assertEqual([(c['node'], c['label'], [x['label'] for x in c['children']]) for c in pt['children']],
+                         [(f"pf:{p['id']}", '결제 프로젝트', ['2026.11.05', '2026.11.03', '2026.11.02']),
+                          (f"pf:{q['id']}", '기획', ['2026.11.01'])])
+
+        rows = minutes.list_regular_meetings(actor_id='u1', directory_id='weekly')
+        self.assertEqual([(r['id'], r['date_label'], r['project_name'], r['directory_name']) for r in rows],
+                         [('w-thu', '2026.11.05', '결제 프로젝트', '주간 회의'), ('w-sun', '2026.11.01', '기획', '주간 회의')])
         self.assertEqual([r['id'] for r in minutes.list_all_meetings(actor_id='u1')],
-                         ['w-solo', 'w-proj', 'n-proj', 'mon', 'w-old'])
-        self.assertEqual([r['id'] for r in minutes.list_project_meetings(actor_id='u1', folder_id=p['id'])],
-                         ['w-proj', 'n-proj'])
+                         ['w-thu', 'solo', 'n-1', 'mon', 'w-sun'])
 
         # 종류 바꾸기 · 프로젝트에서 빼기
-        update_meeting(actor_id='u1', meeting_id='n-proj', type_id='monthly', clear_folder=True)
-        self.assertEqual([r['id'] for r in minutes.list_all_meetings(actor_id='u1', type_id='monthly')], ['n-proj', 'mon'])
-        self.assertEqual([r['id'] for r in minutes.list_project_meetings(actor_id='u1', folder_id=p['id'])], ['w-proj'])
+        update_meeting(actor_id='u1', meeting_id='n-1', directory_id='monthly')
+        self.assertEqual([r['id'] for r in minutes.list_regular_meetings(actor_id='u1', directory_id='monthly')],
+                         ['n-1', 'mon'])
+        update_meeting(actor_id='u1', meeting_id='n-1', clear_project=True)
+        self.assertEqual([r['id'] for r in minutes.list_regular_meetings(actor_id='u1', directory_id='monthly')], ['mon'])
         with self.assertRaises(ValidationError):
-            self._meeting('bad', type_id='daily')
-        # 프로젝트 폴더는 종류 없이 만들 수 있음
-        from crud.folders import create_folder
-        self.assertIsNone(create_folder(actor_id='u1', name='종류 없는 프로젝트')['type_id'])
+            self._meeting('bad', directory_id='daily')
 
     # ------------------------------------------------------------ RLS (migration 004)
     def test_rls_on_sources_and_summaries(self):
@@ -351,10 +377,6 @@ class MinutesIntegrationTests(unittest.TestCase):
 
     # ------------------------------------------------------------ import_summary.py
     def test_import_summary_fills_title_source_summary(self):
-        if 'import_summary' not in sys.modules:   # paths.py 가 web 폴더를 찾으므로, 없으면 빈 폴더로 대신
-            web = Path(tempfile.mkdtemp())
-            (web / 'app.py').touch()
-            os.environ.setdefault('WEB_DIR', str(web))
         import import_summary
         from crud import minutes
         with tempfile.TemporaryDirectory() as d:
@@ -431,7 +453,22 @@ class MigrationPathTests(unittest.TestCase):
                             summary_points, summary_topics, summary_agendas, meeting_summaries, meeting_sources;
                             ALTER TABLE meetings DROP COLUMN title, DROP COLUMN held_at, DROP COLUMN type_id;
                             DELETE FROM meeting_types;
-                            ALTER TABLE folders ALTER COLUMN type_id SET NOT NULL''')
+                            ALTER TABLE folders ALTER COLUMN type_id SET NOT NULL;
+                            DROP TABLE failed_exports, meeting_status_history;
+                            ALTER TABLE meetings DROP COLUMN reviewer_id, DROP COLUMN submitted_at,
+                                DROP COLUMN confirmed_at, DROP COLUMN confirmed_by;
+                            ALTER TABLE meetings DROP CONSTRAINT meetings_status_check;
+                            ALTER TABLE meetings ADD CONSTRAINT meetings_status_check
+                                CHECK (status IN ('review', 'confirmed', 'sending', 'done', 'fail'));
+                            ALTER TABLE integration_tools DROP COLUMN last_sync_at;
+                            ALTER TABLE integration_status DROP COLUMN updated_by;
+                            ALTER TABLE notifications DROP CONSTRAINT notifications_kind_check;
+                            ALTER TABLE notifications ADD CONSTRAINT notifications_kind_check
+                                CHECK (kind IN ('review', 'shared', 'integration', 'member'));
+                            CREATE TABLE failed_exports (   -- 예전 모양: 도구 · 회의 한 쌍만
+                                tool_id TEXT NOT NULL REFERENCES integration_tools(id) ON DELETE CASCADE,
+                                meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+                                PRIMARY KEY (tool_id, meeting_id))''')
             conn.execute('''INSERT INTO meeting_types (id,name,meta) VALUES
                             ('weekly','주간 회의','목업'), ('monthly','월간 회의','목업')''')
             conn.execute("INSERT INTO accounts (user_id,email) VALUES ('u1','u1@test.local')")
@@ -439,6 +476,8 @@ class MigrationPathTests(unittest.TestCase):
                             ('rel','릴리즈','weekly','u1'), ('period-weekly','주차별','weekly','u1')''')
             conn.execute('''INSERT INTO meetings (id, folder_id, host_user_id) VALUES
                             ('in-proj','rel','u1'), ('in-period','period-weekly','u1'), ('no-folder',NULL,'u1')''')
+            conn.execute("INSERT INTO integration_tools (id,mark,name,description) VALUES ('slack','S','Slack','')")
+            conn.execute("INSERT INTO failed_exports VALUES ('slack','in-proj')")
         self._migrate(upto='003')
         out = self._migrate(upto='005')
         self.assertIn('APPLY 004_meeting_sources_summaries.sql', out)
@@ -466,7 +505,15 @@ class MigrationPathTests(unittest.TestCase):
                                 content, evidence_line_ids) VALUES (%s, 0, 0, '소주제', '논의 내용', '{3,4}')''', (sid,))
             conn.execute('''INSERT INTO summary_action_items (summary_id, position, description, owner_raw, due_date)
                             VALUES (%s, 0, '할 일', 'A', '2026-11-20')''', (sid,))
-        self.assertIn('APPLY 006_meeting_detail.sql', self._migrate())
+        out = self._migrate()
+        self.assertIn('APPLY 006_meeting_detail.sql', out)
+        self.assertIn('APPLY 007_exports_status_history.sql', out)
+        self.assertIn('APPLY 008_draft_review_flow.sql', out)
+        with psycopg.connect(TEST_URL) as conn:   # 007: 예전 실패 기록에 id · 종류가 붙고, 상태 이력 시작점이 생김
+            self.assertEqual(conn.execute("SELECT id LIKE 'f-%', kind, resolved_at FROM failed_exports").fetchall(),
+                             [(True, 'simple', None)])
+            self.assertEqual(conn.execute("SELECT count(*) FROM meeting_status_history "
+                                          "WHERE from_status IS NULL AND to_status = 'review'").fetchone(), (3,))
         from db import pool
         pool.cache_clear()
         from crud import detail
@@ -485,7 +532,8 @@ class MigrationPathTests(unittest.TestCase):
         # 3) schema.sql 로 초기화한 뒤 migrate.py 를 다시 돌리면 001~006 이 다시 적용돼야 함
         with psycopg.connect(TEST_URL, autocommit=True) as conn:
             conn.execute(schema)
-        self.assertEqual(self._migrate().count('APPLY'), 6)
+        n_files = len(list((ROOT / 'migrations').glob('[0-9][0-9][0-9]_*.sql')))
+        self.assertEqual(self._migrate().count('APPLY'), n_files)
         with psycopg.connect(TEST_URL) as conn:
             n = conn.execute("SELECT count(*) FROM pg_trigger WHERE tgname='meetings_status_transition'").fetchone()
             self.assertEqual(n, (1,))

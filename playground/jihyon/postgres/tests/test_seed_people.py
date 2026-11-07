@@ -11,7 +11,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import seed_people  # noqa: E402
 
-
+@unittest.skipUnless((seed_people.SEED_DIR / "users.json").exists(),
+                     "backend/seed/users.json 이 없습니다 (저장소 안의 playground/<이름>/postgres 에서 실행)")
 class SeedPeopleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
