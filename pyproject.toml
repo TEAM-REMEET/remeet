@@ -28,3 +28,9 @@ dependencies = [
     "transformers>=5.20.2",
     "uvicorn[standard]>=0.54.0",
 ]
+
+[dependency-groups]
+dev = [
+    "deepeval>=2.5.5",
+    "pytest>=9.2.0",
+]
