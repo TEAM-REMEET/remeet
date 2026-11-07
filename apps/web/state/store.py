@@ -254,6 +254,9 @@ class AppState:
     archive_role: str = "all"  # 기간별 목록의 전체 / 내가 주관 / 참석
     tree_open: set[str] = field(default_factory=lambda: {"root"})  # 사이드바에서 펼친 노드
     tree_mode: str = "time"  # 사이드바 회의록 트리: time(정기 회의) | project(프로젝트 단위)
+    ask_history: list[dict] = field(default_factory=list)  # 회의에 물어보기 기록: 받은 답 + asked_at (최근 것이 앞) · 형식은 repo.ask()
+    ask_current: str = ""  # 지금 보고 있는 기록의 질문
+    ask_nonce: int = 0  # 질문 입력칸 비우기용
 
 
 def me_id() -> str:

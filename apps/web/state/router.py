@@ -13,6 +13,7 @@
   /deliver-m1                    결과 전달 (참석자에게 보내기)
   /export-m1                     외부 도구(MCP) 전송 (결과 전달 뒤 도구를 골라 보내기)
   /shared-sent · /shared-received
+  /ask                           회의에 물어보기 (온보딩 에이전트)
   /admin-cost · /admin-members · /admin-mcp   관리자 화면 (관리자 계정만)
 
 흐름
@@ -41,6 +42,7 @@ STATIC = {
     "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),
     "recv": ("shared-received", "공유 받은 회의"),
+    "ask": ("ask", "회의에 물어보기"),
     "adm_cost": ("admin-cost", "비용 관리"),
     "adm_members": ("admin-members", "구성원 관리"),
     "adm_mcp": ("admin-mcp", "MCP 관리"),

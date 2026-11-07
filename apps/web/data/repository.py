@@ -13,7 +13,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from config import MEETING_SUMMARY_TIMEOUT
+from config import ASK_TIMEOUT, MEETING_SUMMARY_TIMEOUT
 from data import api
 
 from data.models import (
@@ -345,6 +345,18 @@ def _graph(raw: dict) -> KnowledgeGraph:
 @lru_cache(maxsize=1)
 def folder_wiki() -> KnowledgeGraph:
     return _graph(_load("wiki_folder"))
+
+
+# ---------------------------------------------------------------- 회의에 물어보기
+def ask(question: str) -> dict:
+    """회의 기록에 묻고 근거가 달린 답을 받음 (POST /api/ask · 온보딩 에이전트). 형식은 ask 결과 JSON 그대로.
+
+    실패하면(백엔드 꺼짐 · 시간 초과 · 로그인 만료) answer_status="error" 와 이유를 담아 돌려줘요.
+    """
+    try:
+        return api.call("POST", "/api/ask", {"question": question}, _token(), timeout=ASK_TIMEOUT)
+    except api.ApiError as e:
+        return {"question": question, "answer_status": "error", "summary": str(e)}
 
 
 # ---------------------------------------------------------------- integrations
