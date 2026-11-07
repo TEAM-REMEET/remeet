@@ -11,6 +11,7 @@ from .common import (
     require_user,
     can_access_folder,
     can_access_meeting,
+    can_manage_meeting,
     can_view_raw,
     invalidate,
 )
@@ -111,10 +112,11 @@ def update_meeting(*,actor_id: str,meeting_id: str,project_id: str | None = None
 
 
 def delete_meeting(*,actor_id: str,meeting_id: str) -> dict:
+    """회의 삭제 (주관자 · 작성자 · 검토자는 못 함). 신입 주관자는 제출 뒤 고칠 수 없어도 삭제는 할 수 있어서
+    RLS 의 수정 규칙 대신 migrations/018 의 remeet_internal.delete_meeting() 으로 지워요."""
     with transaction(actor_id) as cur:
-        can_access_meeting(cur,meeting_id,actor_id,write=True)
-        cur.execute("""UPDATE meetings SET deleted_at=now() WHERE id=%s AND deleted_at IS NULL
-                       RETURNING *""", (meeting_id,))
+        can_manage_meeting(cur,meeting_id,actor_id)
+        cur.execute("SELECT * FROM remeet_internal.delete_meeting(%s)", (meeting_id,))
         row=cur.fetchone()
     invalidate('_base_meetings','base_folders')
     return row

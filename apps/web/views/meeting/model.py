@@ -20,7 +20,7 @@ def current(s: AppState) -> Meeting:
 
 
 def is_host(m: Meeting) -> bool:
-    return sel.manages(m)  # 고치고 확정할 수 있는 사람 (검토자가 있으면 검토자, 없으면 주관자)
+    return sel.manages(m)  # 고치고 확정할 수 있는 사람 (주관자 · 검토자)
 
 
 def raw_locked(m: Meeting) -> bool:
@@ -64,6 +64,8 @@ def read_note(m: Meeting) -> str:
         return f"공유받음 · {sel.scope_label(m.shared.scope)} · 보낸 사람 {m.shared.sender}"
     if role == "member":
         return "미참석 · 폴더 멤버로 열람 · 읽기 전용"
+    if role == "reviewer":
+        return f"검토자 · 주관 {sel.name_of(m.host)} · 읽기 전용"
     return f"읽기 전용 · 주관 {sel.name_of(m.host)}"
 
 

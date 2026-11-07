@@ -229,7 +229,7 @@ def _agenda(a: dict) -> Agenda:
 
 def _todo(t: dict, deleted: bool = False) -> Todo:
     return Todo(t["text"], _owners(t), t["due"], tuple(t["src"]), t["urgent"], item_id=t.get("item_id") or "",
-                due_iso=t.get("due_date") or "", todo_id=t.get("id") or 0, deleted=deleted)
+                due_iso=t.get("due_date") or "", todo_id=t.get("id") or 0, deleted=deleted, agenda=t.get("agenda") or "")
 
 
 def _todos(d: dict) -> tuple[Todo, ...]:
@@ -240,6 +240,13 @@ def _todos(d: dict) -> tuple[Todo, ...]:
 
 
 def _meeting(d: dict) -> Meeting:
+    m = _meeting_only(d)
+    if any(t.agenda for t in m.todos):  # 직접 추가하며 고른 안건 → 그 안건 아래에 보여 줌 (DB agenda_title)
+        m = _attach_added_todos(m, 0, [i for i, t in enumerate(m.todos) if t.deleted])
+    return m
+
+
+def _meeting_only(d: dict) -> Meeting:
     shared = d.get("shared")
     return Meeting(
         id=d["id"],

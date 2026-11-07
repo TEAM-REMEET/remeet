@@ -3,13 +3,14 @@
     ① save_draft()       status = draft. 작성 2단계(분석 및 검토)의 「미리보기」 회의록을 그대로 저장.
                           여러 번 저장해도 됨 (요약은 버전으로 쌓임). 작성자 · 주관자만 보임.
     ② submit_meeting()   draft → review. 참석자에게 「회의록이 생성됐어요」 알림.
-    ③ confirm_meeting()  review → confirmed. 검토자(reviewer_id), 없으면 주관자만 (web: 주관자만 「확정하기」).
+    ③ confirm_meeting()  review → confirmed. 주관자 · 검토자(reviewer_id) 중 먼저 확정한 사람.
 
     흐름 (web compose_finish 와 같음)
       내가 주관자          미리보기 → 생성 → (바로) 확정                         검토 단계 없음
       주관자가 다른 사람   미리보기 → 생성 = 「검토 요청하기」 → 주관자 검토 · 수정 → 확정
                            reviewer_id = 주관자 (자동) · 주관자에게 review 알림 · 작성자는 이제 못 고침
       신입이 주관자        미리보기 → 생성 → 윗사람 검토 · 수정 → 확정            reviewer_id = 윗사람 (꼭 지정)
+                           신입 주관자도 계속 고치고 확정할 수 있어요 (migrations/019)
 
 누가 신입인지는 구성원 표(팀원 담당)에 생길 예정 → seniority() 한 곳만 그 표를 보게 바꾸면 돼요.
     'junior' → (내가 주관자면) 윗사람 지정 필수 · 'senior' → 윗사람 지정하면 오류 · None(지금: 모름) → 넘긴 값을 따름
@@ -239,7 +240,7 @@ def confirm_meeting(*, actor_id: str, meeting_id: str) -> dict:
         if m["status"] != "review":
             raise ValidationError("검토 대기 중인 회의록만 확정할 수 있습니다.")
         if not is_editor(m, actor_id):
-            raise PermissionDenied("확정 권한이 없습니다 (검토자, 없으면 주관자만 확정할 수 있어요).")
+            raise PermissionDenied("확정 권한이 없습니다 (주관자 · 검토자만 확정할 수 있어요).")
         cur.execute(
             """UPDATE meetings SET status = 'confirmed', confirmed_at = now(), confirmed_by = %s
                WHERE id = %s RETURNING *""",

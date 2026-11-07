@@ -105,14 +105,15 @@ class ComposeFlowTests(unittest.TestCase):
         with self.assertRaises(ValidationError):            # 생성된 뒤엔 미리보기 저장 X
             self._draft(meeting_id=mid)
 
-        # ③ 신입은 이제 읽기만 · 윗사람이 수정
+        # ③ 신입 주관자 · 윗사람(검토자) 둘 다 고칠 수 있음 (019) · 참석자는 못 고침
         dj = detail.get_meeting_detail(actor_id='jr', meeting_id=mid)
-        self.assertEqual((dj['can_edit'], dj['author'], dj['reviewer'], len(dj['paragraphs'])), (False, 'jr', 'boss', 2))
-        for call in (lambda: detail.save_summary(actor_id='jr', meeting_id=mid, content=CONTENT),
-                     lambda: detail.add_todo(actor_id='jr', meeting_id=mid, text='x'),
-                     lambda: compose.confirm_meeting(actor_id='jr', meeting_id=mid)):
+        self.assertEqual((dj['can_edit'], dj['author'], dj['reviewer'], len(dj['paragraphs'])), (True, 'jr', 'boss', 2))
+        detail.save_summary(actor_id='jr', meeting_id=mid, content=CONTENT)
+        detail.add_todo(actor_id='jr', meeting_id=mid, text='신입이 추가')
+        for call in (lambda: detail.save_summary(actor_id='u2', meeting_id=mid, content=CONTENT),
+                     lambda: detail.add_todo(actor_id='u2', meeting_id=mid, text='x')):
             with self.subTest(call=call):
-                with self.assertRaisesRegex(PermissionDenied, '검토자'):
+                with self.assertRaisesRegex(PermissionDenied, '권한'):
                     call()
         detail.save_summary(actor_id='boss', meeting_id=mid, content={**CONTENT, 'summary': {'text': '팀장 수정', 'src': []}})
         self.assertTrue(detail.get_meeting_detail(actor_id='boss', meeting_id=mid)['can_edit'])
@@ -201,7 +202,46 @@ class ComposeFlowTests(unittest.TestCase):
         compose.submit_meeting(actor_id='jr', meeting_id=mid, reviewer_id='boss')
         self.assertEqual((run('u2', count), run('u3', count)), (1, 0))
         upd = f"UPDATE meeting_todos SET urgent = TRUE WHERE meeting_id = '{mid}'"
-        self.assertEqual((run('jr', upd), run('boss', upd)), (0, 1))                         # 신입 X · 검토자 O
+        self.assertEqual((run('jr', upd), run('boss', upd), run('u2', upd)), (1, 1, 0))      # 신입 주관자 O · 검토자 O · 참석자 X
+
+    def test_delete_and_share_by_host_author_only(self):
+        """018: 삭제 · 공유는 주관자 · 작성자(신입)만. 검토자 · 참석자 · 남은 못 함. 고치기는 그대로 검토자만."""
+        from followup.adapters.postgres import compose, detail, meetings, shares
+        from followup.adapters.postgres.common import NotFoundError, PermissionDenied
+
+        def run(user, sql):
+            with self.transaction(user) as cur:
+                cur.execute('SET LOCAL ROLE remeet_app')
+                cur.execute(sql)
+                return cur.rowcount if not cur.description else cur.fetchone()['n']
+
+        mid = self._draft()['id']
+        compose.submit_meeting(actor_id='jr', meeting_id=mid, reviewer_id='boss')
+        detail.save_summary(actor_id='jr', meeting_id=mid, content=CONTENT)                # 신입 주관자도 고치기 O (019)
+        for who in ('boss', 'u2', 'u3'):                                                   # 검토자 · 참석자 · 남 X
+            with self.assertRaises(PermissionDenied):
+                shares.create_share(actor_id=who, meeting_id=mid, recipient_user_id='u3')
+            with self.assertRaises(PermissionDenied):
+                meetings.delete_meeting(actor_id=who, meeting_id=mid)
+        a = shares.create_share(actor_id='jr', meeting_id=mid, recipient_user_id='u3')       # 신입 주관자 O
+        self.assertEqual(len(shares.list_shares(actor_id='jr', meeting_id=mid)), 1)
+        with self.assertRaises(PermissionDenied):
+            shares.revoke_share(actor_id='boss', share_id=a['id'])
+        shares.revoke_share(actor_id='jr', share_id=a['id'])
+        detail.save_summary(actor_id='boss', meeting_id=mid, content=CONTENT)              # 검토자는 고치기 O
+
+        # RLS (remeet_app): 공유 넣기 · 삭제 함수 — 검토자 · 참석자 X · 신입 O
+        ins = ("WITH x AS (INSERT INTO meeting_shares (meeting_id,sender_id,recipient_user_id,scope) "
+               f"VALUES ('{mid}', '{{u}}', 'u3', 'summary') RETURNING 1) SELECT count(*) AS n FROM x")
+        for who in ('boss', 'u2'):
+            with self.assertRaises(Exception):
+                run(who, ins.format(u=who))
+        self.assertEqual(run('jr', ins.format(u='jr')), 1)
+        delete = f"SELECT count(*) AS n FROM remeet_internal.delete_meeting('{mid}')"
+        self.assertEqual((run('boss', delete), run('u2', delete)), (0, 0))
+        self.assertEqual(run('jr', delete), 1)
+        with self.assertRaises(NotFoundError):
+            detail.get_meeting_detail(actor_id='boss', meeting_id=mid)
 
 
 if __name__ == '__main__':

@@ -140,7 +140,10 @@ class MeetingRecordApiTests(unittest.TestCase):
         ai = self.call('GET', f'/api/meetings/{mid}/todos', self.U2)
         self.assertEqual([(t['text'], t['owners']) for t in ai], [('수수료 비교표 정리', ['u2'])])
         t = self.call('POST', f'/api/meetings/{mid}/todos', self.U1,
-                      {'text': '정산 일정 공유', 'owners': ['u1', 'u2'], 'due': '11/7', 'due_date': '2026-11-07'}, 201)
+                      {'text': '정산 일정 공유', 'owners': ['u1', 'u2'], 'due': '11/7', 'due_date': '2026-11-07',
+                       'agenda': '결제 수수료'}, 201)
+        self.assertEqual(t['agenda'], '결제 수수료')                                    # 017: 고른 안건 저장
+        self.assertEqual(ai[0]['agenda'], '')                                           # AI 할 일은 빈 값
         self.call('POST', f'/api/meetings/{mid}/todos', self.U2, {'text': '참석자는 못 함'}, status=403)
         self.call('POST', f'/api/meetings/{mid}/todos', self.U1, {'text': ''}, status=422)
         self.assertEqual(self.call('PUT', f"/api/todos/{t['id']}/owners", self.U1, {'owners': ['u2']}), ['u2'])
@@ -158,6 +161,8 @@ class MeetingRecordApiTests(unittest.TestCase):
                       {'text': '정산 일정 공유 (수정)', 'owners': ['u1'], 'due': '11/12', 'due_date': '2026-11-12'})
         self.assertEqual((e['text'], e['owners'], e['due'], e['due_date']), ('정산 일정 공유 (수정)', ['u1'], '11/12', '2026-11-12'))
         self.assertEqual(self.call('PATCH', f"/api/todos/{t['id']}", self.U1, {'owners': []})['text'], '정산 일정 공유 (수정)')
+        self.assertEqual(self.call('PATCH', f"/api/todos/{t['id']}", self.U1, {'agenda': '정산'})['agenda'], '정산')
+        self.assertEqual([x['agenda'] for x in self.call('GET', f'/api/meetings/{mid}', self.U1)['todos']][-1], '정산')
         self.call('PATCH', f"/api/todos/{t['id']}", self.U2, {'text': 'x'}, status=403)
         d = self.call('GET', f'/api/meetings/{mid}', self.U1)
         self.assertEqual([(x['text'], x['due_date']) for x in d['todos']][-1], ('정산 일정 공유 (수정)', '2026-11-12'))

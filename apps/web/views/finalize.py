@@ -188,7 +188,7 @@ def render() -> None:
         if not sel.manages(m) or (sel.status_of(s, m.id) != "review" and s.fin_flow != m.id):
             page_header("회의록 확정", m.title)
             if not sel.manages(m):
-                markup('<p class="hint" style="font-size:14px">회의록은 주관자(검토자가 있으면 검토자)만 확정할 수 있어요.</p>')
+                markup('<p class="hint" style="font-size:14px">회의록은 주관자 · 검토자만 확정할 수 있어요.</p>')
             else:
                 markup('<p class="hint" style="font-size:14px">이미 확정한 회의록이에요.</p>')
                 button("← 이전화면으로", key="fin_done_back", variant="secondary", on_click=actions.open_meeting,
