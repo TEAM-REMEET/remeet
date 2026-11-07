@@ -135,7 +135,7 @@ def _details_card(s: AppState, m: Meeting, details: list[model.AgendaDetail]) ->
     opened = {k for k in s.agenda_open if k.startswith(f"{m.id}:")}
     with card("agdetails"):
         with st.container(horizontal=True, vertical_alignment="center"):
-            card_title("안건별 상세")
+            card_title("안건별 상세", icon_html=icon_box("file-text", bg="#E8F0FB", color="#2F5FB3"))
             if details:
                 all_open = len(opened) >= len(details)
                 button("모두 접기" if all_open else "모두 펼치기", key="agd_all", variant="mini",
@@ -179,7 +179,8 @@ def _summary_tab(s: AppState, m: Meeting, mode: str = "edit") -> None:
 def _agenda_tab(s: AppState, m: Meeting) -> None:
     weights = model.agenda_weights(s, m)
     with card("weights"):
-        card_title("안건별 논의 비중", aside=model.weight_basis(m))
+        card_title("안건별 논의 비중", aside=model.weight_basis(m),
+                   icon_html=icon_box("chart", bg="#F1ECFB", color="#6B4FBB", stroke=2.4))
         if not weights:
             hint("원문이 공유되지 않아 논의 비중을 계산할 수 없어요.", size=13)
         else:
@@ -195,7 +196,7 @@ def _agenda_tab(s: AppState, m: Meeting) -> None:
 
     host = model.is_host(m)
     with card("flow"):
-        card_title("안건 흐름")
+        card_title("안건 흐름", icon_html=icon_box("flow", bg="#E3F4F4", color="#1F7A7A"))
         for i, a in enumerate(m.agendas):
             status, tone, branched = model.agenda_status(s, m, i)
             with st.container(horizontal=True, vertical_alignment="center", gap="small"):

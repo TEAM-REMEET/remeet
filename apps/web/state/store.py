@@ -106,7 +106,7 @@ class AppState:
     # --- 회의 상세
     meeting_id: str = "m1"
     insight_tab: str = "sum"  # sum | ag | todo | kw | rel
-    left_tab: str = "raw"  # raw | ratio
+    left_tab: str = "raw"  # raw
     raw_query: str = ""
     highlight: list[str] = field(default_factory=list)
     highlight_key: str = ""

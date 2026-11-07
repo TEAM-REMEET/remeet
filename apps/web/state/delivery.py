@@ -3,7 +3,7 @@
 실제 서버 대신, 시작 시각부터 흐른 시간으로 '지금까지 도착한 이벤트 수'를 계산합니다.
 타이머 없이도 페이지를 다시 그릴 때마다 같은 결과가 나오므로 화면 코드가 단순해집니다.
 
-전달 순서: 회의록 확정 저장 → 할 일·담당자 반영 → 참석자에게 결과 전송 → 위키 반영
+전달 순서: 회의록 확정 저장 → 할 일·담당자 반영 → 참석자에게 결과 전송
 외부 도구(MCP · Slack · Jira 등) 전송은 여기서 하지 않고, 끝난 뒤 「외부 도구 전송」 화면(state/export.py)에서
 주관자가 도구를 골라 따로 보내요.
 
@@ -53,7 +53,7 @@ def _first_events(mid: str) -> list[Event]:
     return (
         [Event("open"), Event("step", step="save"), Event("step", step="todo"), Event("sendStart")]
         + [Event("sent", to=r, ok=r != timeout) for r in recipients(mid)]
-        + [Event("step", step="wiki"), Event("end")]
+        + [Event("end")]
     )
 
 
@@ -94,7 +94,7 @@ def sync(state: AppState) -> None:
 class Progress:
     conn: str = "connecting"  # connecting | open | closed
     steps: dict[str, str] = field(
-        default_factory=lambda: dict.fromkeys(("save", "todo", "send", "wiki"), "wait"))
+        default_factory=lambda: dict.fromkeys(("save", "todo", "send"), "wait"))
     recipients: dict[str, str] = field(default_factory=dict)  # wait | sending | ok | fail
     log: list[dict] = field(default_factory=list)
     ended: bool = False
@@ -125,8 +125,8 @@ def _apply(p: Progress, e: Event, mid: str, attempt: int) -> None:
         p.log.append({"ev": "open", "data": f'{{"meeting":"{mid}","attempt":{attempt}}}'})
     elif e.kind == "step":
         p.steps[e.step] = "done"
-        ev = {"save": "meeting.confirmed", "todo": "tasks.assigned", "wiki": "wiki.updated"}[e.step]
-        data = {"save": '{"version":2}', "todo": f'{{"tasks":{todo_n}}}', "wiki": '{"folder":true}'}
+        ev = {"save": "meeting.confirmed", "todo": "tasks.assigned"}[e.step]
+        data = {"save": '{"version":2}', "todo": f'{{"tasks":{todo_n}}}'}
         p.log.append({"ev": ev, "data": data[e.step]})
     elif e.kind == "sendStart":
         p.steps["send"] = "run"
