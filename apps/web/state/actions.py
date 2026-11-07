@@ -194,7 +194,7 @@ def close_modal() -> None:
 def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
-                cp_example="plain", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
+                cp_example="plain", cp_format_note="", cp_format_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
 
 
 def open_new_note() -> None:
@@ -219,8 +219,32 @@ def compose_example(kind: str) -> None:
     """「지원하는 입력 형식」 버튼: 입력 형식을 고름. 입력칸에는 그 형식의 예시가 회색 안내글(placeholder)로만 보임.
 
     입력한 내용(nn_text)은 건드리지 않음 — 예시는 값이 아니라서 수정·제출되지 않음.
+    직접 고르면 자동 선택 안내 · 경고는 지움 (글을 다시 고치기 전까지 자동 판별이 이 선택을 덮어쓰지 않음).
     """
-    _set(cp_example=kind, nn_error="")
+    _set(cp_example=kind, nn_error="", cp_format_note="", cp_format_warn="")
+
+
+def _auto_format(s, text: str) -> None:
+    """회의 내용을 보고 입력 형식을 자동으로 고름 (형식 버튼 선택 + 안내). 어느 형식에도 맞지 않으면 경고."""
+    from state import compose_ai
+
+    fmt, problem = compose_ai.detect(text)
+    s.cp_format_note = s.cp_format_warn = ""
+    if fmt is None and not problem:  # 비었거나 너무 짧음: 판별하지 않음
+        return
+    if problem == "mixed":  # 두 형식을 섞어 씀
+        s.cp_format_warn = "지원하지 않는 입력 형식이에요. 입력하신 회의 내용을 한 번 더 검토해 주세요."
+        return
+    recheck = "입력하신 회의 내용이 지원하는 입력 형식과 동일한지 한 번 더 검토해 주세요."
+    if fmt is None:  # 일부 줄에만 발화자 표기 · 괄호가 안 닫힘 등
+        s.cp_format_warn = recheck
+        return
+    s.cp_example = fmt
+    label = compose_ai.FORMAT_LABEL[fmt]
+    if problem:  # 형식은 맞는데 빈 줄 규칙 등이 틀림
+        s.cp_format_warn = f"입력 형식 자동 선택: 「{label}」 · {recheck}"
+    else:
+        s.cp_format_note = f"입력 형식 자동 선택: 「{label}」 · 입력한 내용을 보고 골랐어요. 다르면 위에서 직접 골라 주세요."
 
 
 def compose_reset() -> None:
@@ -244,9 +268,9 @@ def compose_sync(nonce: int) -> None:
 
 
 def compose_attach(nonce: int) -> None:
-    """파일을 올림: TXT는 내용을 읽어 「회의 내용」 칸에 채움 (앞서 쓴 글은 파일 내용으로 바뀜) · 첨부 칸은 비움.
+    """파일을 올림: TXT · MD는 내용을 읽어 「회의 내용」 칸에 채움 (앞서 쓴 글은 파일 내용으로 바뀜) · 첨부 칸은 비움.
 
-    DOCX · HWPX · MD 등 그 밖의 형식은 지금처럼 첨부 파일로 둠 (「다음 단계」 때 compose_sync가 읽음).
+    DOCX · HWPX 등 그 밖의 형식은 지금처럼 첨부 파일로 둠 (「다음 단계」 때 compose_sync가 읽음).
     """
     s = get_state()
     ss = st.session_state
@@ -261,13 +285,16 @@ def compose_attach(nonce: int) -> None:
     typed = (ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or "").strip()
     s.nn_text, s.nn_files, s.nn_error = body.strip("\n"), [], ""
     s.cp_text_rev += 1  # 입력칸을 새 값으로 다시 그림
+    _auto_format(s, s.nn_text)
     s.toast = (f"앞서 입력한 내용을 「{file.name}」 내용으로 바꿨어요." if typed and typed != body.strip()
                else f"「{file.name}」 내용을 회의 내용 칸에 불러왔어요. 확인하고 필요하면 고쳐 주세요.")
 
 
-def compose_check() -> None:
-    """회의 내용 칸을 바꿀 때마다(칸을 벗어나면) 형식 검사 결과를 새로."""
-    get_state().nn_error = ""
+def compose_check(nonce: int) -> None:
+    """회의 내용 칸을 바꿀 때마다(칸을 벗어나면) 형식 검사 결과를 새로 · 형식을 자동으로 고름."""
+    s = get_state()
+    s.nn_error = ""
+    _auto_format(s, st.session_state.get(f"cp_text_{nonce}_{s.cp_text_rev}") or "")
 
 
 def _format_error(error: str) -> None:

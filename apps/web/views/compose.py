@@ -184,17 +184,22 @@ def _content(s: AppState, n: int) -> None:
             value=s.nn_text,
             height=320,
             label_visibility="collapsed",
-            on_change=actions.compose_check,
+            on_change=actions.compose_check,  # 칸을 벗어나면 형식을 자동으로 고름
+            args=(n,),
             # 예시는 값이 아니라 회색 안내글(placeholder)로만 보여 줌 → 수정 불가, 입력칸을 누르면 사라짐
             placeholder=ai.EXAMPLES[s.cp_example],
         )
     with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
         with st.container(key="cp-attach", width="content"):
-            # TXT를 올리면 내용을 회의 내용 칸에 채우고 첨부 칸은 비움 (그 밖의 형식은 첨부로 둠)
+            # TXT · MD를 올리면 내용을 회의 내용 칸에 채우고 첨부 칸은 비움 (그 밖의 형식은 첨부로 둠)
             st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}_{s.cp_file_rev}",
                              label_visibility="collapsed", on_change=actions.compose_attach, args=(n,))
         markup(f'<span class="cp-types">{ALLOWED_LABEL}</span>')
         markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
+    if s.cp_format_warn:  # 자동 판별 결과: 경고(주황)가 있으면 경고만, 없으면 고른 형식 안내(초록)
+        _info(esc(s.cp_format_warn), "warn")
+    elif s.cp_format_note:
+        _info(esc(s.cp_format_note), "ok")
     if s.nn_files and not st.session_state.get(f"cp_files_{n}_{s.cp_file_rev}"):
         with st.container(horizontal=True, vertical_alignment="center", gap="small"):
             markup('<span class="cp-hint">앞에서 첨부한 파일: ' + esc(", ".join(nm for nm, _ in s.nn_files)) + "</span>")

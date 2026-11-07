@@ -1,6 +1,6 @@
 """첨부 파일(회의 내용) 읽기: TXT · MD · DOCX · HWPX.
 
-- TXT · MD: 글자 그대로 (UTF-8, 안 되면 CP949 · TXT는 올리면 회의 내용 입력칸에 바로 채움)
+- TXT · MD: 글자 그대로 (UTF-8, 안 되면 CP949 · TXT · MD는 올리면 회의 내용 입력칸에 바로 채움)
 - DOCX(워드) · HWPX(한글): 압축 파일 안의 XML 에서 문단 글자만 꺼냄 (문단마다 한 줄, 빈 문단은 빈 줄)
 그 밖의 형식은 읽지 않아요. 「발화자 확인」 때 안내하고 다음 단계로 못 가요 (state/actions.compose_next).
 """
@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 
 ALLOWED = ("txt", "md", "docx", "hwpx")
 ALLOWED_LABEL = "TXT · MD · DOCX · HWPX"
-INLINE_EXTS = ("txt",)  # 올리면 내용을 「회의 내용」 입력칸에 바로 채우는 형식 (나머지는 첨부 파일로 둠)
+INLINE_EXTS = ("txt", "md")  # 올리면 내용을 「회의 내용」 입력칸에 바로 채우는 형식 (나머지는 첨부 파일로 둠)
 
 
 def ext(name: str) -> str:
