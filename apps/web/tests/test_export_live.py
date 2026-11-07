@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from data import repository as repo  # noqa: E402
+from data import api, repository as repo  # noqa: E402
 from state import export  # noqa: E402
 from state.delivery import recipients  # noqa: E402
 from state.store import AppState, ExportRun  # noqa: E402
@@ -75,6 +75,26 @@ class RetryOnlyFailed(unittest.TestCase):
         self.assertEqual(sent, [to, [to[0]]])  # 두 번째는 못 받은 사람 한 명만
         self.assertEqual(p.exports["mail"], "ok")
         self.assertEqual(export.summary(s.export, "mail"), f"메일 {len(to)}/{len(to)}명 보냄")
+
+    def test_connection_failure_goes_to_admin_and_is_not_resent(self):
+        s, calls = AppState(), []
+        s.final_summaries[MID] = {}
+
+        def broken(title, body, to):
+            calls.append(to)
+            raise api.ApiError("메일 서버에 연결하지 못했어요", 502)
+        n_admin = len(repo.live_notifications("admin"))
+        with patch("state.minutes_text.render_minutes", return_value="회의록"), \
+                patch.object(repo, "export_mail", broken):
+            p = run(s, "mail", 1)
+            self.assertEqual(p.exports["mail"], "fail")
+            rec = next(f for f in repo.export_failures(MID) if f.id == f"rt-{MID}-mail")
+            self.assertEqual(rec.kind, "tech")  # 관리자 문의 (다시 보내기 없음)
+            self.assertEqual(len(repo.live_notifications("admin")), n_admin + 1)
+            s.export = ExportRun(meeting_id=MID, picked=("mail",), attempt=2, started_at=time.time() - 600,
+                                 results=s.export.results, errors=s.export.errors)
+            export.send(s)
+        self.assertEqual(len(calls), 1)  # 다시 보내기에서 또 보내지 않음
 
     def test_mail_without_final_minutes_is_simulated(self):
         s = AppState()
