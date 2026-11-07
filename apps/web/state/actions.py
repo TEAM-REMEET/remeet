@@ -7,6 +7,8 @@
 from __future__ import annotations
 
 import time
+from dataclasses import replace
+from datetime import date, datetime
 
 import streamlit as st
 
@@ -16,6 +18,7 @@ from components import member_fields as mf
 from data import repository as repo
 from data.models import Todo
 from state import router
+from utils.dates import parse_due
 from utils.files import ALLOWED_LABEL, is_allowed, read_text
 from state import selectors as sel
 from state.store import Delivery, ExportRun, NewFolder, SentShare, get_state, reset_state
@@ -191,12 +194,15 @@ def close_modal() -> None:
 def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
-                cp_example="plain", preview_meeting=None)
+                cp_example="plain", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
 
 
 def open_new_note() -> None:
     """'새 회의록' → 작성 화면. 보고 있던 프로젝트 · 회의 종류를 미리 골라 둡니다."""
     s = get_state()
+    if s.cp_job_running or (s.cp_step == 2 and s.preview_meeting is not None):  # 분석 중이거나 검토 중이면 그 화면으로
+        go("compose")
+        return
     mtype = s.archive_type if s.screen == "archive" and s.archive_type else s.nn_type
     topic = s.folder_id if s.screen == "folder" and s.folder_id in sel.folders(s) else ""
     go("compose", nn_type=mtype, nn_topic=topic, nn_name="", nn_host=me_id(), nn_people=[me_id()],
@@ -220,6 +226,7 @@ def compose_example(kind: str) -> None:
 def compose_reset() -> None:
     """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
     s = get_state()
+    _clear_job()
     _set(compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
 
 
@@ -230,7 +237,8 @@ def compose_sync(nonce: int) -> None:
     s.nn_title = (ss.get(f"cp_title_{nonce}") or "").strip()
     s.nn_date = ss.get(f"cp_date_{nonce}")
     s.nn_text = ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or ""
-    files = ss.get(f"cp_files_{nonce}") or []
+    file = ss.get(f"cp_files_{nonce}")  # 파일은 한 개만 고를 수 있어요
+    files = [file] if file else []
     if files:  # TXT · MD · DOCX · HWPX 는 글을 읽고, 그 밖의 형식 · 읽을 수 없는 파일은 None (발화자 확인 때 안내)
         s.nn_files = [(f.name, read_text(f.name, f.getvalue())) for f in files]
 
@@ -254,9 +262,16 @@ def compose_next(nonce: int) -> None:
     missing = [n for n, ok in (("회의 제목", s.nn_title), ("회의 날짜", s.nn_date), ("주관자", s.nn_host)) if not ok]
     if s.nn_topic not in sel.all_my_folder_ids(s) and not s.nn_name.strip():
         missing.append("프로젝트")
-    parsed = compose_ai.parse(compose_text(s))
+    parsed = compose_ai.parse(compose_text(s), s.cp_example)
     if missing:
         _format_error(" · ".join(missing) + "을(를) 입력해 주세요.")
+        return
+    # 회의 내용은 직접 입력과 파일 첨부 중 하나만, 파일도 한 개만
+    if len(s.nn_files) > 1:
+        _format_error("파일은 한 개만 첨부할 수 있어요. 첨부한 파일을 한 개로 줄여 주세요.")
+        return
+    if s.nn_text.strip() and s.nn_files:
+        _format_error("회의 내용은 직접 입력과 파일 첨부 중 하나만 쓸 수 있어요. 입력한 글을 지우거나 첨부한 파일을 빼 주세요.")
         return
     # 첨부 파일: TXT · MD · DOCX · HWPX 만 (그 밖의 형식이면 다음 단계로 못 감)
     wrong = [name for name, _ in s.nn_files if not is_allowed(name)]
@@ -287,7 +302,7 @@ PREVIEW_ID = "cp-preview"
 def _build_preview(s, mid: str):
     from state import compose_ai
 
-    parsed = compose_ai.parse(compose_text(s))
+    parsed = compose_ai.parse(compose_text(s), s.cp_example)
     topic = s.nn_topic if s.nn_topic in sel.all_my_folder_ids(s) else None
     return compose_ai.build_meeting(
         mid, title=s.nn_title, day=s.nn_date, project_id=topic, directory_id=s.nn_type, host=s.nn_host,
@@ -297,23 +312,120 @@ def _build_preview(s, mid: str):
 
 
 def compose_goto(step: int) -> None:
-    """단계 이동. 2단계(분석 및 검토)로 가면 회의 상세와 같은 화면으로 볼 미리보기 회의록을 만듦."""
+    """단계 이동. 2단계(분석 및 검토)로 가면 보낼 요청을 만듦 (실제 호출은 views/compose.py → compose_analyze)."""
+    from state import compose_request
+
     s = get_state()
     if step == 2:
-        s.preview_meeting = _build_preview(s, PREVIEW_ID)
-        s.added_todos.pop(PREVIEW_ID, None)
-        s.deleted_todos.pop(PREVIEW_ID, None)
+        try:
+            request = compose_request.build_request(s, compose_text(s))
+        except (ValueError, api.ApiError) as e:
+            _format_error(str(e))
+            return
+        if request != s.cp_result_request:  # 내용이 같으면 받아 둔 결과를 다시 보여 주고 AI를 호출하지 않음
+            s.preview_meeting, s.cp_result, s.cp_final = None, None, None
+            s.added_todos.pop(PREVIEW_ID, None)
+            s.edited_todos.pop(PREVIEW_ID, None)
+            s.deleted_todos.pop(PREVIEW_ID, None)
+            try:
+                repo.start_summary_job(request, {"nn_name": s.nn_name})
+            except api.ApiError as e:
+                _format_error(str(e))
+                return
+            s.cp_job_running = True
+        s.cp_request = request
         _set(meeting_id=PREVIEW_ID, insight_tab="sum", left_tab="raw", highlight=[], highlight_key="", raw_query="")
     _set(cp_step=step, nn_error="")
+
+
+def _apply_result(s, result: dict) -> None:
+    """분석 결과 → 미리보기 회의록."""
+    from state import summary_view
+
+    s.cp_result, s.cp_result_request, s.cp_job_running = result, s.cp_request, False
+    s.preview_meeting = summary_view.apply_summary(_build_preview(s, PREVIEW_ID), result)
+
+
+def _clear_job() -> None:
+    """끝난 분석 작업 지우기 (실패해도 다음 등록에 지장 없음)."""
+    try:
+        repo.clear_summary_job()
+    except api.ApiError:
+        pass
+
+
+def compose_poll() -> None:
+    """분석이 끝났는지 확인: 끝나면 결과를 넣고, 실패하면 1단계로 돌아가 안내 (같은 내용으로 다시 보내면 이어서 진행)."""
+    s = get_state()
+    try:
+        job = repo.current_summary_job()
+    except api.ApiError:  # 잠깐 연결이 안 돼도 다음 확인 때 다시 봄
+        return
+    if job["status"] == "done":
+        _apply_result(s, job["result"])
+    elif job["status"] != "running":
+        s.cp_job_running, s.cp_step = False, 1
+        _format_error(job.get("message") or "분석 작업을 찾을 수 없어요. 다시 시도해 주세요.")
+
+
+def compose_resume() -> None:
+    """새 회의록 화면에 처음 왔을 때: 서버에 분석 작업이 있으면 입력값과 진행 상태를 복원 (브라우저를 닫았다 와도)."""
+    from datetime import date as _date
+
+    from state import compose_ai
+
+    s = get_state()
+    if s.cp_job_synced:
+        return
+    s.cp_job_synced = True
+    if s.cp_request:  # 이 세션에서 이미 진행 중
+        return
+    try:
+        job = repo.current_summary_job()
+    except api.ApiError:
+        return
+    if job["status"] == "none":
+        return
+    req = job["request"]
+    s.nn_title, s.nn_date, s.nn_host = req["title"], _date.fromisoformat(req["date"]), req["host_user_id"]
+    s.nn_people = [a["user_id"] for a in req["attendees"]]
+    s.nn_type, s.cp_example, s.nn_text, s.nn_files = req["directory_id"], req["transcript_format"], req["transcript"], []
+    s.nn_topic, s.nn_name = req.get("project_id") or "new", job.get("draft", {}).get("nn_name", "")
+    labels = compose_ai.parse(req["transcript"], req["transcript_format"]).labels
+    s.nn_speaker_map = compose_ai.match_speakers(labels, s.nn_people)[0]
+    s.cp_request = req
+    s.compose_nonce += 1
+    if job["status"] == "failed":
+        s.cp_step = 1
+        _format_error(job.get("message") or "분석에 실패했어요. 다시 시도해 주세요.")
+        return
+    s.cp_step = 2
+    if job["status"] == "running":
+        s.cp_job_running = True
+    else:
+        _apply_result(s, job["result"])
 
 
 def compose_clear_files() -> None:
     _set(nn_files=[])
 
 
+def unchecked_assignees(mid: str = PREVIEW_ID) -> list[str]:
+    """담당자 확인이 필요한데 아직 수정 창에서 확인하지 않은 액션 아이템 (삭제한 것은 제외)."""
+    return [t.text for _, t in sel.todo_items(get_state(), mid) if t.assignee_check]
+
+
 def open_compose_confirm() -> None:
-    """2단계 「확정하기」(주관자) · 「검토 요청하기」(주관자가 아닌 사람) → 한 번 더 묻는 창."""
-    open_modal("cp_confirm" if get_state().nn_host == me_id() else "cp_review")
+    """2단계 「확정하기」(주관자) · 「검토 요청하기」(주관자가 아닌 사람) → 한 번 더 묻는 창.
+
+    주관자: 담당자 확인이 필요한 액션이 남아 있으면 막음 (그대로 확정하면 담당자 추천 · 적재에서 빠지기 때문).
+    """
+    s = get_state()
+    if s.nn_host == me_id() and (left := unchecked_assignees()):
+        more = f" 외 {len(left) - 1}건" if len(left) > 1 else ""
+        _set(insight_tab="todo", toast=f"담당자를 확인해 주세요: 「{left[0]}」{more}. 액션 아이템을 눌러 담당자를 고르거나 삭제하면 확정할 수 있어요.")
+        return
+    open_modal("cp_confirm" if s.nn_host == me_id() else "cp_review")
 
 
 def compose_confirm() -> None:
@@ -321,12 +433,28 @@ def compose_confirm() -> None:
     _set(modal=None, cp_finishing=True)
 
 
+def compose_review() -> bool:
+    """「확정하기」: 화면에서 고친 값을 보내 근거 연결 · 검증을 거친 최종 JSON을 받음. 실패하면 안내 후 False (다시 누르면 이어서 진행)."""
+    from state import review_request
+
+    s = get_state()
+    if s.nn_host != me_id():  # 주관자가 아니면 수정 없이 주관자에게 검토 요청
+        return True
+    try:
+        s.cp_final = repo.review_meeting(s.cp_result["meeting_id"], review_request.build_edits(s))
+    except api.ApiError as e:
+        s.cp_finishing = False
+        _format_error(str(e))
+        return False
+    return True
+
+
 def compose_finish() -> None:
     """확정하기 로딩이 끝나면: 완성된 회의록을 만들어 폴더에 넣고, 회의록 확정 1단계(담당자 추천)로 이동."""
     from state import compose_ai
 
     s = get_state()
-    parsed = compose_ai.parse(compose_text(s))
+    parsed = compose_ai.parse(compose_text(s), s.cp_example)
     s.cp_finishing = False
     if parsed.error:
         _set(cp_step=1, nn_error="회의 내용 형식을 확인해 주세요.")
@@ -335,20 +463,27 @@ def compose_finish() -> None:
     if s.nn_topic in sel.all_my_folder_ids(s):
         fid = s.nn_topic
     else:
-        fid = f"n{len(s.new_folders) + 1}"
+        fid = s.cp_result["project_id"]  # 새 프로젝트 ID는 백엔드가 만든 값
         s.new_folders.append(NewFolder(fid, s.nn_name.strip() or "새 프로젝트"))
-    mid = f"new{len(s.new_meetings) + 1}"
-    s.new_meetings[mid] = compose_ai.build_meeting(
-        mid, title=s.nn_title, day=s.nn_date, project_id=fid, directory_id=s.nn_type, host=s.nn_host,
-        people=list(s.nn_people),
-        parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
-    )
+    mid = s.cp_result["meeting_id"]
+    meeting = replace(s.preview_meeting, id=mid, project_id=fid, directory_id=s.nn_type)
+    if s.cp_final:  # 최종 JSON으로 회의록을 만듦 (수정 · 추가 · 삭제가 이미 들어 있으므로 화면 수정값은 버림)
+        from state import summary_view
+
+        meeting = summary_view.apply_summary(meeting, s.cp_final)
+        s.final_summaries[mid] = s.cp_final
+        s.summaries[mid] = s.cp_final  # 담당자 추천의 입력 (사용자 수정 · 근거 연결까지 끝난 최종 JSON)
+        for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
+            changes.pop(PREVIEW_ID, None)
+    s.new_meetings[mid] = meeting
     s.created_notes.append((fid, mid))
     for store in (s.assigned, s.todo_due):  # 미리보기에서 정한 담당자 · 마감일을 새 회의로 옮김
         for key in [k for k in store if k.startswith(f"{PREVIEW_ID}:")]:
             store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
     if PREVIEW_ID in s.added_todos:  # 미리보기에서 직접 추가한 액션 아이템도 새 회의로
         s.added_todos[mid] = s.added_todos.pop(PREVIEW_ID)
+    if PREVIEW_ID in s.edited_todos:  # 미리보기에서 수정한 액션 아이템도
+        s.edited_todos[mid] = s.edited_todos.pop(PREVIEW_ID)
     if PREVIEW_ID in s.deleted_todos:  # 미리보기에서 삭제한 액션 아이템도
         s.deleted_todos[mid] = s.deleted_todos.pop(PREVIEW_ID)
     s.preview_meeting = None
@@ -365,6 +500,7 @@ def compose_finish() -> None:
                                f"주관자 {host}님이 검토한 뒤 확정해 주세요.", now_text(), mid)
         open_meeting(mid)
         toast = f"주관자 {host}님에게 「{title}」 회의록 검토를 요청했어요."
+    _clear_job()
     _set(toast=toast,
          compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
 
@@ -533,12 +669,64 @@ def open_add_todo() -> None:
     s = get_state()
     if sel.my_role(repo.meeting(s.meeting_id)) != "host":
         return
-    open_modal("add_todo", todo_nonce=s.todo_nonce + 1, todo_draft_text="", todo_draft_owners=[], todo_draft_due=None)
+    open_modal("add_todo", todo_edit_index=None, todo_nonce=s.todo_nonce + 1, todo_draft_text="", todo_draft_owners=[],
+               todo_draft_due=None, todo_draft_agenda="")
+
+
+def _due_date(t: Todo) -> date | None:
+    """할 일의 마감일 → 날짜 입력칸 값. 연도를 알 수 있을 때만 (없으면 올해로 봄)."""
+    if t.due_iso:
+        try:
+            return datetime.strptime(t.due_iso[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
+    try:
+        return datetime.strptime(f"{date.today().year}/{t.due.split()[0]}", "%Y/%m/%d").date()
+    except (ValueError, IndexError):
+        return None
+
+
+def open_edit_todo(mid: str, index: int) -> None:
+    """액션 아이템을 누름 → 수정 모달 (내용 · 담당자 · 마감일) · 주관자만."""
+    s = get_state()
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    t = dict(sel.todo_items(s, mid))[index]
+    open_modal("edit_todo", todo_edit_index=index, todo_nonce=s.todo_nonce + 1, todo_draft_text=t.text,
+               todo_draft_owners=list(sel.todo_owner_ids(s, sel.todo_key(mid, index), t)), todo_draft_due=_due_date(t))
+
+
+def submit_todo_edit(mid: str, index: int, text: str, owners: list[str], due: date | None) -> bool:
+    """액션 아이템 수정 저장 (주관자만). 근거 연결은 「확정하기」 때 하고, 날짜를 바꾸지 않았으면 원래 시각 표기도 유지해요."""
+    s = get_state()
+    m = repo.meeting(mid)
+    if sel.my_role(m) != "host" or not text.strip() or (due and due < sel.meeting_date(m)):
+        return False
+    key = sel.todo_key(mid, index)
+    t = dict(sel.todo_items(s, mid))[index]
+    if due == _due_date(t):
+        shown, iso = t.due, t.due_iso
+    else:
+        shown, iso = (f"{due.month}/{due.day}", due.isoformat()) if due else ("", "")
+    edit = {"text": text.strip(), "owners": tuple(dict.fromkeys(owners)), "due": shown, "due_iso": iso,
+            "assignee_check": False}  # 수정 창에서 저장 = 담당자를 확인함
+    if mid == PREVIEW_ID and (edit["text"], edit["owners"], iso) != (t.text, t.owners, t.due_iso):
+        edit["src"] = ()  # 값이 바뀌면 「확정하기」 때 근거를 다시 연결 (그 전까지 이전 근거를 보여 주지 않음)
+    s.edited_todos = {**s.edited_todos, mid: {**s.edited_todos.get(mid, {}), index: edit}}
+    s.assigned.pop(key, None)  # 수정한 담당자 · 마감일이 앞서 지정한 값보다 우선
+    s.todo_due.pop(key, None)
+    _set(modal=None, todo_edit_index=None, toast="액션 아이템을 수정했어요.")
+    return True
 
 
 def keep_todo_due(due_key: str) -> None:
     """추가 모달의 마감일: 고르는 즉시 저장 (담당자 고르기 창에 다녀와도 남도록)."""
     get_state().todo_draft_due = st.session_state.get(due_key)
+
+
+def keep_todo_agenda(agenda_key: str) -> None:
+    """추가 모달의 안건: 고르는 즉시 저장 (담당자 고르기 창에 다녀와도 남도록)."""
+    get_state().todo_draft_agenda = st.session_state.get(agenda_key) or ""
 
 
 def open_todo_owner_picker(text: str) -> None:
@@ -555,7 +743,7 @@ def back_to_add_todo(confirm: bool = False) -> None:
     if confirm:
         s.todo_draft_owners = list(s.pick_draft)
     s.pp_nonce += 1
-    _set(modal="add_todo")
+    _set(modal="add_todo" if s.todo_edit_index is None else "edit_todo")
 
 
 def remove_todo_owner(pid: str) -> None:
@@ -564,18 +752,22 @@ def remove_todo_owner(pid: str) -> None:
     s.todo_draft_owners = [p for p in s.todo_draft_owners if p != pid]
 
 
-def submit_todo(mid: str, text: str, owners: list[str], due: str) -> bool:
-    """액션 아이템 직접 추가 (주관자만): 원문에서 근거 발언을 찾아 함께 넣음 (로딩 화면 없이 바로)."""
+def submit_todo(mid: str, text: str, owners: list[str], due: date | None, agenda: str) -> bool:
+    """액션 아이템 직접 추가 (주관자만). 분석 및 검토 화면에서는 근거를 찾지 않고 「확정하기」 때 연결 · 그 밖에는 근거 발언을 찾아 함께 넣음 (로딩 화면 없이 바로)."""
     from state import todo_ai
 
     s = get_state()
     m = repo.meeting(mid)
-    if sel.my_role(m) != "host" or not text.strip():
+    if sel.my_role(m) != "host" or not text.strip() or agenda not in sel.agenda_options(m):
         return False
-    src = todo_ai.rescan(m, text.strip())
-    todo = Todo(text.strip(), tuple(dict.fromkeys(owners)), due, tuple(src))
+    if due and due < sel.meeting_date(m):
+        return False
+    src = () if mid == PREVIEW_ID else todo_ai.rescan(m, text.strip())
+    todo = Todo(text.strip(), tuple(dict.fromkeys(owners)), f"{due.month}/{due.day}" if due else "", tuple(src),
+                due_iso=due.isoformat() if due else "", agenda=agenda)
     s.added_todos = {**s.added_todos, mid: [*s.added_todos.get(mid, []), todo]}
-    note = f"근거 발언 {len(src)}개를 찾았어요." if src else "원문에서 관련 발언을 찾지 못했어요."
+    note = "「확정하기」를 누르면 근거 발언을 찾아 연결해요." if mid == PREVIEW_ID else (
+        f"근거 발언 {len(src)}개를 찾았어요." if src else "원문에서 관련 발언을 찾지 못했어요.")
     _set(modal=None, todo_scope="all", toast=f"액션 아이템을 추가했어요. {note}")
     return True
 
@@ -785,11 +977,11 @@ def confirm_owner_change() -> None:
 
 
 def set_todo_due(key: str, widget_key: str) -> None:
-    """담당자 추천: 액션 아이템 마감일 고치기 (비우면 회의록의 마감일로)."""
+    """담당자 추천: 액션 아이템 마감일 고치기 (비우면 회의록의 마감일로). 연도까지 저장 (DB에 그대로 보냄)."""
     s = get_state()
     d = st.session_state.get(widget_key)
     if d:
-        s.todo_due[key] = f"{d.month}/{d.day}"
+        s.todo_due[key] = d.isoformat()
     else:
         s.todo_due.pop(key, None)
 
@@ -815,19 +1007,62 @@ def finalize_goto(step: int) -> None:
     _set(fin_step=step)
 
 
-def confirm_assignees(mid: str) -> None:
-    """「다음: 최종 회의록」: 주관자가 고른 담당자를 Neo4j에 확정하고 2단계로. 실패하면 1단계에 남아 다시 누르게 함.
+def _final_assignments(s, mid: str, final: dict) -> list[dict]:
+    """담당자 추천 화면의 지금 담당자 · 마감일 중 최종 JSON과 다른 것 → 최종 JSON 변경 목록 (참석자가 아닌 담당자도 이름 · 직무를 함께 보냄)."""
+    items = {d["item_id"]: d for a in final["agendas"] for d in a["major_discussions"]}
+    rows = {r["user_id"]: r for r in repo.people_rows()} if s.assigned else {}
+    changes = []
+    for i, t in sel.todo_items(s, mid):
+        item = items.get(t.item_id)
+        if item is None:
+            continue
+        key = sel.todo_key(mid, i)
+        change: dict = {}
+        owners = list(sel.todo_owner_ids(s, key, t))
+        if owners != [u for u in item["assignee_user_ids"] if u]:
+            change["assignees"] = [{"user_id": u, "name": (rows.get(u) or {}).get("name") or sel.assignee_name(u),
+                                    "job": (rows.get(u) or {}).get("job")} for u in owners]
+        due = s.todo_due.get(key)  # 담당자 추천에서 고친 마감일 (YYYY-MM-DD)
+        if due and due != (item["due"] or "")[:10]:  # 같은 날이면 원래 시각 표기를 그대로 둠
+            change["due"] = due
+        if change:
+            changes.append({"item_id": t.item_id, **change})
+    return changes
 
-    모든 일의 지금 담당자를 보냄 (바꾼 사람 · 회의록 담당자 · 비운 일은 빈 목록 → 앞서 저장한 지정도 덮어씀). 목업 회의는 저장 없이 넘어감.
+
+def confirm_assignees(mid: str) -> None:
+    """「다음: 최종 회의록」: 모든 액션 아이템의 담당자 · 마감일을 한 번에 확정하고 2단계로 (이후 고칠 수 없음).
+
+    담당자나 마감일이 빈 일이 있으면 넘어가지 않음. 요약 JSON이 있는 회의는 백엔드에 한 번에 보내고(전부 저장 or 하나도 안 됨),
+    실패하면 1단계에 남아 다시 누르게 함. 목업 회의는 검사만 하고 저장 없이 넘어감. 시험 모드 회의는 Neo4j에 저장하지 않음.
+    최종 JSON이 있으면 바꾼 담당자 · 마감일을 최종 JSON에도 저장 (회의록 TXT에 반영).
     """
     s = get_state()
-    if mid in s.summaries:
+    items, empty = [], []
+    for i, t in sel.todo_items(s, mid):
+        key = sel.todo_key(mid, i)
+        owners = list(sel.todo_owner_ids(s, key, t))
+        due = parse_due(s.todo_due.get(key) or t.due_iso or t.due)  # 회의록 마감일은 연도가 있는 due_iso로 (화면 표기 11/6은 연도 없음)
+        if not owners or not due:
+            empty.append(t.text)
+        items.append({"item_id": t.item_id, "user_ids": owners, "due": due.isoformat() if due else None})
+    if empty:
+        s.toast = f"담당자나 마감일이 비어 있는 액션 아이템이 {len(empty)}건 있어요. 모두 정해야 최종 회의록으로 넘어갈 수 있어요."
+        return
+    if mid in s.summaries and not s.summaries[mid].get("config", {}).get("ui_test"):  # 시험 모드는 Neo4j에 저장하지 않음
         try:
-            for i, t in sel.todo_items(s, mid):
-                if t.item_id:
-                    repo.set_assignees(t.item_id, list(sel.todo_owner_ids(s, sel.todo_key(mid, i), t)))
+            # shortcut: 확정 화면에서 직접 추가한 일(item_id 없음)은 Neo4j에 없어 보내지 않음, 추가가 확정 전 단계로만 가면 그대로
+            repo.confirm_action_items(mid, [x for x in items if x["item_id"]])
         except api.ApiError as e:
-            s.toast = f"담당자를 저장하지 못했어요. 다시 눌러 주세요. ({e})"
+            s.toast = f"담당자 · 마감일을 저장하지 못했어요. 아무것도 바뀌지 않았으니 다시 눌러 주세요. ({e})"
+            return
+    final = s.final_summaries.get(mid)
+    if final:
+        try:
+            if changes := _final_assignments(s, mid, final):
+                s.final_summaries[mid] = s.summaries[mid] = repo.save_final_assignees(mid, changes)
+        except api.ApiError as e:
+            s.toast = f"최종 회의록에 담당자 · 마감일을 저장하지 못했어요. 다시 눌러 주세요. ({e})"
             return
     _set(fin_step=2)
 

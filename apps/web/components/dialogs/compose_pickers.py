@@ -20,7 +20,7 @@ from state.store import get_state
 from ui.avatar import avatar
 from ui.buttons import button
 from ui.html import markup
-from utils.text import esc
+from utils.text import esc, md_escape
 
 def _footer(kind: str, label: str, *, disabled: bool = False) -> None:
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
@@ -43,38 +43,6 @@ def _person_option(pid: str) -> str:
 # - 사람을 누를 때마다 상자가 새로 그려지는데, 그 즉시(화면에 그리기 전) 이전 스크롤 위치를 되돌려 놓아 삐끗거리지 않음
 # - 칩이 새 줄로 넘어갈 때(줄 수가 늘 때)만 맨 아래로 내려 방금 고른 사람을 보여 줌
 # - 모달을 새로 열면 맨 아래부터
-_CHOSEN_SCROLL_JS = """<script>
-(function () {
-  if (window.__pickChosenScroll) return;
-  window.__pickChosenScroll = true;
-  var mem = {top: null, rows: 0};
-  function rowsOf(box) {
-    var tops = {};
-    box.querySelectorAll('.pick-chip').forEach(function (c) { tops[c.offsetTop] = 1; });
-    return Object.keys(tops).length;
-  }
-  function apply(box) {
-    if (box.__sig === box.dataset.n) return;
-    box.__sig = box.dataset.n;
-    var rows = rowsOf(box);
-    if (mem.top === null || rows > mem.rows) box.scrollTop = box.scrollHeight;
-    else box.scrollTop = mem.top;
-    mem.rows = rows;
-    mem.top = box.scrollTop;
-    if (!box.__listen) {
-      box.__listen = true;
-      box.addEventListener('scroll', function () { mem.top = box.scrollTop; });
-    }
-  }
-  new MutationObserver(function () {
-    var boxes = document.querySelectorAll('.pick-chosen');
-    if (!boxes.length) { mem.top = null; mem.rows = 0; return; }
-    boxes.forEach(apply);
-  }).observe(document.body, {childList: true, subtree: true, characterData: true});
-  document.querySelectorAll('.pick-chosen').forEach(apply);
-})();
-</script>"""
-
 
 def people_picker(kind: str, *, single: bool, title: str | None = None, hint: str | None = None,
                   featured: list[str] | None = None, featured_label: str = "") -> None:
@@ -87,7 +55,9 @@ def people_picker(kind: str, *, single: bool, title: str | None = None, hint: st
     # 지금 고른 사람: 제목은 상자 위에 고정, 사람 칩만 상자 안에서 스크롤
     title = title or ("주관자" if single
                       else f"선택한 참석자 {len(s.pick_draft)}명")
-    if s.pick_draft:
+    if not single and s.pick_draft:  # 칩을 누르면 해제 (참석자 고르기의 주관자는 뺄 수 없음)
+        chips = ""
+    elif s.pick_draft:
         chips = "".join(
             f'<span class="pick-chip">{avatar(sel.person(pid).initial, size=22, host=single)}'
             f'{esc(sel.person(pid).name)}<span class="t">{esc(sel.person(pid).team)}</span></span>'
@@ -96,15 +66,22 @@ def people_picker(kind: str, *, single: bool, title: str | None = None, hint: st
     else:
         chips = '<span class="pick-empty">아직 고른 사람이 없어요</span>'
     # 높이가 고정된 상자 · 넘치면 상자 안에서 스크롤. 스크롤 위치는 _CHOSEN_SCROLL_JS 가 관리
-    markup(f'<div class="pick-chosen-head">{esc(title)}</div>'
-           f'<div class="pick-chosen" data-n="{len(s.pick_draft)}"><div class="pick-chosen-in">{chips}</div></div>')
-    if not single:
-        with st.container(key="pick-js"):  # 화면에 자리를 차지하지 않는 숨은 칸
-            st.html(_CHOSEN_SCROLL_JS, unsafe_allow_javascript=True)
+    if not single and s.pick_draft:
+        markup(f'<div class="pick-chosen-head">{esc(title)}</div>')
+        with st.container(key="pick-chosen-btns", horizontal=True, gap="xsmall", height=104, border=False):
+            for pid in s.pick_draft:
+                fixed = kind == "cp_people" and pid == s.nn_host
+                button(f"{md_escape(sel.person(pid).name)} :gray[{md_escape(sel.person(pid).team)}]",
+                       key=f"pick_chip_{kind}_{pid}", variant="mini", disabled=fixed,
+                       icon=None if fixed else ":material/close:",
+                       on_click=actions.pick_person, args=(pid, False))
+    else:
+        markup(f'<div class="pick-chosen-head">{esc(title)}</div>'
+               f'<div class="pick-chosen" data-n="{len(s.pick_draft)}"><div class="pick-chosen-in">{chips}</div></div>')
 
     # 사람 고르기: 조직도(본부 › 부 › 팀 › 사람) · 검색 · 최근 · 즐겨찾기 (팀 · 조직이 많아도 찾기 쉽게)
     hint = hint or ("이름을 누르면 주관자로 골라져요" if single
-                    else "이름을 누르면 선택 · 다시 누르면 해제" + (" · 주관자는 늘 참석해요" if kind == "cp_people" else ""))
+                    else "이름을 누르면 선택 · 다시 누르거나 위 칩을 누르면 해제" + (" · 주관자는 늘 참석해요" if kind == "cp_people" else ""))
     markup(f'<div class="pick-section-head"><b>사람 찾기</b><span class="hint">{esc(hint)}</span></div>')
     org_people_picker(kind, chosen=list(s.pick_draft), single=single, featured=featured, featured_label=featured_label,
                       on_pick=functools.partial(actions.pick_person, single=single), height=280)

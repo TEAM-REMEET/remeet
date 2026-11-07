@@ -54,6 +54,12 @@ APP_TITLE = "RE:MEET"
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 # 회의 요약 응답을 기다리는 시간 (초). 요약은 몇 분 이상 걸릴 수 있어 nginx의 proxy_read_timeout과 같게 둬요.
 MEETING_SUMMARY_TIMEOUT = 3600
+# 확정(근거 연결 · 검증) 응답을 기다리는 시간 (초) — 백엔드 제한 10분(REVIEW_TIMEOUT_SECONDS)보다 조금 길게
+REVIEW_TIMEOUT = 660
+# 회의 분석이 끝났는지 확인하는 간격 (초)
+SUMMARY_POLL_SECONDS = 3
+# 화면 확인용 시험 모드에서 회의 내용으로 넣는 값 (docs/ui-test-mode.md · backend settings.UI_TEST_TRANSCRIPT와 같음)
+UI_TEST_TRANSCRIPT = "test"
 ASK_TIMEOUT = 120  # 회의에 물어보기: LLM 2번 + 새 회의의 결정 정리 (보통 수 초)
 JIRA_EXPORT_TIMEOUT = 180  # Jira 전송: 액션 아이템마다 담당자 찾기 + 이슈 만들기
 

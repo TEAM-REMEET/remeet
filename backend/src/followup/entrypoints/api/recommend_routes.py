@@ -3,20 +3,23 @@
 POST /api/meetings/{meeting_id}/recommendations   body = 검토가 끝난 MeetingSummary JSON 전체
     → Neo4j 적재 → 이번 회의 액션아이템 담당자 추천 → 액션아이템별 결과 (몇십 초 ~ 몇 분 걸림)
     같은 회의로 다시 보내도 된다 (적재는 건너뛰고, 추천은 실패했던 건만 다시).
-PUT  /api/action-items/{item_id}/assignee          body = {"user_ids": [...]}  주관자가 고른 담당자로 확정
+PUT  /api/meetings/{meeting_id}/action-items      body = {"items": [{item_id, user_ids, due}]}  「다음: 최종 회의록」
+    이 회의의 액션아이템 전부의 담당자 · 마감일을 한 번에 확정 (하나라도 빠지거나 틀리면 아무것도 저장 안 함)
 GET  /api/meetings/{meeting_id}/minutes            최종 회의록 (회의 정보 · 안건 · 액션아이템과 확정 담당자)
 
 오류 응답
-    401 로그인하지 않음 / 404 없는 회의 · 액션아이템 / 400 없는 사람 / 422 입력 형식 오류
+    401 로그인하지 않음 / 404 없는 회의 / 400 빠진 액션아이템 · 없는 사람 / 422 입력 형식 오류 (담당자 없음 · 날짜 형식)
     502 적재 · 추천 실패 — 같은 요청을 다시 보내면 됨
 """
 
 import logging
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from followup.adapters.neo4j import action_items
+from followup.analysis.summary import ui_test
 from followup.analysis.summary.schemas import MeetingSummary
 from followup.application.recommend_assignees import recommend_for_meeting
 from followup.entrypoints.api.routes.auth import current_user
@@ -59,10 +62,10 @@ class Candidate(BaseModel):
 class RecommendedItem(BaseModel):
     item_id: str
     text: str
-    due: str | None
+    due: str | None                 # YYYY-MM-DD (확정 전에는 회의록 값 · 날짜가 아닐 수 있음)
     recommend_status: str | None    # null: 정상 / no_candidate: 후보 없음 / skill_unclear: 필요 스킬을 못 정함
     missing_skills: list[str] | None
-    assignees: list[Assignee]       # 이미 정해진 담당자 (있으면 추천은 비어 있음)
+    assignees: list[Assignee]       # 지금 담당자 (회의록에 적힘 · 주관자가 지정 · 확정)
     predecessors: list[Predecessor]
     candidates: list[Candidate]     # 점수 높은 순 (직급별 2명, 최대 6명) · 담당자를 고른 뒤에도 그대로
 
@@ -72,8 +75,14 @@ class Recommendations(BaseModel):
     items: list[RecommendedItem]
 
 
-class AssigneeUpdate(BaseModel):
-    user_ids: list[str]     # 빈 목록이면 주관자가 지정한 담당자를 비움
+class ConfirmItem(BaseModel):
+    item_id: str
+    user_ids: list[str] = Field(min_length=1)   # 최종 담당자 전부 (회의록 담당자를 그대로 두려면 그 사람도 넣음)
+    due: date                                   # 마감일 (YYYY-MM-DD)
+
+
+class Confirmation(BaseModel):
+    items: list[ConfirmItem]                    # 이 회의의 액션아이템 전부
 
 
 # 동기 함수: 오래 걸리는 동안 다른 요청을 막지 않게 (FastAPI가 스레드에서 실행)
@@ -81,6 +90,8 @@ class AssigneeUpdate(BaseModel):
 def recommend(meeting_id: str, summary: MeetingSummary):
     if summary.meeting_id != meeting_id:
         raise HTTPException(status_code=422, detail=f"주소의 회의({meeting_id})와 본문의 meeting_id({summary.meeting_id})가 달라요.")
+    if ui_test.is_test_summary(summary):    # 화면 확인용 시험 모드: LLM 호출 · Neo4j 적재 없이 시험용 후보
+        return {"meeting_id": meeting_id, "items": ui_test.recommend_items(summary)}
     try:
         items = recommend_for_meeting(summary.model_dump(mode="json"))
     except Exception as e:
@@ -89,15 +100,17 @@ def recommend(meeting_id: str, summary: MeetingSummary):
     return {"meeting_id": meeting_id, "items": items}
 
 
-@router.put("/action-items/{item_id}/assignee", response_model=list[Assignee])
-def assign(item_id: str, body: AssigneeUpdate):
+@router.put("/meetings/{meeting_id}/action-items", response_model=list[RecommendedItem])
+def confirm(meeting_id: str, body: Confirmation):
+    items = [{"item_id": i.item_id, "user_ids": list(dict.fromkeys(i.user_ids)), "due": i.due.isoformat()}
+             for i in body.items]
     try:
-        assignees = action_items.set_assignees(item_id, list(dict.fromkeys(body.user_ids)))
+        result = action_items.confirm_items(meeting_id, items)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    if assignees is None:
-        raise HTTPException(status_code=404, detail=f"액션 아이템 {item_id}를 찾을 수 없어요.")
-    return assignees
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"회의 {meeting_id}를 찾을 수 없어요.")
+    return result
 
 
 @router.get("/meetings/{meeting_id}/minutes")

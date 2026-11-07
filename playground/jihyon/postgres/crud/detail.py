@@ -368,6 +368,12 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
             (meeting_id, actor_id),
         )
         sh = cur.fetchone()
+        sender = None
+        if sh:  # 보낸 사람 "이름 · 팀" (구성원 표 people · teams). 구성원 표에 없으면 id 그대로
+            cur.execute("""SELECT p.name, t.name AS team FROM people p LEFT JOIN teams t ON t.team_id = p.team_id
+                           WHERE p.user_id = %s""", (sh["sender_id"],))
+            who = cur.fetchone()
+            sender = f"{who['name']} · {who['team']}" if who and who["team"] else (who["name"] if who else sh["sender_id"])
         todos = _todos(cur, meeting_id)
 
     when, md = _when(m["held_at"])
@@ -382,7 +388,7 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
         "keywords": keywords,
         "todos": [{k: t[k] for k in ("id", "item_id", "text", "owners", "due", "src", "urgent")} for t in todos],
         # from: 보낸 사람 id → 화면에서 구성원 표로 "이름 · 팀" 으로 바꿔 보여 주기
-        "shared": ({"from": sh["sender_id"], "scope": sh["scope"], "lock_raw": sh["lock_raw"],
+        "shared": ({"from": sender, "sender_id": sh["sender_id"], "scope": sh["scope"], "lock_raw": sh["lock_raw"],
                     "received": f"{sh['shared_on'].month}/{sh['shared_on'].day}"} if sh else None),
         "branch_of": ({"meeting": m["branch_of_id"], "agenda_index": m["branch_agenda_index"]}
                       if m["branch_of_id"] else None),

@@ -14,6 +14,8 @@ AI 가 붙인 「참석자1」, 「A」 같은 임시 발화자는 2단계에서
 
 from __future__ import annotations
 
+from config import UI_TEST_TRANSCRIPT
+
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -150,10 +152,24 @@ def _spacing(parsed: Parsed, kinds: list) -> Parsed:
     return parsed
 
 
-def parse(text: str) -> Parsed:
-    """입력 형식 검사. 지원하지 않는 형식이면 error 에 이유를 적어 돌려 줌 (빈 줄 규칙 포함)."""
+def parse(text: str, fmt: str | None = None) -> Parsed:
+    """입력 형식 검사. 지원하지 않는 형식이면 error 에 이유를 적어 돌려 줌 (빈 줄 규칙 포함).
+
+    fmt: 사용자가 고른 형식. plain이면 콜론 · 대괄호가 있어도 발화자로 보지 않고 한 줄을 문장 하나로 읽어요.
+    회의 내용이 시험용 값(docs/ui-test-mode.md)이면 형식 검사를 건너뛰어요. 시험 모드가 꺼져 있으면 백엔드가 거절해요.
+    """
+    if (text or "").strip().lower() == UI_TEST_TRANSCRIPT:
+        return Parsed(fmt or "plain", (Line(1, None, text.strip()),))
     kinds_all = [(i + 1, *_kind(ln.strip())) for i, ln in enumerate((text or "").splitlines()) if ln.strip()]
-    return _spacing(_parse(text), kinds_all)
+    return _spacing(_parse_plain(text) if fmt == "plain" else _parse(text), kinds_all)
+
+
+def _parse_plain(text: str) -> Parsed:
+    raw = [(i + 1, ln.strip()) for i, ln in enumerate((text or "").splitlines())]
+    raw = [(no, ln) for no, ln in raw if ln]
+    if not raw or sum(len(ln) for _, ln in raw) < 10:  # 비었거나 너무 짧으면 같은 안내
+        return _parse(text)
+    return Parsed("plain", tuple(Line(no, None, ln) for no, ln in raw))
 
 
 def _parse(text: str) -> Parsed:
@@ -191,14 +207,20 @@ ANALYZE_DELAY_SECONDS = 2.0  # 목업: 「확정하기」 때 AI 분석 · 회�
 
 
 def match_speakers(labels: tuple[str, ...], attendees: list[str]) -> tuple[dict[str, str], list[str]]:
-    """발화자 표기 → 참석자 id. 참석자의 이름(전체 · 짧은 이름)과 같아야 해요.
+    """발화자 표기 → 참석자 id. 참석자의 이름(전체 · 짧은 이름) 또는 이름(직무)와 같아야 해요.
 
     돌려줌: (연결, 참석자에 없는 발화자 표기들) · 없는 발화자가 있으면 형식 오류 (미지정으로 두지 않음)
     """
     people = repo.people()
+    jobs = {r["user_id"]: r.get("job") or "" for r in repo.people_rows()}
     mapping, unknown = {}, []
+
+    def same(a: str, b: str) -> bool:
+        return "".join(a.split()) == "".join(b.split())
+
     for label in labels:
-        pid = next((p for p in dict.fromkeys(attendees) if p in people and label in (people[p].short, people[p].name)), "")
+        pid = next((p for p in dict.fromkeys(attendees) if p in people and any(
+            same(label, x) for x in (people[p].short, people[p].name, f"{people[p].name}({jobs.get(p, '')})"))), "")
         if pid:
             mapping[label] = pid
         else:
@@ -326,6 +348,7 @@ def build_meeting(mid: str, *, title: str, day: date, project_id: str | None, di
         title=title,
         when=f"{day.month}월 {day.day}일 ({_WEEKDAYS[day.weekday()]})",
         date=f"{day.month}/{day.day}",
+        held_on=day,
         project_id=project_id,
         directory_id=directory_id,
         host=host,
