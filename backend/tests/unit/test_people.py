@@ -149,6 +149,11 @@ class AuthRouteTests(unittest.TestCase):
 class PeopleRouteTests(unittest.TestCase):
     client = TestClient(app)
 
+    def setUp(self):  # PostgreSQL 반영은 가짜로 (내 컴퓨터 DB 에 테스트 사람이 들어가지 않게)
+        sync = patch("followup.entrypoints.api.routes.people.pg_people.sync_people")
+        self.pg_sync = sync.start()
+        self.addCleanup(sync.stop)
+
     def test_list(self):
         with patch.object(people, "list_people", return_value=[PERSON]):
             response = self.client.get("/api/people", headers=MEMBER)
@@ -167,6 +172,13 @@ class PeopleRouteTests(unittest.TestCase):
             response = self.client.post("/api/people", json=self.NEW, headers=ADMIN)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(create.call_args.args[0]["permission"], "member")
+        self.pg_sync.assert_called_once_with([PERSON])  # Neo4j 저장 뒤 PostgreSQL 에도
+
+    def test_postgres_failure_does_not_fail_request(self):
+        """Neo4j 는 이미 저장됨 → PostgreSQL 반영이 실패해도 201 (다시 보내면 중복 생성되므로). 로그만 남김."""
+        self.pg_sync.side_effect = RuntimeError("PostgreSQL 꺼짐")
+        with patch.object(people, "create_person", return_value=PERSON), self.assertLogs(level="ERROR"):
+            self.assertEqual(self.client.post("/api/people", json=self.NEW, headers=ADMIN).status_code, 201)
 
     def test_create_rejects_bad_input_before_db(self):
         bad = [{**self.NEW, "email": "no-at"}, {**self.NEW, "position": "boss"},

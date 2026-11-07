@@ -9,6 +9,7 @@
         LANGSMITH_PROJECT     LangSmith 프로젝트 (없으면 아래 LANGSMITH_PROJECT 사용)
         SUMMARY_OUTPUT_DIR    summary.json · 단계별 LLM 응답 저장 위치 (없으면 backend/outputs/summary_action)
         NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD   Neo4j 접속 정보
+        DATABASE_URL          PostgreSQL 접속 주소
         AUTH_SECRET           로그인 토큰 서명 키 (길고 무작위인 값)
         ATLASSIAN_EMAIL / ATLASSIAN_API_TOKEN / JIRA_CLOUD_ID / JIRA_PROJECT_KEY / JIRA_ISSUE_TYPE   Jira 전송
         SMTP_HOST / SMTP_PORT / SMTP_USERNAME / SMTP_PASSWORD / MAIL_FROM   메일 전송 (요약본 → 참석자)
@@ -16,7 +17,7 @@
     - 실행 전 validate()로 값의 범위를 확인
 
 구성
-    0. 서버 (Neo4j · 로그인)
+    0. 서버 (Neo4j · PostgreSQL · 로그인)
     1. 저장
     2. LLM 호출 (2-1. 검증 · 재수정 루프)
     3. LangSmith
@@ -39,6 +40,9 @@ load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False, encodi
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
+
+# PostgreSQL (회의 목록 · 권한 · 상태 · 공유 · 알림 · 검색). 로컬 기본값은 backend/docker-compose.postgres.yml
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://remeet:remeet@localhost:5432/remeet")
 
 # 로그인 출입증(토큰) 서명 키. 길고 무작위인 값이어야 하고, 바뀌면 모든 사람이 다시 로그인해야 한다.
 AUTH_SECRET = os.getenv("AUTH_SECRET", "")

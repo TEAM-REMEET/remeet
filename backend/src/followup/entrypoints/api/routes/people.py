@@ -3,14 +3,18 @@
 모든 API는 로그인 토큰이 있어야 하고, 추가 · 수정은 관리자 토큰이어야 한다 (nginx가 /api/를 외부에 공개하므로).
 """
 
+import logging
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from followup.adapters.neo4j import people
+from followup.adapters.postgres import people as pg_people
 from followup.entrypoints.api.routes.auth import current_user, require_admin
 
+logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["people"], dependencies=[Depends(current_user)])
 
 Position = Literal["senior", "mid", "junior"]
@@ -65,6 +69,17 @@ class PersonUpdate(BaseModel):
     skills: list[SkillLevel] | None = None
 
 
+def _sync_postgres(person: dict) -> None:
+    """Neo4j 에 저장한 사람을 PostgreSQL 에도 반영 (회의 권한 · 외래 키가 accounts · people 을 봄).
+
+    Neo4j 는 이미 저장됐으므로 여기서 실패해도 되돌리지 않고 기록만 남김 (같은 요청을 다시 보내면 중복 생성).
+    어긋나면: PYTHONPATH=src python -m followup.entrypoints.seed_postgres sync-from-neo4j
+    """
+    try:
+        pg_people.sync_people([person])
+    except Exception:  # noqa: BLE001 - PostgreSQL 이 꺼져 있어도 구성원 관리는 되게
+        logger.exception("PostgreSQL 구성원 반영 실패: %s (sync-from-neo4j 로 다시 맞추세요)", person.get("user_id"))
+
 def _bad_request(e: ValueError) -> HTTPException:
     return HTTPException(status_code=409 if isinstance(e, people.Conflict) else 400, detail=str(e))
 
@@ -85,9 +100,11 @@ def get_person(user_id: str):
 @router.post("/people", response_model=Person, status_code=201, dependencies=[Depends(require_admin)])
 def create_person(body: PersonCreate):
     try:
-        return people.create_person(body.model_dump())
+        person = people.create_person(body.model_dump())
     except ValueError as e:
         raise _bad_request(e) from e
+    _sync_postgres(person)
+    return person
 
 
 @router.patch("/people/{user_id}", response_model=Person, dependencies=[Depends(require_admin)])
@@ -98,6 +115,7 @@ def update_person(user_id: str, body: PersonUpdate):
         raise _bad_request(e) from e
     if person is None:
         raise HTTPException(status_code=404, detail=f"구성원 {user_id}를 찾을 수 없습니다.")
+    _sync_postgres(person)
     return person
 
 
