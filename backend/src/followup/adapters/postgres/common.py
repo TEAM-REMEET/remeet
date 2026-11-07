@@ -214,6 +214,18 @@ def can_view_raw(
     )
 
 
+def person_label(cur, user_id: str | None) -> str | None:
+    """사람 → 화면 표기 "이름 · 팀" (구성원 표 people · teams). 구성원 표에 없으면 id 그대로 (web ShareInfo.sender)."""
+    if not user_id:
+        return None
+    cur.execute("""SELECT p.name, t.name AS team FROM people p LEFT JOIN teams t ON t.team_id = p.team_id
+                   WHERE p.user_id = %s""", (user_id,))
+    who = cur.fetchone()
+    if who is None:
+        return user_id
+    return f"{who['name']} · {who['team']}" if who["team"] else who["name"]
+
+
 def ensure_updated(cur):
     if cur.rowcount != 1:
         raise NotFoundError("변경할 데이터를 찾을 수 없습니다.")
