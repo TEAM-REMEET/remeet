@@ -110,6 +110,17 @@ def _todo_row(s: AppState, t: model.TodoView, recommend: bool) -> None:
                    on_click=actions.open_owner_change, args=(t.key, t.text))
 
 
+def _restore_assigned(s: AppState, m: Meeting) -> None:
+    """새로고침 · 다시 들어옴: 앞서 「다음」으로 Neo4j에 저장한 담당자(manual)를 화면에 되살림.
+    이 세션에서 이미 고른 담당자가 있으면 그쪽이 우선."""
+    recs = s.recommendations.get(m.id, {})
+    for i, t in sel.todo_items(s, m.id):
+        key = sel.todo_key(m.id, i)
+        saved = [a["user_id"] for a in recs.get(t.item_id, {}).get("assignees", []) if a.get("source") == "manual"]
+        if t.item_id and not t.owners and saved and key not in s.assigned:
+            s.assigned[key] = saved
+
+
 def _load_recommendations(s: AppState, m: Meeting) -> bool:
     """처음 들어올 때 한 번: 검토가 끝난 요약을 Neo4j에 적재하고 담당자를 추천받아 둠 (목업 회의는 건너뜀).
     실패하면 안내와 「다시 시도」를 보여 주고 False (같은 요청을 다시 보내도 됨)."""
@@ -119,6 +130,7 @@ def _load_recommendations(s: AppState, m: Meeting) -> bool:
         loading_overlay("담당자를 추천하고 있어요", "회의록을 저장하고 액션 아이템마다 후보를 찾는 중이에요 · 1~2분 걸릴 수 있어요")
         try:
             s.recommendations[m.id] = repo.recommend_assignees(s.summaries[m.id])
+            _restore_assigned(s, m)
             st.rerun()  # 로딩 표시 지우기
         except ApiError as e:
             st.session_state["_fin_rec_error"] = str(e)
