@@ -51,7 +51,9 @@ from pathlib import Path
 APP_TITLE = "RE:MEET"
 
 # 백엔드(FastAPI) 주소. 로컬은 기본값, Docker는 docker-compose에서 http://backend:8000 을 넣어요.
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+# 로컬 기본값은 localhost 대신 127.0.0.1: Windows는 localhost를 IPv6(::1)로 먼저 시도하는데 uvicorn은 IPv4(127.0.0.1)만 열어서
+# 매 호출마다 약 2초를 기다린 뒤 IPv4로 넘어감 (127.0.0.1은 0.01초)
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 # 회의 요약 응답을 기다리는 시간 (초). 요약은 몇 분 이상 걸릴 수 있어 nginx의 proxy_read_timeout과 같게 둬요.
 MEETING_SUMMARY_TIMEOUT = 3600
 # 확정(근거 연결 · 검증) 응답을 기다리는 시간 (초) — 백엔드 제한 10분(REVIEW_TIMEOUT_SECONDS)보다 조금 길게
@@ -61,6 +63,7 @@ SUMMARY_POLL_SECONDS = 3
 # 화면 확인용 시험 모드에서 회의 내용으로 넣는 값 (docs/ui-test-mode.md · backend settings.UI_TEST_TRANSCRIPT와 같음)
 UI_TEST_TRANSCRIPT = "test"
 ASK_TIMEOUT = 120  # 회의에 물어보기: LLM 2번 + 새 회의의 결정 정리 (보통 수 초)
+EXPORT_TIMEOUT = 180  # 외부 도구 전송 (Jira · 메일): 백엔드 settings.EXPORT_BUDGET_SECONDS 로 이 안에 끝남
 
 # 브랜드 이미지 (assets/brand/)
 BRAND_DIR = Path(__file__).resolve().parent / "assets" / "icons"

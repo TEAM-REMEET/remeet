@@ -13,7 +13,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from config import ASK_TIMEOUT, MEETING_SUMMARY_TIMEOUT, REVIEW_TIMEOUT
+from config import ASK_TIMEOUT, EXPORT_TIMEOUT, MEETING_SUMMARY_TIMEOUT, REVIEW_TIMEOUT
 from data import api
 
 from data.models import (
@@ -64,8 +64,12 @@ def _token() -> str:
     return getattr(st.session_state.get("_app_state"), "token", "")
 
 
-# shortcut: 60초 캐시, 이 앱에서 바꾸면 바로 비우지만 다른 곳(DB 직접 수정)의 변경은 최대 60초 늦게 보임
-@st.cache_data(ttl=60, show_spinner=False)
+# shortcut: 10분 캐시 (클릭마다 Neo4j를 다녀오는 지연을 줄임). 이 앱에서 바꾸면 바로 비우지만,
+#   다른 곳(DB 직접 수정)의 변경은 최대 10분 늦게 보임 → 바로 보려면 프론트 재시작 또는 화면 메뉴의 Clear cache
+_PEOPLE_TTL = 600  # 초
+
+
+@st.cache_data(ttl=_PEOPLE_TTL, show_spinner=False)
 def _people_rows(token: str) -> list[dict]:
     return api.call("GET", "/api/people", token=token)
 
@@ -75,7 +79,7 @@ def people_rows() -> list[dict]:
     return _people_rows(_token())
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=_PEOPLE_TTL, show_spinner=False)
 def _catalog(kind: str, token: str) -> list[dict]:
     return api.call("GET", f"/api/{kind}", token=token)
 
@@ -431,6 +435,21 @@ def ask(question: str) -> dict:
         return api.call("POST", "/api/ask", {"question": question}, _token(), timeout=ASK_TIMEOUT)
     except api.ApiError as e:
         return {"question": question, "answer_status": "error", "summary": str(e)}
+
+
+# ---------------------------------------------------------------- 외부 도구 전송 · Jira
+def export_jira(meeting_title: str, items: list[dict]) -> dict:
+    """액션 아이템 → Jira 이슈 (POST /api/exports/jira). items: [{key, title, owners, due}]
+    → {project_key, created, total, items: [{key, ok, issue_key | error, assigned}]} · 연결 · 설정 실패는 ApiError."""
+    return api.call("POST", "/api/exports/jira", {"meeting_title": meeting_title, "items": items}, _token(),
+                    timeout=EXPORT_TIMEOUT)
+
+
+def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
+    """회의록 글 → 참석자마다 메일 (POST /api/exports/mail). recipients: [user_id]
+    → {items: [{key, ok, sent | error}]} · 연결 · 설정 실패는 ApiError."""
+    return api.call("POST", "/api/exports/mail", {"meeting_title": meeting_title, "body": body, "recipients": recipients},
+                    _token(), timeout=EXPORT_TIMEOUT)
 
 
 # ---------------------------------------------------------------- integrations

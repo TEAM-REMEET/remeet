@@ -10,6 +10,8 @@
         SUMMARY_OUTPUT_DIR    summary.json · 단계별 LLM 응답 저장 위치 (없으면 backend/outputs/summary_action)
         NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD   Neo4j 접속 정보
         AUTH_SECRET           로그인 토큰 서명 키 (길고 무작위인 값)
+        ATLASSIAN_EMAIL / ATLASSIAN_API_TOKEN / JIRA_CLOUD_ID / JIRA_PROJECT_KEY / JIRA_ISSUE_TYPE   Jira 전송
+        SMTP_HOST / SMTP_PORT / SMTP_USERNAME / SMTP_PASSWORD / MAIL_FROM   메일 전송 (요약본 → 참석자)
     - 환경변수는 이 파일에서만 읽음 (openai_client.py 제외)
     - 실행 전 validate()로 값의 범위를 확인
 
@@ -46,6 +48,35 @@ AUTH_TOKEN_DAYS = 7
 def missing() -> list[str]:
     """서버가 동작하는 데 꼭 필요한데 비어 있는 설정 이름."""
     return [name for name in ("NEO4J_PASSWORD", "AUTH_SECRET") if not globals()[name]]
+
+
+# 외부 도구 전송 · Jira (Atlassian MCP). 토큰은 id.atlassian.com 에서 앱을 「Atlassian MCP V2」로 발급
+JIRA_KEYS = ("ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN", "JIRA_CLOUD_ID", "JIRA_PROJECT_KEY")
+JIRA_ISSUE_TYPE = "작업"  # JIRA_ISSUE_TYPE 이 없을 때 · Jira 프로젝트에 실제로 있는 유형 이름이어야 함
+EXPORT_CALL_TIMEOUT = 30  # 외부 도구(Jira MCP · SMTP) 호출 하나를 기다리는 최대 시간 (초)
+# 이 시간이 지나면 남은 아이템은 보내지 않고 '시간 초과'로 돌려줌 (다시 보내기 대상).
+# 접속(30) + 이 시간 + 마지막 아이템(호출 2번 · 60)이 화면이 기다리는 시간(apps/web config.EXPORT_TIMEOUT=180) 안에 들게
+EXPORT_BUDGET_SECONDS = 80
+
+# 외부 도구 전송 · 메일 (SMTP). Gmail 이면 smtp.gmail.com:587 + 앱 비밀번호
+MAIL_KEYS = ("SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "MAIL_FROM")
+SMTP_PORT = 587  # SMTP_PORT 가 없을 때 · 465 면 SSL, 그 밖은 STARTTLS
+
+
+def jira_config() -> dict[str, str] | None:
+    """Jira 연동 값 (JIRA_KEYS + JIRA_ISSUE_TYPE). 하나라도 비면 None (연동 안 됨)."""
+    values = {k: os.getenv(k, "").strip() for k in JIRA_KEYS}
+    if not all(values.values()):
+        return None
+    return values | {"JIRA_ISSUE_TYPE": os.getenv("JIRA_ISSUE_TYPE", "").strip() or JIRA_ISSUE_TYPE}
+
+
+def mail_config() -> dict[str, str] | None:
+    """메일 연동 값 (MAIL_KEYS + SMTP_PORT). 하나라도 비면 None (연동 안 됨)."""
+    values = {k: os.getenv(k, "").strip() for k in MAIL_KEYS}
+    if not all(values.values()):
+        return None
+    return values | {"SMTP_PORT": os.getenv("SMTP_PORT", "").strip() or str(SMTP_PORT)}
 
 # ══════════════════════════════════════════════════════════════════════
 # 1. 저장
