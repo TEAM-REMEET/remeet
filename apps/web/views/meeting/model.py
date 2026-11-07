@@ -10,6 +10,7 @@ from data.models import AgendaTopic, Evidence, Meeting, MeetingResult, TaggedPoi
 from state import selectors as sel
 from state.store import AppState
 from ui.theme import SEGMENT_COLORS
+from utils.dates import due_label
 from utils.text import find_date_token
 
 
@@ -227,7 +228,7 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
             who_tone="mine" if mine else ("att" if t.owners else "warn"),  # (안 씀) 한 덩어리 태그 색
             who_tags=tags,
             unassigned=not t.owners and not s.assigned.get(key),
-            due=(f"{t.due}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent else ""),
+            due=(f"{due_label(t.due)}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent else ""),
             raw_due=t.due,
             urgent=t.urgent,
             speaker=speaker_name(para.speaker) if para else ("원문 비공개" if t.src else "근거 없음"),

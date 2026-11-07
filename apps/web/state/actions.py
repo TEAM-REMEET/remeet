@@ -16,6 +16,7 @@ from components import member_fields as mf
 from data import repository as repo
 from data.models import Todo
 from state import router
+from utils.dates import parse_due
 from utils.files import ALLOWED_LABEL, is_allowed, read_text
 from state import selectors as sel
 from state.store import Delivery, ExportRun, NewFolder, SentShare, get_state, reset_state
@@ -785,11 +786,11 @@ def confirm_owner_change() -> None:
 
 
 def set_todo_due(key: str, widget_key: str) -> None:
-    """담당자 추천: 액션 아이템 마감일 고치기 (비우면 회의록의 마감일로)."""
+    """담당자 추천: 액션 아이템 마감일 고치기 (비우면 회의록의 마감일로). 연도까지 저장 (DB에 그대로 보냄)."""
     s = get_state()
     d = st.session_state.get(widget_key)
     if d:
-        s.todo_due[key] = f"{d.month}/{d.day}"
+        s.todo_due[key] = d.isoformat()
     else:
         s.todo_due.pop(key, None)
 
@@ -816,18 +817,28 @@ def finalize_goto(step: int) -> None:
 
 
 def confirm_assignees(mid: str) -> None:
-    """「다음: 최종 회의록」: 주관자가 고른 담당자를 Neo4j에 확정하고 2단계로. 실패하면 1단계에 남아 다시 누르게 함.
+    """「다음: 최종 회의록」: 모든 액션 아이템의 담당자 · 마감일을 한 번에 확정하고 2단계로 (이후 고칠 수 없음).
 
-    모든 일의 지금 담당자를 보냄 (바꾼 사람 · 회의록 담당자 · 비운 일은 빈 목록 → 앞서 저장한 지정도 덮어씀). 목업 회의는 저장 없이 넘어감.
+    담당자나 마감일이 빈 일이 있으면 넘어가지 않음. 요약 JSON이 있는 회의는 백엔드에 한 번에 보내고(전부 저장 or 하나도 안 됨),
+    실패하면 1단계에 남아 다시 누르게 함. 목업 회의는 검사만 하고 저장 없이 넘어감.
     """
     s = get_state()
+    items, empty = [], []
+    for i, t in sel.todo_items(s, mid):
+        owners = list(sel.todo_owner_ids(s, sel.todo_key(mid, i), t))
+        due = parse_due(t.due)
+        if not owners or not due:
+            empty.append(t.text)
+        items.append({"item_id": t.item_id, "user_ids": owners, "due": due.isoformat() if due else None})
+    if empty:
+        s.toast = f"담당자나 마감일이 비어 있는 액션 아이템이 {len(empty)}건 있어요. 모두 정해야 최종 회의록으로 넘어갈 수 있어요."
+        return
     if mid in s.summaries:
         try:
-            for i, t in sel.todo_items(s, mid):
-                if t.item_id:
-                    repo.set_assignees(t.item_id, list(sel.todo_owner_ids(s, sel.todo_key(mid, i), t)))
+            # shortcut: 확정 화면에서 직접 추가한 일(item_id 없음)은 Neo4j에 없어 보내지 않음, 추가가 확정 전 단계로만 가면 그대로
+            repo.confirm_action_items(mid, [x for x in items if x["item_id"]])
         except api.ApiError as e:
-            s.toast = f"담당자를 저장하지 못했어요. 다시 눌러 주세요. ({e})"
+            s.toast = f"담당자 · 마감일을 저장하지 못했어요. 아무것도 바뀌지 않았으니 다시 눌러 주세요. ({e})"
             return
     _set(fin_step=2)
 
