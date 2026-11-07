@@ -17,6 +17,7 @@ from config import MEETING_SUMMARY_TIMEOUT
 from data import api
 
 from data.models import (
+    MISC_AGENDA,
     Agenda,
     AgendaTopic,
     MeetingResult,
@@ -112,9 +113,24 @@ def me(token: str) -> dict:
     return api.call("GET", "/api/auth/me", token=token)
 
 
-def summarize_meeting(body: dict) -> dict:
-    """회의 등록 입력 → 요약 · 액션 아이템 (POST /api/meetings, 응답은 MeetingSummary JSON). 실패하면 api.ApiError."""
-    return api.call("POST", "/api/meetings", body, _token(), timeout=MEETING_SUMMARY_TIMEOUT)
+def start_summary_job(request: dict, draft: dict) -> dict:
+    """회의 등록 입력 → 요약 · 액션 아이템을 백그라운드로 시작. 입력이 틀리거나(422) 이미 분석 중이면(409) api.ApiError."""
+    return api.call("POST", "/api/meeting-jobs", {"request": request, "draft": draft}, _token())
+
+
+def current_summary_job() -> dict:
+    """내 분석 작업: status = none | running | done(result 포함) | failed(message) · request · draft 는 입력값."""
+    return api.call("GET", "/api/meeting-jobs/current", None, _token())
+
+
+def clear_summary_job() -> None:
+    """끝난 분석 작업 지우기."""
+    api.call("DELETE", "/api/meeting-jobs/current", None, _token())
+
+
+def review_meeting(meeting_id: str, edits: list[dict]) -> dict:
+    """사용자 수정 반영 · 근거 연결 · 검증 → 최종 JSON (POST /api/meetings/{id}/review). 실패하면 api.ApiError."""
+    return api.call("POST", f"/api/meetings/{meeting_id}/review", {"edits": edits}, _token(), timeout=MEETING_SUMMARY_TIMEOUT)
 
 
 def recommend_assignees(summary: dict) -> dict[str, dict]:
@@ -255,6 +271,48 @@ def _added_todos() -> dict[str, list[Todo]]:
     return getattr(state, "added_todos", {}) or {}
 
 
+def _edited_todos() -> dict[str, dict[int, dict]]:
+    """주관자가 수정한 액션 아이템 (AppState.edited_todos)."""
+    try:
+        state = st.session_state.get("_app_state")
+    except Exception:  # noqa: BLE001 - Streamlit 밖(테스트 등)에서 부를 때
+        return {}
+    return getattr(state, "edited_todos", {}) or {}
+
+
+def _deleted_todos() -> dict[str, list[int]]:
+    """삭제한 액션 아이템 번호 (AppState.deleted_todos)."""
+    try:
+        state = st.session_state.get("_app_state")
+    except Exception:  # noqa: BLE001 - Streamlit 밖(테스트 등)에서 부를 때
+        return {}
+    return getattr(state, "deleted_todos", {}) or {}
+
+
+def _with_added_todo(agenda: Agenda, t: Todo) -> Agenda:
+    """안건에 직접 추가한 할 일을 넣음 (상세가 있으면 마지막 소주제 아래, 없으면 요점으로)."""
+    src = tuple(dict.fromkeys([*agenda.src, *t.src]))
+    if not agenda.detailed:
+        return replace(agenda, src=src, points=(*agenda.points, Evidence(t.text, t.src)))
+    point = TaggedPoint("액션", t.text, t.src)
+    last = agenda.topics[-1] if agenda.topics else AgendaTopic(MISC_AGENDA, ())
+    return replace(agenda, src=src, topics=(*agenda.topics[:-1], replace(last, points=(*last.points, point))))
+
+
+def _attach_added_todos(m: Meeting, first: int, gone: list[int]) -> Meeting:
+    """직접 추가한 할 일을 고른 안건에 표시. 기타를 골랐는데 기타 안건이 없으면 맨 뒤에 새로 만들어요."""
+    agendas = list(m.agendas)
+    for i, t in enumerate(m.todos):
+        if i < first or i in gone or not t.agenda:
+            continue
+        at = next((k for k, a in enumerate(agendas) if a.title == t.agenda), None)
+        if at is None:
+            agendas.append(Agenda(t.agenda, "논의됨", "info", False, (), (), detailed=True))
+            at = len(agendas) - 1
+        agendas[at] = _with_added_todo(agendas[at], t)
+    return replace(m, agendas=tuple(agendas))
+
+
 def _fresh_todo(t) -> Todo:
     """세션에 남아 있던 예전 Todo(담당자 한 명 · owner)를 지금 모양(owners)으로. 앱을 띄운 채 코드를 바꾼 경우 대비."""
     if hasattr(t, "owners"):
@@ -268,9 +326,18 @@ def meetings() -> dict[str, Meeting]:
     out = dict(_base_meetings())
     for mid, m in _session_meetings().items():
         out[mid] = replace(m, todos=tuple(_fresh_todo(t) for t in m.todos))
+    first_added = {}
     for mid, todos in _added_todos().items():
         if mid in out and todos:
+            first_added[mid] = len(out[mid].todos)
             out[mid] = replace(out[mid], todos=out[mid].todos + tuple(_fresh_todo(t) for t in todos))
+    for mid, edits in _edited_todos().items():
+        if mid in out and edits:
+            out[mid] = replace(out[mid], todos=tuple(replace(t, urgent=False, **edits[i]) if i in edits else t
+                                                     for i, t in enumerate(out[mid].todos)))
+    gone = _deleted_todos()
+    for mid, first in first_added.items():
+        out[mid] = _attach_added_todos(out[mid], first, gone.get(mid, []))
     return out
 
 

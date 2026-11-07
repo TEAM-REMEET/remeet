@@ -65,7 +65,7 @@ def _agenda(agenda: dict) -> Agenda:
         decisions=_evidence([d for d in discussions if _is_decision(d)]),
         open_issues=_evidence(_active(agenda["unresolved_issues"])),
         next_candidates=_evidence(_active(agenda["next_meeting_topics"])),
-        detailed=True,
+        detailed=True, agenda_id=agenda["agenda_id"],
     )
 
 
@@ -80,7 +80,7 @@ def apply_summary(meeting: Meeting, summary: dict) -> Meeting:
         results += [MeetingResult("결정", e.text, (number,), e.src) for e in view.decisions]
         results += [MeetingResult("미해결", e.text, (number,), e.src) for e in view.open_issues]
         todos += [Todo(d["text"], tuple(u for u in d["assignee_user_ids"] if u), _due(d["due"]),
-                       _src(d["evidence_utterance_indices"]))
+                       _src(d["evidence_utterance_indices"]), item_id=d["item_id"], due_iso=d["due"] or "")
                   for d in _active(raw["major_discussions"]) if d["discussion_tag"] == "액션"]
     return replace(
         meeting,

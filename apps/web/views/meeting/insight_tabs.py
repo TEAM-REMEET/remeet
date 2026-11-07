@@ -269,7 +269,12 @@ def _todo_tab(s: AppState, m: Meeting, mode: str = "edit") -> None:
             with st.container(key=f"todo-{t.index}"):
                 # 할 일 제목 · 지우기는 오른쪽 빨간 휴지통 (주관자만)
                 with st.container(key=f"todohead-{t.index}", horizontal=True, vertical_alignment="top", gap="small"):
-                    st.html(f'<p class="todo-title">{esc(t.text)}</p>', width="stretch")
+                    if can_edit:  # 내용을 누르면 수정 모달 (내용 · 담당자 · 마감일)
+                        button(md_escape(t.text), key=f"todo_edit_{t.key}", variant="pick", width="stretch",
+                               icon=":material/edit:", help="눌러서 내용 · 담당자 · 마감일 수정",
+                               on_click=actions.open_edit_todo, args=(m.id, t.index))
+                    else:
+                        st.html(f'<p class="todo-title">{esc(t.text)}</p>', width="stretch")
                     if can_edit:
                         button("", key=f"todo_del_{t.key}", variant="trash", icon=":material/delete:",
                                help="이 액션 아이템 삭제 (목록 아래에서 되돌릴 수 있어요)",

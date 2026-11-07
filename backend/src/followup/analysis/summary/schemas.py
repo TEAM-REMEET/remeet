@@ -16,9 +16,9 @@
     - 안건 목차 · 회의 결과는 항목을 복사하지 않고 item_id로 참조 (수정 시 항목 한 곳만 고치면 됨)
 """
 
-from typing import Literal, get_args
+from typing import Annotated, Literal, get_args
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -421,6 +421,107 @@ class VerificationResult(BaseModel):
         return [i for i in self.rounds[-1].issues if i.issue_id in ids]
 
 
+# ══════════════════════════════════════════════════════════════════════
+# 4. 사용자 수정(HITL) — 흐름은 application/review_meeting.py
+# ══════════════════════════════════════════════════════════════════════
+# ── 4-1. 사용자 수정 목록 (입력) ───────────────────────
+class HitlCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    op: Literal["create"]
+    agenda_id: str                      # 사용자가 선택한 안건 ('기타'면 기타 안건: 있으면 그 안건, 없으면 새로 만듦)
+    text: str                           # 액션명
+    assignee_user_ids: list[str] = []
+    due: str | None = None              # 날짜로 확인되지 않으면 빈 일정(null)으로 저장
+
+
+class HitlUpdate(BaseModel):
+    # 쓴 값만 변경 (값을 쓰지 않은 필드는 그대로, due: null은 일정을 비움)
+    model_config = ConfigDict(extra="forbid")
+    op: Literal["update"]
+    item_id: str
+    text: str | None = None
+    assignee_user_ids: list[str] | None = None
+    due: str | None = None
+
+
+class HitlDelete(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    op: Literal["delete"]
+    item_id: str
+
+
+class HitlEdits(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    edits: list[Annotated[HitlCreate | HitlUpdate | HitlDelete, Field(discriminator="op")]]
+
+
+# ── 4-2. 근거 연결 · 검증 출력 (prompts/link_evidence.py · verify_evidence.py) ──
+class LLMEvidenceLink(_LLMModel):
+    item_id: str
+    evidence_utterance_indices: list[int]
+    reason: str
+
+
+class LLMEvidenceLinks(_LLMModel):
+    links: list[LLMEvidenceLink]
+
+
+EvidenceIssueType = Literal["관련 없는 근거", "핵심 근거 누락"]
+
+
+class LLMEvidenceIssue(_LLMModel):
+    item_id: str
+    issue_type: EvidenceIssueType
+    description: str
+    utterance_indices: list[int]
+
+
+class LLMEvidenceVerification(_LLMModel):
+    issues: list[LLMEvidenceIssue]      # 빈 배열 = 통과
+
+
+# ── 4-3. 저장 기록 ─────────────────────────────────────
+EvidenceStatus = Literal["NOT_NEEDED", "LINKED", "NO_EVIDENCE", "UNVERIFIED"]
+# NOT_NEEDED: 삭제 · 변경 없음 / LINKED: 연결 · 검증 완료 / NO_EVIDENCE: 전사문에 근거 없음 (빈 배열, 사용자 값은 유지)
+# UNVERIFIED: 마지막 검증까지 문제가 남아 근거를 비움 (빈 배열, 사용자 값은 유지, 비우기 전 근거는 항목 history)
+# NO_EVIDENCE · UNVERIFIED는 REVIEW_REQUIRED로 표시하지 않음
+
+
+class HitlEditRecord(BaseModel):
+    op: Literal["create", "update", "delete"]
+    item_id: str
+    agenda_id: str
+    changed_fields: list[str] = []
+    evidence_before: list[int] = []
+    evidence_after: list[int] = []
+    evidence_status: EvidenceStatus = "LINKED"
+    note: str | None = None             # ex. 날짜로 확인되지 않아 빈 일정으로 저장
+
+
+class HitlEvidenceIssue(BaseModel):
+    issue_id: str                       # h{검증 회차}_i{n}
+    round: int
+    item_id: str
+    issue_type: str
+    description: str
+    utterance_indices: list[int]
+
+
+class HitlEvidenceRound(BaseModel):
+    round: int
+    target_item_ids: list[str]
+    passed: bool
+    issues: list[HitlEvidenceIssue] = []
+
+
+class HitlResult(BaseModel):
+    status: Literal["NO_CHANGES", "COMPLETED"]
+    applied_at: str
+    max_rounds: int
+    edits: list[HitlEditRecord] = []
+    rounds: list[HitlEvidenceRound] = []
+
+
 class MeetingSummary(BaseModel):
     """최종 저장 JSON — {회의 ID}_summary.json"""
     meeting_id: str
@@ -437,6 +538,7 @@ class MeetingSummary(BaseModel):
     agendas: list[Agenda]
     postprocess_log: list[PostprocessLog]
     verification: VerificationResult = VerificationResult()     # 검증 · 재수정 기록 (application/summarize_meeting.py)
+    hitl: HitlResult | None = None      # 사용자 수정 기록 ({회의 ID}_summary_final.json에만, application/review_meeting.py)
 
     def find_item(self, item_id: str) -> BaseItem | None:
         for agenda in self.agendas:

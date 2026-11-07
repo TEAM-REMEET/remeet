@@ -9,6 +9,7 @@ from state.store import me_id
 from data import repository as repo
 from data.models import AgendaTopic, Evidence, Meeting, MeetingResult, TaggedPoint
 from state import selectors as sel
+from state.review_request import PREVIEW_ID
 from state.store import AppState
 from ui.theme import SEGMENT_COLORS
 
@@ -222,6 +223,13 @@ class TodoView:
         return f"- {self.text} ({self.who}, {self.raw_due}까지)" if self.raw_due else f"- {self.text} ({self.who})"
 
 
+def _evidence_pending(s: AppState, m: Meeting, index: int) -> bool:
+    """분석 및 검토 화면에서 추가 · 수정한 할 일: 근거는 「확정하기」 때 연결돼요."""
+    if m.id != PREVIEW_ID or s.preview_meeting is None:
+        return False
+    return index >= len(s.preview_meeting.todos) or index in s.edited_todos.get(m.id, {})
+
+
 def todos(s: AppState, m: Meeting) -> list[TodoView]:
     out = []
     for i, t in sel.todo_items(s, m.id):  # 삭제한 액션 아이템은 빼고 (번호는 원래 그대로)
@@ -241,6 +249,7 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
         else:
             mine, who, tags = False, "담당 미정", (("담당 미정", "warn"),)
         para = m.paragraph(t.src[0]) if t.src else None
+        pending = not t.src and _evidence_pending(s, m, i)
         out.append(TodoView(
             index=i, key=key, text=t.text, mine=mine,
             who=who,
@@ -250,8 +259,11 @@ def todos(s: AppState, m: Meeting) -> list[TodoView]:
             due=(f"{t.due}까지" if t.due else "마감일 없음") + (" · 곧 마감" if t.urgent else ""),
             raw_due=t.due,
             urgent=t.urgent,
-            speaker=speaker_name(para.speaker) if para else ("원문 비공개" if t.src else "근거 없음"),
-            quote=para.text if para else ("원문이 공유되지 않았어요" if t.src else "원문에서 관련 발언을 찾지 못했어요"),
+            speaker=speaker_name(para.speaker) if para else (
+                "원문 비공개" if t.src else "근거 연결 전" if pending else "근거 없음"),
+            quote=para.text if para else (
+                "원문이 공유되지 않았어요" if t.src else "「확정하기」를 누르면 근거 발언을 찾아 연결해요" if pending
+                else "원문에서 관련 발언을 찾지 못했어요"),
             src=t.src,
         ))
     return out

@@ -264,6 +264,7 @@ class Person:
         return self.name[:1]
 
 
+MISC_AGENDA = "기타"  # 어느 안건에도 해당하지 않는 내용을 모으는 안건 (backend settings.MISC_AGENDA_TITLE과 같음)
 NO_SPEAKER = "발화자"  # 발화자 없는 회의록의 원문 화자 표기 (화면에는 이름 없이 문장만 보여 줌)
 
 
@@ -326,6 +327,7 @@ class Agenda:
     open_issues: tuple[Evidence, ...] = ()  # 미해결 이슈
     next_candidates: tuple[Evidence, ...] = ()  # 다음 회의 후보 안건
     detailed: bool = False  # True 면 위 필드가 데이터에 있음 (비어 있어도 그대로 보여 줌)
+    agenda_id: str = ""  # MeetingSummary agenda_id (AI 요약 결과만 · 목업은 빈 값)
 
 
 @dataclass(frozen=True)
@@ -346,6 +348,8 @@ class Todo:
     src: tuple[str, ...]
     urgent: bool = False
     item_id: str = ""  # MeetingSummary 액션 item_id (= Neo4j ActionItem.action_item_id) · 목업 · 직접 추가한 일은 빈 값
+    due_iso: str = ""  # 연도까지 있는 마감일 (YYYY-MM-DD[ HH:MM]) · 화면 표기 due(11/6)로는 연도를 알 수 없어요
+    agenda: str = ""  # 직접 추가할 때 고른 안건 제목 (AI가 만든 할 일은 빈 값)
 
 
 @dataclass(frozen=True)
@@ -378,6 +382,7 @@ class Meeting:
     agendas: tuple[Agenda, ...]
     todos: tuple[Todo, ...]
     directory_id: str = "normal"  # 회의 종류: weekly | monthly | normal
+    held_on: object = None  # 회의 날짜 (datetime.date · 연도까지) · 목업은 비어 있음 → date(M/D)로 계산
     shared: ShareInfo | None = None
     branch_of: str | None = None  # 안건 분리로 생긴 회의라면 원래 회의 id
     results: tuple[MeetingResult, ...] = ()  # 회의 결과 (없으면 결정·미해결로 대신 만듦)

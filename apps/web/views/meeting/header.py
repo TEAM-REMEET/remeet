@@ -8,6 +8,7 @@ from components.member_pills import member_pills
 from data import repository as repo
 from data.models import Meeting
 from state import actions
+from state import minutes_text
 from state import selectors as sel
 from state.store import AppState
 from ui.buttons import button
@@ -37,8 +38,18 @@ def _shared_notice(s: AppState) -> None:
         notice(f"{esc(s.last_share_to)}에게 공유했어요. 「공유한 회의」에서 확인할 수 있어요.", "success")
 
 
+def _minutes_download(s: AppState, m: Meeting) -> None:
+    """회의록 TXT 다운로드 · 사용자 수정과 근거 연결까지 끝난 최종 JSON이 있는 회의만."""
+    final = s.final_summaries.get(m.id)
+    if not final:
+        return
+    with st.container(key="b-secondary-md_minutes", width="content"):
+        st.download_button("회의록 다운로드", minutes_text.render_minutes(final), file_name=minutes_text.minutes_filename(final),
+                           mime="text/plain", key="md_minutes", icon=":material/download:")
+
+
 def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
-    """최종 회의록 머리말 (편집 없음): 삭제 · 공유 · (deliver) 결과 전달 / (전달 뒤) 외부 도구 전송.
+    """최종 회의록 머리말 (편집 없음): 삭제 · 회의록 다운로드 · 공유 · (deliver) 결과 전달 / (전달 뒤) 외부 도구 전송.
 
     deliver: 회의록 확정 2단계 — 아직 결과 전달 전이라 「결과 전달」 버튼
     """
@@ -52,6 +63,7 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
             if host:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
                        on_click=actions.open_delete, args=("meeting", m.id))
+                _minutes_download(s, m)
                 button("공유", key="md_share", variant="secondary", icon=":material/share:",
                        on_click=actions.open_share)
                 if deliver:  # → 결과 전달 화면 (그다음 외부 도구 전송)
@@ -61,6 +73,7 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
                     button("외부 도구 전송", key="md_export", variant="primary", icon=":material/output:",
                            on_click=actions.open_export, args=(m.id,))
             else:
+                _minutes_download(s, m)
                 st.html(f'<span class="read-note">{esc(model.read_note(m))}</span>', width="content")
     _people_row(m)
     _shared_notice(s)

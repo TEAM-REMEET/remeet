@@ -7,11 +7,12 @@ AppState + 목업 데이터를 조합해 화면이 바로 쓸 수 있는 값을 
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from datetime import date
 
 from state.store import me_id
 from config import YEAR
 from data import repository as repo
-from data.models import Folder, Meeting, Person, Todo
+from data.models import MISC_AGENDA, Folder, Meeting, Person, Todo
 from state.store import AppState
 from utils.dates import date_key
 
@@ -32,6 +33,20 @@ def assignee_name(who: str) -> str:
     """지정한 담당자(user_id) → 이름. 구성원에 없는 값(목업 후보 이름)은 그대로 보여 줘요."""
     p = repo.people().get(who)
     return p.name if p else who
+
+
+def meeting_date(m: Meeting) -> date:
+    """회의 날짜 (연도까지). 할 일 마감일은 이 날짜 이전으로 고를 수 없어요."""
+    if m.held_on:
+        return m.held_on
+    month, day = m.date.split("/")
+    return date(YEAR, int(month), int(day))
+
+
+def agenda_options(m: Meeting) -> list[str]:
+    """할 일을 넣을 수 있는 안건: 지금 안건들 + 맨 뒤에 기타 (이미 있으면 그대로)."""
+    titles = [a.title for a in m.agendas if a.title != MISC_AGENDA]
+    return [*titles, MISC_AGENDA]
 
 
 def speaker_id(short_name: str) -> str | None:

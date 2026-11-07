@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import replace
+from datetime import date, datetime
 
 import streamlit as st
 
@@ -192,12 +193,15 @@ def close_modal() -> None:
 def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
-                cp_example="plain", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None)
+                cp_example="plain", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
 
 
 def open_new_note() -> None:
     """'새 회의록' → 작성 화면. 보고 있던 프로젝트 · 회의 종류를 미리 골라 둡니다."""
     s = get_state()
+    if s.cp_job_running or (s.cp_step == 2 and s.preview_meeting is not None):  # 분석 중이거나 검토 중이면 그 화면으로
+        go("compose")
+        return
     mtype = s.archive_type if s.screen == "archive" and s.archive_type else s.nn_type
     topic = s.folder_id if s.screen == "folder" and s.folder_id in sel.folders(s) else ""
     go("compose", nn_type=mtype, nn_topic=topic, nn_name="", nn_host=me_id(), nn_people=[me_id()],
@@ -221,6 +225,7 @@ def compose_example(kind: str) -> None:
 def compose_reset() -> None:
     """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
     s = get_state()
+    _clear_job()
     _set(compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
 
 
@@ -317,27 +322,87 @@ def compose_goto(step: int) -> None:
             _format_error(str(e))
             return
         if request != s.cp_result_request:  # 내용이 같으면 받아 둔 결과를 다시 보여 주고 AI를 호출하지 않음
-            s.preview_meeting, s.cp_result = None, None
+            s.preview_meeting, s.cp_result, s.cp_final = None, None, None
             s.added_todos.pop(PREVIEW_ID, None)
+            s.edited_todos.pop(PREVIEW_ID, None)
             s.deleted_todos.pop(PREVIEW_ID, None)
+            try:
+                repo.start_summary_job(request, {"nn_name": s.nn_name})
+            except api.ApiError as e:
+                _format_error(str(e))
+                return
+            s.cp_job_running = True
         s.cp_request = request
         _set(meeting_id=PREVIEW_ID, insight_tab="sum", left_tab="raw", highlight=[], highlight_key="", raw_query="")
     _set(cp_step=step, nn_error="")
 
 
-def compose_analyze() -> None:
-    """2단계: 요약 · 액션 아이템 추출을 요청하고 결과를 미리보기 회의록에 넣음. 실패하면 1단계로 돌아가 안내 (같은 내용으로 다시 보내면 이어서 진행)."""
+def _apply_result(s, result: dict) -> None:
+    """분석 결과 → 미리보기 회의록."""
     from state import summary_view
 
+    s.cp_result, s.cp_result_request, s.cp_job_running = result, s.cp_request, False
+    s.preview_meeting = summary_view.apply_summary(_build_preview(s, PREVIEW_ID), result)
+
+
+def _clear_job() -> None:
+    """끝난 분석 작업 지우기 (실패해도 다음 등록에 지장 없음)."""
+    try:
+        repo.clear_summary_job()
+    except api.ApiError:
+        pass
+
+
+def compose_poll() -> None:
+    """분석이 끝났는지 확인: 끝나면 결과를 넣고, 실패하면 1단계로 돌아가 안내 (같은 내용으로 다시 보내면 이어서 진행)."""
     s = get_state()
     try:
-        result = repo.summarize_meeting(s.cp_request)
-    except api.ApiError as e:
-        s.cp_step = 1
-        _format_error(str(e))
+        job = repo.current_summary_job()
+    except api.ApiError:  # 잠깐 연결이 안 돼도 다음 확인 때 다시 봄
         return
-    s.cp_result, s.cp_result_request = result, s.cp_request
-    s.preview_meeting = summary_view.apply_summary(_build_preview(s, PREVIEW_ID), result)
+    if job["status"] == "done":
+        _apply_result(s, job["result"])
+    elif job["status"] != "running":
+        s.cp_job_running, s.cp_step = False, 1
+        _format_error(job.get("message") or "분석 작업을 찾을 수 없어요. 다시 시도해 주세요.")
+
+
+def compose_resume() -> None:
+    """새 회의록 화면에 처음 왔을 때: 서버에 분석 작업이 있으면 입력값과 진행 상태를 복원 (브라우저를 닫았다 와도)."""
+    from datetime import date as _date
+
+    from state import compose_ai
+
+    s = get_state()
+    if s.cp_job_synced:
+        return
+    s.cp_job_synced = True
+    if s.cp_request:  # 이 세션에서 이미 진행 중
+        return
+    try:
+        job = repo.current_summary_job()
+    except api.ApiError:
+        return
+    if job["status"] == "none":
+        return
+    req = job["request"]
+    s.nn_title, s.nn_date, s.nn_host = req["title"], _date.fromisoformat(req["date"]), req["host_user_id"]
+    s.nn_people = [a["user_id"] for a in req["attendees"]]
+    s.nn_type, s.cp_example, s.nn_text, s.nn_files = req["directory_id"], req["transcript_format"], req["transcript"], []
+    s.nn_topic, s.nn_name = req.get("project_id") or "new", job.get("draft", {}).get("nn_name", "")
+    labels = compose_ai.parse(req["transcript"], req["transcript_format"]).labels
+    s.nn_speaker_map = compose_ai.match_speakers(labels, s.nn_people)[0]
+    s.cp_request = req
+    s.compose_nonce += 1
+    if job["status"] == "failed":
+        s.cp_step = 1
+        _format_error(job.get("message") or "분석에 실패했어요. 다시 시도해 주세요.")
+        return
+    s.cp_step = 2
+    if job["status"] == "running":
+        s.cp_job_running = True
+    else:
+        _apply_result(s, job["result"])
 
 
 def compose_clear_files() -> None:
@@ -352,6 +417,22 @@ def open_compose_confirm() -> None:
 def compose_confirm() -> None:
     """확인 창에서 확정 · 검토 요청: 다음 화면에서 로딩 화면을 띄운 채 회의록을 만듦 (views/compose.py → compose_finish)."""
     _set(modal=None, cp_finishing=True)
+
+
+def compose_review() -> bool:
+    """「확정하기」: 화면에서 고친 값을 보내 근거 연결 · 검증을 거친 최종 JSON을 받음. 실패하면 안내 후 False (다시 누르면 이어서 진행)."""
+    from state import review_request
+
+    s = get_state()
+    if s.nn_host != me_id():  # 주관자가 아니면 수정 없이 주관자에게 검토 요청
+        return True
+    try:
+        s.cp_final = repo.review_meeting(s.cp_result["meeting_id"], review_request.build_edits(s))
+    except api.ApiError as e:
+        s.cp_finishing = False
+        _format_error(str(e))
+        return False
+    return True
 
 
 def compose_finish() -> None:
@@ -371,13 +452,23 @@ def compose_finish() -> None:
         fid = s.cp_result["project_id"]  # 새 프로젝트 ID는 백엔드가 만든 값
         s.new_folders.append(NewFolder(fid, s.nn_name.strip() or "새 프로젝트"))
     mid = s.cp_result["meeting_id"]
-    s.new_meetings[mid] = replace(s.preview_meeting, id=mid, project_id=fid, directory_id=s.nn_type)
+    meeting = replace(s.preview_meeting, id=mid, project_id=fid, directory_id=s.nn_type)
+    if s.cp_final:  # 최종 JSON으로 회의록을 만듦 (수정 · 추가 · 삭제가 이미 들어 있으므로 화면 수정값은 버림)
+        from state import summary_view
+
+        meeting = summary_view.apply_summary(meeting, s.cp_final)
+        s.final_summaries[mid] = s.cp_final
+        for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
+            changes.pop(PREVIEW_ID, None)
+    s.new_meetings[mid] = meeting
     s.created_notes.append((fid, mid))
     for store in (s.assigned, s.todo_due):  # 미리보기에서 정한 담당자 · 마감일을 새 회의로 옮김
         for key in [k for k in store if k.startswith(f"{PREVIEW_ID}:")]:
             store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
     if PREVIEW_ID in s.added_todos:  # 미리보기에서 직접 추가한 액션 아이템도 새 회의로
         s.added_todos[mid] = s.added_todos.pop(PREVIEW_ID)
+    if PREVIEW_ID in s.edited_todos:  # 미리보기에서 수정한 액션 아이템도
+        s.edited_todos[mid] = s.edited_todos.pop(PREVIEW_ID)
     if PREVIEW_ID in s.deleted_todos:  # 미리보기에서 삭제한 액션 아이템도
         s.deleted_todos[mid] = s.deleted_todos.pop(PREVIEW_ID)
     s.preview_meeting = None
@@ -394,6 +485,7 @@ def compose_finish() -> None:
                                f"주관자 {host}님이 검토한 뒤 확정해 주세요.", now_text(), mid)
         open_meeting(mid)
         toast = f"주관자 {host}님에게 「{title}」 회의록 검토를 요청했어요."
+    _clear_job()
     _set(toast=toast,
          compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
 
@@ -562,12 +654,63 @@ def open_add_todo() -> None:
     s = get_state()
     if sel.my_role(repo.meeting(s.meeting_id)) != "host":
         return
-    open_modal("add_todo", todo_nonce=s.todo_nonce + 1, todo_draft_text="", todo_draft_owners=[], todo_draft_due=None)
+    open_modal("add_todo", todo_edit_index=None, todo_nonce=s.todo_nonce + 1, todo_draft_text="", todo_draft_owners=[],
+               todo_draft_due=None, todo_draft_agenda="")
+
+
+def _due_date(t: Todo) -> date | None:
+    """할 일의 마감일 → 날짜 입력칸 값. 연도를 알 수 있을 때만 (없으면 올해로 봄)."""
+    if t.due_iso:
+        try:
+            return datetime.strptime(t.due_iso[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
+    try:
+        return datetime.strptime(f"{date.today().year}/{t.due.split()[0]}", "%Y/%m/%d").date()
+    except (ValueError, IndexError):
+        return None
+
+
+def open_edit_todo(mid: str, index: int) -> None:
+    """액션 아이템을 누름 → 수정 모달 (내용 · 담당자 · 마감일) · 주관자만."""
+    s = get_state()
+    if sel.my_role(repo.meeting(mid)) != "host":
+        return
+    t = dict(sel.todo_items(s, mid))[index]
+    open_modal("edit_todo", todo_edit_index=index, todo_nonce=s.todo_nonce + 1, todo_draft_text=t.text,
+               todo_draft_owners=list(sel.todo_owner_ids(s, sel.todo_key(mid, index), t)), todo_draft_due=_due_date(t))
+
+
+def submit_todo_edit(mid: str, index: int, text: str, owners: list[str], due: date | None) -> bool:
+    """액션 아이템 수정 저장 (주관자만). 근거 연결은 「확정하기」 때 하고, 날짜를 바꾸지 않았으면 원래 시각 표기도 유지해요."""
+    s = get_state()
+    m = repo.meeting(mid)
+    if sel.my_role(m) != "host" or not text.strip() or (due and due < sel.meeting_date(m)):
+        return False
+    key = sel.todo_key(mid, index)
+    t = dict(sel.todo_items(s, mid))[index]
+    if due == _due_date(t):
+        shown, iso = t.due, t.due_iso
+    else:
+        shown, iso = (f"{due.month}/{due.day}", due.isoformat()) if due else ("", "")
+    edit = {"text": text.strip(), "owners": tuple(dict.fromkeys(owners)), "due": shown, "due_iso": iso}
+    if mid == PREVIEW_ID and (edit["text"], edit["owners"], iso) != (t.text, t.owners, t.due_iso):
+        edit["src"] = ()  # 값이 바뀌면 「확정하기」 때 근거를 다시 연결 (그 전까지 이전 근거를 보여 주지 않음)
+    s.edited_todos = {**s.edited_todos, mid: {**s.edited_todos.get(mid, {}), index: edit}}
+    s.assigned.pop(key, None)  # 수정한 담당자 · 마감일이 앞서 지정한 값보다 우선
+    s.todo_due.pop(key, None)
+    _set(modal=None, todo_edit_index=None, toast="액션 아이템을 수정했어요.")
+    return True
 
 
 def keep_todo_due(due_key: str) -> None:
     """추가 모달의 마감일: 고르는 즉시 저장 (담당자 고르기 창에 다녀와도 남도록)."""
     get_state().todo_draft_due = st.session_state.get(due_key)
+
+
+def keep_todo_agenda(agenda_key: str) -> None:
+    """추가 모달의 안건: 고르는 즉시 저장 (담당자 고르기 창에 다녀와도 남도록)."""
+    get_state().todo_draft_agenda = st.session_state.get(agenda_key) or ""
 
 
 def open_todo_owner_picker(text: str) -> None:
@@ -584,7 +727,7 @@ def back_to_add_todo(confirm: bool = False) -> None:
     if confirm:
         s.todo_draft_owners = list(s.pick_draft)
     s.pp_nonce += 1
-    _set(modal="add_todo")
+    _set(modal="add_todo" if s.todo_edit_index is None else "edit_todo")
 
 
 def remove_todo_owner(pid: str) -> None:
@@ -593,18 +736,22 @@ def remove_todo_owner(pid: str) -> None:
     s.todo_draft_owners = [p for p in s.todo_draft_owners if p != pid]
 
 
-def submit_todo(mid: str, text: str, owners: list[str], due: str) -> bool:
-    """액션 아이템 직접 추가 (주관자만): 원문에서 근거 발언을 찾아 함께 넣음 (로딩 화면 없이 바로)."""
+def submit_todo(mid: str, text: str, owners: list[str], due: date | None, agenda: str) -> bool:
+    """액션 아이템 직접 추가 (주관자만). 분석 및 검토 화면에서는 근거를 찾지 않고 「확정하기」 때 연결 · 그 밖에는 근거 발언을 찾아 함께 넣음 (로딩 화면 없이 바로)."""
     from state import todo_ai
 
     s = get_state()
     m = repo.meeting(mid)
-    if sel.my_role(m) != "host" or not text.strip():
+    if sel.my_role(m) != "host" or not text.strip() or agenda not in sel.agenda_options(m):
         return False
-    src = todo_ai.rescan(m, text.strip())
-    todo = Todo(text.strip(), tuple(dict.fromkeys(owners)), due, tuple(src))
+    if due and due < sel.meeting_date(m):
+        return False
+    src = () if mid == PREVIEW_ID else todo_ai.rescan(m, text.strip())
+    todo = Todo(text.strip(), tuple(dict.fromkeys(owners)), f"{due.month}/{due.day}" if due else "", tuple(src),
+                due_iso=due.isoformat() if due else "", agenda=agenda)
     s.added_todos = {**s.added_todos, mid: [*s.added_todos.get(mid, []), todo]}
-    note = f"근거 발언 {len(src)}개를 찾았어요." if src else "원문에서 관련 발언을 찾지 못했어요."
+    note = "「확정하기」를 누르면 근거 발언을 찾아 연결해요." if mid == PREVIEW_ID else (
+        f"근거 발언 {len(src)}개를 찾았어요." if src else "원문에서 관련 발언을 찾지 못했어요.")
     _set(modal=None, todo_scope="all", toast=f"액션 아이템을 추가했어요. {note}")
     return True
 

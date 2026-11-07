@@ -13,16 +13,15 @@
 
 from __future__ import annotations
 
-import time
 
 import streamlit as st
 
 from components.member_pills import member_pills
+from config import SUMMARY_POLL_SECONDS
 from state.store import me_id
 from data import repository as repo
 from state import actions
 from state import compose_ai as ai
-from state import minutes_text
 from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button, button_group
@@ -215,23 +214,40 @@ def _step1(s: AppState, n: int) -> None:
 
 
 # ================================================================ 2단계: 분석 및 검토 (회의 상세와 같은 화면)
+@st.fragment(run_every=SUMMARY_POLL_SECONDS)
+def _poll_analysis() -> None:
+    """이 칸만 주기적으로 다시 그려 분석이 끝났는지 확인 (다른 화면에 있으면 돌지 않음)."""
+    s = get_state()
+    actions.compose_poll()
+    if not s.cp_job_running:
+        st.rerun(scope="app")
+
+
+def _analyzing(s: AppState) -> None:
+    """분석 진행 중 화면: 입력을 다시 고치거나 새로 등록할 수 없고, 다른 화면으로는 자유롭게 이동해요."""
+    with st.container(key="wz-card-full", gap="medium"):
+        _card_head("회의를 분석하고 있어요", "진행 중")
+        _info(f"<b>「{esc(s.nn_title)}」의 요약과 액션 아이템을 정리하고 있어요</b>"
+              "<span>몇 분 걸릴 수 있어요. 다른 화면으로 이동해도 분석은 계속되고, 「새 회의록」으로 돌아오면 "
+              "이어서 확인할 수 있어요. 끝나기 전에는 새 회의록을 등록할 수 없어요.</span>")
+        _poll_analysis()
+
+
 def _step2(s: AppState) -> None:
-    if s.preview_meeting is None:  # 아직 결과가 없으면 백엔드에 요청 (끝나면 다시 그림 · 실패하면 1단계로)
-        loading_overlay("회의를 분석하고 있어요", "요약과 액션 아이템을 정리하는 중이에요. 몇 분 걸릴 수 있어요.")
-        actions.compose_analyze()
+    if s.cp_job_running:  # 뒤에서 분석 중: 다른 화면에 다녀와도 이 화면으로 돌아옴
+        _analyzing(s)
+        return
+    if s.preview_meeting is None:
+        actions.compose_goto(1)
         st.rerun()
     m = s.preview_meeting
     s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
-    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · 회의록 다운로드 · 확정하기)
+    # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
             button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
-            with st.container(key="b-secondary-cp_minutes", width="content"):
-                st.download_button("회의록 다운로드", minutes_text.render_minutes(s.cp_result),
-                                   file_name=minutes_text.minutes_filename(s.cp_result), mime="text/plain",
-                                   key="cp_minutes")
             # 주관자는 확정 · 주관자가 아니면 주관자에게 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
             button("확정하기" if s.nn_host == me_id() else "검토 요청하기", key="cp_finish", variant="primary",
                    icon=":material/task_alt:" if s.nn_host == me_id() else ":material/rate_review:",
@@ -255,13 +271,14 @@ def _step2(s: AppState) -> None:
             loading_overlay("회의록을 확정하고 있어요", "분석 결과로 회의록을 만들고 담당자 추천을 준비하는 중이에요")
         else:
             loading_overlay("검토를 요청하고 있어요", f"회의록을 만들어 주관자 {sel.name_of(s.nn_host)}님에게 보내는 중이에요")
-        time.sleep(ai.ANALYZE_DELAY_SECONDS)  # 실제 서비스에서는 AI 서버 호출
-        actions.compose_finish()
+        if actions.compose_review():  # 수정 반영 · 근거 연결 · 검증 (실패하면 안내 후 이 화면에 머무름)
+            actions.compose_finish()
         st.rerun()
 
 
 # ================================================================ 진입점
 def render() -> None:
+    actions.compose_resume()  # 서버에 분석 작업이 있으면 입력값 · 진행 상태 복원
     s = get_state()
     n = s.compose_nonce
     if s.nn_host and s.nn_host not in s.nn_people:  # 주관자는 참석자에 늘 들어 있음 (예전 세션 포함)

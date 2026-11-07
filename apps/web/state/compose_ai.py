@@ -14,6 +14,8 @@ AI 가 붙인 「참석자1」, 「A」 같은 임시 발화자는 2단계에서
 
 from __future__ import annotations
 
+from config import UI_TEST_TRANSCRIPT
+
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -154,7 +156,10 @@ def parse(text: str, fmt: str | None = None) -> Parsed:
     """입력 형식 검사. 지원하지 않는 형식이면 error 에 이유를 적어 돌려 줌 (빈 줄 규칙 포함).
 
     fmt: 사용자가 고른 형식. plain이면 콜론 · 대괄호가 있어도 발화자로 보지 않고 한 줄을 문장 하나로 읽어요.
+    회의 내용이 시험용 값(docs/ui-test-mode.md)이면 형식 검사를 건너뛰어요. 시험 모드가 꺼져 있으면 백엔드가 거절해요.
     """
+    if (text or "").strip().lower() == UI_TEST_TRANSCRIPT:
+        return Parsed(fmt or "plain", (Line(1, None, text.strip()),))
     kinds_all = [(i + 1, *_kind(ln.strip())) for i, ln in enumerate((text or "").splitlines()) if ln.strip()]
     return _spacing(_parse_plain(text) if fmt == "plain" else _parse(text), kinds_all)
 
@@ -343,6 +348,7 @@ def build_meeting(mid: str, *, title: str, day: date, project_id: str | None, di
         title=title,
         when=f"{day.month}월 {day.day}일 ({_WEEKDAYS[day.weekday()]})",
         date=f"{day.month}/{day.day}",
+        held_on=day,
         project_id=project_id,
         directory_id=directory_id,
         host=host,

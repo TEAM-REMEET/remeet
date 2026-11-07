@@ -72,8 +72,10 @@ class SummaryState(TypedDict, total=False):
 class _StepRunner:
     """실행 1회 전용 LLM 호출기 — 호출 상한과 단계별 응답 재사용을 담당 (동시 실행 간에 값을 공유하지 않음)"""
 
-    def __init__(self, llm: StructuredLLM, store: SummaryStore, meeting_id: str, use_cache: bool):
+    def __init__(self, llm: StructuredLLM, store: SummaryStore, meeting_id: str, use_cache: bool,
+                 max_calls: int | None = None):
         self.llm, self.store, self.meeting_id, self.use_cache = llm, store, meeting_id, use_cache
+        self.max_calls = cfg.max_llm_calls() if max_calls is None else max_calls
         self.api_calls = 0
 
     def _key(self, system: str, user: str, schema: type[BaseModel], step: str, effort: str | None) -> str:
@@ -100,9 +102,8 @@ class _StepRunner:
         if cached is not None:
             logger.info("[%s] %s: 저장된 응답 사용", self.meeting_id, step)
             return cached
-        if self.api_calls >= cfg.max_llm_calls():
-            raise LLMCallLimitError(f"LLM 호출 상한 초과 — 실행 1회당 최대 {cfg.max_llm_calls()}회 "
-                                    f"({cfg.llm_call_plan_text()}), 호출하지 않고 중단")
+        if self.api_calls >= self.max_calls:
+            raise LLMCallLimitError(f"LLM 호출 상한 초과 — 실행 1회당 최대 {self.max_calls}회, 호출하지 않고 중단")
         self.api_calls += 1     # 실패해도 센 횟수로 둠
         logger.info("[%s] %s: LLM 호출 (추론 강도 %s)", self.meeting_id, step, effort)
         parsed = self.llm.parse(system, user, schema, effort)
