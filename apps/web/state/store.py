@@ -211,6 +211,9 @@ class AppState:
     nn_error: str = ""  # 작성 화면 오류 안내 (빈 값이면 없음)
     # 3단계 작성: 1 회의 내용 입력 → 2 발화자 확인 → 3 분석 및 결과
     cp_step: int = 1  # 1 회의 내용 입력 · 2 분석 및 검토
+    cp_request: dict | None = None  # 보낼 POST /api/meetings 요청
+    cp_result: dict | None = None  # 백엔드가 돌려준 요약 결과 (저장된 summary.json과 같은 내용)
+    cp_result_request: dict | None = None  # cp_result를 만든 요청 (같으면 AI를 다시 호출하지 않음)
     cp_finishing: bool = False  # 2단계 「확정하기」를 눌러 회의록을 만드는 중 (로딩 화면)
     cp_text_rev: int = 0  # 예시를 넣을 때마다 바뀌어 입력칸을 새로 그림
     nn_title: str = ""

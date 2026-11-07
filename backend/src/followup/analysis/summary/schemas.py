@@ -424,7 +424,9 @@ class VerificationResult(BaseModel):
 class MeetingSummary(BaseModel):
     """최종 저장 JSON — {회의 ID}_summary.json"""
     meeting_id: str
-    project_id: str | None = None       # 웹 폼에서 선택한 프로젝트 (파일 입력은 null)
+    project_id: str | None = None       # 웹 폼에서 선택한 프로젝트 또는 새로 만든 P_ULID (파일 입력은 null)
+    directory_id: str | None = None     # 회의 종류: monthly | weekly | normal (파일 입력은 null)
+    host_user_id: str | None = None     # 주관자 — LLM에는 넘기지 않음 (파일 입력은 null)
     created_at: str
     config: dict                        # settings.snapshot() (비밀 값 · 비용 정보 없음)
     source_document: SourceDocument

@@ -105,10 +105,11 @@ def _results_card(s: AppState, m: Meeting) -> None:
                     _pick(md_escape(r.text) + (f"  \n{refs}" if refs else ""), f"res{i}", s, r.src)
 
 
-def _detail_section(title: str, items: tuple, key: str, s: AppState, empty: str = "없어요.") -> None:
-    markup(f'<h4 class="agd-h">{esc(title)}</h4>')
+def _detail_section(title: str, items: tuple, key: str, s: AppState) -> None:
+    """값이 없으면 제목까지 보이지 않아요."""
     if not items:
-        markup(f'<p class="agd-empty">{esc(empty)}</p>')
+        return
+    markup(f'<h4 class="agd-h">{esc(title)}</h4>')
     for j, e in enumerate(items):
         _pick(md_escape(e.text), f"{key}_{j}", s, e.src)
 
@@ -117,9 +118,8 @@ def _agenda_detail(s: AppState, m: Meeting, d: model.AgendaDetail) -> None:
     i = d.index - 1
     with st.container(key=f"agdet-{i}", gap=None):
         _detail_section("논의 배경", d.background, f"abg{i}", s)
-        markup('<h4 class="agd-h">주요 논의</h4>')
-        if not d.topics:
-            markup('<p class="agd-empty">없어요.</p>')
+        if d.topics:
+            markup('<h4 class="agd-h">주요 논의</h4>')
         for t, topic in enumerate(d.topics):
             if topic.title:
                 markup(f'<p class="agd-topic">{d.index}-{t + 1}. {esc(topic.title)}</p>')
@@ -179,7 +179,7 @@ def _summary_tab(s: AppState, m: Meeting, mode: str = "edit") -> None:
 def _agenda_tab(s: AppState, m: Meeting) -> None:
     weights = model.agenda_weights(s, m)
     with card("weights"):
-        card_title("안건별 논의 비중", aside="원문 분량 기준")
+        card_title("안건별 논의 비중", aside=model.weight_basis(m))
         if not weights:
             hint("원문이 공유되지 않아 논의 비중을 계산할 수 없어요.", size=13)
         else:
@@ -313,24 +313,6 @@ def _deleted_todos(s: AppState, m: Meeting) -> None:
 
 
 # ---------------------------------------------------------------- 키워드·일정
-def _keyword_tab(s: AppState, m: Meeting) -> None:
-    with card("keywords"):
-        card_title("주요 키워드", aside="누르면 원문에서 찾아요",
-                   icon_html='<span class="icon-box" style="width:22px;height:22px;border-radius:3px;background:#2B2D33;'
-                             'color:#FFC24D;font-size:10px;font-weight:800">AB</span>')
-        with st.container(horizontal=True, gap="xsmall"):
-            for i, kw in enumerate(m.keywords):
-                button(md_escape(kw), key=f"kw{i}", variant="kwon" if s.raw_query == kw else "kw",
-                       on_click=actions.search_keyword, args=(kw,))
-    lines = model.date_lines(m)
-    with card("dates"):
-        card_title("날짜·시간이 들어간 대화", icon_html=icon_box("clock-hand", bg="#F37321", color="#FFFFFF", round_=True, stroke=2.4))
-        if not lines:
-            hint("원문이 공유되지 않아 날짜·시간을 찾을 수 없어요." if model.raw_locked(m)
-                 else "대화 내용에서 날짜·시간을 찾지 못했어요.", size=13)
-        for d in lines:
-            _pick(f"`{md_escape(d.token)}` :gray[**{md_escape(d.who)}**]  \n“{md_escape(d.text)}”", f"date{d.pid}", s, (d.pid,))
-
 
 # ---------------------------------------------------------------- 연관 회의
 def _related_tab(s: AppState, m: Meeting) -> None:
@@ -344,7 +326,7 @@ def _related_tab(s: AppState, m: Meeting) -> None:
             button(label, key=f"rel_{r.id}", variant="card", on_click=actions.open_meeting, args=(r.id,), width="stretch")
 
 
-_TABS = {"sum": _summary_tab, "ag": _agenda_tab, "todo": _todo_tab, "kw": _keyword_tab, "rel": _related_tab}
+_TABS = {"sum": _summary_tab, "ag": _agenda_tab, "todo": _todo_tab, "rel": _related_tab}
 
 
 def render_insights(s: AppState, m: Meeting, mode: str = "edit") -> None:
@@ -352,8 +334,7 @@ def render_insights(s: AppState, m: Meeting, mode: str = "edit") -> None:
     m = repo.meeting(m.id)  # 직접 추가한 액션 아이템까지 합친 회의 (새 회의록 미리보기 포함)
     with st.container(key="md-tabs"):
         button_group(
-            [("sum", "요약"), ("ag", f"안건 {len(m.agendas) + sum(1 for t in s.added_agendas.get(m.id, []) if t)}"), ("todo", f"액션 아이템 {len(sel.todo_items(s, m.id))}"),
-             ("kw", "키워드·일정"), ("rel", f"연관 회의 {len(model.related(s, m))}")],
+            [("sum", "요약"), ("ag", f"안건 {len(m.agendas) + sum(1 for t in s.added_agendas.get(m.id, []) if t)}"), ("todo", f"액션 아이템 {len(sel.todo_items(s, m.id))}"), ("rel", f"연관 회의 {len(model.related(s, m))}")],
             s.insight_tab, actions.set_insight_tab, key="insight", style="tab",
         )
     with st.container(height=700, border=False, key="md-body", gap="small"):

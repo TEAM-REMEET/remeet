@@ -716,6 +716,12 @@ hr.cp-divider {
   overflow-anchor: none;
   box-sizing: border-box;
 }
+.st-key-pick-chosen-btns {
+  padding: 10px 12px;
+  border: 1px dashed #d5d8dd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
 /* 스크롤 · 복사 스크립트만 담는 숨은 칸 */
 .st-key-pick-js,
 .st-key-ca-js {

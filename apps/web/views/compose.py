@@ -106,7 +106,8 @@ def _info(html: str, tone: str = "info") -> None:
 def _current_text(s: AppState, n: int) -> str:
     """지금 입력칸에 있는 글 + 첨부 파일 내용 (형식 검사용)."""
     typed = st.session_state.get(f"cp_text_{n}_{s.cp_text_rev}", s.nn_text) or ""
-    files = st.session_state.get(f"cp_files_{n}") or []
+    file = st.session_state.get(f"cp_files_{n}")  # 파일은 한 개만 고를 수 있어요
+    files = [file] if file else []
     bodies = [read_text(f.name, f.getvalue()) for f in files] if files else [b for _, b in s.nn_files]
     bodies = [b for b in bodies if b]  # 지원하지 않는 형식 · 읽을 수 없는 파일은 빼고
     return "\n".join(x.strip() for x in [typed, *bodies] if x and x.strip())
@@ -183,7 +184,7 @@ def _content(s: AppState, n: int) -> None:
         )
     with st.container(key="cp-attach-row", horizontal=True, vertical_alignment="center", gap="small"):
         with st.container(key="cp-attach", width="content"):
-            st.file_uploader("파일 첨부", accept_multiple_files=True, key=f"cp_files_{n}",
+            st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}",
                              label_visibility="collapsed")
         markup(f'<span class="cp-types">{ALLOWED_LABEL}</span>')
         markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
@@ -208,22 +209,12 @@ def _step1(s: AppState, n: int) -> None:
 
 # ================================================================ 2단계: 분석 및 검토 (회의 상세와 같은 화면)
 def _step2(s: AppState) -> None:
+    if s.preview_meeting is None:  # 아직 결과가 없으면 백엔드에 요청 (끝나면 다시 그림 · 실패하면 1단계로)
+        loading_overlay("회의를 분석하고 있어요", "요약과 액션 아이템을 정리하는 중이에요. 몇 분 걸릴 수 있어요.")
+        actions.compose_analyze()
+        st.rerun()
     m = s.preview_meeting
-    if m is None:  # 새로고침 등으로 미리보기가 없으면 다시 만들기
-        actions.compose_goto(2)
-        m = s.preview_meeting
     s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
-    parsed = ai.parse(actions.compose_text(s))
-    result = ai.analyze(parsed, s.nn_speaker_map, s.nn_title)
-
-    data = {
-        "title": s.nn_title, "date": str(s.nn_date), "host": sel.name_of(s.nn_host),
-        "speakers": {lb: sel.name_of(p) for lb, p in s.nn_speaker_map.items()},
-        "summary": result.summary,
-        "agendas": [{"title": t, "lines": list(b)} for t, b in result.agendas],
-        "todos": [{"text": t, "owners": [x.strip() for x in w.split(",")] if w != "담당 미정" else [], "due": d}
-                  for t, w, d in result.todos],
-    }
     # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(뒤로 가기 · JSON 저장 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
@@ -231,16 +222,17 @@ def _step2(s: AppState) -> None:
         with st.container(horizontal=True, width="content", gap="small"):
             button("← 뒤로 가기", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
             with st.container(key="b-secondary-cp_json", width="content"):
-                st.download_button("결과 JSON 저장", json.dumps(data, ensure_ascii=False, indent=2),
-                                   file_name="meeting_result.json", mime="application/json", key="cp_json")
+                st.download_button("결과 JSON 저장", json.dumps(s.cp_result, ensure_ascii=False, indent=2),
+                                   file_name=f'{s.cp_result["meeting_id"]}_summary.json', mime="application/json",
+                                   key="cp_json")
             # 주관자는 확정 · 주관자가 아니면 주관자에게 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
             button("확정하기" if s.nn_host == me_id() else "검토 요청하기", key="cp_finish", variant="primary",
                    icon=":material/task_alt:" if s.nn_host == me_id() else ":material/rate_review:",
                    on_click=actions.open_compose_confirm)
     with st.container(horizontal=True, vertical_alignment="center"):
         member_pills(f"{m.when} · 참석 {len(m.people)}명", m.host, list(m.people))
-        note = ("프로토타입 · AI 분석 예시 — 「확정하기」를 눌러야 저장돼요" if s.nn_host == me_id()
-                else f"프로토타입 · AI 분석 예시 — 「검토 요청하기」를 누르면 주관자 {sel.name_of(s.nn_host)}님에게 알림이 가요")
+        note = ("AI 분석 결과 — 「확정하기」를 눌러 회의록을 확정해 주세요" if s.nn_host == me_id()
+                else f"AI 분석 결과 — 「검토 요청하기」를 누르면 주관자 {sel.name_of(s.nn_host)}님에게 알림이 가요")
         st.html(f'<span class="read-note">{esc(note)}</span>', width="content")
 
     # 본문: 회의 상세와 같은 원문 · 인사이트 탭

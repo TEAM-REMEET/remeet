@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import time
+from dataclasses import replace
 
 import streamlit as st
 
@@ -176,7 +177,7 @@ def close_modal() -> None:
 def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
-                cp_example="plain", preview_meeting=None)
+                cp_example="plain", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None)
 
 
 def open_new_note() -> None:
@@ -232,7 +233,8 @@ def compose_sync(nonce: int) -> None:
     s.nn_title = (ss.get(f"cp_title_{nonce}") or "").strip()
     s.nn_date = ss.get(f"cp_date_{nonce}")
     s.nn_text = ss.get(f"cp_text_{nonce}_{s.cp_text_rev}", s.nn_text) or ""
-    files = ss.get(f"cp_files_{nonce}") or []
+    file = ss.get(f"cp_files_{nonce}")  # 파일은 한 개만 고를 수 있어요
+    files = [file] if file else []
     if files:  # TXT · MD · DOCX · HWPX 는 글을 읽고, 그 밖의 형식 · 읽을 수 없는 파일은 None (발화자 확인 때 안내)
         s.nn_files = [(f.name, read_text(f.name, f.getvalue())) for f in files]
 
@@ -258,9 +260,16 @@ def compose_next(nonce: int) -> None:
         missing.append("회의 종류 · 폴더")
     elif s.nn_group != "period" and s.nn_topic not in sel.folder_ids_of_type(s, s.nn_type) and not s.nn_name.strip():
         missing.append("회의 종류 · 폴더")
-    parsed = compose_ai.parse(compose_text(s))
+    parsed = compose_ai.parse(compose_text(s), s.cp_example)
     if missing:
         _format_error(" · ".join(missing) + "을(를) 입력해 주세요.")
+        return
+    # 회의 내용은 직접 입력과 파일 첨부 중 하나만, 파일도 한 개만
+    if len(s.nn_files) > 1:
+        _format_error("파일은 한 개만 첨부할 수 있어요. 첨부한 파일을 한 개로 줄여 주세요.")
+        return
+    if s.nn_text.strip() and s.nn_files:
+        _format_error("회의 내용은 직접 입력과 파일 첨부 중 하나만 쓸 수 있어요. 입력한 글을 지우거나 첨부한 파일을 빼 주세요.")
         return
     # 첨부 파일: TXT · MD · DOCX · HWPX 만 (그 밖의 형식이면 다음 단계로 못 감)
     wrong = [name for name, _ in s.nn_files if not is_allowed(name)]
@@ -291,7 +300,7 @@ PREVIEW_ID = "cp-preview"
 def _build_preview(s, mid: str):
     from state import compose_ai
 
-    parsed = compose_ai.parse(compose_text(s))
+    parsed = compose_ai.parse(compose_text(s), s.cp_example)
     topic = s.nn_topic if s.nn_group != "period" and s.nn_topic in sel.folder_ids_of_type(s, s.nn_type) else None
     return compose_ai.build_meeting(
         mid, title=s.nn_title, day=s.nn_date, topic=topic, host=s.nn_host, people=list(s.nn_people),
@@ -300,14 +309,38 @@ def _build_preview(s, mid: str):
 
 
 def compose_goto(step: int) -> None:
-    """단계 이동. 2단계(분석 및 검토)로 가면 회의 상세와 같은 화면으로 볼 미리보기 회의록을 만듦."""
+    """단계 이동. 2단계(분석 및 검토)로 가면 보낼 요청을 만듦 (실제 호출은 views/compose.py → compose_analyze)."""
+    from state import compose_request
+
     s = get_state()
     if step == 2:
-        s.preview_meeting = _build_preview(s, PREVIEW_ID)
-        s.added_todos.pop(PREVIEW_ID, None)
-        s.deleted_todos.pop(PREVIEW_ID, None)
+        try:
+            request = compose_request.build_request(s, compose_text(s))
+        except (ValueError, api.ApiError) as e:
+            _format_error(str(e))
+            return
+        if request != s.cp_result_request:  # 내용이 같으면 받아 둔 결과를 다시 보여 주고 AI를 호출하지 않음
+            s.preview_meeting, s.cp_result = None, None
+            s.added_todos.pop(PREVIEW_ID, None)
+            s.deleted_todos.pop(PREVIEW_ID, None)
+        s.cp_request = request
         _set(meeting_id=PREVIEW_ID, insight_tab="sum", left_tab="raw", highlight=[], highlight_key="", raw_query="")
     _set(cp_step=step, nn_error="")
+
+
+def compose_analyze() -> None:
+    """2단계: 요약 · 액션 아이템 추출을 요청하고 결과를 미리보기 회의록에 넣음. 실패하면 1단계로 돌아가 안내 (같은 내용으로 다시 보내면 이어서 진행)."""
+    from state import summary_view
+
+    s = get_state()
+    try:
+        result = repo.summarize_meeting(s.cp_request)
+    except api.ApiError as e:
+        s.cp_step = 1
+        _format_error(str(e))
+        return
+    s.cp_result, s.cp_result_request = result, s.cp_request
+    s.preview_meeting = summary_view.apply_summary(_build_preview(s, PREVIEW_ID), result)
 
 
 def compose_clear_files() -> None:
@@ -329,7 +362,7 @@ def compose_finish() -> None:
     from state import compose_ai
 
     s = get_state()
-    parsed = compose_ai.parse(compose_text(s))
+    parsed = compose_ai.parse(compose_text(s), s.cp_example)
     s.cp_finishing = False
     if parsed.error:
         _set(cp_step=1, nn_error="회의 내용 형식을 확인해 주세요.")
@@ -346,13 +379,10 @@ def compose_finish() -> None:
     elif s.nn_topic in topics:
         fid = s.nn_topic
     else:
-        fid = f"n{len(s.new_folders) + 1}"
+        fid = s.cp_result["project_id"]  # 새 폴더 ID는 백엔드가 만든 값
         s.new_folders.append(NewFolder(fid, s.nn_name.strip() or "새 폴더", s.nn_type))
-    mid = f"new{len(s.new_meetings) + 1}"
-    s.new_meetings[mid] = compose_ai.build_meeting(
-        mid, title=s.nn_title, day=s.nn_date, topic=fid, host=s.nn_host, people=list(s.nn_people),
-        parsed=parsed, mapping=dict(s.nn_speaker_map), files=[n for n, _ in s.nn_files],
-    )
+    mid = s.cp_result["meeting_id"]
+    s.new_meetings[mid] = replace(s.preview_meeting, id=mid, topic=fid)
     s.created_notes.append((fid, mid))
     for key in [k for k in s.assigned if k.startswith(f"{PREVIEW_ID}:")]:  # 미리보기에서 정한 담당자를 새 회의로 옮김
         s.assigned[f"{mid}:{key.split(':', 1)[1]}"] = s.assigned.pop(key)
@@ -385,7 +415,8 @@ def submit_compose(nonce: int) -> None:
     s = get_state()
     ss = st.session_state
     text = (ss.get(f"cp_text_{nonce}") or "").strip()
-    files = [f.name for f in (ss.get(f"cp_files_{nonce}") or [])]
+    file = ss.get(f"cp_files_{nonce}")
+    files = [file.name] if file else []
     title = (ss.get(f"cp_title_{nonce}") or "").strip()
     day = ss.get(f"cp_date_{nonce}")
     host = s.nn_host

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 
 from state.store import me_id
@@ -10,7 +11,6 @@ from data.models import AgendaTopic, Evidence, Meeting, MeetingResult, TaggedPoi
 from state import selectors as sel
 from state.store import AppState
 from ui.theme import SEGMENT_COLORS
-from utils.text import find_date_token
 
 
 def current(s: AppState) -> Meeting:
@@ -137,9 +137,18 @@ def agenda_status(s: AppState, m: Meeting, i: int) -> tuple[str, str, bool]:
     return ("분리됨", "split", True) if branched else (a.status, a.tone, False)
 
 
-def agenda_weights(s: AppState, m: Meeting) -> list[AgendaWeight]:
-    sums = [[0, 0] for _ in m.agendas]
-    idx, total = -1, 0
+def _has_headings(m: Meeting) -> bool:
+    return any(p.is_heading for p in m.paragraphs)
+
+
+def weight_basis(m: Meeting) -> str:
+    return "원문 분량 기준" if _has_headings(m) else "근거 발언 분량 기준"
+
+
+def _sums_by_heading(m: Meeting) -> list[list[float]]:
+    """원문에 안건 제목 줄이 있는 회의(목업): 제목 줄 사이의 발언을 그 안건으로 셈. [글자 수, 발언 수]"""
+    sums: list[list[float]] = [[0, 0] for _ in m.agendas]
+    idx = -1
     for p in m.paragraphs:
         if p.is_heading:
             idx += 1
@@ -147,36 +156,42 @@ def agenda_weights(s: AppState, m: Meeting) -> list[AgendaWeight]:
         k = max(0, min(idx, len(sums) - 1))
         sums[k][0] += len(p.text)
         sums[k][1] += 1
-        total += len(p.text)
-    if not total:
+    return sums
+
+
+def _sums_by_evidence(m: Meeting) -> list[list[float]]:
+    """AI 요약 결과: 안건 항목의 근거 발언을 셈. 여러 안건의 근거인 발언은 글자 수를 나눠 줌. [글자 수, 발언 수]"""
+    length = {p.id: len(p.text) for p in m.paragraphs}
+    per_agenda = [[pid for pid in dict.fromkeys(a.src) if pid in length] for a in m.agendas]
+    shared = Counter(pid for pids in per_agenda for pid in pids)
+    return [[sum(length[pid] / shared[pid] for pid in pids), len(pids)] for pids in per_agenda]
+
+
+def _percents(values: list[float]) -> list[int]:
+    """합이 정확히 100이 되도록 반올림 (최대 나머지 방식)."""
+    total = sum(values)
+    exact = [v * 100 / total for v in values]
+    out = [int(x) for x in exact]
+    for i in sorted(range(len(exact)), key=lambda i: out[i] - exact[i])[:100 - sum(out)]:
+        out[i] += 1
+    return out
+
+
+def agenda_weights(s: AppState, m: Meeting) -> list[AgendaWeight]:
+    sums = _sums_by_heading(m) if _has_headings(m) else _sums_by_evidence(m)
+    if not sum(chars for chars, _ in sums):
         return []
+    percents = _percents([chars for chars, _ in sums])
     avg = 100 / len(m.agendas)
     out = []
     for i, a in enumerate(m.agendas):
-        pct = round(sums[i][0] * 100 / total)
+        pct = percents[i]
         status, tone, _ = agenda_status(s, m, i)
         out.append(AgendaWeight(
             i + 1, a.title, pct, sums[i][1],
             " · 평균보다 길게 논의됨" if len(m.agendas) > 1 and pct > avg * 1.4 else "",
             status, tone, SEGMENT_COLORS[i % len(SEGMENT_COLORS)], a.src,
         ))
-    return out
-
-
-@dataclass(frozen=True)
-class DateLine:
-    pid: str
-    token: str
-    who: str
-    text: str
-
-
-def date_lines(m: Meeting) -> list[DateLine]:
-    out = []
-    for p in m.paragraphs:
-        token = find_date_token(p.text) if p.speaker else None
-        if token:
-            out.append(DateLine(p.id, token, speaker_name(p.speaker), p.text))
     return out
 
 

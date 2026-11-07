@@ -44,13 +44,16 @@ from followup import settings as cfg
 from followup.analysis.summary import steps
 from followup.analysis.summary.preprocessing import load_transcript
 from followup.analysis.summary.schemas import LLMMeetingSummary, MeetingSummary, VerificationIssue
-from followup.analysis.summary.transcript_builder import MeetingSubmission, build_meeting_text, make_meeting_id
+from followup.analysis.summary.transcript_builder import (MeetingSubmission, build_meeting_text, new_meeting_id,
+                                                          new_project_id, submission_key)
 from followup.application.ports import StructuredLLM, SummaryStore
 
 logger = logging.getLogger(__name__)
 
 RECURSION_LIMIT = 25        # 노드 실행 상한 (정상 최대: 생성 2 + 후처리 1 + 검증 3 + 재수정 2 + 검토 표시 1 + 마무리 1 + 저장 1 = 11)
 _MEETING_ID = re.compile(r"\w[\w.-]*")      # 회의 ID는 저장 경로에 쓰이므로 경로 구분자 · '.' 시작을 허용하지 않음
+_MEETING_ID_STEP = "meeting_id"              # 요청 내용별로 회의 ID를 기억해 두는 단계 이름
+_PROJECT_ID_STEP = "project_id"              # 요청 내용별로 새 프로젝트 ID를 기억해 두는 단계 이름
 
 
 class LLMCallLimitError(RuntimeError):
@@ -179,7 +182,8 @@ def _build_graph(runner: _StepRunner, store: SummaryStore, save: bool):
 
 def summarize_meeting(meeting_id: str, transcript_text: str, *, llm: StructuredLLM, store: SummaryStore,
                       source_name: str | None = None, save: bool = True, use_cache: bool | None = None,
-                      project_id: str | None = None) -> MeetingSummary:
+                      project_id: str | None = None, directory_id: str | None = None,
+                      host_user_id: str | None = None) -> MeetingSummary:
     """전사문 텍스트 → MeetingSummary (save=True면 summary.json 저장)
 
     source_name: summary.json에 남길 입력 이름 (파일 이름 등) / use_cache: None이면 settings.USE_LLM_CACHE
@@ -189,7 +193,8 @@ def summarize_meeting(meeting_id: str, transcript_text: str, *, llm: StructuredL
         raise ValueError(f"회의 ID 형식 오류: {meeting_id!r}")
     cfg.validate()
     model = cfg.model_name()
-    loaded = {**load_transcript(meeting_id, transcript_text, source_name), "project_id": project_id}
+    loaded = {**load_transcript(meeting_id, transcript_text, source_name), "project_id": project_id,
+              "directory_id": directory_id, "host_user_id": host_user_id}
     logger.info("[%s] 입력: 발화 %d개 · 화자 모드 %s (%s) · 경고 %d건", meeting_id, len(loaded["transcript"]),
                 loaded["speaker_mode"], loaded["transcript_format"], len(loaded["warnings"]))
     runner = _StepRunner(llm, store, meeting_id, cfg.USE_LLM_CACHE if use_cache is None else use_cache)
@@ -204,8 +209,32 @@ def summarize_meeting(meeting_id: str, transcript_text: str, *, llm: StructuredL
     return summary
 
 
+def _remembered_id(store: SummaryStore, key: str, step: str, make, remember: bool) -> str:
+    # 재시도에도 같은 ID를 쓰도록 요청 내용별로 저장해 둔 값을 찾고, 없으면 새로 만듦
+    value = store.read_step(key, step) if remember else None
+    if value is None:
+        value = make()
+        if remember:
+            store.write_step(key, step, value)
+    return value
+
+
 def summarize_submission(submission: MeetingSubmission, *, llm: StructuredLLM, store: SummaryStore,
                          save: bool = True, use_cache: bool | None = None) -> MeetingSummary:
-    """POST /api/meetings 입력 → MeetingSummary (같은 요청을 다시 보내면 실패한 단계부터 진행됨)"""
-    return summarize_meeting(make_meeting_id(submission), build_meeting_text(submission), llm=llm, store=store, save=save,
-                             use_cache=use_cache, project_id=submission.project_id)
+    """POST /api/meetings 입력 → MeetingSummary
+
+    project_id가 없으면 새 폴더로 보고 P_ULID를 만듦.
+    실패 후 같은 요청을 다시 보내면 같은 ID로 실패한 단계부터 진행됨 (검증 · 재수정 프롬프트에 항목 ID가 들어가므로
+    ID가 바뀌면 저장된 응답을 재사용할 수 없음). 완료된 뒤 다시 보내면 새 회의로 처리됨.
+    """
+    text = build_meeting_text(submission)       # 입력 형식이 틀리면 ID를 만들기 전에 중단
+    resumable = save and (cfg.USE_LLM_CACHE if use_cache is None else use_cache)
+    key = submission_key(submission)
+    meeting_id = _remembered_id(store, key, _MEETING_ID_STEP, new_meeting_id, resumable)
+    project_id = submission.project_id or _remembered_id(store, key, _PROJECT_ID_STEP, new_project_id, resumable)
+    summary = summarize_meeting(meeting_id, text, llm=llm, store=store, save=save, use_cache=use_cache,
+                                project_id=project_id, directory_id=submission.directory_id,
+                                host_user_id=submission.host_user_id)
+    if resumable:
+        store.clear_steps(key)
+    return summary

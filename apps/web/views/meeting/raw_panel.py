@@ -55,11 +55,8 @@ def _paragraphs_html(s: AppState, m: Meeting, query: str) -> str:
 
 
 def _speaker_bar(s: AppState, m: Meeting) -> None:
-    """발화자: 이 회의에 나온 사람(발언 수)."""
-    chips = "".join(
-        f'<span class="spk-chip">{esc(sel.name_of(pid))}<span class="n">{n}</span></span>'
-        for pid, n in model.speakers(s, m)
-    )
+    """발화자: 이 회의에 나온 사람."""
+    chips = "".join(f'<span class="spk-chip">{esc(sel.name_of(pid))}</span>' for pid, _ in model.speakers(s, m))
     with st.container(key="spk-bar", horizontal=True, vertical_alignment="center", gap="xsmall"):
         markup(f'<div class="spk-list"><span class="inline-label">발화자</span>{chips}</div>')
 

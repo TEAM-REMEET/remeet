@@ -42,4 +42,9 @@ class LocalFileStore:
         _write_atomic(self._steps_dir(meeting_id) / f"{key}.json", content)
 
     def clear_steps(self, meeting_id: str) -> None:
-        shutil.rmtree(self._steps_dir(meeting_id), ignore_errors=True)
+        steps = self._steps_dir(meeting_id)
+        shutil.rmtree(steps, ignore_errors=True)
+        try:
+            steps.parent.rmdir()        # 요약 파일이 없는 빈 폴더만 지워짐
+        except OSError:
+            pass
