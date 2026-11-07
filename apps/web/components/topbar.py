@@ -56,6 +56,9 @@ def render_topbar() -> None:
     with st.container(key="topbar", horizontal=True, vertical_alignment="center", gap="small"):
         _crumbs()
         _notifications()
-        if get_state().is_admin:  # 관리자: 새 회의록 버튼 없음
+        s = get_state()
+        if s.is_admin:  # 관리자: 새 회의록 버튼 없음
+            return
+        if s.screen == "compose" and not s.not_found:  # 이미 새 회의록 화면 (사이드바와 같은 기준): 버튼 숨김
             return
         button("새 회의록", key="topbar_new", variant="primary", icon=":material/add:", on_click=actions.open_new_note)
