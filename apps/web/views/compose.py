@@ -165,7 +165,7 @@ def _basic_info(s: AppState, n: int) -> None:
                           label_visibility="collapsed")
         with c2:
             _label("회의 날짜")  # 선택: 고르지 않으면 「다음 단계」 때 오늘 날짜로 (actions.compose_next)
-            st.date_input("회의 날짜 (선택)", value=s.nn_date, key=f"cp_date_{n}", format="YYYY/MM/DD",
+            st.date_input("회의 날짜 (선택)", value=s.nn_date or today(), key=f"cp_date_{n}", format="YYYY/MM/DD",
                           label_visibility="collapsed")
             if st.session_state.get(f"cp_date_{n}") is None:
                 markup(f'<span class="cp-hint">날짜를 고르지 않으면 오늘({today():%Y/%m/%d})로 저장돼요.</span>')
