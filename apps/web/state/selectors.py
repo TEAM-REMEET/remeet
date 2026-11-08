@@ -67,12 +67,21 @@ def all_people_ids() -> list[str]:
 
 
 def team_groups() -> list[tuple[str, list[str]]]:
-    """[(팀 이름, [사람 id])] — 전체 사람을 팀별로 묶음 (내 팀 먼저). 주관자·참석자 고르기용."""
+    """[(팀 이름, [사람 id])] — 전체 사람을 팀별로 묶음 (내 팀 먼저 · 팀 안은 이름 가나다순). 주관자·참석자 고르기용."""
     groups: dict[str, list[str]] = {}
-    for pid, p in repo.people().items():
+    for pid, p in sorted(repo.people().items(), key=lambda kv: kv[1].name):
         groups.setdefault(p.team, []).append(pid)
     mine = me().team
     return sorted(groups.items(), key=lambda kv: kv[0] != mine)
+
+
+POSITION_LABEL = {"senior": "Senior", "mid": "Mid", "junior": "Junior"}  # 순서 = 담당자 추천 카드 순서
+
+
+def person_desc(pid: str) -> str:
+    """사람 목록 이름 옆: 직무 · 포지션 (없는 값은 뺌)."""
+    pos = next((r.get("position") or "" for r in repo.people_rows() if r["user_id"] == pid), "")
+    return " · ".join(x for x in (person_role(pid), POSITION_LABEL.get(pos, "")) if x)
 
 
 def person_role(pid: str) -> str:
