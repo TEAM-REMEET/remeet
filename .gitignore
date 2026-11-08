@@ -1,3 +1,5 @@
+.claude/
+
 # 데이터
 data/
 !apps/web/data/
