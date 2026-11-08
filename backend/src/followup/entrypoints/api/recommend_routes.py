@@ -95,7 +95,9 @@ def recommend(meeting_id: str, summary: MeetingSummary, me: str = Depends(actor)
     if ui_test.is_test_summary(summary):    # 화면 확인용 시험 모드: LLM 호출 · Neo4j 적재 없이 시험용 후보
         return {"meeting_id": meeting_id, "items": ui_test.recommend_items(summary)}
     raw = summary.model_dump(mode="json")
-    raw["project_name"] = _project_name(me, summary.project_id)
+    project = _project(me, summary.project_id)
+    raw["project_name"] = project.get("name")
+    raw["project_created_at"] = project["created_at"].isoformat() if project.get("created_at") else None
     try:
         items = recommend_for_meeting(raw)
     except Exception as e:
@@ -104,15 +106,15 @@ def recommend(meeting_id: str, summary: MeetingSummary, me: str = Depends(actor)
     return {"meeting_id": meeting_id, "items": items}
 
 
-def _project_name(me: str, project_id: str | None) -> str | None:
-    """Neo4j Project.name 에 넣을 웹 프로젝트 이름. 못 찾으면 None (적재는 project_id 로 계속)."""
+def _project(me: str, project_id: str | None) -> dict:
+    """Neo4j Project 에 넣을 웹 프로젝트 정보 (이름 · 만든 시각). 못 찾으면 {} (적재는 project_id 로 계속)."""
     if not project_id:
-        return None
+        return {}
     try:
-        return folders.get_folder(actor_id=me, folder_id=project_id)["name"]
+        return folders.get_folder(actor_id=me, folder_id=project_id)
     except Exception:
-        logger.warning("프로젝트 이름 조회 실패 %s", project_id, exc_info=True)
-        return None
+        logger.warning("프로젝트 조회 실패 %s", project_id, exc_info=True)
+        return {}
 
 
 @router.put("/meetings/{meeting_id}/action-items", response_model=list[RecommendedItem])
