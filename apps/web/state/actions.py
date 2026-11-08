@@ -1359,9 +1359,9 @@ def _send_with_overlay(s, verb: str, sub: str) -> None:
     실제로 보내는 건 Jira · 메일뿐이라, 시뮬레이션 도구만 골랐어도 잠깐은 보이게 최소 시간을 채움."""
     from config import EXPORT_OVERLAY_MIN_SECONDS
     from state import export
-    from ui.loading import loading_overlay
+    from ui.loading import callback_overlay
 
-    loading_overlay(f"{' · '.join(repo.tool(t).name for t in s.export.picked)}(으)로 {verb}", sub)
+    callback_overlay(f"{' · '.join(repo.tool(t).name for t in s.export.picked)}(으)로 {verb}", sub)
     started = time.monotonic()
     export.send(s)  # 실제 전송 (Jira · 메일을 골랐고 연결된 경우만)
     time.sleep(max(0.0, EXPORT_OVERLAY_MIN_SECONDS - (time.monotonic() - started)))
@@ -1416,13 +1416,21 @@ def set_integration(tool_id: str) -> None:
 
 
 def resend_export(fid: str) -> None:
-    """단순 이슈: 주관자가 회의록 안에서 「다시 보내기」."""
+    """단순 이슈: 주관자가 회의록 안에서 「다시 보내기」 → Jira · 메일은 실패한 것만 실제로 다시 보냄 (state/export.py)."""
+    from state import export
+    from ui.loading import callback_overlay
+
     s = get_state()
     f = next(x for x in repo.export_failures() if x.id == fid)
-    try:  # 해결 기록 (POST /api/integrations/failures/{id}/resolve) · 남은 실패가 없으면 서버가 done 으로
-        repo.resolve_failure(fid)
+    tool = repo.tool(f.tool)
+    callback_overlay(f"{tool.name}(으)로 다시 보내고 있어요", "보내지 못한 것만 다시 보내는 중이에요 · 1~2분 걸릴 수 있어요")
+    try:  # 다 보냈으면 해결 기록 (남은 실패가 없으면 서버가 done 으로)
+        left = export.resend_failure(s, f)
     except api.ApiError as e:
         _api_failed(e, "다시 보내")
+        return
+    if left:
+        s.toast = f"「{repo.meeting(f.meeting).title}」 {tool.name}: {left}. 다시 보내 보세요."
         return
     s.export_resent.add(fid)
     if not any(sel.failure_open(s, x.id) for x in repo.export_failures(f.meeting)):
@@ -1442,6 +1450,18 @@ def admin_resend(fid: str) -> None:
         _api_failed(e, "다시 보내")
         return
     s.toast = f"「{title}」 결과를 {tool.name}(으)로 보냈어요. 사용자에게 전달 완료 알림을 보냈어요."
+
+
+def hand_over_failures(tool_id: str) -> None:
+    """관리자 · MCP 관리 (Jira · 메일): 연동을 고친 뒤 → 남은 기술 이슈를 주관자가 다시 보내게 넘김.
+    관리자는 회의 내용을 볼 수 없어 직접 못 보냄 · 서버가 tech → simple + 주관자에게 알림 (다시 연결과 같은 동작)."""
+    s = get_state()
+    try:
+        repo.set_tool_status(tool_id, "on")
+    except api.ApiError as e:
+        _api_failed(e, "넘기")
+        return
+    s.toast = f"{repo.tool(tool_id).name} 전송 실패를 주관자에게 넘겼어요. 주관자가 회의에서 다시 보낼 수 있어요."
 
 
 def open_contact_admin(fid: str) -> None:

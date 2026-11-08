@@ -70,28 +70,53 @@ def _iso_due(due: str) -> str | None:
     return f"{YEAR}-{int(m[1]):02d}-{int(m[2]):02d}" if m else None
 
 
-def _jira_items(state: AppState, mid: str, only: set[str] | None = None) -> list[dict]:
-    """보낼 액션 아이템 (담당자는 담당자 추천 · 지정에서 확정한 사람). only: 이 key 만 (다시 보내기)."""
-    out = []
+def _jira_items(state: AppState, mid: str, only: set[str] | None = None) -> tuple[list[dict], list[dict]]:
+    """보낼 액션 아이템 · key = DB 할 일 id (→ Jira 라벨 remeet-todo-{id} · 같은 할 일로 이슈가 두 번 생기지 않게).
+    담당자는 담당자 추천 · 지정에서 확정한 사람. only: 이 key 만 (다시 보내기).
+    → (보낼 것, 저장 안 된 할 일의 실패 결과) · id 가 없으면 라벨을 못 붙여 중복을 못 막으니 보내지 않음."""
+    items, unsaved = [], []
     for i, t in sel.todo_items(state, mid):
-        key = sel.todo_key(mid, i)
-        if only is None or key in only:
-            out.append({"key": key, "title": t.text[:255], "owners": list(sel.todo_owner_ids(state, key, t)),
-                        "due": _iso_due(t.due)})
-    return out
+        key = str(t.todo_id) if t.todo_id else f"unsaved-{i}"
+        if only is not None and key not in only:
+            continue
+        if not t.todo_id:
+            unsaved.append({"key": key, "ok": False, "error": "저장되지 않은 액션 아이템이에요. 회의록을 다시 열어 주세요."})
+            continue
+        items.append({"key": key, "title": t.text[:255], "due": _iso_due(t.due),
+                      "owners": list(sel.todo_owner_ids(state, sel.todo_key(mid, i), t))})
+    return items, unsaved
 
 
-def _request(state: AppState, t: str, only: set[str] | None) -> dict | None:
+def _request(state: AppState, mid: str, t: str, only: set[str] | None) -> dict | None:
     """백엔드로 보냄 (only: 이 key 만 · 다시 보내기). 보낼 게 없으면 None."""
     from state.minutes_text import render_minutes
 
-    mid = state.export.meeting_id
     m = repo.meeting(mid)
     if t == "jira":
-        items = _jira_items(state, mid, only)
-        return repo.export_jira(m.title, items) if items else None
+        items, unsaved = _jira_items(state, mid, only)
+        if not (items or unsaved):
+            return None
+        res = repo.export_jira(m.title, items) if items else {"project_key": "", "items": []}
+        return {**res, "items": res["items"] + unsaved}
     to = [p for p in mail_recipients(mid) if only is None or p in only]
-    return repo.export_mail(m.title, render_minutes(state.final_summaries[mid]), to) if to else None
+    minutes = state.final_summaries.get(mid) or repo.summary_json(mid)  # 다시 보내기는 새로 로그인한 뒤일 수 있음
+    return repo.export_mail(m.title, render_minutes(minutes), to) if to else None
+
+
+def resend_failure(state: AppState, f: ExportFailure) -> str:
+    """회의 상세 「다시 보내기」: 실패 기록 하나를 실제로 다시 보냄 (Jira · 메일 · keys 가 있으면 그것만, 없으면 전부).
+    다 보냈으면 해결 · 또 일부 실패면 남은 것으로 새 기록을 남긴 뒤 예전 기록을 해결 (회의는 계속 fail).
+    → 사용자에게 보여 줄 남은 실패 사유 (다 보냈으면 "") · 연결 · 설정 실패는 ApiError (기록은 그대로)."""
+    if f.tool not in LIVE:  # 시뮬레이션 도구
+        repo.resolve_failure(f.id)
+        return ""
+    res = _request(state, f.meeting, f.tool, set(f.keys) if f.keys else None) or {"items": []}
+    bad = [r for r in res["items"] if not r["ok"]]
+    if bad:
+        reason = f"{len(bad)}{'명에게' if f.tool == 'mail' else '건을'} 또 보내지 못했어요"
+        repo.record_failure(f.meeting, f.tool, "simple", reason, bad[0]["error"], [r["key"] for r in bad])
+    repo.resolve_failure(f.id)
+    return reason if bad else ""
 
 
 def mail_recipients(mid: str) -> list[str]:
@@ -110,7 +135,7 @@ def send(state: AppState) -> None:
         done = x.results.get(t)
         only = {r["key"] for r in done["items"] if not r["ok"]} if done else None
         try:
-            res = _request(state, t, only) or {"items": []}
+            res = _request(state, x.meeting_id, t, only) or {"items": []}
         except api.ApiError as e:
             x.errors[t] = str(e)
             continue
@@ -244,10 +269,12 @@ def progress(state: AppState) -> Progress:
     return p
 
 
-def _save_failure(state: AppState, mid: str, t: str, kind: str, reason: str, code: str) -> None:
-    """실패 기록을 DB 에 (POST /api/integrations/failures · tech 면 관리자 알림은 서버가 보냄)."""
+def _save_failure(state: AppState, mid: str, t: str, kind: str, reason: str, code: str,
+                  keys: list[str] | None = None) -> None:
+    """실패 기록을 DB 에 (POST /api/integrations/failures · tech 면 관리자 알림은 서버가 보냄).
+    keys: 실패한 것만 (다시 보내기 때 그것만 보냄) · None = 아무것도 못 보냄 → 다시 보낼 때 전부."""
     try:
-        f = repo.record_failure(mid, t, kind, reason, code)
+        f = repo.record_failure(mid, t, kind, reason, code, keys)
     except api.ApiError as e:
         state.toast = f"전송 실패 기록을 서버에 저장하지 못했어요. ({e})"
         return
@@ -267,7 +294,7 @@ def _record_failure(state: AppState, mid: str, t: str, when: str) -> None:
         n, done = len(bad), len(items) - len(bad)
         reason = (f"{n}명에게 보내지 못했어요 (받은 {done}명에게는 다시 보내지 않아요)" if t == "mail"
                   else f"이슈 {n}건을 만들지 못했어요 (만든 {done}건은 그대로)")
-        _save_failure(state, mid, t, "simple", reason, bad[0]["error"])
+        _save_failure(state, mid, t, "simple", reason, bad[0]["error"], [r["key"] for r in bad])
 
 
 def sync(state: AppState) -> None:

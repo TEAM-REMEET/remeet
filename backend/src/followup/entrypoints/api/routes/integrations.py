@@ -13,7 +13,7 @@ POST /api/integrations/failures/{failure_id}/resolve  다시 보내서 해결됨
 API 로 열지 않았어요.
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -34,6 +34,8 @@ class Failure(BaseModel):
     kind: Literal["simple", "tech"]
     reason: str = Field(min_length=1)
     code: str = ""
+    # 실패한 것 (Jira 할 일 id · 메일 user_id) · 없으면 모름 → 다시 보낼 때 전부 (migrations/022)
+    keys: list[Annotated[str, Field(min_length=1, max_length=100)]] | None = Field(default=None, max_length=500)
 
 
 class Export(BaseModel):

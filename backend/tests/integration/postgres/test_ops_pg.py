@@ -153,6 +153,24 @@ class OpsIntegrationTests(unittest.TestCase):
         self.assertIn(('delivered', 'm1'), self._notis('u1'))
         self.assertEqual(ig.list_failures(actor_id='ad', open_only=True), [])
 
+    def test_failed_keys_and_reconnect_hands_tech_to_host(self):
+        """022: 실패한 것(key) 저장 · None = 모름 · 다시 연결하면 남은 tech → simple + 주관자에게 알림."""
+        from followup.adapters.postgres import integrations as ig
+        from followup.adapters.postgres.common import ValidationError
+        self._meeting()
+        part = ig.record_failure(actor_id='u1', meeting_id='m1', tool_id='slack', kind='simple',
+                                 reason='2건을 보내지 못했어요', keys=['41', '42'])
+        self.assertEqual(part['failed_keys'], ['41', '42'])
+        tech = ig.record_failure(actor_id='u1', meeting_id='m1', tool_id='jira', kind='tech', reason='인증 만료')
+        self.assertIsNone(tech['failed_keys'])                                   # 아무것도 못 보냄 → 다시 보낼 때 전부
+        with self.assertRaises(ValidationError):                                 # 빈 목록은 「없음」·「모름」이 섞임
+            ig.record_failure(actor_id='u1', meeting_id='m1', tool_id='slack', kind='simple', reason='x', keys=[])
+        ig.set_tool_status(actor_id='ad', tool_id='jira', status='on')           # 관리자가 다시 연결
+        kinds = {f['id']: f['kind'] for f in ig.list_failures(actor_id='u1', meeting_id='m1')}
+        self.assertEqual((kinds[tech['id']], kinds[part['id']]), ('simple', 'simple'))
+        self.assertIn(('integration', 'm1'), self._notis('u1'))                  # 주관자에게 「다시 보내기」 안내
+        ig.resolve_failure(actor_id='u1', failure_id=tech['id'])                 # 이제 주관자가 다시 보내 해결
+
 
 if __name__ == '__main__':
     unittest.main()
