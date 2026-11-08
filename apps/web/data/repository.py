@@ -169,12 +169,13 @@ def confirm_action_items(meeting_id: str, items: list[dict]) -> list[dict]:
 
 def recommendation_config(item: dict) -> dict:
     """추천 결과 한 건 → 담당자 지정 창이 쓰는 모양 (assignee_config()와 같은 키)."""
+    positions = {r["user_id"]: r.get("position") or "" for r in people_rows()}  # 추천 응답엔 직급이 없어서 구성원 표에서
+
     def candidate(c: dict) -> Candidate:
-        match = " · ".join(x for x in (", ".join(c["skills"]), f"{c['team']} 소속" if c["team"] else "",
-                                       f"진행 중 업무 {c['open_tasks']}건") if x)
+        match = "\n".join(x for x in (", ".join(c["skills"]), f"진행 중 업무 {c['open_tasks']}건") if x)  # 스킬 / 업무 수 따로 줄
         return Candidate(c["user_id"], c["name"], c["team"] or "", c["role"] or "", round(c["score"]),
                          round(c["skill_score"]), round(c["role_team_score"] or 0), round(c["workload_score"]),
-                         c["open_tasks"], c["attended"], tuple(c["skills"]), match)
+                         c["open_tasks"], c["attended"], tuple(c["skills"]), match, positions.get(c["user_id"], ""))
 
     def md(day: str | None) -> str:  # 2026-11-05 → 11/5
         return f"{int(day[5:7])}/{int(day[8:10])}" if day else ""

@@ -35,7 +35,7 @@ def _footer(kind: str, label: str, *, disabled: bool = False) -> None:
 # ================================================================ 주관자 · 참석자
 def _person_option(pid: str) -> str:
     p = sel.person(pid)
-    role = sel.person_role(pid)
+    role = sel.person_desc(pid)
     return f"{p.name}" + (f" · {role}" if role else "") + (" (나)" if pid == me_id() else "")
 
 

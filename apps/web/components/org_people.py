@@ -47,7 +47,7 @@ class _Picker:
         self.on_pick = on_pick
         self.single = single
         self.locked = locked  # 고를 수 없는 사람 → 이유 (예: 이미 멤버)
-        self.sub = sub or (lambda pid: sel.person_role(pid))
+        self.sub = sub or sel.person_desc
         self.members = dict(sel.team_groups())  # 팀 이름 → [사람 id]
         self.featured = [pid for pid in (featured or []) if pid in repo.people()]  # 맨 앞 탭 (예: 이 회의 참석자)
         self.tabs = ([("featured", featured_label or "추천")] if featured is not None else []) + list(_TABS)

@@ -38,6 +38,13 @@ def _pick_button(who: str, key: str, *, stretch: bool = False) -> None:
 
 
 TOP_N = 6  # 추천 후보 수 (한 줄에 모두)
+PER_POSITION = 2  # 포지션마다 보여 줄 후보 수 (Senior 2 · Mid 2 · Junior 2)
+
+
+def _by_position(cands: list[Candidate]) -> list[Candidate]:
+    """Senior → Mid → Junior 순으로 포지션마다 점수 높은 2명. 포지션을 모르는 후보(목업)는 맨 뒤에 남는 자리만큼."""
+    out = [c for pos in sel.POSITION_LABEL for c in [c for c in cands if c.position == pos][:PER_POSITION]]
+    return (out + [c for c in cands if c.position not in sel.POSITION_LABEL])[:TOP_N]
 
 
 PREV_PER_ROW = 3  # 선행 업무 담당자 카드: 한 줄에 최대 3장 (가로로 긴 카드)
@@ -61,14 +68,14 @@ def _predecessors(prev: list[Predecessor]) -> None:
 
 
 def _top(cands: list[Candidate]) -> None:
-    """추천 상위 6명을 한 줄에."""
-    top = cands[:TOP_N]
+    """추천 후보를 포지션별로 묶어 한 줄에 (Senior 1 · 2 → Mid 1 · 2 → Junior 1 · 2)."""
+    top = _by_position(cands)
     if not top:
         markup('<p class="hint">이 일에 맞는 스킬을 가진 후보를 찾지 못했어요. 아래 「팀에서 직접 고르기」로 골라 주세요.</p>')
         return
     with st.container(key="top-cands"):
         cols = st.columns(TOP_N, gap="small")
-        for i, (col, c) in enumerate(zip(cols, top)):
+        for col, c in zip(cols, top):
             bars = "".join(
                 f'<div class="r"><span class="l">{label}</span><span class="bar"><span style="width:{v}%"></span></span>'
                 f'<span class="v">{v}</span></div>'
@@ -76,7 +83,9 @@ def _top(cands: list[Candidate]) -> None:
             )
             sub = f"{c.team} · {c.role}" + ("" if c.att else " · 비참석자")
             with col, st.container(key=f"cand-{c.id}"):
-                markup(f'<div class="cand-head"><span>{i + 1}. {esc(c.name)}</span><span>{c.score}점</span></div>'
+                pos = sel.POSITION_LABEL.get(c.position)
+                tag = f'<span class="tag tag-host small">{pos}</span> ' if pos else ""
+                markup(f'<div class="cand-head"><span>{tag}{esc(c.name)}</span><span>{c.score}점</span></div>'
                        f'<div class="cand-sub">{esc(sub)}</div><div class="cand-bars">{bars}</div>'
                        + (f'<p class="cand-match">{esc(c.match)}</p>' if c.match else '<p class="cand-match"></p>'))
                 _pick_button(_who(c.id, c.name), f"pick_{c.id}", stretch=True)
@@ -109,7 +118,7 @@ def _team_picker(cands: list[Candidate], cfg: dict) -> None:
         markup('<h3 style="font-size:15px;font-weight:700">팀에서 직접 고르기</h3>'
                '<p class="hint">이름 · 팀으로 찾거나 조직도를 펼쳐 고르세요.</p>')
         org_people_picker("assign", chosen=list(s.assign_draft),
-                          on_pick=actions.toggle_assignee, height=320)  # 이름 옆엔 직급만 (기본값)
+                          on_pick=actions.toggle_assignee, height=320)  # 이름 옆엔 직무 · 포지션 (기본값)
 
 
 def _config(s) -> dict:
@@ -136,7 +145,7 @@ def _assign_body() -> None:
         if cfg["predecessors"]:  # 선행 업무 담당자는 추천 6명 위, 맨 위에
             _predecessors(cfg["predecessors"])
         # 점수 안내는 점수가 나오는 추천 후보 바로 위에 (선행 업무 담당자 카드에는 점수가 없음)
-        markup(f'<div class="prev-title top-title"><b>추천 후보 {min(TOP_N, len(cands))}명</b>'
+        markup(f'<div class="prev-title top-title"><b>추천 후보 {len(_by_position(cands))}명</b>'
                '<span class="hint">회의록·보유 스킬·현재 업무량으로 점수를 매겼어요</span></div>')
         _top(cands)
         if not s.assign_searching:

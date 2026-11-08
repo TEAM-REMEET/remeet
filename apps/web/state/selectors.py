@@ -75,6 +75,15 @@ def team_groups() -> list[tuple[str, list[str]]]:
     return sorted(groups.items(), key=lambda kv: kv[0] != mine)
 
 
+POSITION_LABEL = {"senior": "Senior", "mid": "Mid", "junior": "Junior"}  # 순서 = 담당자 추천 카드 순서
+
+
+def person_desc(pid: str) -> str:
+    """사람 목록 이름 옆: 직무 · 포지션 (없는 값은 뺌)."""
+    pos = next((r.get("position") or "" for r in repo.people_rows() if r["user_id"] == pid), "")
+    return " · ".join(x for x in (person_role(pid), POSITION_LABEL.get(pos, "")) if x)
+
+
 def person_role(pid: str) -> str:
     """조직도에 있는 직무 (없으면 빈 값)."""
     for t in repo.teams().values():

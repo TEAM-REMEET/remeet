@@ -1929,11 +1929,12 @@
 .st-key-top-cands .cand-head { font-size: 14px; flex-wrap: wrap; gap: 2px 6px; }
 .st-key-top-cands .cand-head span:first-child { white-space: nowrap; }
 .st-key-top-cands .cand-sub { font-size: 12px; min-height: 34px; }
-.st-key-top-cands .cand-bars { gap: 5px; margin-top: 8px; }
+.st-key-top-cands .cand-bars { gap: 5px; margin-top: 16px; }
 .st-key-top-cands .cand-bars .r { gap: 6px; }
 .st-key-top-cands .cand-bars .l { width: 52px; font-size: 11px; }
 .st-key-top-cands .cand-bars .v { width: 22px; font-size: 11px; }
-.st-key-top-cands .cand-match { margin-top: 6px; font-size: 11px; line-height: 1.5; min-height: 33px; }
+/* 카드 높이 통일: 4줄(11px × 1.5) 고정 · 넘치면 이 칸 안에서 스크롤 · 줄바꿈(\n)은 줄로 */
+.st-key-top-cands .cand-match { margin-top: 16px; font-size: 11px; line-height: 1.5; height: 66px; overflow-y: auto; white-space: pre-line; }
 .st-key-top-cands [class*="st-key-cand-"] [class*="st-key-b-"] button { height: 34px; font-size: 14px; }
 .st-key-top-cands .cand-sub, .st-key-top-cands .cand-match { word-break: keep-all; }
 
