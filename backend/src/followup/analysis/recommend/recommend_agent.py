@@ -16,6 +16,11 @@ Neo4j에 남기는 것:
   (ActionItem)-[:BORROWED_SKILLS_FROM]->(ActionItem)   유사 업무에서 스킬을 빌렸을 때만
   ActionItem.recommend_status = 'no_candidate'|'skill_unclear' (추천 엣지가 없는 경우만), ActionItem.missing_skills
 조회·LLM 실패는 아무것도 쓰지 않는다 → 같은 회의로 다시 요청하면 그 건만 다시 처리된다.
+
+하네스 (요약 에이전트와 같은 두 가지)
+  1. LLM 호출 상한: CallBudget — 실행 1회당 settings.recommend_max_llm_calls() (적재와 병렬 해석이 함께 셈).
+     넘으면 호출하지 않고 그 건은 error(저장 안 함). 한 번에 추천하는 액션아이템은 settings.MAX_RECOMMEND_ITEMS건까지.
+  2. LangGraph recursion_limit: RUN_RECURSION_LIMIT(run 그래프) · ITEM_RECURSION_LIMIT(item 그래프 1건마다)
 """
 from __future__ import annotations
 
@@ -24,11 +29,14 @@ import json
 import logging
 import operator
 from pathlib import Path
+import threading
 from typing import Annotated, TypedDict
 import uuid
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
+
+from followup import settings
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +44,30 @@ INTERPRET_PROMPT = (Path(__file__).with_name("prompts") / "interpret.md").read_t
 
 POSITIONS = ("senior", "mid", "junior")
 PER_POSITION = 2
-MAX_INTERPRET = 2  # 최초 1회 + 재시도 1회
+MAX_INTERPRET = settings.RECOMMEND_MAX_INTERPRET  # 최초 1회 + 재시도 1회
 LLM_EFFORT = "high"  # playground에서 비교해 고른 값 (모델은 환경변수 OPENAI_MODEL)
 LLM_RETRIES = 3  # 일시적 오류(네트워크·rate limit)는 여기서 해결. 그래도 실패하면 저장 안 하고 다음 요청에 다시
+# 노드 실행 상한 (정상 최대: fetch_context 1 + interpret 2 + validate 2 + borrow 1 + score 1 + save 1 = 8)
+ITEM_RECURSION_LIMIT = 12
+# 노드 실행 상한 (정상 최대: load_items 1 + process_item 1 = 2, Send 병렬 처리는 한 단계로 셈)
+RUN_RECURSION_LIMIT = 5
+
+
+class LLMCallLimitError(RuntimeError):
+    """실행 1회의 API 호출 상한 초과 (호출하지 않음)"""
+
+
+class CallBudget:
+    """실행 1회 전용 API 호출 상한. 적재와 액션아이템별 병렬 해석이 함께 쓰므로 lock을 잡고 센다."""
+
+    def __init__(self, max_calls: int):
+        self.max_calls, self.used, self._lock = max_calls, 0, threading.Lock()
+
+    def take(self, step: str) -> None:
+        with self._lock:
+            if self.used >= self.max_calls:
+                raise LLMCallLimitError(f"LLM 호출 상한 초과 — 실행 1회당 최대 {self.max_calls}회, {step} 호출하지 않고 중단")
+            self.used += 1  # 실패해도 센 횟수로 둠
 
 # ─────────────────────────────── 고정 쿼리 (LLM은 ID만 넘김) ───────────────────────────────
 
@@ -421,9 +450,10 @@ class RunState(TypedDict, total=False):
     results: Annotated[list[dict], operator.add]
 
 
-def build_graph(tools: dict, llm):
+def build_graph(tools: dict, llm, budget: CallBudget | None = None):
     """tools: catalog(), items(force), context(id), candidates() -> (rows, workload_present),
-    similar(id) -> REQUIRES_SKILL이 있는 다른 액션아이템들, save(result). 주입받아서 같은 그래프가 Neo4j와 가짜(--self-check)에서 돈다."""
+    similar(id) -> REQUIRES_SKILL이 있는 다른 액션아이템들, save(result). 주입받아서 같은 그래프가 Neo4j와 가짜(--self-check)에서 돈다.
+    budget: 실행 1회의 API 호출 상한 (없으면 세지 않음)."""
 
     def fetch_context(s: ItemState) -> dict:
         try:
@@ -444,14 +474,18 @@ def build_graph(tools: dict, llm):
                     if s.get("failure_kind") == "skill" else None)
         payload = {**llm_context(s["context"]), "catalog": s["catalog"], "previous_attempt": previous}
         try:
+            if budget:
+                budget.take("해석")
             raw = call_json(llm, INTERPRET_PROMPT, payload)
+        except LLMCallLimitError as exc:  # 다시 시도하지 않고 give_up → error (저장 안 함)
+            return {"attempts": s["attempts"] + 1, "raw_spec": None, "failure_kind": "limit", "failure": str(exc)}
         except Exception as exc:
             return {"attempts": s["attempts"] + 1, "raw_spec": None, "failure_kind": "llm",
                     "failure": f"LLM 해석 호출 실패 ({type(exc).__name__})"}
         return {"attempts": s["attempts"] + 1, "raw_spec": raw, "failure": None, "failure_kind": None}
 
     def validate(s: ItemState) -> dict:
-        if s.get("failure_kind") == "llm":
+        if s.get("failure_kind") in ("llm", "limit"):
             return {}
         try:
             spec, warnings = normalize_spec(s["raw_spec"], s["catalog"])
@@ -460,7 +494,7 @@ def build_graph(tools: dict, llm):
         return {"spec": spec, "missing_skills": spec["unmatched_skills"], "warnings": s["warnings"] + warnings}
 
     def give_up(s: ItemState) -> dict:
-        status = "error" if s.get("failure_kind") == "llm" else "skill_unclear"
+        status = "error" if s.get("failure_kind") in ("llm", "limit") else "skill_unclear"
         return {"status": status, "warnings": s["warnings"] + [f"{s['failure']} (해석 {s['attempts']}회 시도)"]}
 
     def borrow(s: ItemState) -> dict:
@@ -513,6 +547,8 @@ def build_graph(tools: dict, llm):
     def after_validate(s: ItemState) -> str:
         if s.get("spec"):
             return "score"
+        if s.get("failure_kind") == "limit":
+            return "give_up"
         if s["attempts"] < MAX_INTERPRET:
             return "interpret"
         return "borrow" if s.get("failure_kind") == "skill" else "give_up"
@@ -533,14 +569,18 @@ def build_graph(tools: dict, llm):
     item_graph = item.compile()
 
     def load_items(s: RunState) -> dict:
-        return {"catalog": tools["catalog"](), "item_ids": tools["items"](s.get("force", False))}
+        ids, limit = tools["items"](s.get("force", False)), settings.MAX_RECOMMEND_ITEMS
+        if len(ids) > limit:  # 넘친 건은 저장하지 않으므로 다시 요청하면 그 건부터 이어서 추천
+            logger.warning("액션아이템 %d건 중 %d건만 추천, 나머지 %d건은 다음 요청에", len(ids), limit, len(ids) - limit)
+        return {"catalog": tools["catalog"](), "item_ids": ids[:limit]}
 
     def fan_out(s: RunState):
         return [Send("process_item", {"item_id": i, "catalog": s["catalog"]}) for i in s["item_ids"]] or END
 
     def process_item(payload: dict) -> dict:
         try:
-            return {"results": [item_graph.invoke(payload)["output"]]}
+            # 그래프 안에서 다시 실행하는 그래프라 바깥 recursion_limit이 전달되는지에 기대지 않고 따로 준다
+            return {"results": [item_graph.invoke(payload, {"recursion_limit": ITEM_RECURSION_LIMIT})["output"]]}
         except Exception as exc:  # 한 건이 실패해도 다른 건에 영향 없게. 저장 안 했으니 다음 실행에 다시
             logger.exception("[%s] 처리 실패", payload["item_id"])
             return {"results": [{"action_item_id": payload["item_id"], "status": "error"}]}
@@ -555,7 +595,7 @@ def build_graph(tools: dict, llm):
 
 
 def run_once(graph, force: bool, metadata: dict | None = None) -> list[dict]:
-    config = {"run_name": "recommend_agent",
+    config = {"run_name": "recommend_agent", "recursion_limit": RUN_RECURSION_LIMIT,
               "metadata": {"recommend_run_id": uuid.uuid4().hex[:12], **(metadata or {})}}
     return graph.invoke({"force": force}, config).get("results") or []
 

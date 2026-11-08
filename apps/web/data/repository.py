@@ -186,6 +186,8 @@ def recommendation_config(item: dict) -> dict:
                                      p["user_id"])
                          for p in item["predecessors"]],
         "needed_skills": set(), "related_teams": set(), "reasons": {},
+        # 후보가 없을 때 이유 (no_candidate: 스킬 가진 사람 없음 / skill_unclear: 필요 스킬을 못 정함) · 스킬 목록에 없는 기술
+        "status": item.get("recommend_status"), "missing_skills": item.get("missing_skills") or [],
     }
 
 

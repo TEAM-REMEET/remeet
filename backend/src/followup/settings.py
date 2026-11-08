@@ -125,6 +125,11 @@ HITL_MAX_VERIFY_ROUNDS = 2           # 근거 검증 최대 횟수 (1~3) — 근
 HITL_EFFORT = None                   # 근거 연결 · 검증 추론 강도 / None이면 REASONING_EFFORT
 IMPROVEMENT_ISSUE_TYPES = {"깊이 부족", "논의 흐름 단절", "세부 정보 누락", "결정 고려사항 누락", "중복 요약",
                            "요약 범위 오류", "안건 구성 오류", "기타 안건 분류 오류"}
+# 담당자 추천 (application/recommend_assignees.py · analysis/recommend/recommend_agent.py)
+#   실행 1회당 실제 API 호출 상한은 recommend_max_llm_calls()로 자동 계산 (적재 Topic 판단 + 후속 업무 연결 + 해석 + 여유)
+RECOMMEND_MAX_INTERPRET = 2          # 액션아이템 1건의 요구 스킬 해석 최대 횟수 (최초 1 + 재시도 1 · 무한 루프 방지)
+MAX_RECOMMEND_ITEMS = 20             # 실행 1회에 추천할 액션아이템 수 상한 (평균 6~7개 · 넉넉히 10개의 2배) — 넘친 건은 저장 안 함, 다시 요청하면 이어서
+RECOMMEND_CALL_MARGIN = 2            # 호출 상한의 여유 값
 
 # ── 2-2. 사용량 · 비용 기록 (PostgreSQL llm_usage · 관리자 「비용 관리」 · adapters/llm/usage.py) ──────────
 #   AI 응답이 올 때마다 1줄 저장 (회의록 분석 · 근거 연결 · 담당자 추천 · 회의 질문). 결과 JSON에는 넣지 않음
@@ -226,6 +231,17 @@ def max_llm_calls() -> int:
 def hitl_max_llm_calls() -> int:
     # HITL 실행 1회당 실제 API 호출 상한 = 회차마다 근거 연결 1 + 검증 1
     return HITL_MAX_VERIFY_ROUNDS * 2
+
+
+def recommend_llm_call_plan(n_agendas: int, n_items: int) -> dict[str, int]:
+    # 담당자 추천 단계별 최대 LLM 호출 횟수 (Topic 판단은 안건당 최대 1 · 후속 업무 연결은 회의당 최대 1)
+    return {"Topic 판단": n_agendas, "후속 업무 연결": 1,
+            "해석": RECOMMEND_MAX_INTERPRET * min(n_items, MAX_RECOMMEND_ITEMS)}
+
+
+def recommend_max_llm_calls(n_agendas: int, n_items: int) -> int:
+    # 담당자 추천 실행 1회당 실제 API 호출 상한 (안건 5~6개 · 액션아이템 20개 이상이면 천장 48~49)
+    return sum(recommend_llm_call_plan(n_agendas, n_items).values()) + RECOMMEND_CALL_MARGIN
 
 
 def llm_call_plan_text() -> str:
