@@ -20,7 +20,8 @@ from followup.analysis.summary.schemas import (LLMAgenda, LLMDeletion, LLMDiscus
                                        LLMRevision, LLMVerification, LLMVerifyIssue)
 from followup import settings as cfg
 from followup.analysis.summary.steps import EmptySummaryError
-from followup.application.summarize_meeting import LLMCallLimitError, _StepRunner, summarize_meeting
+from followup.application.summarize_meeting import (LLMCallLimitError, LLMInputLimitError, _StepRunner, input_chars,
+                                                     summarize_meeting)
 from followup.entrypoints import cli
 
 TRANSCRIPT = (Path(__file__).parents[1] / "fixtures" / "sample_meeting.txt").read_text(encoding="utf-8")
@@ -306,6 +307,20 @@ class ResumeTests(Base):
         with self.assertRaises(LLMCallLimitError):
             runner("over", "u", LLMVerification, step="verify")
         self.assertEqual(len(llm.calls), cfg.max_llm_calls())
+
+    def test_input_over_limit_is_not_called(self):
+        llm = FakeLLM(verifications=[[]] * 2)
+        runner = _StepRunner(llm, self.store, "M", use_cache=False)
+        limit = input_chars("s", "u", LLMVerification)
+        with patch.object(cfg, "MAX_STEP_INPUT_CHARS", limit):
+            runner("s", "u", LLMVerification, step="verify")             # 상한과 같으면 호출
+            with self.assertRaises(LLMInputLimitError):
+                runner("s", "uu", LLMVerification, step="verify")        # 1자라도 넘으면 호출하지 않음
+        self.assertEqual(len(llm.calls), 1)
+        self.assertEqual(runner.api_calls, 1)
+
+    def test_input_limit_counts_schema(self):
+        self.assertGreater(input_chars("", "", LLMRevision), 0)         # 출력 형식(JSON 스키마)도 입력에 포함
 
     def test_sa011_concurrent_runs_do_not_share_state(self):
         def run(i):

@@ -355,12 +355,24 @@ def _api_folders(token: str) -> dict[str, Folder]:
         return {f.id: f for f in pool.map(folder, projects)}
 
 
-def _from_api(source: str, loader, default):
-    """로그인 전이면 조용히 default. 실패하면 화면 위에 안내(data_errors)를 남기고 default."""
+def _is_admin() -> bool:
+    """관리자 계정으로 로그인했는지 (_token 과 같은 이유로 세션 상태에서 바로 읽어요)."""
+    return bool(getattr(st.session_state.get("_app_state"), "is_admin", False))
+
+
+def _from_api(source: str, loader, default, *, user_only: bool = False):
+    """로그인 전이면 조용히 default. 실패하면 화면 위에 안내(data_errors)를 남기고 default.
+
+    user_only=True: 일반 사용자 전용 API (회의 · 회의 종류 · 프로젝트). 백엔드가 관리자를 403 으로 막으므로
+    관리자면 부르지 않고 조용히 default (화면을 다시 그릴 때마다 403 이 쌓이고 안내가 뜨는 것 방지).
+    """
     token = _token()
     if not token:
         return default
     errors = st.session_state.setdefault("_data_errors", {})
+    if user_only and _is_admin():
+        errors.pop(source, None)
+        return default
     try:
         out = loader(token)
     except api.ApiError as e:
@@ -383,7 +395,7 @@ def meetings_changed() -> None:
 
 
 def _base_meetings() -> dict[str, Meeting]:
-    return _from_api("회의록", _api_meetings, {})
+    return _from_api("회의록", _api_meetings, {}, user_only=True)
 
 
 def _session_meetings() -> dict[str, Meeting]:
@@ -499,13 +511,13 @@ def received_meeting_ids() -> list[str]:
 def meeting_types() -> dict[str, MeetingType]:
     """회의 종류 (GET /api/meeting-types). 못 불러와도 월간 · 주간 · 일반 칸은 있어야 화면(주소 · 카드)이 그려져요."""
     out = {k: MeetingType(k, name, "", 0) for k, name in _DEFAULT_TYPES.items()}
-    out.update(_from_api("회의 종류", _api_meeting_types, {}))
+    out.update(_from_api("회의 종류", _api_meeting_types, {}, user_only=True))
     return out
 
 
 def base_folders() -> dict[str, Folder]:
     """내 프로젝트 (GET /api/projects + 멤버 · 회의 · 브리프)."""
-    return _from_api("프로젝트", _api_folders, {})
+    return _from_api("프로젝트", _api_folders, {}, user_only=True)
 
 
 # ---------------------------------------------------------------- assignee candidates
