@@ -286,6 +286,8 @@ img.ico { display: inline-block; flex: none; vertical-align: middle; }
   background: rgba(246, 247, 249, 0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   animation: ld-fade 0.2s ease-out;
 }
+/* 사이드바는 따로 쌓여서 덮이지 않음 → 로딩 중에는 누르지 못하게 (작업 도중 다른 화면으로 가면 결과 저장이 빠짐) */
+body:has(.ld-overlay) section[data-testid="stSidebar"] { pointer-events: none; opacity: 0.5; transition: opacity 0.2s; }
 .ld-box {
   display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
   padding: 28px 36px 24px; border-radius: 12px; background: rgba(255, 255, 255, 0.92);

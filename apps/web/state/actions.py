@@ -1325,8 +1325,7 @@ def start_export() -> None:
                          expired=tuple(k for k, v in repo.tool_statuses().items() if v == "expired"))
     s.status_override[x.meeting_id] = "sending"
     _save_status(x.meeting_id, "sending")
-    with st.spinner("외부 도구로 보내고 있어요…"):
-        export.send(s)  # 실제 전송 (Jira · 메일을 골랐고 연결된 경우만)
+    _send_with_overlay(s, "보내고 있어요", "외부 도구로 회의 결과를 보내는 중이에요 · 1~2분 걸릴 수 있어요")
 
 
 def retry_export() -> None:
@@ -1342,8 +1341,20 @@ def retry_export() -> None:
                          expired=x.expired, contact_shown=True, results=x.results, errors=x.errors)
     s.status_override[x.meeting_id] = "sending"
     _save_status(x.meeting_id, "sending")
-    with st.spinner("실패한 것만 다시 보내고 있어요…"):
-        export.send(s)  # 연결 · 설정 실패(errors)는 건너뜀 (관리자 문의)
+    _send_with_overlay(s, "다시 보내고 있어요", "실패한 것만 다시 보내는 중이에요 (연결 · 설정 실패는 관리자 문의)")
+
+
+def _send_with_overlay(s, verb: str, sub: str) -> None:
+    """외부 도구로 보내는 동안 회의록 확정과 같은 로딩 화면 (콜백 안에서 그리면 다음 화면을 그릴 때 사라짐).
+    실제로 보내는 건 Jira · 메일뿐이라, 시뮬레이션 도구만 골랐어도 잠깐은 보이게 최소 시간을 채움."""
+    from config import EXPORT_OVERLAY_MIN_SECONDS
+    from state import export
+    from ui.loading import loading_overlay
+
+    loading_overlay(f"{' · '.join(repo.tool(t).name for t in s.export.picked)}(으)로 {verb}", sub)
+    started = time.monotonic()
+    export.send(s)  # 실제 전송 (Jira · 메일을 골랐고 연결된 경우만)
+    time.sleep(max(0.0, EXPORT_OVERLAY_MIN_SECONDS - (time.monotonic() - started)))
 
 
 def finish_export() -> None:
