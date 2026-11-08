@@ -1456,7 +1456,7 @@ def adm_set_month(key: str) -> None:
 
 def adm_pick_month(year_key: str, month_key: str) -> None:
     """비용 관리: 연도 · 월 고르기. 그 연도에 없는 달이면 그 연도의 마지막 달로."""
-    keys = [m["key"] for m in repo.admin()["months"]]
+    keys = [m["key"] for m in repo.cost_months()]
     y = st.session_state.get(year_key)
     mth = st.session_state.get(month_key)
     key = f"{y}-{mth:02d}"
@@ -1469,17 +1469,24 @@ def adm_save_budget(budget_key: str, alert_key: str) -> None:
     """월 예산 · 알림 기준 저장 (조직 설정 · 서버 공용)."""
     s = get_state()
     b = repo.budget()
-    b["amount"] = int(st.session_state.get(budget_key) or b["amount"])
-    b["alert_at"] = int(st.session_state.get(alert_key) or b["alert_at"])
-    s.toast = f"월 예산을 {b['amount']:,}원, 알림 기준을 {b['alert_at']}%로 저장했어요."
+    amount = int(st.session_state.get(budget_key) or b["amount"])
+    alert_at = int(st.session_state.get(alert_key) or b["alert_at"])
+    try:
+        repo.save_budget(amount, alert_at)
+    except api.ApiError as e:
+        s.toast = f"예산을 저장하지 못했어요: {e}"
+        return
+    s.toast = f"월 예산을 {amount:,}원, 알림 기준을 {alert_at}%로 저장했어요."
 
 
 def check_budget_alert() -> None:
     """관리자: 이번 달 월말 예상 금액이 알림 기준을 넘으면 알림 (같은 예산 · 기준으로는 한 번만)."""
     from state import delivery
 
-    cur = next(m for m in repo.admin()["months"] if m.get("running"))
+    cur = next((m for m in repo.cost_months() if m.get("running")), None)
     b = repo.budget()
+    if cur is None or not cur["amount"] or b["amount"] <= 0:
+        return
     forecast = cur["amount"] / cur["days"] * cur["month_days"]
     pct = forecast / b["amount"] * 100
     if pct >= b["alert_at"] and repo.budget_alert_once(f"{cur['key']}:{b['amount']}:{b['alert_at']}"):

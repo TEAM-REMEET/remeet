@@ -42,6 +42,7 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ValidationError
 
 from followup import settings as cfg
+from followup.adapters.llm import usage
 from followup.analysis.summary import steps
 from followup.analysis.summary.preprocessing import load_transcript
 from followup.analysis.summary.schemas import LLMMeetingSummary, MeetingSummary, VerificationIssue
@@ -84,8 +85,9 @@ class _StepRunner:
     """실행 1회 전용 LLM 호출기 — 호출 상한과 단계별 응답 재사용을 담당 (동시 실행 간에 값을 공유하지 않음)"""
 
     def __init__(self, llm: StructuredLLM, store: SummaryStore, meeting_id: str, use_cache: bool,
-                 max_calls: int | None = None, deadline: float | None = None):
+                 max_calls: int | None = None, deadline: float | None = None, feature: str = "summary"):
         self.llm, self.store, self.meeting_id, self.use_cache = llm, store, meeting_id, use_cache
+        self.feature = feature      # 사용량 기록의 기능 이름 (summary: 회의록 분석 · evidence: 근거 연결 · 검증)
         self.max_calls = cfg.max_llm_calls() if max_calls is None else max_calls
         self.deadline = deadline    # time.monotonic() 기준 — 지나면 새 LLM 호출을 하지 않음
         self.api_calls = 0
@@ -123,7 +125,8 @@ class _StepRunner:
             raise LLMCallLimitError(f"LLM 호출 상한 초과 — 실행 1회당 최대 {self.max_calls}회, 호출하지 않고 중단")
         self.api_calls += 1     # 실패해도 센 횟수로 둠
         logger.info("[%s] %s: LLM 호출 (추론 강도 %s · 입력 %s자)", self.meeting_id, step, effort, f"{size:,}")
-        parsed = self.llm.parse(system, user, schema, effort)
+        with usage.scope(self.meeting_id, self.feature):
+            parsed = self.llm.parse(system, user, schema, effort)
         if self.use_cache and (cache_if is None or cache_if(parsed)):
             self.store.write_step(self.meeting_id, key, parsed.model_dump_json(indent=1))
         return parsed

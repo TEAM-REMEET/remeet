@@ -23,8 +23,10 @@ def build_llm():
     from langchain_openai import ChatOpenAI  # 무거운 import는 실제로 물어볼 때만
 
     settings.load_env()
+    from followup.adapters.llm import usage
+
     return ChatOpenAI(model=settings.model_name(), reasoning_effort=agent.LLM_EFFORT, timeout=agent.LLM_TIMEOUT,
-                      max_retries=agent.LLM_RETRIES)
+                      max_retries=agent.LLM_RETRIES, callbacks=[usage.langchain_callback("ask")])
 
 
 def ask(question: str, *, llm=None, tools: dict | None = None) -> dict[str, Any]:

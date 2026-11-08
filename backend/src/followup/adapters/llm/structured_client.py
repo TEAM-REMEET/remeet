@@ -7,6 +7,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 
 from followup import settings as cfg
+from followup.adapters.llm import usage
 from followup.adapters.llm.tracing import wrap_client
 
 
@@ -27,6 +28,7 @@ class OpenAIStructuredClient:
             kwargs["reasoning"] = {"effort": effort}
         response = self._get_client().responses.parse(model=cfg.model_name(), instructions=system, input=user,
                                                       text_format=schema, **kwargs)
+        usage.record_responses(response)    # 사용량 · 비용 기록 (어느 회의 · 기능인지는 호출하는 쪽의 usage.scope)
         if response.output_parsed is None:
             raise RuntimeError(f"구조화 출력 파싱 실패 ({schema.__name__}) — 응답 거부 또는 형식 오류")
         return response.output_parsed

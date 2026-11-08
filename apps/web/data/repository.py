@@ -820,7 +820,6 @@ def _server() -> dict:
         # 조직 (관리자 · 구성원 관리): 새로 추가한 구성원 · 팀/직무 변경 · 권한 · 상태
         "org": {"added": {}, "edits": {}, "roles": {}, "status": {}},
         "org_version": 0,  # 조직이 바뀔 때마다 +1 → 열려 있는 사용자 화면이 알아채고 새로 그림
-        "budget": {"amount": admin()["budget"], "alert_at": admin()["alert_at"]},  # 월 예산 · 알림 기준 (%)
         "budget_alerted": set(),  # 이미 보낸 예산 알림 (같은 알림을 또 보내지 않게)
     }
 
@@ -850,10 +849,6 @@ def team_id_of(name: str) -> str | None:
 def job_catalog() -> list[str]:
     """직무 목록 (Neo4j Role)."""
     return [r["name"] for r in catalog("roles")]
-
-
-def budget() -> dict:
-    return _server()["budget"]
 
 
 def budget_alert_once(key: str) -> bool:
@@ -939,6 +934,74 @@ def tool(tool_id: str) -> IntegrationTool:
 def admin() -> dict:
     """관리자 화면 목업: 관리자 계정 · 월 예산 · 월별 비용 · 팀별/기능별 비중 · 구성원 이메일·최근 접속."""
     return _load("admin")
+
+
+# ---------------------------------------------------------------- 관리자 · 비용 관리 (백엔드 → PostgreSQL llm_usage)
+# 비용은 달러로 받아 환율로 원을 계산 (화면: ₩12,345 ($8.82)). 예산 · 알림 기준은 서버 공용 (app_settings)
+COST_FEATURES = {"summary": "회의록 분석", "evidence": "근거 연결 (확정)", "recommend": "담당자 추천", "ask": "회의 질문"}
+# 기능별 사용량 화면에서 묶어 보여 주는 단위 (기록은 기능 4개로 따로 남고, 화면에서만 합침)
+COST_GROUPS = {"회의록 생성": ("summary", "evidence", "recommend"), "회의 질문": ("ask",)}
+_DEFAULT_BUDGET = {"amount_krw": 50000, "alert_pct": 80}   # 백엔드를 못 부를 때만 (백엔드 settings 기본값과 같게)
+_DEFAULT_RATE = {"rate": 1400.0, "date": "", "fallback": True}
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _api_cost(token: str) -> dict:
+    return api.call("GET", "/api/admin/cost", token=token)
+
+
+def _month_key(y: int, m: int) -> str:
+    return f"{y:04d}-{m:02d}"
+
+
+def _empty_cost() -> dict:
+    """백엔드를 못 부를 때: 최근 12개월을 0원으로 (화면이 깨지지 않게)."""
+    from utils.dates import today
+
+    t = today()
+    y, m, months = t.year, t.month, []
+    for _ in range(12):
+        months.append({"key": _month_key(y, m), "year": y, "month": m, "cost_usd": 0.0, "notes": 0, "unpriced": 0,
+                       "features": {f: 0.0 for f in COST_FEATURES}})
+        y, m = (y, m - 1) if m > 1 else (y - 1, 12)
+    return {"today": t.isoformat(), "months": months[::-1], "budget": dict(_DEFAULT_BUDGET), "rate": dict(_DEFAULT_RATE)}
+
+
+def _cost() -> dict:
+    return _from_api("비용", _api_cost, None) or _empty_cost()
+
+
+def cost_rate() -> dict:
+    """{"rate": 1358.73, "date": "2026-11-06", "fallback": False} — fallback이면 기본 환율 (환율을 받지 못함)."""
+    return _cost()["rate"]
+
+
+def cost_months() -> list[dict]:
+    """오래된 달부터. 화면용으로 원화 금액(amount) · 진행 중인 달 정보(running · days · month_days)를 붙여요."""
+    import calendar
+    from datetime import date
+
+    data = _cost()
+    rate = data["rate"]["rate"]
+    today = date.fromisoformat(data["today"])
+    out = []
+    for mo in data["months"]:
+        running = mo["year"] == today.year and mo["month"] == today.month
+        out.append({**mo, "amount": mo["cost_usd"] * rate, "running": running, "days": today.day if running else None,
+                    "month_days": calendar.monthrange(mo["year"], mo["month"])[1]})
+    return out
+
+
+def budget() -> dict:
+    """{"amount": 월 예산(원), "alert_at": 알림 기준(%)} (서버 공용 · 관리자가 저장한 값)."""
+    b = _cost()["budget"]
+    return {"amount": b["amount_krw"], "alert_at": b["alert_pct"]}
+
+
+def save_budget(amount: int, alert_at: int) -> None:
+    """월 예산 · 알림 기준 저장 (PUT /api/admin/budget). 실패하면 api.ApiError."""
+    api.call("PUT", "/api/admin/budget", {"amount_krw": int(amount), "alert_pct": int(alert_at)}, token=_token())
+    _api_cost.clear()
 
 
 # ---------------------------------------------------------------- notifications
