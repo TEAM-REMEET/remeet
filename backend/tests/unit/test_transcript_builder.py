@@ -3,6 +3,9 @@ import unittest
 
 from pydantic import ValidationError
 
+from unittest.mock import patch
+
+from followup import settings as cfg
 from followup.analysis.summary.preprocessing import TranscriptFormatError, parse_transcript
 from followup.analysis.summary.transcript_builder import MeetingSubmission, build_meeting_text, new_meeting_id, submission_key
 
@@ -52,6 +55,24 @@ class FormatTests(unittest.TestCase):
     def test_file_bom_and_crlf_are_removed(self):
         text = build_meeting_text(submission(transcript="﻿바트: 첫 발화\r\n\r\n﻿조현우B: 둘째 발화\r\n"))
         self.assertIn("바트_u1: 첫 발화\n조현우B_u10: 둘째 발화\n", text)
+
+
+class LengthTests(unittest.TestCase):
+    def test_transcript_at_limit_is_accepted(self):
+        sub = submission()
+        with patch.object(cfg, "MAX_TRANSCRIPT_CHARS", len(sub.transcript)):
+            self.assertEqual(build_meeting_text(sub), EXPECTED)
+
+    def test_transcript_over_limit_is_rejected_before_llm(self):
+        sub = submission()
+        with patch.object(cfg, "MAX_TRANSCRIPT_CHARS", len(sub.transcript) - 1):
+            with self.assertRaises(TranscriptFormatError) as ctx:
+                build_meeting_text(sub)
+        self.assertIn("너무 길어요", ctx.exception.errors[0])
+
+    def test_default_limits(self):
+        self.assertEqual((cfg.MAX_TRANSCRIPT_CHARS, cfg.MAX_STEP_INPUT_CHARS), (35000, 80000))
+        cfg.validate()
 
 
 class ParticipantTests(unittest.TestCase):
