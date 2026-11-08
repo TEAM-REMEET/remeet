@@ -98,7 +98,7 @@ class AppState:
     # --- 폴더
     folder_id: str = "all"  # all 이면 회의 종류 화면
     folder_tab: str = "all"  # all(회의록 목록) | wiki
-    folder_role: str = "all"  # all | host | att
+    folder_role: str = "todo"  # all | todo(내 할 일이 있는 회의 · 기본) | host | att
     show_brief: bool = False
     new_folders: list[NewFolder] = field(default_factory=list)
     deleted_folders: set[str] = field(default_factory=set)
@@ -270,8 +270,7 @@ class AppState:
     search_tab: str = ""  # 회의명 | 폴더명 | 구성원 | 회의 내용 (빈 값이면 결과가 있는 첫 버튼)
     search_nonce: int = 0  # 검색 페이지로 새로 들어올 때마다 바뀜 (입력칸 새로 · 커서 맞추기)
     archive_qnonce: int = 0  # 화면을 옮길 때마다 바뀌어 검색칸을 비움
-    todo_group: str = ""  # 회의 목록 판넬: left(내 할 일이 있음) · 빈 값이면 회의가 있는 첫 판넬
-    archive_role: str = "all"  # 기간별 목록의 전체 / 내가 주관 / 참석
+    archive_role: str = "todo"  # 회의 종류별 목록의 전체 / 내 할 일이 있는 회의(기본) / 내가 주관 / 참석
     tree_open: set[str] = field(default_factory=lambda: {"root"})  # 사이드바에서 펼친 노드
     tree_mode: str = "time"  # 사이드바 회의록 트리: time(정기 회의) | project(프로젝트 단위)
     ask_history: list[dict] = field(default_factory=list)  # 회의에 물어보기 기록: 받은 답 + asked_at (최근 것이 앞) · 형식은 repo.ask()

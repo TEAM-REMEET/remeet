@@ -18,7 +18,7 @@ from components.knowledge_graph import (
     entity_panel,
     knowledge_graph,
 )
-from components.meeting_table import meeting_sections
+from components.meeting_table import meeting_table
 from components.member_pills import member_pills
 from state.store import me_id
 from config import FOLDER_WIKI_MIN_NOTES
@@ -36,6 +36,8 @@ from utils.text import esc
 
 # ================================================================ 폴더 화면
 def _empty_texts(role: str) -> tuple[str, str]:
+    if role == "todo":
+        return "내 할 일이 있는 회의가 없어요", "이 폴더에서 나에게 맡겨진 할 일이 있는 회의는 없어요."
     if role == "host":
         return "내가 주관한 회의가 없어요", "이 폴더에서 내가 주관한 회의는 아직 없어요."
     if role == "att":
@@ -153,7 +155,8 @@ def _wiki_tab(s: AppState, fp: FolderPage) -> None:
 def render_folder_page(s: AppState, fp: FolderPage) -> None:
     host_ids = [i for i in fp.notes if sel.my_role(repo.meeting(i)) == "host"]
     att_ids = [i for i in fp.notes if sel.my_role(repo.meeting(i)) == "att"]
-    shown = {"host": host_ids, "att": att_ids}.get(s.folder_role, fp.notes)
+    todo_ids = [i for i in fp.notes if sel.my_todo_status(s, i) == "left"]
+    shown = {"todo": todo_ids, "host": host_ids, "att": att_ids}.get(s.folder_role, fp.notes)
 
     with st.container(horizontal=True, vertical_alignment="top"):
         with st.container(gap="small"):
@@ -174,7 +177,7 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
     button_group(
         [("all", f"회의록 {len(fp.notes)}"), ("wiki", "위키")],
         s.folder_tab if s.folder_tab in ("all", "wiki") else "all",
-        lambda v: actions.update(folder_tab=v, folder_role="all"),
+        lambda v: actions.update(folder_tab=v, folder_role="todo"),
         key="ftab",
         style="tab",
     )
@@ -184,14 +187,15 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
 
     with st.container(horizontal=True, vertical_alignment="center", gap="small"):
         button_group(
-            [("all", f"전체 {len(fp.notes)}"), ("host", f"내가 주관 {len(host_ids)}"), ("att", f"참석 {len(att_ids)}")],
+            [("all", f"전체 {len(fp.notes)}"), ("todo", f"내 할 일이 있는 회의 {len(todo_ids)}"),
+             ("host", f"내가 주관 {len(host_ids)}"), ("att", f"참석 {len(att_ids)}")],
             s.folder_role,
             lambda v: actions.update(folder_role=v),
             key="frole",
         )
         markup(info_tip(_VISIBILITY_HELP))
     if shown:
-        meeting_sections(s, shown, key=fp.key)
+        meeting_table([sel.meeting_row(s, i) for i in shown], key=f"{fp.key}-{s.folder_role}")
     else:
         title, text = _empty_texts(s.folder_role)
         empty_state(text, title=title)

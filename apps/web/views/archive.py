@@ -1,7 +1,7 @@
 """회의록 화면.
 
   회의록        → 월간 · 주간 · 일반 회의 카드 (+ 검색)
-  회의 종류      → 그 종류의 회의 목록 (전체 / 내가 주관 / 참석)
+  회의 종류      → 그 종류의 회의 목록 (전체 / 내 할 일이 있는 회의 / 내가 주관 / 참석)
 
 프로젝트 ─ 회의 구조이고, 회의마다 종류(월간 · 주간 · 일반)가 있어요. 프로젝트 화면은 views/folder.py
 """
@@ -79,17 +79,21 @@ def _type(s: AppState, t: str) -> None:
         page_header(mtype.name, f"{mtype.meta} · 회의록 {len(ids)}개")
         button("회의록 올리기", key="type_upload", variant="primary", on_click=actions.open_new_note)
     host_ids, att_ids = arc.by_role(ids, "host"), arc.by_role(ids, "att")
+    todo_ids = [i for i in ids if sel.my_todo_status(s, i) == "left"]
     button_group(
-        [("all", f"전체 {len(ids)}"), ("host", f"내가 주관 {len(host_ids)}"), ("att", f"참석 {len(att_ids)}")],
+        [("all", f"전체 {len(ids)}"), ("todo", f"내 할 일이 있는 회의 {len(todo_ids)}"),
+         ("host", f"내가 주관 {len(host_ids)}"), ("att", f"참석 {len(att_ids)}")],
         s.archive_role,
         lambda v: actions.update(archive_role=v),
         key="trole",
     )
-    shown = {"host": host_ids, "att": att_ids}.get(s.archive_role, ids)
+    shown = {"todo": todo_ids, "host": host_ids, "att": att_ids}.get(s.archive_role, ids)
     if shown:
         meeting_table([sel.meeting_row(s, i) for i in shown], key=f"type-{t}")
     else:
-        empty_state("아직 회의록이 없어요." if not ids else "조건에 맞는 회의록이 없어요.", pad=40)
+        empty_state("아직 회의록이 없어요." if not ids
+                    else "내 할 일이 있는 회의가 없어요." if s.archive_role == "todo"
+                    else "조건에 맞는 회의록이 없어요.", pad=40)
 
 
 # ---------------------------------------------------------------- 검색 (회의록 첫 화면에만)

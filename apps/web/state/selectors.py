@@ -326,22 +326,6 @@ def my_todo_status(state: AppState, mid: str) -> str:
     return "left" if my_todo_keys(state, mid) else "none"
 
 
-# 회의 목록을 나눠 보여 줄 때의 묶음 (순서대로)
-TODO_GROUPS = (
-    ("left", "내 할 일이 있는 회의"),
-)  # 나에게 할당된 할 일이 없는 회의는 판넬에 넣지 않아요
-
-
-def group_by_todo(state: AppState, ids: list[str]) -> list[tuple[str, str, list[str]]]:
-    """[(key, 제목, 회의 id 목록)] · 빈 묶음은 뺍니다."""
-    out = []
-    for key, title in TODO_GROUPS:
-        part = [i for i in ids if my_todo_status(state, i) == key]
-        if part:
-            out.append((key, title, part))
-    return out
-
-
 def todo_key(mid: str, index: int) -> str:
     return f"{mid}:{index}"
 
