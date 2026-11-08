@@ -12,6 +12,7 @@ from datetime import date, datetime
 
 import streamlit as st
 
+from config import MAX_TRANSCRIPT_CHARS
 from state.store import me_id
 from data import api
 from components import member_fields as mf
@@ -343,6 +344,10 @@ def compose_next(nonce: int) -> None:
     broken = [name for name, body in s.nn_files if body is None]
     if broken:
         _format_error(f"파일을 읽을 수 없어요: {', '.join(broken)} · 파일이 손상되었거나 암호 · 배포용 문서가 아닌지 확인해 주세요.")
+        return
+    length = len(compose_text(s))
+    if length > MAX_TRANSCRIPT_CHARS:  # 너무 길면 분석 시간 · 비용이 커져서 막음 (백엔드도 같은 기준으로 한 번 더 확인)
+        _format_error(f"회의 내용이 너무 길어요 ({length:,}자 / 최대 {MAX_TRANSCRIPT_CHARS:,}자). 회의를 나눠서 올려 주세요.")
         return
     if parsed.error or parsed.format != s.cp_example:  # 고른 형식에서 벗어나면 다음 단계로 못 감
         _format_error(f"회의 내용이 「{compose_ai.FORMAT_LABEL[s.cp_example]}」 형식에 맞지 않아요. "

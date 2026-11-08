@@ -132,6 +132,11 @@ LANGSMITH_TAGS = ["summary_action"]  # trace에 붙는 태그 (LangSmith에서 �
 # ══════════════════════════════════════════════════════════════════════
 # 4. 입력
 # ══════════════════════════════════════════════════════════════════════
+# 입력 길이 상한 (LLM 호출 전에 막음 · 처리 시간과 비용을 묶어 둠)
+#   전사문 35,000자 ≈ 회의 1시간 10분~1시간 30분 · 프롬프트로 바뀌면 약 1.23배, 요약 결과는 원문의 약 0.41배
+#   가장 큰 단계(재수정: 지시 + 전사문 + 요약 + 검증 결과 + 출력 형식)가 MAX_STEP_INPUT_CHARS 안에 들도록 정한 값
+MAX_TRANSCRIPT_CHARS = 35000         # 사용자가 넣은 회의 내용(전사문) 최대 글자 수 — 넘으면 422 (화면 apps/web/config.py와 같게 유지)
+MAX_STEP_INPUT_CHARS = 80000         # LLM 호출 1번의 입력 최대 글자 수 (지시 프롬프트 + 사용자 프롬프트 + 출력 형식 JSON 스키마) — 넘으면 호출하지 않고 중단
 UTTERANCE_START = 1                  # 첫 발화 번호 (GoldenSet position과 같게: 메타데이터 · 빈 줄 제외, 1부터)
 # 전사문 앞부분의 '키: 값' 줄 중 아래 키만 메타데이터로 읽음 (그 외 '화자: 내용' 줄은 발화)
 TITLE_KEYS = ("회의 제목",)                         # 회의 제목
@@ -236,6 +241,11 @@ def validate() -> None:
         errors.append(f"LLM_TIMEOUT={LLM_TIMEOUT!r} — 0보다 커야 함")
     if not isinstance(UTTERANCE_START, int) or UTTERANCE_START < 0:
         errors.append(f"UTTERANCE_START={UTTERANCE_START!r} — 0 이상 정수")
+    for name, value in (("MAX_TRANSCRIPT_CHARS", MAX_TRANSCRIPT_CHARS), ("MAX_STEP_INPUT_CHARS", MAX_STEP_INPUT_CHARS)):
+        if not isinstance(value, int) or value <= 0:
+            errors.append(f"{name}={value!r} — 0보다 큰 정수")
+    if isinstance(MAX_TRANSCRIPT_CHARS, int) and isinstance(MAX_STEP_INPUT_CHARS, int) and MAX_TRANSCRIPT_CHARS >= MAX_STEP_INPUT_CHARS:
+        errors.append("MAX_TRANSCRIPT_CHARS는 MAX_STEP_INPUT_CHARS보다 작아야 함 (전사문 외에 지시 프롬프트 · 요약도 들어감)")
     if errors:
         raise ValueError("settings 설정 오류:\n  - " + "\n  - ".join(errors))
 

@@ -62,6 +62,15 @@ class LLMCallLimitError(RuntimeError):
     """실행 1회의 API 호출 상한 초과"""
 
 
+class LLMInputLimitError(RuntimeError):
+    """LLM 호출 1번의 입력이 settings.MAX_STEP_INPUT_CHARS를 넘음 (호출하지 않음)"""
+
+
+def input_chars(system: str, user: str, schema: type[BaseModel]) -> int:
+    # 모델에 들어가는 글자 수 = 지시 프롬프트 + 사용자 프롬프트 + 출력 형식(JSON 스키마, 구조화 출력이라 함께 입력됨)
+    return len(system) + len(user) + len(json.dumps(schema.model_json_schema(), ensure_ascii=False))
+
+
 class SummaryState(TypedDict, total=False):
     loaded: dict                        # load_transcript 결과
     llm_out: LLMMeetingSummary          # 생성 원본 (ID 없음)
@@ -107,10 +116,13 @@ class _StepRunner:
             return cached
         if self.deadline is not None and time.monotonic() >= self.deadline:
             raise TimeLimitExceeded(f"제한 시간 초과 — {step} 호출하지 않고 중단")
+        size = input_chars(system, user, schema)
+        if size > cfg.MAX_STEP_INPUT_CHARS:
+            raise LLMInputLimitError(f"{step} 입력이 상한을 넘음 ({size:,}자 / 최대 {cfg.MAX_STEP_INPUT_CHARS:,}자) — 호출하지 않고 중단")
         if self.api_calls >= self.max_calls:
             raise LLMCallLimitError(f"LLM 호출 상한 초과 — 실행 1회당 최대 {self.max_calls}회, 호출하지 않고 중단")
         self.api_calls += 1     # 실패해도 센 횟수로 둠
-        logger.info("[%s] %s: LLM 호출 (추론 강도 %s)", self.meeting_id, step, effort)
+        logger.info("[%s] %s: LLM 호출 (추론 강도 %s · 입력 %s자)", self.meeting_id, step, effort, f"{size:,}")
         parsed = self.llm.parse(system, user, schema, effort)
         if self.use_cache and (cache_if is None or cache_if(parsed)):
             self.store.write_step(self.meeting_id, key, parsed.model_dump_json(indent=1))

@@ -165,6 +165,10 @@ def _check_people(submission: MeetingSubmission, by_id: dict[str, Attendee]) -> 
 
 def build_meeting_text(submission: MeetingSubmission) -> str:
     """요청 → 파이프라인 입력 텍스트 (조립 후 파이프라인 파서로 다시 검사)"""
+    length = len(submission.transcript.strip())
+    if length > cfg.MAX_TRANSCRIPT_CHARS:       # 너무 길면 처리 시간 · 비용이 커져서 LLM 호출 전에 막음
+        raise TranscriptFormatError("입력 오류", [f"회의 내용이 너무 길어요 ({length:,}자 / 최대 {cfg.MAX_TRANSCRIPT_CHARS:,}자) — "
+                                                 "회의를 나눠서 올려 주세요."])
     by_id = {p.user_id: p for p in submission.attendees}
     _check_people(submission, by_id)
     body = _body(submission, by_id)
