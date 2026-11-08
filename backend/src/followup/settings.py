@@ -122,6 +122,24 @@ HITL_EFFORT = None                   # 근거 연결 · 검증 추론 강도 / N
 IMPROVEMENT_ISSUE_TYPES = {"깊이 부족", "논의 흐름 단절", "세부 정보 누락", "결정 고려사항 누락", "중복 요약",
                            "요약 범위 오류", "안건 구성 오류", "기타 안건 분류 오류"}
 
+# ── 2-2. 사용량 · 비용 기록 (PostgreSQL llm_usage · 관리자 「비용 관리」 · adapters/llm/usage.py) ──────────
+#   AI 응답이 올 때마다 1줄 저장 (회의록 분석 · 근거 연결 · 담당자 추천 · 회의 질문). 결과 JSON에는 넣지 않음
+#   API 서버에서만 기록 (테스트 · CLI는 기록 안 함) · 기록이 실패해도 본 작업은 계속함
+RECORD_LLM_USAGE = True
+# 모델별 단가 (USD · 100만 토큰당: 입력, 캐시 입력, 출력) — 응답의 모델 이름이 이 키로 시작하면 그 단가
+# 표에 없는 모델은 비용을 비워 두고 경고 (토큰 수는 남아 있어 나중에 다시 계산할 수 있음)
+LLM_PRICES_USD = {
+    "gpt-6-luna": (0.10, 0.01, 0.50),
+}
+# 달러 → 원 환율: 하루 한 번 받아 옴 (유럽중앙은행 기준 · 키 없음). 받지 못하면 관리자 설정(app_settings.usd_krw_rate) → 아래 값
+EXCHANGE_RATE_URL = "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW"
+EXCHANGE_RATE_TTL_SECONDS = 86400    # 환율을 다시 받는 간격 (초)
+EXCHANGE_RATE_TIMEOUT = 5            # 환율 요청 대기 시간 (초)
+DEFAULT_USD_KRW = 1400               # 환율도 관리자 설정도 없을 때
+DEFAULT_BUDGET_KRW = 50000           # 월 예산 기본값 (원) — 관리자가 저장하면 app_settings 값을 씀
+DEFAULT_BUDGET_ALERT_PCT = 80        # 예산 알림 기준 기본값 (%)
+USAGE_MONTHS = 12                    # 비용 관리 화면에 보내는 최근 개월 수
+
 # ══════════════════════════════════════════════════════════════════════
 # 3. LangSmith (키는 환경변수, LANGSMITH_TRACING=true일 때만 기록)
 # ══════════════════════════════════════════════════════════════════════
