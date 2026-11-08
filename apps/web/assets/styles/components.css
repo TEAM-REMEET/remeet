@@ -261,6 +261,34 @@
   font-size: 11px; font-weight: 700; color: #9A4A0B; background: var(--accent-soft);
 }
 
+/* 알약 hover 카드: 이름 · 이메일 / 팀 · 직무 · 직급 (ⓘ 말풍선과 같은 모양 · workspace.css .info-tip)
+   스크립트 없이 focus 로: 이름 클릭 → 열림 · 카드 클릭(글자 긁기) → 그대로 · 이름 다시 클릭(덮개) 또는 바깥 클릭 → 닫힘 */
+.mwrap { position: relative; display: inline-flex; }
+.mpill { outline: none; cursor: pointer; }
+.mpill:focus-visible { border-color: var(--accent); }
+.mcard {
+  visibility: hidden; opacity: 0; position: absolute; left: 0; top: calc(100% + 10px);
+  display: flex; flex-direction: column; gap: 2px; width: max-content; max-width: 360px;
+  padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(20, 24, 31, 0.12); z-index: 50; transition: opacity 0.12s;
+  font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--ink-2); white-space: nowrap;
+  outline: none; cursor: text; user-select: text; -webkit-user-select: text;
+}
+.mcard .top { display: flex; align-items: baseline; gap: 8px; }
+.mcard b { font-weight: 700; color: var(--ink); }
+.mcard .em { font-size: 12px; color: var(--muted); }
+.mcard::before {
+  content: ""; position: absolute; left: 14px; top: -6px; width: 10px; height: 10px; transform: rotate(45deg);
+  background: #FFFFFF; border-left: 1px solid var(--line); border-top: 1px solid var(--line);
+}
+.mcard::after { content: ""; position: absolute; left: 0; right: 0; top: -11px; height: 11px; } /* 알약 → 카드로 마우스 옮길 때 끊기지 않게 */
+.mclose { display: none; position: absolute; inset: 0; z-index: 40; cursor: pointer; outline: none; }
+.mpill:focus ~ .mcard, .mcard:focus,
+.mwrap:hover:not(:has(.mclose:focus)) .mcard { visibility: visible; opacity: 1; }
+.mpill:focus ~ .mclose, .mcard:focus ~ .mclose { display: block; }
+/* 카드가 잘리지 않도록 알약 줄의 html 칸은 넘침 허용 */
+.stElementContainer:has(.pills), .stElementContainer:has(.pills) .stHtml { overflow: visible !important; z-index: 20; }
+
 /* 사람 목록 (모달) */
 .plist-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-faint); }
 .plist-row .who { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.35; }

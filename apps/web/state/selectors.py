@@ -84,6 +84,11 @@ def person_desc(pid: str) -> str:
     return " · ".join(x for x in (person_role(pid), POSITION_LABEL.get(pos, "")) if x)
 
 
+def person_email(pid: str) -> str:
+    """구성원 표의 이메일 (없으면 빈 값)."""
+    return next((r.get("email") or "" for r in repo.people_rows() if r["user_id"] == pid), "")
+
+
 def person_role(pid: str) -> str:
     """조직도에 있는 직무 (없으면 빈 값)."""
     for t in repo.teams().values():
@@ -319,22 +324,6 @@ def my_todo_keys(state: AppState, mid: str) -> list[str]:
 def my_todo_status(state: AppState, mid: str) -> str:
     """left(나에게 맡겨진 할 일이 있음) | none(없음)"""
     return "left" if my_todo_keys(state, mid) else "none"
-
-
-# 회의 목록을 나눠 보여 줄 때의 묶음 (순서대로)
-TODO_GROUPS = (
-    ("left", "내 할 일이 있는 회의"),
-)  # 나에게 할당된 할 일이 없는 회의는 판넬에 넣지 않아요
-
-
-def group_by_todo(state: AppState, ids: list[str]) -> list[tuple[str, str, list[str]]]:
-    """[(key, 제목, 회의 id 목록)] · 빈 묶음은 뺍니다."""
-    out = []
-    for key, title in TODO_GROUPS:
-        part = [i for i in ids if my_todo_status(state, i) == key]
-        if part:
-            out.append((key, title, part))
-    return out
 
 
 def todo_key(mid: str, index: int) -> str:

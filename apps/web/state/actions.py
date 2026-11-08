@@ -83,7 +83,7 @@ def go(screen: str, **extra) -> None:
 def open_archive(mtype: str = "") -> None:
     """회의록 화면: 회의록(회의 종류 카드) → 회의 종류의 회의 목록."""
     s = get_state()
-    go("archive", archive_type=mtype, archive_role="all", archive_query="", archive_qnonce=s.archive_qnonce + 1)
+    go("archive", archive_type=mtype, archive_role="todo", archive_query="", archive_qnonce=s.archive_qnonce + 1)
 
 
 def ask_meetings(question: str) -> None:
@@ -167,7 +167,7 @@ def tree_click(node: str) -> None:
 
 def open_folder(fid: str) -> None:
     f = sel.folders(get_state())[fid]
-    go("folder", folder_id=fid, folder_tab="all", folder_role="all", todo_group="")
+    go("folder", folder_id=fid, folder_tab="all", folder_role="todo")
 
 
 def open_meeting(mid: str, *, editing: bool = False) -> None:

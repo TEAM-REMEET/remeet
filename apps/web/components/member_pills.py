@@ -18,9 +18,16 @@ def member_pills(lead: str, host: str, people: list[str]) -> None:
         p = sel.person(pid)
         is_host = pid == host
         role = '<span class="role">주관</span>' if is_host else ""
+        info = " · ".join(x for x in (p.team, sel.person_desc(pid)) if x)  # hover 카드: 팀 · 직무 · 직급
+        email = sel.person_email(pid)
+        # 순서 중요 (CSS 형제 선택자): 알약 → 카드 → 닫기 덮개. 스크립트 없이 focus 로 열고 닫음 (components.css)
+        card = (f'<span class="mcard" tabindex="-1" role="tooltip"><span class="top"><b>{esc(p.name)}</b>'
+                f'{f"<span class=em>{esc(email)}</span>" if email else ""}</span>'
+                f'{f"<span>{esc(info)}</span>" if info else ""}</span><span class="mclose" tabindex="-1"></span>'
+                if info or email else "")
         pills.append(
-            f'<span class="mpill{" host" if is_host else ""}">{avatar(p.initial, size=24, host=is_host)}'
-            f'<span class="nm">{esc(p.name)}</span>{role}</span>'
+            f'<span class="mwrap"><span class="mpill{" host" if is_host else ""}" tabindex="0">'
+            f'{avatar(p.initial, size=24, host=is_host)}<span class="nm">{esc(p.name)}</span>{role}</span>{card}</span>'
         )
     markup(f'<div class="pills"><span class="lead">{esc(lead)}</span>{"".join(pills)}</div>')
 

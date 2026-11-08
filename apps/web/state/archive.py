@@ -31,8 +31,8 @@ def meeting_day(mid: str) -> date:
 
 
 def dotted(d: date) -> str:
-    """2026.10.27 (사이드바 회의 파일 이름)"""
-    return f"{d.year}.{d.month:02d}.{d.day:02d}"
+    """26.10.27 (사이드바 회의 파일 이름)"""
+    return f"{d:%y.%m.%d}"
 
 
 def week_of(d: date) -> tuple[date, int]:
