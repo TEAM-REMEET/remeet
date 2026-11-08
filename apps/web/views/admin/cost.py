@@ -66,7 +66,9 @@ def _kpis(mo: dict, prev: dict | None) -> None:
     pct = mo["amount"] / b["amount"] * 100
     fpct = total / b["amount"] * 100
     over = fpct >= b["alert_at"]
-    per_note = mo["amount"] / max(mo["notes"], 1)
+    # 1건당 평균: 「회의록 생성」(분석 · 근거 연결 · 담당자 추천) 비용만 회의록 수로 나눔 (회의 질문 비용은 빼고)
+    note_usd = sum(mo["features"].get(f, 0.0) for f in repo.COST_GROUPS["회의록 생성"])
+    per_note = note_usd * repo.cost_rate()["rate"] / max(mo["notes"], 1)
     if prev and prev["amount"] > 0:
         diff = (total - prev["amount"]) / prev["amount"] * 100
         vs = f'{"+" if diff >= 0 else ""}{diff:.0f}%'
@@ -130,8 +132,9 @@ def _breakdown(mo: dict) -> None:
         if total <= 0:
             markup('<p class="adm-note">이 달에는 AI 사용 기록이 없어요.</p>')
         else:
-            rows = [(name, mo["features"].get(f, 0.0) / total, _money(mo["features"].get(f, 0.0) * rate))
-                    for f, name in repo.COST_FEATURES.items()]
+            # 회의록 생성 = 회의록 분석 + 근거 연결(확정) + 담당자 추천 · 회의 질문은 따로
+            sums = {name: sum(mo["features"].get(f, 0.0) for f in fs) for name, fs in repo.COST_GROUPS.items()}
+            rows = [(name, usd / total, _money(usd * rate)) for name, usd in sums.items()]
             markup(f'<div class="adm-shares wide">{_share_rows(rows)}</div>')
         markup('<p class="adm-note">AI 호출마다 기록한 토큰 수 × 모델 단가로 계산한 금액이에요 (부가세 별도).</p>')
 
@@ -183,7 +186,7 @@ def render() -> None:
     mo, prev = months[idx], (months[idx - 1] if idx else None)
     with page("adm-cost"):
         with st.container(horizontal=True, vertical_alignment="bottom"):
-            page_header("비용 관리", "회의록 분석 · 근거 연결 · 담당자 추천 · 회의 질문에 쓴 AI 비용을 달마다 확인해요.")
+            page_header("비용 관리", "회의록 생성(분석 · 근거 연결 · 담당자 추천)과 회의 질문에 쓴 AI 비용을 달마다 확인해요.")
             _picker(s, mo)
         _rate_note(mo)
         _alert(mo)

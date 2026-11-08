@@ -939,6 +939,8 @@ def admin() -> dict:
 # ---------------------------------------------------------------- 관리자 · 비용 관리 (백엔드 → PostgreSQL llm_usage)
 # 비용은 달러로 받아 환율로 원을 계산 (화면: ₩12,345 ($8.82)). 예산 · 알림 기준은 서버 공용 (app_settings)
 COST_FEATURES = {"summary": "회의록 분석", "evidence": "근거 연결 (확정)", "recommend": "담당자 추천", "ask": "회의 질문"}
+# 기능별 사용량 화면에서 묶어 보여 주는 단위 (기록은 기능 4개로 따로 남고, 화면에서만 합침)
+COST_GROUPS = {"회의록 생성": ("summary", "evidence", "recommend"), "회의 질문": ("ask",)}
 _DEFAULT_BUDGET = {"amount_krw": 50000, "alert_pct": 80}   # 백엔드를 못 부를 때만 (백엔드 settings 기본값과 같게)
 _DEFAULT_RATE = {"rate": 1400.0, "date": "", "fallback": True}
 
