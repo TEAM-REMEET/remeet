@@ -112,3 +112,19 @@ class Jira:
         if not key:
             raise RuntimeError("Jira 가 이슈 키를 돌려주지 않았어요.")
         return key
+
+    async def search(self, cloud_id: str, jql: str, fields: list[str], max_results: int) -> list[dict]:
+        """JQL 검색 → 이슈 [{key, fields: {...}}] (읽기만)."""
+        payload = await self._call("searchJiraIssuesUsingJql",
+                                   {"cloudId": cloud_id, "jql": jql, "fields": fields, "maxResults": max_results})
+        return pick_issues(payload)
+
+    async def site_url(self, cloud_id: str) -> str | None:
+        """이 사이트의 주소 (https://xxx.atlassian.net) · 이슈 링크를 만들 때."""
+        payload = await self._call("getAccessibleAtlassianResources", {})
+        return next((d["url"] for d in _walk(payload) if d.get("cloudId") == cloud_id and d.get("url")), None)
+
+
+def pick_issues(payload: Any) -> list[dict]:
+    return [d for d in _walk(payload)
+            if isinstance(d.get("key"), str) and ISSUE_KEY.match(d["key"]) and isinstance(d.get("fields"), dict)]

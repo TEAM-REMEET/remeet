@@ -168,11 +168,13 @@ def render_sidebar() -> None:
         return
     me = sel.me()
     with st.sidebar, st.container(key="sidebar"):
-        with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 새 회의록으로
+        with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 홈으로
             markup(f'<div class="sb-logo">{brand_logo(20)}</div>')
-            button("새 회의록으로", key="logo_home", variant="ghost", on_click=actions.open_new_note)
+            button("홈으로", key="logo_home", variant="ghost", on_click=actions.go, args=("home",))
         with st.container(key="sidebar-groups", gap=None):
             with st.container(key="navgroup-main"):
+                _nav_item("홈", "home", on=s.screen == "home" and not s.not_found, on_click=actions.go, args=("home",),
+                          icon_name=":material/home:")
                 _nav_item("새 회의록", "compose", on=s.screen == "compose" and not s.not_found, on_click=actions.open_new_note,
                           icon_name=":material/edit_square:")
 

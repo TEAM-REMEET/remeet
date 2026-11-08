@@ -40,6 +40,7 @@ from views import (
     export,
     finalize,
     folder,
+    home,
     search,
     shared_received,
     shared_sent,
@@ -50,6 +51,7 @@ from views.admin import members as admin_members
 from views.meeting import render as render_meeting
 
 ROUTES = {
+    "home": home.render,
     "compose": compose.render,
     "archive": archive.render,
     "search": search.render,

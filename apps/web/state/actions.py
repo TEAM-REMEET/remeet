@@ -62,7 +62,7 @@ def start_session(token: str, user: dict, restore: bool = False) -> None:
     _set(logged_in=True, login_error="", is_admin=admin, token=token, user_id=user["user_id"],
          user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], nn_people=[user["user_id"]], cookie_written=restore)
     if not restore:
-        screen = "adm_cost" if admin else "compose"
+        screen = "adm_cost" if admin else "home"  # 일반 사용자는 홈(내 할 일 대시보드)부터
         _set(screen=screen, not_found="")
         router.request(screen)
 
@@ -195,6 +195,11 @@ def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
                 cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
+
+
+def refresh_dashboard() -> None:
+    """홈 · 「동기화」 → 이번 화면에서 Jira 를 다시 불러옴 (서버 캐시를 건너뜀 · views/home.py)."""
+    st.session_state["_home_refresh"] = True
 
 
 def open_new_note() -> None:

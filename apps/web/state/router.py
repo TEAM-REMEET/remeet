@@ -38,6 +38,7 @@ from utils.browser import hide_page_not_found
 
 # 고정 경로 화면: screen → (url_path, 탭 제목)
 STATIC = {
+    "home": ("home", "홈"),
     "compose": ("", "새 회의록"),
     "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),

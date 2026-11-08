@@ -2128,3 +2128,23 @@
 .ask-contacts .who { display: flex; flex-direction: column; min-width: 120px; }
 .ask-contacts .who span { font-size: 12px; color: #80858E; }
 .ask-contacts .why { color: #5F646D; font-size: 13px; }
+
+/* 홈 · 내 Jira 할 일 대시보드 (views/home.py) */
+.dash-stats { display: flex; gap: 10px; margin: 4px 0 10px; }
+.dash-stats span { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line-soft);
+  border-radius: 10px; background: var(--bg-soft); font-size: 12px; color: var(--muted); }
+.dash-stats b { font-size: 20px; font-weight: 700; color: var(--ink); }
+.dash-list { display: flex; flex-direction: column; }
+.dash-row { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--line-faint); font-size: 14px; }
+.dash-key { flex: none; width: 72px; font-weight: 600; }
+.dash-key a { color: var(--accent); text-decoration: none; }
+.dash-key a:hover { text-decoration: underline; }
+.dash-title { flex: 1; min-width: 0; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-due { flex: none; color: var(--text-sub); font-size: 13px; }
+/* Jira 파랑 (Atlassian 브랜드 색) · 로고와 함께 눈에 띄게 */
+.dash-all { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; margin: 0 0 6px; padding: 7px 14px;
+  border: 1px solid #0C66E4; border-radius: 8px; background: #E9F2FF; color: #0C66E4; font-size: 13px; font-weight: 600; text-decoration: none; }
+.dash-all:hover { background: #CCE0FF; }
+.dash-all .dash-jira-logo { width: 18px; height: 18px; min-width: 18px; padding: 0; border: 0; background: none; }
+.dash-all .dash-jira-logo img { width: 18px; height: 18px; }
+@media (max-width: 640px) { .dash-stats { flex-direction: column; } .dash-title { white-space: normal; } }
