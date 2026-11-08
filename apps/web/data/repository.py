@@ -587,6 +587,14 @@ def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
                     _token(), timeout=EXPORT_TIMEOUT)
 
 
+# ---------------------------------------------------------------- 홈 · 대시보드
+def dashboard_jira(refresh: bool = False) -> dict:
+    """내 Jira 할 일 (GET /api/dashboard/jira · 로그인한 사람이 담당자인 미완료 이슈, 서버가 1분 캐시).
+    refresh: 「동기화」 (캐시를 건너뜀).
+    → {linked, issues: [{key, title, status, category, due, url}], all_url, synced_at} · 연결 · 설정 실패는 ApiError."""
+    return api.call("GET", "/api/dashboard/jira" + ("?refresh=true" if refresh else ""), token=_token(), timeout=30)
+
+
 # ---------------------------------------------------------------- 회의록 쓰기 (PostgreSQL · 백엔드 API)
 # 실패하면 api.ApiError (메시지는 화면에 그대로 보여 줘도 돼요). 쓴 뒤에는 meetings_changed() 로 캐시를 비워 바로 보이게 해요.
 def _write(method: str, path: str, body: dict | None = None):
