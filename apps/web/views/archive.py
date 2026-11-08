@@ -21,7 +21,7 @@ from ui.icons import icon
 from ui.layout import empty_state, page, page_header
 from components.meeting_table import meeting_table
 from utils.browser import ime_live
-from utils.text import esc
+from utils.text import esc, safe_key
 
 _TYPE_ORDER = ("monthly", "weekly", "normal")  # 화면 버튼 순서: 월간 · 주간 · 일반
 
@@ -56,7 +56,28 @@ def _grid(items: list, draw, cols: int = 3) -> None:
 
 
 # ---------------------------------------------------------------- 1. 회의록
+def _projects_root(s: AppState) -> None:
+    """사이드바 「프로젝트」 탭의 회의록: 프로젝트 폴더 카드 (정기 회의 탭의 월간 · 주간 · 일반 대신)."""
+    fs = sel.folders(s)
+    fids = sel.all_my_folder_ids(s)
+    page_header("회의록", f"프로젝트 {len(fids)}개 · 프로젝트를 고르면 그 프로젝트의 회의록을 볼 수 있어요")
+
+    def draw(fid: str) -> None:
+        notes = sel.folder_note_ids(s, fid)  # 나에게 보이는 회의만 (최근 순) · 사이드바 트리와 같은 기준
+        _option_card(f"proj-{safe_key(fid)}", icon_name="folder", title=fs[fid].name, meta=f"회의록 {len(notes)}개",
+                     last=_latest(notes), on_click=actions.open_folder, args=(fid,))
+
+    if fids:
+        _grid(fids, draw)
+    else:
+        empty_state("아직 참여한 프로젝트가 없어요.", pad=40)
+    markup(f'<span class="lock-note">{icon("lock", 12, "#80858E", 2)}내가 멤버인 프로젝트만 보여요</span>')
+
+
 def _root(s: AppState) -> None:
+    if s.tree_mode == "project":
+        _projects_root(s)
+        return
     page_header("회의록", "회의 종류를 고르면 그 종류의 회의를 최근 순으로 볼 수 있어요")
     types = repo.meeting_types()
 
