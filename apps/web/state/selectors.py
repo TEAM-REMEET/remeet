@@ -84,6 +84,11 @@ def person_desc(pid: str) -> str:
     return " · ".join(x for x in (person_role(pid), POSITION_LABEL.get(pos, "")) if x)
 
 
+def person_email(pid: str) -> str:
+    """구성원 표의 이메일 (없으면 빈 값)."""
+    return next((r.get("email") or "" for r in repo.people_rows() if r["user_id"] == pid), "")
+
+
 def person_role(pid: str) -> str:
     """조직도에 있는 직무 (없으면 빈 값)."""
     for t in repo.teams().values():
