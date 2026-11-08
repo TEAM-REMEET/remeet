@@ -64,6 +64,7 @@ SUMMARY_POLL_SECONDS = 3
 UI_TEST_TRANSCRIPT = "test"
 ASK_TIMEOUT = 120  # 회의에 물어보기: LLM 2번 + 새 회의의 결정 정리 (보통 수 초)
 EXPORT_TIMEOUT = 180  # 외부 도구 전송 (Jira · 메일): 백엔드 settings.EXPORT_BUDGET_SECONDS 로 이 안에 끝남
+EXPORT_OVERLAY_MIN_SECONDS = 1.0  # 외부 도구 전송 로딩 화면을 최소 이만큼은 보여 줌 (시뮬레이션 도구는 바로 끝나서)
 
 # 브랜드 이미지 (assets/brand/)
 BRAND_DIR = Path(__file__).resolve().parent / "assets" / "icons"
