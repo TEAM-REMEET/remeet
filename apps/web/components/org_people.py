@@ -75,8 +75,9 @@ class _Picker:
                 markup(f'<span class="pp-lock">{esc(lock)}</span>')
             else:
                 fav = pid in s.pp_fav
-                button("", key=f"ppfav_{self.ctx}_{level}_{pid}", variant="ghost",
-                       icon=":material/star:" if fav else ":material/star_outline:", help="즐겨찾기",
+                # 즐겨찾기면 key 에 on → CSS 가 같은 별을 채워 그림 (Streamlit 아이콘 글꼴엔 채운 별이 없음)
+                button("", key=f"ppfav{'on' if fav else ''}_{self.ctx}_{level}_{pid}", variant="ghost",
+                       icon=":material/star:", help="즐겨찾기",
                        on_click=actions.people_fav, args=(pid,))
         if path:
             where = " › ".join([*sel.team_ancestors(p.team), p.team])
