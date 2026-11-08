@@ -185,6 +185,8 @@ def _load_meeting_tx(tx: Any, meeting: dict[str, Any], llm: LLM) -> None:
 
 
 def _ask_json(llm: LLM, system: str, user: str) -> Any:
+    # 적재의 LLM 호출은 모두 여기를 거친다. 호출하는 곳을 추가하면 settings.recommend_llm_call_plan()에도 한 줄 추가
+    # (담당자 추천 호출 상한에 적재 몫이 빠지면 적재 중 상한에 걸려 회의 적재 전체가 실패한다)
     content = llm(system, user)
     found = re.search(r"\{.*\}", content, re.S)  # ```json 같은 감싸기가 붙어 와도 JSON 부분만 꺼낸다
     return json.loads(found.group()) if found else None

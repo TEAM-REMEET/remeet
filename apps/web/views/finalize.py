@@ -73,8 +73,9 @@ def _box(html: str, tone: str = "info") -> None:
 
 
 # ================================================================ 1단계: 담당자 추천
-def _todo_row(s: AppState, t: model.TodoView, recommend: bool) -> None:
-    """할 일 · 담당자 태그 | 마감일(고치기) | 담당자 추천 보기(담당 미정) · 담당자 변경 — 모든 액션 아이템."""
+def _todo_row(s: AppState, t: model.TodoView, recommend: bool, waiting: bool) -> None:
+    """할 일 · 담당자 태그 | 마감일(고치기) | 담당자 추천 보기(담당 미정) · 담당자 직접 선택(추천 못 받음) · 담당자 변경.
+    waiting: 서버가 아직 추천하지 못한 일 → 추천 창(후보 0명) 대신 사람 찾기 창."""
     with st.container(key=f"fintodo-{t.index}", horizontal=True, vertical_alignment="center", gap="medium"):
         # 할 일(굵게) 아래 한 줄 띄우고 「담당 [사람 태그]  |  기한 날짜」 — 라벨을 붙여 한눈에 구분
         tags = "".join(tag(name, tone) for name, tone in t.who_tags)
@@ -90,7 +91,13 @@ def _todo_row(s: AppState, t: model.TodoView, recommend: bool) -> None:
             st.date_input("마감일", value=current if current and current >= first_day else None, min_value=first_day,
                           key=wk, format="YYYY/MM/DD",
                           label_visibility="collapsed", on_change=actions.set_todo_due, args=(t.key, wk))
-        if t.unassigned:
+        if waiting and t.unassigned:  # 연주황 버튼 (pages.css fin_assign_direct)
+            button("담당자 직접 선택", key=f"fin_assign_direct_{t.key}", variant="secondary",
+                   icon=":material/person_add:", on_click=actions.open_owner_change, args=(t.key, t.text))
+        elif waiting:  # 직접 고른 뒤 다시 바꿀 때도 사람 찾기 창
+            button("담당자 변경", key=f"fin_assign_{t.key}", variant="secondary", icon=":material/manage_accounts:",
+                   on_click=actions.open_owner_change, args=(t.key, t.text))
+        elif t.unassigned:
             button("담당자 추천 보기", key=f"fin_assign_{t.key}", variant="primary",
                    icon=":material/person_search:", on_click=actions.open_assign, args=(t.key, t.text))
         elif recommend:  # 회의록에 담당자가 없던 일: 고른 뒤에도 바꿀 때는 담당자 추천 창으로
@@ -143,6 +150,12 @@ def _step_assign(s: AppState, m: Meeting) -> None:
         return
     items = model.todos(s, m)
     left = [t for t in items if t.unassigned]
+    # 서버가 아직 추천하지 못한 일 (LLM 호출 실패 · 한 번에 추천하는 수 초과) — recommend_agent ITEMS_QUERY와 같은 조건.
+    # 다시 요청하면 서버가 그 일만 추천해요 (적재는 건너뜀)
+    pending = {item_id for item_id, r in s.recommendations.get(m.id, {}).items()
+               if not (r["assignees"] or r["candidates"] or r["recommend_status"])}
+    waiting = {t.key for t in items if m.todos[t.index].item_id in pending}
+    waiting_left = [t for t in left if t.key in waiting]
     # 현재 단계 제목과 같은 줄 오른쪽: 다음 단계만 (「확정하기」를 누른 뒤라 분석 및 검토로 되돌아가지 않음)
     with step_header("담당자 추천", f"{m.title} · 액션 아이템 {len(items)}건 · 담당자와 마감일을 확인한 뒤 최종 회의록으로 넘어가요"):
         button("최종 회의록 →", key="fin_next", variant="primary", icon=":material/description:", on_click=actions.confirm_assignees, args=(m.id,))
@@ -150,9 +163,15 @@ def _step_assign(s: AppState, m: Meeting) -> None:
         no_due = [t for t in items if not parse_due(t.raw_due)]
         if left or no_due:
             parts = [f"담당 미정 {len(left)}건"] * bool(left) + [f"마감일 없음 {len(no_due)}건"] * bool(no_due)
-            _box(f"<b>{' · '.join(parts)}</b><span>모든 액션 아이템에 담당자와 마감일을 정해야 최종 회의록으로 넘어갈 수 있어요. "
-                 "담당 미정은 「담당자 추천 보기」에서 고르고, 마감일은 오른쪽 날짜 칸에서 정해 주세요. "
-                 "「다음」을 누르면 저장되고 그 뒤에는 바꿀 수 없어요.</span>", "warn")
+            more = (f'<span class="fin-rec-wait">· 이 중 <b>{len(waiting_left)}건</b>은 아직 추천을 받지 못했어요.</span>'
+                    if waiting_left else "")
+            with st.container(key="fin-warn", gap="small"):  # 안내 상자 안에 「나머지 추천 받기」 (pages.css)
+                _box(f"<b>{' · '.join(parts)}</b><span>모든 액션 아이템에 담당자와 마감일을 정해야 최종 회의록으로 넘어갈 수 있어요. "
+                     "담당 미정은 「담당자 추천 보기」에서 고르고, 마감일은 오른쪽 날짜 칸에서 정해 주세요. "
+                     f"「다음」을 누르면 저장되고 그 뒤에는 바꿀 수 없어요.</span>{more}", "warn")
+                if waiting_left:  # 누르면 받아 둔 추천을 지우고 다시 요청 (_load_recommendations)
+                    button("나머지 추천 받기", key="fin_rec_more", variant="secondary", icon=":material/refresh:",
+                           on_click=s.recommendations.pop, args=(m.id, None))
         elif items:
             _box("<b>모든 액션 아이템에 담당자가 있어요</b><span>마감일과 담당자를 고칠 게 없으면 다음 단계로 넘어가면 돼요.</span>", "ok")
         else:
@@ -162,7 +181,7 @@ def _step_assign(s: AppState, m: Meeting) -> None:
             # 이 일들은 담당자를 고른 뒤에도 맨 위 자리 그대로 (지금 담당 미정인지가 아니라 원래 데이터 기준으로 정렬)
             recommend = {key for key, *_ in model.assignable(s, m)}
             for t in [t for t in items if t.key in recommend] + [t for t in items if t.key not in recommend]:
-                _todo_row(s, t, t.key in recommend)
+                _todo_row(s, t, t.key in recommend, t.key in waiting)
 
 
 # ================================================================ 2단계: 최종 회의록 (회의 상세와 같은 화면 · 고칠 수 없음)

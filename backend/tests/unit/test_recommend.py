@@ -7,7 +7,8 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from followup.adapters.neo4j.load import normalize_meeting, valid_follow_ups
-from followup.analysis.recommend.recommend_agent import build_graph, most_similar, run_once
+from followup import settings
+from followup.analysis.recommend.recommend_agent import CallBudget, build_graph, most_similar, run_once
 from followup.entrypoints.api.main import app
 from followup.entrypoints.api.routes.auth import current_user
 
@@ -82,6 +83,27 @@ class AgentGraphTests(unittest.TestCase):
         self.assertEqual(saved["nocand"]["recommendations"], [])
         self.assertIsNone(most_similar("x", []))
         self.assertNotIn("decisions", json.dumps(llm.payloads[0]))  # LLM에는 정해진 맥락만
+
+    def test_harness(self):
+        """호출 상한을 넘으면 호출하지 않고 error(저장 안 함) · MAX_RECOMMEND_ITEMS를 넘친 건은 이번에 처리하지 않음."""
+        good = {"required_skills": [{"skill_id": "A", "importance": "core"}]}
+        llm = FakeLLM({i: [good] for i in "abc"})
+        saved = {}
+        tools = {
+            "catalog": lambda: {"skills": [{"id": "A", "name": "A"}], "roles": [], "teams": [], "users": [{"id": "s1"}]},
+            "items": lambda force: ["a", "b", "c"],
+            "context": lambda i: {"action_item_id": i, "title": "할 일", "attendees": [{"user_id": "s1"}]},
+            "candidates": lambda: ([person("s1", "senior", 4)], True),
+            "similar": lambda i: [],
+            "save": lambda out: saved.update({out["action_item_id"]: out}),
+        }
+        with patch.object(settings, "MAX_RECOMMEND_ITEMS", 2):
+            results = run_once(build_graph(tools, llm, CallBudget(1)), False)
+        self.assertEqual(sorted(r["action_item_id"] for r in results), ["a", "b"])  # c는 다음 요청에
+        self.assertEqual(sorted(r["status"] for r in results), ["error", "pending_manager_review"])
+        self.assertEqual((len(llm.payloads), len(saved)), (1, 1))  # 상한 넘은 건은 LLM을 부르지 않고 저장도 안 함
+        self.assertEqual(settings.recommend_max_llm_calls(5, 7), 5 + 1 + 14 + 2)
+        self.assertEqual(settings.recommend_max_llm_calls(6, 30), 6 + 1 + 40 + 2)  # 액션아이템은 20건까지만 셈
 
 
 def summary(**extra):

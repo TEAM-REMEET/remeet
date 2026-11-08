@@ -67,11 +67,32 @@ def _predecessors(prev: list[Predecessor]) -> None:
                     _pick_button(_who(p.user_id, p.name), f"prev_{i}")
 
 
-def _top(cands: list[Candidate]) -> None:
+NO_CANDIDATE_REASONS = {  # 추천 결과 recommend_status → (제목, 설명)
+    "no_candidate": ("필요한 스킬을 가진 구성원이 없어요",
+                     "회의 내용으로 이 일에 필요한 스킬을 정했지만, 그 스킬을 가진 구성원을 찾지 못했어요."),
+    "skill_unclear": ("이 일에 필요한 스킬을 정하지 못했어요",
+                      "회의 내용만으로는 어떤 스킬이 필요한 일인지 판단하기 어려워서 후보를 추천하지 않았어요."),
+}
+
+
+def _no_candidates(cfg: dict) -> None:
+    """후보 0명: 이유를 알면 안내 상자로, 모르면 한 줄 안내."""
+    reason = NO_CANDIDATE_REASONS.get(cfg.get("status"))
+    if not reason:
+        markup('<p class="hint">이 일에 맞는 스킬을 가진 후보를 찾지 못했어요. 아래 「팀에서 직접 고르기」로 골라 주세요.</p>')
+        return
+    missing = cfg.get("missing_skills") if cfg.get("status") == "no_candidate" else None
+    extra = (f'<span class="assign-missing">스킬 목록에 없는 기술: <b>{esc(", ".join(missing))}</b></span>'
+             if missing else "")
+    markup(f'<div class="wz-box wz-info"><b>{reason[0]}</b>'
+           f'<span>{reason[1]} 아래 「팀에서 직접 고르기」로 골라 주세요.</span>{extra}</div>')
+
+
+def _top(cands: list[Candidate], cfg: dict) -> None:
     """추천 후보를 포지션별로 묶어 한 줄에 (Senior 1 · 2 → Mid 1 · 2 → Junior 1 · 2)."""
     top = _by_position(cands)
     if not top:
-        markup('<p class="hint">이 일에 맞는 스킬을 가진 후보를 찾지 못했어요. 아래 「팀에서 직접 고르기」로 골라 주세요.</p>')
+        _no_candidates(cfg)
         return
     with st.container(key="top-cands"):
         cols = st.columns(TOP_N, gap="small")
@@ -147,9 +168,10 @@ def _assign_body() -> None:
         # 점수 안내는 점수가 나오는 추천 후보 바로 위에 (선행 업무 담당자 카드에는 점수가 없음)
         markup(f'<div class="prev-title top-title"><b>추천 후보 {len(_by_position(cands))}명</b>'
                '<span class="hint">회의록·보유 스킬·현재 업무량으로 점수를 매겼어요</span></div>')
-        _top(cands)
+        _top(cands, cfg)
         if not s.assign_searching:
-            button("추천에 원하는 사람이 없나요? 팀에서 직접 고르기", key="start_search", variant="dashed",
+            label = "추천에 원하는 사람이 없나요? 팀에서 직접 고르기" if _by_position(cands) else "팀에서 직접 고르기"
+            button(label, key="start_search", variant="dashed",
                    width="stretch", on_click=actions.update, kwargs={"assign_searching": True})
         else:
             _team_picker(cands, cfg)
