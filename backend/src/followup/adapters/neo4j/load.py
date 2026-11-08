@@ -110,6 +110,8 @@ def normalize_meeting(raw: dict[str, Any]) -> dict[str, Any]:
         "meeting_id": meeting_id,
         # 파일로 만든 예전 JSON에는 project_id가 없다 → 회의 하나짜리 프로젝트로 둔다
         "project_id": raw.get("project_id") or f"project-{meeting_id}",
+        "project_name": raw.get("project_name"),  # 추천 API가 PostgreSQL에서 채움 (파일 입력은 없음)
+        "project_created_at": raw.get("project_created_at"),  # ISO 8601, 위와 같음
         "title": info.get("title") or f"{meeting_id} 회의",
         "held_at": info.get("date") or (raw.get("created_at") or "")[:10] or None,
         "attendees": [p["user_id"] for p in info.get("participants", []) if p.get("user_id")],
@@ -132,16 +134,18 @@ def load_meeting(raw: dict[str, Any], llm: LLM) -> bool:
 
 
 def _load_meeting_tx(tx: Any, meeting: dict[str, Any], llm: LLM) -> None:
-    # shortcut: 프로젝트 이름이 아직 없어 project_id를 이름으로 씀, GET /api/projects가 생기면 거기서 만든 이름 사용
+    # 이름은 웹에서 만든 프로젝트 이름(PostgreSQL folders.name), 모르면 project_id. 이미 있는 노드도 이름을 갱신
     tx.run("""
         MERGE (p:Project {project_id: $pid})
-        ON CREATE SET p.name = $pid, p.status = 'active'
+        ON CREATE SET p.status = 'active'
+        SET p.name = coalesce($pname, p.name, $pid),
+            p.created_at = coalesce(p.created_at, datetime($pcreated))
         CREATE (mt:Meeting {meeting_id: $mid, title: $title, held_at: datetime($at)})-[:IN]->(p)
         WITH mt
         UNWIND $attendees AS uid
         MATCH (u:Person {user_id: uid})
         MERGE (u)-[:ATTENDED]->(mt)
-        """, pid=meeting["project_id"], mid=meeting["meeting_id"], title=meeting["title"],
+        """, pid=meeting["project_id"], pname=meeting["project_name"], pcreated=meeting["project_created_at"], mid=meeting["meeting_id"], title=meeting["title"],
            at=meeting["held_at"], attendees=meeting["attendees"]).consume()
 
     for agenda in meeting["agendas"]:
