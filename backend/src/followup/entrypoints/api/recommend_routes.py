@@ -19,9 +19,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from followup.adapters.neo4j import action_items
+from followup.adapters.postgres import folders
 from followup.analysis.summary import ui_test
 from followup.analysis.summary.schemas import MeetingSummary
 from followup.application.recommend_assignees import recommend_for_meeting
+from followup.entrypoints.api.routes.actor import actor
 from followup.entrypoints.api.routes.auth import current_user
 
 logger = logging.getLogger(__name__)
@@ -87,17 +89,30 @@ class Confirmation(BaseModel):
 
 # 동기 함수: 오래 걸리는 동안 다른 요청을 막지 않게 (FastAPI가 스레드에서 실행)
 @router.post("/meetings/{meeting_id}/recommendations", response_model=Recommendations)
-def recommend(meeting_id: str, summary: MeetingSummary):
+def recommend(meeting_id: str, summary: MeetingSummary, me: str = Depends(actor)):
     if summary.meeting_id != meeting_id:
         raise HTTPException(status_code=422, detail=f"주소의 회의({meeting_id})와 본문의 meeting_id({summary.meeting_id})가 달라요.")
     if ui_test.is_test_summary(summary):    # 화면 확인용 시험 모드: LLM 호출 · Neo4j 적재 없이 시험용 후보
         return {"meeting_id": meeting_id, "items": ui_test.recommend_items(summary)}
+    raw = summary.model_dump(mode="json")
+    raw["project_name"] = _project_name(me, summary.project_id)
     try:
-        items = recommend_for_meeting(summary.model_dump(mode="json"))
+        items = recommend_for_meeting(raw)
     except Exception as e:
         logger.exception("담당자 추천 실패 %s", meeting_id)  # 원인은 서버 로그에만 (응답에 내부 정보를 넣지 않음)
         raise HTTPException(status_code=502, detail="담당자 추천에 실패했어요. 잠시 뒤 다시 시도해 주세요.") from e
     return {"meeting_id": meeting_id, "items": items}
+
+
+def _project_name(me: str, project_id: str | None) -> str | None:
+    """Neo4j Project.name 에 넣을 웹 프로젝트 이름. 못 찾으면 None (적재는 project_id 로 계속)."""
+    if not project_id:
+        return None
+    try:
+        return folders.get_folder(actor_id=me, folder_id=project_id)["name"]
+    except Exception:
+        logger.warning("프로젝트 이름 조회 실패 %s", project_id, exc_info=True)
+        return None
 
 
 @router.put("/meetings/{meeting_id}/action-items", response_model=list[RecommendedItem])
