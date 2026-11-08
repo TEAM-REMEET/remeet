@@ -54,6 +54,8 @@ APP_TITLE = "RE:MEET"
 # 로컬 기본값은 localhost 대신 127.0.0.1: Windows는 localhost를 IPv6(::1)로 먼저 시도하는데 uvicorn은 IPv4(127.0.0.1)만 열어서
 # 매 호출마다 약 2초를 기다린 뒤 IPv4로 넘어감 (127.0.0.1은 0.01초)
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+# 회의 내용(전사문) 최대 글자 수 — 백엔드 settings.MAX_TRANSCRIPT_CHARS와 같게 (넘으면 「다음 단계」에서 막음)
+MAX_TRANSCRIPT_CHARS = 35000
 # 회의 요약 응답을 기다리는 시간 (초). 요약은 몇 분 이상 걸릴 수 있어 nginx의 proxy_read_timeout과 같게 둬요.
 MEETING_SUMMARY_TIMEOUT = 3600
 # 확정(근거 연결 · 검증) 응답을 기다리는 시간 (초) — 백엔드 제한 10분(REVIEW_TIMEOUT_SECONDS)보다 조금 길게

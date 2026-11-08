@@ -190,7 +190,7 @@ def guard(current_path: str) -> None:
     s = get_state()
     on_admin = s.screen in sel.ADMIN_SCREENS
     if s.is_admin and not on_admin and not s.not_found:
-        request("adm_cost")
+        request("adm_members")
         st.rerun()
     elif not s.is_admin and on_admin:
         s.not_found = "/" + current_path
