@@ -63,7 +63,7 @@ def start_session(token: str, user: dict, restore: bool = False) -> None:
     _set(logged_in=True, login_error="", is_admin=admin, token=token, user_id=user["user_id"],
          user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], nn_people=[user["user_id"]], cookie_written=restore)
     if not restore:
-        screen = "adm_cost" if admin else "compose"
+        screen = "adm_members" if admin else "compose"
         _set(screen=screen, not_found="")
         router.request(screen)
 
