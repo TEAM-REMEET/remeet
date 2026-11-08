@@ -17,7 +17,7 @@ from __future__ import annotations
 import streamlit as st
 
 from components.member_pills import member_pills
-from config import SUMMARY_POLL_SECONDS
+from config import MAX_TRANSCRIPT_CHARS, SUMMARY_POLL_SECONDS
 from state.store import me_id
 from data import repository as repo
 from state import actions
@@ -220,7 +220,10 @@ def _content(s: AppState, n: int) -> None:
             st.file_uploader("파일 첨부", accept_multiple_files=False, key=f"cp_files_{n}_{s.cp_file_rev}",
                              label_visibility="collapsed", on_change=actions.compose_attach, args=(n,))
         markup(f'<span class="cp-types">{ALLOWED_LABEL}</span>')
-        markup(f'<span class="cp-either">{len(_current_text(s, n)):,}자</span>')
+        length = len(_current_text(s, n))
+        markup(f'<span class="cp-either">{length:,} / {MAX_TRANSCRIPT_CHARS:,}자</span>')
+    if length > MAX_TRANSCRIPT_CHARS:  # 「다음 단계」에서도 막음 (actions.compose_next)
+        _info(f"회의 내용이 최대 {MAX_TRANSCRIPT_CHARS:,}자를 넘었어요. 회의를 나눠서 올려 주세요.", "warn")
     if s.cp_file_warn:  # 지원하지 않는 파일을 올림 (받지 않음)
         _info(esc(s.cp_file_warn), "warn")
     if s.cp_format_warn:  # 자동 판별 결과: 경고(주황)가 있으면 경고만, 없으면 고른 형식 안내(초록)

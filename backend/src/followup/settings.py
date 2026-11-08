@@ -62,6 +62,10 @@ EXPORT_CALL_TIMEOUT = 30  # 외부 도구(Jira MCP · SMTP) 호출 하나를 기
 # 접속(30) + 이 시간 + 마지막 아이템(호출 2번 · 60)이 화면이 기다리는 시간(apps/web config.EXPORT_TIMEOUT=180) 안에 들게
 EXPORT_BUDGET_SECONDS = 80
 
+DASHBOARD_CACHE_SECONDS = 60  # 대시보드 · 내 Jira 할 일: 사람마다 이 시간 동안은 Jira 를 다시 부르지 않음
+DASHBOARD_REFRESH_MIN_SECONDS = 10  # 「동기화」를 눌러도 직전 동기화 뒤 이 시간 안이면 캐시 (연타로 Jira 를 계속 부르지 않게)
+DASHBOARD_MAX_ISSUES = 50     # 대시보드에 보여 줄 내 미완료 이슈 최대 수 (마감일 빠른 순)
+
 # 외부 도구 전송 · 메일 (SMTP). Gmail 이면 smtp.gmail.com:587 + 앱 비밀번호
 MAIL_KEYS = ("SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "MAIL_FROM")
 SMTP_PORT = 587  # SMTP_PORT 가 없을 때 · 465 면 SSL, 그 밖은 STARTTLS
@@ -122,6 +126,24 @@ HITL_EFFORT = None                   # 근거 연결 · 검증 추론 강도 / N
 IMPROVEMENT_ISSUE_TYPES = {"깊이 부족", "논의 흐름 단절", "세부 정보 누락", "결정 고려사항 누락", "중복 요약",
                            "요약 범위 오류", "안건 구성 오류", "기타 안건 분류 오류"}
 
+# ── 2-2. 사용량 · 비용 기록 (PostgreSQL llm_usage · 관리자 「비용 관리」 · adapters/llm/usage.py) ──────────
+#   AI 응답이 올 때마다 1줄 저장 (회의록 분석 · 근거 연결 · 담당자 추천 · 회의 질문). 결과 JSON에는 넣지 않음
+#   API 서버에서만 기록 (테스트 · CLI는 기록 안 함) · 기록이 실패해도 본 작업은 계속함
+RECORD_LLM_USAGE = True
+# 모델별 단가 (USD · 100만 토큰당: 입력, 캐시 입력, 출력) — 응답의 모델 이름이 이 키로 시작하면 그 단가
+# 표에 없는 모델은 비용을 비워 두고 경고 (토큰 수는 남아 있어 나중에 다시 계산할 수 있음)
+LLM_PRICES_USD = {
+    "gpt-6-luna": (0.10, 0.01, 0.50),
+}
+# 달러 → 원 환율: 하루 한 번 받아 옴 (유럽중앙은행 기준 · 키 없음). 받지 못하면 관리자 설정(app_settings.usd_krw_rate) → 아래 값
+EXCHANGE_RATE_URL = "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW"
+EXCHANGE_RATE_TTL_SECONDS = 86400    # 환율을 다시 받는 간격 (초)
+EXCHANGE_RATE_TIMEOUT = 5            # 환율 요청 대기 시간 (초)
+DEFAULT_USD_KRW = 1400               # 환율도 관리자 설정도 없을 때
+DEFAULT_BUDGET_KRW = 50000           # 월 예산 기본값 (원) — 관리자가 저장하면 app_settings 값을 씀
+DEFAULT_BUDGET_ALERT_PCT = 80        # 예산 알림 기준 기본값 (%)
+USAGE_MONTHS = 12                    # 비용 관리 화면에 보내는 최근 개월 수
+
 # ══════════════════════════════════════════════════════════════════════
 # 3. LangSmith (키는 환경변수, LANGSMITH_TRACING=true일 때만 기록)
 # ══════════════════════════════════════════════════════════════════════
@@ -132,6 +154,11 @@ LANGSMITH_TAGS = ["summary_action"]  # trace에 붙는 태그 (LangSmith에서 �
 # ══════════════════════════════════════════════════════════════════════
 # 4. 입력
 # ══════════════════════════════════════════════════════════════════════
+# 입력 길이 상한 (LLM 호출 전에 막음 · 처리 시간과 비용을 묶어 둠)
+#   전사문 35,000자 ≈ 회의 1시간 10분~1시간 30분 · 프롬프트로 바뀌면 약 1.23배, 요약 결과는 원문의 약 0.41배
+#   가장 큰 단계(재수정: 지시 + 전사문 + 요약 + 검증 결과 + 출력 형식)가 MAX_STEP_INPUT_CHARS 안에 들도록 정한 값
+MAX_TRANSCRIPT_CHARS = 35000         # 사용자가 넣은 회의 내용(전사문) 최대 글자 수 — 넘으면 422 (화면 apps/web/config.py와 같게 유지)
+MAX_STEP_INPUT_CHARS = 80000         # LLM 호출 1번의 입력 최대 글자 수 (지시 프롬프트 + 사용자 프롬프트 + 출력 형식 JSON 스키마) — 넘으면 호출하지 않고 중단
 UTTERANCE_START = 1                  # 첫 발화 번호 (GoldenSet position과 같게: 메타데이터 · 빈 줄 제외, 1부터)
 # 전사문 앞부분의 '키: 값' 줄 중 아래 키만 메타데이터로 읽음 (그 외 '화자: 내용' 줄은 발화)
 TITLE_KEYS = ("회의 제목",)                         # 회의 제목
@@ -236,6 +263,11 @@ def validate() -> None:
         errors.append(f"LLM_TIMEOUT={LLM_TIMEOUT!r} — 0보다 커야 함")
     if not isinstance(UTTERANCE_START, int) or UTTERANCE_START < 0:
         errors.append(f"UTTERANCE_START={UTTERANCE_START!r} — 0 이상 정수")
+    for name, value in (("MAX_TRANSCRIPT_CHARS", MAX_TRANSCRIPT_CHARS), ("MAX_STEP_INPUT_CHARS", MAX_STEP_INPUT_CHARS)):
+        if not isinstance(value, int) or value <= 0:
+            errors.append(f"{name}={value!r} — 0보다 큰 정수")
+    if isinstance(MAX_TRANSCRIPT_CHARS, int) and isinstance(MAX_STEP_INPUT_CHARS, int) and MAX_TRANSCRIPT_CHARS >= MAX_STEP_INPUT_CHARS:
+        errors.append("MAX_TRANSCRIPT_CHARS는 MAX_STEP_INPUT_CHARS보다 작아야 함 (전사문 외에 지시 프롬프트 · 요약도 들어감)")
     if errors:
         raise ValueError("settings 설정 오류:\n  - " + "\n  - ".join(errors))
 

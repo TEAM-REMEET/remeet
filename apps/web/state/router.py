@@ -38,6 +38,7 @@ from utils.browser import hide_page_not_found
 
 # 고정 경로 화면: screen → (url_path, 탭 제목)
 STATIC = {
+    "home": ("home", "홈"),
     "compose": ("", "새 회의록"),
     "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),
@@ -190,7 +191,7 @@ def guard(current_path: str) -> None:
     s = get_state()
     on_admin = s.screen in sel.ADMIN_SCREENS
     if s.is_admin and not on_admin and not s.not_found:
-        request("adm_cost")
+        request("adm_members")
         st.rerun()
     elif not s.is_admin and on_admin:
         s.not_found = "/" + current_path

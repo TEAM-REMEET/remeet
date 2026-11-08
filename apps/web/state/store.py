@@ -13,6 +13,7 @@ from dataclasses import MISSING, dataclass, field, fields
 import streamlit as st
 
 from data import repository as repo
+from utils.dates import today
 from data.models import Meeting, Todo
 
 _KEY = "_app_state"
@@ -185,7 +186,7 @@ class AppState:
     # --- 관리자
     live_seen: int = -1  # 이미 본 새 알림 수 (늘어나면 화면을 새로 그려 알림 · 상태를 반영)
     adm_month: str = field(  # 비용 관리에서 보는 달 (처음엔 이번 달)
-        default_factory=lambda: next(m["key"] for m in repo.admin()["months"] if m.get("running")))
+        default_factory=lambda: f"{today():%Y-%m}")
     adm_query: str = ""  # 구성원 검색어
     adm_sort: str = ""  # 구성원 표 정렬 컬럼 (빈 값이면 기본 순서)
     adm_sort_desc: bool = False  # True면 내림차순

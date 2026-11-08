@@ -138,14 +138,12 @@ def _admin_sidebar() -> None:
     s = get_state()
     me = sel.admin_profile(s)
     with st.sidebar, st.container(key="sidebar"):
-        with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 비용 관리로
+        with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 구성원 관리로
             markup(f'<div class="sb-logo">{brand_logo(20)}<span class="sb-admin-tag">관리자</span></div>')
-            button("비용 관리로", key="logo_home", variant="ghost", on_click=actions.go, args=("adm_cost",))
+            button("구성원 관리로", key="logo_home", variant="ghost", on_click=actions.go, args=("adm_members",))
         with st.container(key="sidebar-groups", gap=None):
             with st.container(key="navgroup-admin"):
                 _caption("관리")
-                _nav_item("비용 관리", "adm_cost", on=s.screen == "adm_cost" and not s.not_found, on_click=actions.go,
-                          args=("adm_cost",), icon_name=":material/payments:")
                 _nav_item("구성원 관리", "adm_members", on=s.screen == "adm_members", on_click=actions.go,
                           args=("adm_members",), icon_name=":material/group:",
                           trail_html=_member_count(s))
@@ -153,6 +151,8 @@ def _admin_sidebar() -> None:
                 _nav_item("MCP 관리", "adm_mcp", on=s.screen == "adm_mcp", on_click=actions.go, args=("adm_mcp",),
                           icon_name=":material/hub:",
                           trail_html='<span class="nav-trail dot" title="확인이 필요한 연결이 있어요"></span>' if warn else "")
+                _nav_item("비용 관리", "adm_cost", on=s.screen == "adm_cost" and not s.not_found, on_click=actions.go,
+                          args=("adm_cost",), icon_name=":material/payments:")
         with st.container(key="sidebar-user", horizontal=True, vertical_alignment="center", gap="small", wrap=False):
             markup(
                 f'<div class="me-card">{avatar(me["name"][:1], size=30, accent=True)}'
@@ -168,11 +168,13 @@ def render_sidebar() -> None:
         return
     me = sel.me()
     with st.sidebar, st.container(key="sidebar"):
-        with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 새 회의록으로
+        with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 홈으로
             markup(f'<div class="sb-logo">{brand_logo(20)}</div>')
-            button("새 회의록으로", key="logo_home", variant="ghost", on_click=actions.open_new_note)
+            button("홈으로", key="logo_home", variant="ghost", on_click=actions.go, args=("home",))
         with st.container(key="sidebar-groups", gap=None):
             with st.container(key="navgroup-main"):
+                _nav_item("홈", "home", on=s.screen == "home" and not s.not_found, on_click=actions.go, args=("home",),
+                          icon_name=":material/home:")
                 _nav_item("새 회의록", "compose", on=s.screen == "compose" and not s.not_found, on_click=actions.open_new_note,
                           icon_name=":material/edit_square:")
 

@@ -147,7 +147,7 @@ def review_meeting(meeting_id: str, edits: HitlEdits, *, llm: StructuredLLM, sto
     if save:    # 받은 수정 목록을 그대로 남김 (쓴 값만, {"edits": [...]})
         store.save_edits(meeting_id, edits.model_dump_json(indent=2, exclude_unset=True))
     runner = _StepRunner(llm, store, meeting_id, cfg.USE_LLM_CACHE if use_cache is None else use_cache,
-                         max_calls=cfg.hitl_max_llm_calls())
+                         max_calls=cfg.hitl_max_llm_calls(), feature="evidence")
     def work(deadline: float) -> dict:
         runner.deadline = deadline
         return _build_graph(edits, runner, store, save).invoke(

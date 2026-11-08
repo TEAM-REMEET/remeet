@@ -12,6 +12,7 @@ from datetime import date, datetime
 
 import streamlit as st
 
+from config import MAX_TRANSCRIPT_CHARS
 from state.store import me_id
 from data import api
 from components import member_fields as mf
@@ -62,7 +63,7 @@ def start_session(token: str, user: dict, restore: bool = False) -> None:
     _set(logged_in=True, login_error="", is_admin=admin, token=token, user_id=user["user_id"],
          user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], nn_people=[user["user_id"]], cookie_written=restore)
     if not restore:
-        screen = "adm_cost" if admin else "compose"
+        screen = "adm_members" if admin else "home"  # 일반 사용자는 홈(내 할 일 대시보드)부터
         _set(screen=screen, not_found="")
         router.request(screen)
 
@@ -195,6 +196,11 @@ def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
                 cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
+
+
+def refresh_dashboard() -> None:
+    """홈 · 「동기화」 → 이번 화면에서 Jira 를 다시 불러옴 (서버 캐시를 건너뜀 · views/home.py)."""
+    st.session_state["_home_refresh"] = True
 
 
 def open_new_note() -> None:
@@ -343,6 +349,10 @@ def compose_next(nonce: int) -> None:
     broken = [name for name, body in s.nn_files if body is None]
     if broken:
         _format_error(f"파일을 읽을 수 없어요: {', '.join(broken)} · 파일이 손상되었거나 암호 · 배포용 문서가 아닌지 확인해 주세요.")
+        return
+    length = len(compose_text(s))
+    if length > MAX_TRANSCRIPT_CHARS:  # 너무 길면 분석 시간 · 비용이 커져서 막음 (백엔드도 같은 기준으로 한 번 더 확인)
+        _format_error(f"회의 내용이 너무 길어요 ({length:,}자 / 최대 {MAX_TRANSCRIPT_CHARS:,}자). 회의를 나눠서 올려 주세요.")
         return
     if parsed.error or parsed.format != s.cp_example:  # 고른 형식에서 벗어나면 다음 단계로 못 감
         _format_error(f"회의 내용이 「{compose_ai.FORMAT_LABEL[s.cp_example]}」 형식에 맞지 않아요. "
@@ -1325,8 +1335,7 @@ def start_export() -> None:
                          expired=tuple(k for k, v in repo.tool_statuses().items() if v == "expired"))
     s.status_override[x.meeting_id] = "sending"
     _save_status(x.meeting_id, "sending")
-    with st.spinner("외부 도구로 보내고 있어요…"):
-        export.send(s)  # 실제 전송 (Jira · 메일을 골랐고 연결된 경우만)
+    _send_with_overlay(s, "보내고 있어요", "외부 도구로 회의 결과를 보내는 중이에요 · 1~2분 걸릴 수 있어요")
 
 
 def retry_export() -> None:
@@ -1342,8 +1351,20 @@ def retry_export() -> None:
                          expired=x.expired, contact_shown=True, results=x.results, errors=x.errors)
     s.status_override[x.meeting_id] = "sending"
     _save_status(x.meeting_id, "sending")
-    with st.spinner("실패한 것만 다시 보내고 있어요…"):
-        export.send(s)  # 연결 · 설정 실패(errors)는 건너뜀 (관리자 문의)
+    _send_with_overlay(s, "다시 보내고 있어요", "실패한 것만 다시 보내는 중이에요 (연결 · 설정 실패는 관리자 문의)")
+
+
+def _send_with_overlay(s, verb: str, sub: str) -> None:
+    """외부 도구로 보내는 동안 회의록 확정과 같은 로딩 화면 (콜백 안에서 그리면 다음 화면을 그릴 때 사라짐).
+    실제로 보내는 건 Jira · 메일뿐이라, 시뮬레이션 도구만 골랐어도 잠깐은 보이게 최소 시간을 채움."""
+    from config import EXPORT_OVERLAY_MIN_SECONDS
+    from state import export
+    from ui.loading import loading_overlay
+
+    loading_overlay(f"{' · '.join(repo.tool(t).name for t in s.export.picked)}(으)로 {verb}", sub)
+    started = time.monotonic()
+    export.send(s)  # 실제 전송 (Jira · 메일을 골랐고 연결된 경우만)
+    time.sleep(max(0.0, EXPORT_OVERLAY_MIN_SECONDS - (time.monotonic() - started)))
 
 
 def finish_export() -> None:
@@ -1435,7 +1456,7 @@ def adm_set_month(key: str) -> None:
 
 def adm_pick_month(year_key: str, month_key: str) -> None:
     """비용 관리: 연도 · 월 고르기. 그 연도에 없는 달이면 그 연도의 마지막 달로."""
-    keys = [m["key"] for m in repo.admin()["months"]]
+    keys = [m["key"] for m in repo.cost_months()]
     y = st.session_state.get(year_key)
     mth = st.session_state.get(month_key)
     key = f"{y}-{mth:02d}"
@@ -1448,17 +1469,24 @@ def adm_save_budget(budget_key: str, alert_key: str) -> None:
     """월 예산 · 알림 기준 저장 (조직 설정 · 서버 공용)."""
     s = get_state()
     b = repo.budget()
-    b["amount"] = int(st.session_state.get(budget_key) or b["amount"])
-    b["alert_at"] = int(st.session_state.get(alert_key) or b["alert_at"])
-    s.toast = f"월 예산을 {b['amount']:,}원, 알림 기준을 {b['alert_at']}%로 저장했어요."
+    amount = int(st.session_state.get(budget_key) or b["amount"])
+    alert_at = int(st.session_state.get(alert_key) or b["alert_at"])
+    try:
+        repo.save_budget(amount, alert_at)
+    except api.ApiError as e:
+        s.toast = f"예산을 저장하지 못했어요: {e}"
+        return
+    s.toast = f"월 예산을 {amount:,}원, 알림 기준을 {alert_at}%로 저장했어요."
 
 
 def check_budget_alert() -> None:
     """관리자: 이번 달 월말 예상 금액이 알림 기준을 넘으면 알림 (같은 예산 · 기준으로는 한 번만)."""
     from state import delivery
 
-    cur = next(m for m in repo.admin()["months"] if m.get("running"))
+    cur = next((m for m in repo.cost_months() if m.get("running")), None)
     b = repo.budget()
+    if cur is None or not cur["amount"] or b["amount"] <= 0:
+        return
     forecast = cur["amount"] / cur["days"] * cur["month_days"]
     pct = forecast / b["amount"] * 100
     if pct >= b["alert_at"] and repo.budget_alert_once(f"{cur['key']}:{b['amount']}:{b['alert_at']}"):

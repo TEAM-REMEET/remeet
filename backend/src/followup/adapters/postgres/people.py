@@ -11,7 +11,7 @@ Neo4j 와 어긋났을 때는 people.list_people() 전체를 넘기면 다시 �
 
 from __future__ import annotations
 
-from followup.adapters.postgres.db import transaction
+from followup.adapters.postgres.db import query, transaction
 from followup.adapters.postgres.seed_people import UPSERTS  # people · person_skills upsert 는 시드와 같은 SQL
 
 from .common import ValidationError, required
@@ -22,6 +22,7 @@ ACCOUNT = """INSERT INTO accounts (user_id, email, role) VALUES (%s, %s, %s)
 ROLE = """INSERT INTO roles (role_id, name, team_id) VALUES (%s, %s, %s) ON CONFLICT (role_id) DO NOTHING"""
 # backend 는 스킬 목록 전체를 교체하므로, 목록에 없는 스킬은 지운다
 DROP_SKILLS = "DELETE FROM person_skills WHERE user_id = %s AND NOT (skill_id = ANY(%s))"
+EMAILS = "SELECT user_id, email FROM accounts WHERE user_id = ANY(%s)"
 
 
 def person_rows(p: dict) -> dict:
@@ -39,6 +40,14 @@ def person_rows(p: dict) -> dict:
         "skills": skills,
         "skill_ids": [s[1] for s in skills],
     }
+
+
+def emails_of(user_ids: set[str]) -> dict[str, str]:
+    """사람 id → 이메일 (외부 도구 전송: Jira 담당자 찾기 · 요약본 메일). accounts 의 user_id · email 칸만 읽음
+    (remeet_app 은 020 에서 email 칸 읽기 권한을 받음 · password_hash 는 못 읽음)."""
+    if not user_ids:
+        return {}
+    return {r["user_id"]: r["email"] for r in query(EMAILS, (list(user_ids),))}
 
 
 def sync_people(people: list[dict]) -> int:

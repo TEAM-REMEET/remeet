@@ -27,12 +27,10 @@ class JiraUnavailable(RuntimeError):
 
 
 def emails_of(user_ids: set[str]) -> dict[str, str]:
-    """사람 id → 이메일 (= Jira 계정 이메일이라고 봄).
-    shortcut: Neo4j Person.email 에서 읽음, PostgreSQL 이 백엔드에 붙으면 accounts(user_id, email)만 읽는 조회로 교체
-    """
-    from followup.adapters.neo4j import people
+    """사람 id → 이메일 (= Jira 계정 이메일이라고 봄) · PostgreSQL accounts (Neo4j 구성원이 복사된 명부)."""
+    from followup.adapters.postgres import people
 
-    return {p["user_id"]: p["email"] for p in people.list_people() if p["user_id"] in user_ids and p.get("email")}
+    return people.emails_of(user_ids)
 
 
 def project_key(cfg: dict[str, str]) -> str:

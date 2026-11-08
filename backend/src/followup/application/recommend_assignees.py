@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from followup import settings
+from followup.adapters.llm import usage
 from followup.adapters.llm.openai_client import OpenAIClient
 from followup.adapters.neo4j import action_items, load
 from followup.adapters.neo4j.driver import get_driver
@@ -21,8 +22,15 @@ def recommend_for_meeting(summary: dict[str, Any]) -> list[dict[str, Any]]:
 
     settings.load_env()
     model = settings.model_name()
-    load.load_meeting(summary, OpenAIClient(model=model, reasoning_effort=LOAD_EFFORT))
-    llm = ChatOpenAI(model=model, reasoning_effort=agent.LLM_EFFORT, timeout=120, max_retries=agent.LLM_RETRIES)
+    meeting_id = summary["meeting_id"]
+    loader = OpenAIClient(model=model, reasoning_effort=LOAD_EFFORT)
+    try:
+        load.load_meeting(summary, loader)
+    finally:    # 적재 중 AI 호출 사용량 기록 (중간에 실패해도 이미 쓴 호출은 기록)
+        for call in loader.calls:
+            usage.record_chat(call.get("model") or model, call.get("usage"), meeting_id=meeting_id, feature="recommend")
+    llm = ChatOpenAI(model=model, reasoning_effort=agent.LLM_EFFORT, timeout=120, max_retries=agent.LLM_RETRIES,
+                     callbacks=[usage.langchain_callback("recommend", meeting_id)])
     graph = agent.build_graph(agent.neo4j_tools(get_driver(), summary["meeting_id"]), llm)
     agent.run_once(graph, force=False, metadata={"meeting_id": summary["meeting_id"]})
     return action_items.meeting_items(summary["meeting_id"])
