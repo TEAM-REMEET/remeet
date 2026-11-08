@@ -169,12 +169,13 @@ def confirm_action_items(meeting_id: str, items: list[dict]) -> list[dict]:
 
 def recommendation_config(item: dict) -> dict:
     """추천 결과 한 건 → 담당자 지정 창이 쓰는 모양 (assignee_config()와 같은 키)."""
+    positions = {r["user_id"]: r.get("position") or "" for r in people_rows()}  # 추천 응답엔 직급이 없어서 구성원 표에서
+
     def candidate(c: dict) -> Candidate:
-        match = " · ".join(x for x in (", ".join(c["skills"]), f"{c['team']} 소속" if c["team"] else "",
-                                       f"진행 중 업무 {c['open_tasks']}건") if x)
+        match = "\n".join(x for x in (", ".join(c["skills"]), f"진행 중 업무 {c['open_tasks']}건") if x)  # 스킬 / 업무 수 따로 줄
         return Candidate(c["user_id"], c["name"], c["team"] or "", c["role"] or "", round(c["score"]),
                          round(c["skill_score"]), round(c["role_team_score"] or 0), round(c["workload_score"]),
-                         c["open_tasks"], c["attended"], tuple(c["skills"]), match)
+                         c["open_tasks"], c["attended"], tuple(c["skills"]), match, positions.get(c["user_id"], ""))
 
     def md(day: str | None) -> str:  # 2026-11-05 → 11/5
         return f"{int(day[5:7])}/{int(day[8:10])}" if day else ""
@@ -585,6 +586,14 @@ def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
     → {items: [{key, ok, sent | error}]} · 연결 · 설정 실패는 ApiError."""
     return api.call("POST", "/api/exports/mail", {"meeting_title": meeting_title, "body": body, "recipients": recipients},
                     _token(), timeout=EXPORT_TIMEOUT)
+
+
+# ---------------------------------------------------------------- 홈 · 대시보드
+def dashboard_jira(refresh: bool = False) -> dict:
+    """내 Jira 할 일 (GET /api/dashboard/jira · 로그인한 사람이 담당자인 미완료 이슈, 서버가 1분 캐시).
+    refresh: 「동기화」 (캐시를 건너뜀).
+    → {linked, issues: [{key, title, status, category, due, url}], all_url, synced_at} · 연결 · 설정 실패는 ApiError."""
+    return api.call("GET", "/api/dashboard/jira" + ("?refresh=true" if refresh else ""), token=_token(), timeout=30)
 
 
 # ---------------------------------------------------------------- 회의록 쓰기 (PostgreSQL · 백엔드 API)

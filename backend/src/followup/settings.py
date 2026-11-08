@@ -62,6 +62,10 @@ EXPORT_CALL_TIMEOUT = 30  # 외부 도구(Jira MCP · SMTP) 호출 하나를 기
 # 접속(30) + 이 시간 + 마지막 아이템(호출 2번 · 60)이 화면이 기다리는 시간(apps/web config.EXPORT_TIMEOUT=180) 안에 들게
 EXPORT_BUDGET_SECONDS = 80
 
+DASHBOARD_CACHE_SECONDS = 60  # 대시보드 · 내 Jira 할 일: 사람마다 이 시간 동안은 Jira 를 다시 부르지 않음
+DASHBOARD_REFRESH_MIN_SECONDS = 10  # 「동기화」를 눌러도 직전 동기화 뒤 이 시간 안이면 캐시 (연타로 Jira 를 계속 부르지 않게)
+DASHBOARD_MAX_ISSUES = 50     # 대시보드에 보여 줄 내 미완료 이슈 최대 수 (마감일 빠른 순)
+
 # 외부 도구 전송 · 메일 (SMTP). Gmail 이면 smtp.gmail.com:587 + 앱 비밀번호
 MAIL_KEYS = ("SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "MAIL_FROM")
 SMTP_PORT = 587  # SMTP_PORT 가 없을 때 · 465 면 SSL, 그 밖은 STARTTLS

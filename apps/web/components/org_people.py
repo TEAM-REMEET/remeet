@@ -47,7 +47,7 @@ class _Picker:
         self.on_pick = on_pick
         self.single = single
         self.locked = locked  # 고를 수 없는 사람 → 이유 (예: 이미 멤버)
-        self.sub = sub or (lambda pid: sel.person_role(pid))
+        self.sub = sub or sel.person_desc
         self.members = dict(sel.team_groups())  # 팀 이름 → [사람 id]
         self.featured = [pid for pid in (featured or []) if pid in repo.people()]  # 맨 앞 탭 (예: 이 회의 참석자)
         self.tabs = ([("featured", featured_label or "추천")] if featured is not None else []) + list(_TABS)
@@ -75,8 +75,9 @@ class _Picker:
                 markup(f'<span class="pp-lock">{esc(lock)}</span>')
             else:
                 fav = pid in s.pp_fav
-                button("", key=f"ppfav_{self.ctx}_{level}_{pid}", variant="ghost",
-                       icon=":material/star:" if fav else ":material/star_outline:", help="즐겨찾기",
+                # 즐겨찾기면 key 에 on → CSS 가 같은 별을 채워 그림 (Streamlit 아이콘 글꼴엔 채운 별이 없음)
+                button("", key=f"ppfav{'on' if fav else ''}_{self.ctx}_{level}_{pid}", variant="ghost",
+                       icon=":material/star:", help="즐겨찾기",
                        on_click=actions.people_fav, args=(pid,))
         if path:
             where = " › ".join([*sel.team_ancestors(p.team), p.team])

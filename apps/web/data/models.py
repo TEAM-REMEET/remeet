@@ -442,6 +442,7 @@ class Candidate:
     att: bool
     skills: tuple[str, ...]
     match: str = ""
+    position: str = ""  # senior | mid | junior (구성원 표 · 목업은 비어 있음)
 
 
 @dataclass(frozen=True)

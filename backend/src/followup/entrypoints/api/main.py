@@ -19,6 +19,7 @@ from followup.adapters.postgres import usage as usage_table
 from followup.adapters.postgres.db import close_pool
 from followup.entrypoints.api import errors
 from followup.entrypoints.api.ask_routes import router as ask_router
+from followup.entrypoints.api.dashboard_routes import router as dashboard_router
 from followup.entrypoints.api.export_routes import router as export_router
 from followup.entrypoints.api.recommend_routes import router as recommend_router
 from followup.entrypoints.api.routes import (admin_cost, auth, integrations, meeting_records, notifications, people, projects,
@@ -51,6 +52,7 @@ app.include_router(summary_router)
 app.include_router(recommend_router)
 app.include_router(ask_router)
 app.include_router(export_router)
+app.include_router(dashboard_router)
 # PostgreSQL (프로젝트 · 회의 목록 · 공유 · 알림 · 검색 · 연동). 어댑터 예외 → HTTP 상태는 errors.py
 app.include_router(projects.router)
 app.include_router(shares.router)
