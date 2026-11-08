@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 
 from state.store import me_id
 from config import DELIVERY_EVENT_INTERVAL, DELIVERY_FIRST_EVENT_DELAY
+from data import api
 from data import repository as repo
 from state.store import AppState
 
@@ -86,7 +87,12 @@ def sync(state: AppState) -> None:
     if arrived_count(state) >= len(events(state)):
         p = progress(state)
         d.finished = True
-        state.status_override[d.meeting_id] = "fail" if p.failed else "done"
+        status = "fail" if p.failed else "done"
+        state.status_override[d.meeting_id] = status
+        try:  # 회의 상태도 DB 에 (PUT /api/meetings/{id}/status)
+            repo.set_record_status(d.meeting_id, status)
+        except api.ApiError as e:
+            state.toast = f"전달 결과를 서버에 저장하지 못했어요. ({e})"
 
 
 # ---------------------------------------------------------------- 화면용 계산

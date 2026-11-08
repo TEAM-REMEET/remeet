@@ -117,12 +117,28 @@ def meeting(cur, meeting_id: str) -> dict:
 
 
 def is_editor(m: dict, actor_id: str) -> bool:
-    """이 회의(행)를 지금 고칠 · 확정할 수 있는 사람인지 (migrations/010 의 meeting_editor 와 같음).
+    """이 회의(행)를 지금 고칠 · 확정할 수 있는 사람인지 (migrations/019 의 meeting_editor 와 같음).
     draft: 작성자 · 주관자
-    생성 뒤: 검토자(reviewer_id), 없으면 주관자 (web start_finalize: 주관자만 확정)"""
+    생성 뒤: 주관자 · 검토자(reviewer_id) — 신입 주관자도 검토자도 고치고 확정해요 (먼저 확정한 사람으로 끝).
+    주관자가 아닌 작성자는 생성 뒤 못 고쳐요 (주관자가 검토)."""
     if m["status"] == "draft":
         return actor_id in (m["created_by"], m["host_user_id"])
-    return actor_id == (m["reviewer_id"] or m["host_user_id"])
+    return actor_id in (m["host_user_id"], m["reviewer_id"])
+
+
+def is_manager(m: dict, actor_id: str) -> bool:
+    """회의 삭제 · 공유를 할 수 있는 사람: 주관자 · 작성자 (migrations/018 의 meeting_manager 와 같음).
+    검토자는 검토(고치기 · 확정 · 결과 전달 = is_editor)만 하고 삭제 · 공유는 못 해요."""
+    return actor_id in (m["host_user_id"], m["created_by"])
+
+
+def can_manage_meeting(cur, meeting_id: str, actor_id: str) -> dict:
+    """회의 삭제 · 공유 권한 확인 (주관자 · 작성자). 없으면 PermissionDenied."""
+    require_user(cur, actor_id)
+    m = meeting(cur, meeting_id)
+    if is_manager(m, actor_id):
+        return m
+    raise PermissionDenied("회의 삭제 · 공유는 주관자 · 작성자만 할 수 있습니다.")
 
 
 def attended(cur, meeting_id: str, actor_id: str) -> bool:
@@ -155,7 +171,7 @@ def can_access_meeting(
         if is_editor(m, actor_id):
             return m
         if actor_id == m["created_by"]:
-            raise PermissionDenied("검토를 요청한 회의록은 검토자(주관자)만 수정할 수 있습니다.")
+            raise PermissionDenied("검토를 요청한 회의록은 주관자 · 검토자만 수정할 수 있습니다.")
         raise PermissionDenied("회의 수정 권한이 없습니다.")
 
     if actor_id in (m["host_user_id"], m["created_by"], m["reviewer_id"]):

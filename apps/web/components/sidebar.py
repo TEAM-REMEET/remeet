@@ -185,7 +185,7 @@ def render_sidebar() -> None:
                 _caption("공유")
                 _nav_item("공유한 회의", "sent", on=s.screen == "sent", on_click=actions.go, args=("sent",),
                           icon_name=":material/send:",
-                          trail_html=f'<span class="nav-trail count">{len(s.sent_shares)}</span>')
+                          trail_html=f'<span class="nav-trail count">{len(sel.sent_shares(s))}</span>')
                 _nav_item("공유 받은 회의", "recv", on=s.screen == "recv", on_click=actions.go, args=("recv",),
                           icon_name=":material/inbox:",
                           trail_html=f'<span class="nav-trail badge">{len(repo.received_meeting_ids())}</span>')

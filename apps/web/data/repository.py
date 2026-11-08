@@ -5,7 +5,11 @@
     회의 종류                   GET /api/meeting-types                                   (PostgreSQL)
     회의 목록 · 상세            GET /api/meetings → GET /api/meetings/{id}               (PostgreSQL)
     프로젝트 · 멤버 · 회의 · 브리프  GET /api/projects → /api/projects/{id}/members · /meetings · /briefs
-나머지(알림 · 공유 · 위키 · 연동 · 비용 …)는 아직 data/mock/*.json 에서 읽어요.
+백엔드 API 에 쓰는 것 (회의록 쓰기 섹션)
+    새 회의록 저장 · 생성 · 확정 · 편집(안건), 할 일 추가 · 수정 · 삭제 · 되돌리기, 안건 분리 요청, 회의 삭제,
+    결과 전달 상태 · 전송 기록, 프로젝트 멤버 · 삭제, 공유 · 공유 취소                    (PostgreSQL)
+알림 · 외부 연동(도구 상태 · 전송 실패 · 조직 이름)도 백엔드 API (PostgreSQL)
+나머지(위키 · 담당자 후보 목업 · 비용 …)는 아직 data/mock/*.json 에서 읽어요.
 실제 API 로 바꿀 때는 이 파일의 함수 시그니처만 유지하고 내부 구현을 교체하면 됩니다.
 """
 
@@ -223,7 +227,26 @@ def _agenda(a: dict) -> Agenda:
     )
 
 
+def _todo(t: dict, deleted: bool = False) -> Todo:
+    return Todo(t["text"], _owners(t), t["due"], tuple(t["src"]), t["urgent"], item_id=t.get("item_id") or "",
+                due_iso=t.get("due_date") or "", todo_id=t.get("id") or 0, deleted=deleted, agenda=t.get("agenda") or "")
+
+
+def _todos(d: dict) -> tuple[Todo, ...]:
+    """할 일 + 삭제한 할 일(deleted_todos)을 원래 순서(id 순)로. 번호가 지우기 · 되돌리기와 상관없이 그대로 남아요."""
+    rows = [(t, False) for t in d["todos"]] + [(t, True) for t in d.get("deleted_todos", ())]
+    rows.sort(key=lambda r: r[0].get("id") or 0)
+    return tuple(_todo(t, deleted) for t, deleted in rows)
+
+
 def _meeting(d: dict) -> Meeting:
+    m = _meeting_only(d)
+    if any(t.agenda for t in m.todos):  # 직접 추가하며 고른 안건 → 그 안건 아래에 보여 줌 (DB agenda_title)
+        m = _attach_added_todos(m, 0, [i for i, t in enumerate(m.todos) if t.deleted])
+    return m
+
+
+def _meeting_only(d: dict) -> Meeting:
     shared = d.get("shared")
     return Meeting(
         id=d["id"],
@@ -253,9 +276,11 @@ def _meeting(d: dict) -> Meeting:
             MeetingResult(r["kind"], r["text"], tuple(r.get("agendas", ())), tuple(r.get("src", ())))
             for r in d.get("results", ())
         ),
-        todos=tuple(Todo(t["text"], _owners(t), t["due"], tuple(t["src"]), t["urgent"]) for t in d["todos"]),
+        todos=_todos(d),
         shared=ShareInfo(shared["from"], shared["scope"], shared["received"], shared["lock_raw"]) if shared else None,
         branch_of=(d.get("branch_of") or {}).get("meeting"),
+        author=d.get("author") or "",
+        reviewer=d.get("reviewer") or "",
     )
 
 
@@ -459,6 +484,11 @@ def meeting(mid: str) -> Meeting:
     return meetings()[mid]
 
 
+def deleted_todo_indexes(mid: str) -> list[int]:
+    """DB 에서 삭제한 할 일 번호 (화면 「삭제한 액션 아이템」 · 이 세션에서 지운 번호와 함께 써요)."""
+    return [i for i, t in enumerate(meeting(mid).todos) if t.deleted]
+
+
 def received_meeting_ids() -> list[str]:
     """공유 받은 회의 (최근 받은 순)."""
     shared = [m for m in meetings().values() if m.shared]
@@ -545,17 +575,218 @@ def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
                     _token(), timeout=EXPORT_TIMEOUT)
 
 
+# ---------------------------------------------------------------- 회의록 쓰기 (PostgreSQL · 백엔드 API)
+# 실패하면 api.ApiError (메시지는 화면에 그대로 보여 줘도 돼요). 쓴 뒤에는 meetings_changed() 로 캐시를 비워 바로 보이게 해요.
+def _write(method: str, path: str, body: dict | None = None):
+    res = api.call(method, path, body, _token())
+    meetings_changed()
+    return res
+
+
+def is_saved(mid: str) -> bool:
+    """백엔드(DB)에 있는 회의인지 (작성 중 미리보기면 False → 화면(세션)에서만 고침)."""
+    return mid in _base_meetings()
+
+
+def project_exists(project_id: str) -> bool:
+    try:
+        api.call("GET", f"/api/projects/{project_id}", token=_token())
+    except api.ApiError as e:
+        if e.status in (403, 404):
+            return False
+        raise
+    return True
+
+
+def create_project(name: str, members: list[str], project_id: str | None = None) -> dict:
+    """프로젝트 만들기 (POST /api/projects). project_id 를 주면 그 id 로 (AI 요약의 project_id · Neo4j 와 같게)."""
+    return _write("POST", "/api/projects", {"name": name, "members": members, "id": project_id})
+
+
+def save_record(payload: dict) -> dict:
+    """미리보기 회의록 저장 (POST /api/drafts). payload 는 state/record_payload.draft_payload()."""
+    return _write("POST", "/api/drafts", payload)
+
+
+def submit_record(mid: str, reviewer_id: str | None = None) -> dict:
+    """회의록 생성 (draft → review) · 참석자 알림 · 주관자가 다른 사람이면 주관자에게 검토 요청."""
+    return _write("POST", f"/api/meetings/{mid}/submit", {"reviewer_id": reviewer_id})
+
+
+def confirm_record(mid: str) -> dict:
+    """확정 (review → confirmed) · 검토자, 없으면 주관자만."""
+    return _write("POST", f"/api/meetings/{mid}/confirm")
+
+
+def add_record_todo(mid: str, body: dict) -> dict:
+    return _write("POST", f"/api/meetings/{mid}/todos", body)
+
+
+def update_record_todo(todo_id: int, body: dict) -> dict:
+    return _write("PATCH", f"/api/todos/{todo_id}", body)
+
+
+def delete_record_todo(todo_id: int) -> None:
+    _write("DELETE", f"/api/todos/{todo_id}")
+
+
+def restore_record_todo(todo_id: int) -> None:
+    _write("POST", f"/api/todos/{todo_id}/restore")
+
+
+def request_record_branch(mid: str) -> None:
+    _write("POST", f"/api/meetings/{mid}/branch-requests")
+
+
+def save_record_summary(mid: str, content: dict) -> dict:
+    """회의 상세 「편집」 결과를 요약 새 버전으로 저장 (PUT /api/meetings/{id}/summary · 이전 버전은 남음)."""
+    return _write("PUT", f"/api/meetings/{mid}/summary", {"content": content})
+
+
+def delete_record(mid: str) -> None:
+    _write("DELETE", f"/api/meetings/{mid}")
+
+
+def set_record_status(mid: str, status: str) -> None:
+    """결과 전달 상태 (sending | done | fail). 실패해도 화면은 그대로 이어가요 (서버 기록만 늦음)."""
+    _write("PUT", f"/api/meetings/{mid}/status", {"status": status})
+
+
+def finish_record_delivery(mid: str) -> str:
+    """외부 도구 전송이 끝남 → 남은 실패가 있으면 fail, 없으면 done (서버가 정함)."""
+    return _write("POST", f"/api/meetings/{mid}/delivery/finish")["status"]
+
+
+# ---------------------------------------------------------------- 프로젝트 멤버 · 삭제 (PostgreSQL)
+def add_project_member(fid: str, user_id: str) -> None:
+    _write("POST", f"/api/projects/{fid}/members", {"user_id": user_id})
+
+
+def remove_project_member(fid: str, user_id: str) -> None:
+    _write("DELETE", f"/api/projects/{fid}/members/{user_id}")
+
+
+def delete_project(fid: str) -> None:
+    _write("DELETE", f"/api/projects/{fid}")
+
+
+# ---------------------------------------------------------------- 공유 (PostgreSQL)
+def share_record(mid: str, user_id: str, scope: str) -> dict:
+    """회의 공유 (POST /api/meetings/{id}/shares) · 받는 사람에게 알림은 서버가 보내요."""
+    res = api.call("POST", f"/api/meetings/{mid}/shares", {"recipient_user_id": user_id, "scope": scope}, _token())
+    _sent.clear()
+    return res
+
+
+def revoke_record_share(share_id: int) -> None:
+    api.call("DELETE", f"/api/shares/{share_id}", None, _token())
+    _sent.clear()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def _sent(token: str) -> list[dict]:
+    return api.call("GET", "/api/shares/sent", token=token)
+
+
+def sent_share_rows() -> list[dict]:
+    """[공유한 회의] 내가 보낸 공유 (GET /api/shares/sent · 최근 순). 못 불러오면(로그인 전 · 관리자) 빈 목록."""
+    if not _token():
+        return []
+    try:
+        return _sent(_token())
+    except api.ApiError:
+        return []
+
+
+# ---------------------------------------------------------------- 알림 (PostgreSQL)
+_NOTI_TTL = 3  # 초 · 화면이 3초마다 새 알림을 확인해요 (components/live.py)
+
+
+@st.cache_data(ttl=_NOTI_TTL, show_spinner=False)
+def _api_notifications(token: str) -> list[dict]:
+    return api.call("GET", "/api/notifications", token=token)
+
+
+def _noti_when(ts: str | None) -> str:
+    """'2026-11-07T10:42:00+09:00' → '11/7 10:42'"""
+    if not ts:
+        return ""
+    day, _, clock = ts.partition("T")
+    _, mo, d = day.split("-")
+    return f"{int(mo)}/{int(d)} {clock[:5]}"
+
+
+def _server_notifications() -> list[Notification]:
+    rows = _from_api("알림", _api_notifications, [])
+    return [Notification(r["id"], r["kind"], r["text"], _noti_when(r.get("created_at")), r.get("meeting_id"),
+                         not r.get("is_read"), r.get("folder_id")) for r in rows]
+
+
+def mark_notification_read(nid: str) -> None:
+    """알림을 눌러 읽음 (PATCH /api/notifications/{id}). 이 화면에서만 생긴 알림(live-)은 서버에 없어요."""
+    if nid.startswith("live-") or not _token():
+        return
+    try:
+        api.call("PATCH", f"/api/notifications/{nid}", {"read": True}, _token())
+    except api.ApiError:
+        return  # 읽음 표시는 화면(read_notifications)에도 남아서 다음에 다시 보내면 돼요
+    _api_notifications.clear()
+
+
+# ---------------------------------------------------------------- 외부 연동 (PostgreSQL)
+@st.cache_data(ttl=10, show_spinner=False)
+def _api_integrations(token: str) -> dict:
+    org = api.call("GET", "/api/integrations/organization", token=token)["name"]
+    return {"organization": org, "tools": api.call("GET", "/api/integrations/tools", token=token)}
+
+
+def _last_sync(ts: str | None) -> str:
+    return _noti_when(ts) if ts else ""
+
+
+@st.cache_data(ttl=10, show_spinner=False)
+def _api_failures(token: str, mid: str | None) -> list[dict]:
+    return api.call("GET", "/api/integrations/failures" + (f"?meeting_id={mid}" if mid else ""), token=token)
+
+
+def _failure(r: dict) -> ExportFailure:
+    return ExportFailure(r["id"], r["tool_id"], r["meeting_id"], r["kind"], r["reason"], r.get("code") or "",
+                         _noti_when(r.get("failed_at")), r.get("meeting_title") or "")
+
+
+def _failures_changed() -> None:
+    _api_failures.clear()
+    _api_integrations.clear()
+    _api_notifications.clear()
+    meetings_changed()  # 실패 해결 → 회의 상태(done)도 다시 받음
+
+
+def record_failure(mid: str, tool_id: str, kind: str, reason: str, code: str = "") -> ExportFailure:
+    """보내기 실패 기록 (POST /api/integrations/failures) · tech 면 서버가 관리자에게 알림."""
+    r = api.call("POST", "/api/integrations/failures",
+                 {"meeting_id": mid, "tool_id": tool_id, "kind": kind, "reason": reason, "code": code}, _token())
+    _failures_changed()
+    return _failure(r)
+
+
+def record_export(mid: str, tool_id: str) -> None:
+    """보내기 성공 기록 (도구의 마지막 전송 시각)."""
+    api.call("POST", "/api/integrations/exports", {"meeting_id": mid, "tool_id": tool_id}, _token())
+    _api_integrations.clear()
+
+
 # ---------------------------------------------------------------- integrations
-@lru_cache(maxsize=1)
 def integrations() -> dict:
-    raw = _load("integrations")
-    return {
-        "organization": raw["organization"],
-        "tools": [IntegrationTool(**t) for t in raw["tools"]],
-        "initial_status": raw["initial_status"],
-        # 외부 도구로 보내다 실패한 기록 (단순 이슈 · 기술 이슈)
-        "failures": [ExportFailure(**f) for f in raw.get("failures", [])],
-    }
+    """외부 도구 (GET /api/integrations/organization · /tools). 못 불러오면 목업 (화면 뼈대용)."""
+    data = _from_api("외부 연동", _api_integrations, None)
+    if data is None:
+        raw = _load("integrations")
+        return {"organization": raw["organization"], "tools": [IntegrationTool(**t) for t in raw["tools"]],
+                "initial_status": raw["initial_status"], "failures": []}
+    tools = [IntegrationTool(t["id"], t["mark"], t["name"], t["description"], t["target"], t["is_phase2"],
+                             _last_sync(t.get("last_sync_at"))) for t in data["tools"]]
+    return {"organization": data["organization"], "tools": tools,
+            "initial_status": {t["id"]: t["status"] for t in data["tools"]}, "failures": []}
 
 
 # ---------------------------------------------------------------- 서버 공용 저장소 (데모)
@@ -564,10 +795,7 @@ def integrations() -> dict:
 @st.cache_resource
 def _server() -> dict:
     return {
-        "tools": dict(integrations()["initial_status"]),  # 조직의 외부 도구 연결 상태 (관리자가 바꿈)
-        "failures": {},  # 결과 전달 중에 새로 생긴 전송 실패
-        "resolved": set(),  # 관리자가 다시 보내 해결한 실패 id
-        "notis": {"admin": [], "user": []},  # 새로 생긴 알림 (관리자 · 사용자)
+        "notis": {"admin": [], "user": []},  # 이 앱에서만 생기는 알림 (예산 알림 등 · 나머지 알림은 서버에서)
         # 조직 (관리자 · 구성원 관리): 새로 추가한 구성원 · 팀/직무 변경 · 권한 · 상태
         "org": {"added": {}, "edits": {}, "roles": {}, "status": {}},
         "org_version": 0,  # 조직이 바뀔 때마다 +1 → 열려 있는 사용자 화면이 알아채고 새로 그림
@@ -617,34 +845,57 @@ def budget_alert_once(key: str) -> bool:
 
 
 def tool_status(tool_id: str) -> str:
-    return _server()["tools"].get(tool_id, "off")
+    return tool_statuses().get(tool_id, "off")
 
 
 def tool_statuses() -> dict[str, str]:
-    return dict(_server()["tools"])
+    return dict(integrations()["initial_status"])
 
 
 def set_tool_status(tool_id: str, status: str) -> None:
-    _server()["tools"][tool_id] = status
+    """관리자: 도구 연결 상태 (PUT /api/integrations/tools/{id}/status). 실패하면 ApiError."""
+    api.call("PUT", f"/api/integrations/tools/{tool_id}/status", {"status": status}, _token())
+    _api_integrations.clear()
 
 
-def add_export_failure(f: ExportFailure) -> None:
-    _server()["failures"][f.id] = f
-    _server()["resolved"].discard(f.id)
+def _failure_rows(mid: str | None) -> list[dict]:
+    """관리자는 전체, 사용자는 회의 단위로만 볼 수 있어요 (그 밖이면 빈 목록)."""
+    token = _token()
+    if not token:
+        return []
+    try:
+        return _api_failures(token, mid)
+    except api.ApiError:
+        return []
 
 
-def resolve_failure(fid: str) -> None:
-    _server()["resolved"].add(fid)
-
-
-def is_resolved(fid: str) -> bool:
-    return fid in _server()["resolved"]
+def _remember(rows: list[dict]) -> list[dict]:
+    """한 번 본 실패 기록은 id 로 다시 찾을 수 있게 (다시 보내기 · 관리자 문의 창은 id 만 알아요)."""
+    seen = st.session_state.setdefault("_failure_rows", {})
+    for r in rows:
+        seen[r["id"]] = r
+    return rows
 
 
 def export_failures(mid: str | None = None) -> list[ExportFailure]:
-    """전송 실패 기록 (mid 를 주면 그 회의 것만). 새로 생긴 기록이 앞."""
-    items = list(reversed(_server()["failures"].values())) + integrations()["failures"]
-    return [f for f in items if mid is None or f.meeting == mid]
+    """전송 실패 기록 (GET /api/integrations/failures · mid 를 주면 그 회의 것만). 새로 생긴 기록이 앞.
+    mid 없이 부르면 관리자는 전체, 사용자는 이 화면에서 본 적 있는 기록."""
+    rows = _remember(_failure_rows(mid))
+    if mid is None and not rows:
+        rows = list(st.session_state.get("_failure_rows", {}).values())
+    return [_failure(r) for r in rows]
+
+
+def resolve_failure(fid: str) -> None:
+    """다시 보내서 해결 (POST .../resolve) · 남은 실패가 없으면 서버가 회의를 done 으로 · 주관자에게 알림."""
+    row = api.call("POST", f"/api/integrations/failures/{fid}/resolve", None, _token())
+    _remember([row])  # 해결 시각이 바로 보이게 (is_resolved)
+    _failures_changed()
+
+
+def is_resolved(fid: str) -> bool:
+    r = st.session_state.get("_failure_rows", {}).get(fid)
+    return bool(r and r.get("resolved_at"))
 
 
 def push_notification(audience: str, kind: str, text: str, when: str, meeting: str | None = None) -> None:
@@ -654,7 +905,8 @@ def push_notification(audience: str, kind: str, text: str, when: str, meeting: s
 
 
 def live_notifications(audience: str) -> list[Notification]:
-    return list(_server()["notis"][audience])
+    """새 알림 확인용 (components/live.py 가 몇 초마다 개수를 봄): 서버 알림 + 이 앱 알림."""
+    return notifications(audience)
 
 
 def tool(tool_id: str) -> IntegrationTool:
@@ -669,15 +921,9 @@ def admin() -> dict:
 
 
 # ---------------------------------------------------------------- notifications
-@lru_cache(maxsize=1)
-def _mock_notifications() -> list[Notification]:
-    return [Notification(**n) for n in _load("notifications")]
-
-
 def notifications(audience: str = "user") -> list[Notification]:
-    """알림 목록: 새로 생긴 알림이 앞. 관리자는 새로 생긴 알림만."""
-    live = live_notifications(audience)
-    return live if audience == "admin" else live + _mock_notifications()
+    """알림 목록 (GET /api/notifications · 최근 순) + 이 앱에서만 생긴 알림(예산 알림 등)."""
+    return list(_server()["notis"][audience]) + _server_notifications()
 
 
 

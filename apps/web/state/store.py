@@ -24,6 +24,7 @@ class SentShare:
     to: str
     scope: str  # summary | full
     date: str
+    share_id: int = 0  # DB(PostgreSQL) 공유 id · 0 이면 이 화면에서만 (취소할 때 씀)
 
 
 @dataclass
@@ -239,6 +240,7 @@ class AppState:
     new_meetings: dict[str, Meeting] = field(default_factory=dict)  # 「회의록 생성 완료」로 만든 회의
     created_notes: list[tuple[str, str]] = field(default_factory=list)  # (폴더 id, 회의 id)
     nn_host: str = ""  # 주관자 (로그인하면 나로 채움)
+    nn_reviewer: str = ""  # 검토자 (윗사람) · 내가 신입이고 내가 주관자일 때만 골라요
     nn_people: list[str] = field(default_factory=list)  # 참석자 (주관자는 늘 들어 있음)
     # 작성 화면의 선택 모달(폴더 · 주관자 · 참석자): 「선택」을 누르기 전까지는 여기 임시로 담아 둠
     pick_team: str = ""  # 보고 있는 팀 이름

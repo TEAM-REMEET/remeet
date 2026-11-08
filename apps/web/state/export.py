@@ -244,22 +244,30 @@ def progress(state: AppState) -> Progress:
     return p
 
 
+def _save_failure(state: AppState, mid: str, t: str, kind: str, reason: str, code: str) -> None:
+    """실패 기록을 DB 에 (POST /api/integrations/failures · tech 면 관리자 알림은 서버가 보냄)."""
+    try:
+        f = repo.record_failure(mid, t, kind, reason, code)
+    except api.ApiError as e:
+        state.toast = f"전송 실패 기록을 서버에 저장하지 못했어요. ({e})"
+        return
+    state.export_resent.discard(f.id)
+
+
 def _record_failure(state: AppState, mid: str, t: str, when: str) -> None:
     """실제로 보낸 도구(Jira · 메일)의 실패 기록."""
     x = state.export
-    fid, name = f"rt-{mid}-{t}", repo.tool(t).name
+    name = repo.tool(t).name
     if x.errors.get(t):  # 연결 · 설정 문제: 사용자가 다시 보내도 안 됨 → 관리자
-        repo.add_export_failure(ExportFailure(fid, t, mid, "tech", x.errors[t], f"{name} 연결 실패", when))
-        repo.push_notification("admin", "fail", f"「{repo.meeting(mid).title}」 결과를 {name}(으)로 보내지 못했어요. "
-                               f"{name} 연동(토큰 · 비밀번호 · 권한) 확인이 필요해요.", when)
+        _save_failure(state, mid, t, "tech", f"{x.errors[t]} · {name} 연동(토큰 · 비밀번호 · 권한) 확인이 필요해요.",
+                      f"{name} 연결 실패")
     else:
         items = x.results[t]["items"]
         bad = [r for r in items if not r["ok"]]
         n, done = len(bad), len(items) - len(bad)
         reason = (f"{n}명에게 보내지 못했어요 (받은 {done}명에게는 다시 보내지 않아요)" if t == "mail"
                   else f"이슈 {n}건을 만들지 못했어요 (만든 {done}건은 그대로)")
-        repo.add_export_failure(ExportFailure(fid, t, mid, "simple", reason, bad[0]["error"], when))
-    state.export_resent.discard(fid)
+        _save_failure(state, mid, t, "simple", reason, bad[0]["error"])
 
 
 def sync(state: AppState) -> None:
@@ -279,15 +287,19 @@ def sync(state: AppState) -> None:
         if failed(state, t) and (x.attempt == 1 or not x.errors.get(t)):
             _record_failure(state, mid, t, now_text())
     if x.attempt == 1:
-        for t in [t for t in x.picked if t in x.expired]:  # 인증 만료로 실패 → 실패 기록 (관리자 화면에도 보임)
+        for t in [t for t in x.picked if t in x.expired]:  # 인증 만료로 실패 → 실패 기록 (관리자 화면 · 알림은 서버가)
             tool = repo.tool(t)
-            fid = f"rt-{mid}-{t}"
-            when = now_text()
-            repo.add_export_failure(ExportFailure(
-                fid, t, mid, "tech", f"{tool.name} 인증이 만료되어 보내지 못했어요.",
-                "401 Unauthorized · 토큰 만료", when))
-            state.export_resent.discard(fid)
-            title = repo.meeting(mid).title  # 관리자에게 알림: 기술 이슈라 사용자가 해결할 수 없음
-            repo.push_notification("admin", "fail", f"「{title}」 결과를 {tool.name}(으)로 보내지 못했어요. "
-                                   f"{tool.name} 인증 만료 · 확인이 필요해요.", when)
-    state.status_override[mid] = "fail" if progress(state).failed else "done"
+            _save_failure(state, mid, t, "tech", f"{tool.name} 인증이 만료되어 보내지 못했어요.",
+                          "401 Unauthorized · 토큰 만료")
+    p = progress(state)
+    for t, v in p.exports.items():  # 보낸 도구 → 마지막 전송 시각 (관리자 · MCP 관리)
+        if v == "ok":
+            try:
+                repo.record_export(mid, t)
+            except api.ApiError:
+                pass  # 마지막 전송 시각만 늦게 보일 뿐이라 전송 흐름은 이어가요
+    state.status_override[mid] = "fail" if p.failed else "done"
+    try:  # 회의 상태도 DB 에 (남은 실패가 있으면 fail, 없으면 done · 서버가 정함)
+        repo.finish_record_delivery(mid)
+    except api.ApiError as e:
+        state.toast = f"전달 결과를 서버에 저장하지 못했어요. ({e})"

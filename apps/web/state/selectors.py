@@ -125,7 +125,7 @@ def can_see(state: AppState, mid: str) -> bool:
     if mid in state.new_meetings:  # 내가 새로 만든 회의록은 항상 보임
         return True
     m = repo.meeting(mid)
-    return m.host == me_id() or me_id() in m.people or _shared_to_me(state, m)
+    return m.host == me_id() or me_id() in m.people or is_reviewer(m) or _shared_to_me(state, m)
 
 
 def _shared_to_me(state: AppState, m: Meeting) -> bool:
@@ -136,7 +136,7 @@ def _shared_to_me(state: AppState, m: Meeting) -> bool:
 def is_absent_shared(state: AppState, mid: str) -> bool:
     """미참석(조퇴·불참)했는데 주관자가 공유해 줘서 보이는 회의."""
     m = repo.meeting(mid)
-    return m.host != me_id() and me_id() not in m.people and _shared_to_me(state, m)
+    return m.host != me_id() and me_id() not in m.people and not is_reviewer(m) and _shared_to_me(state, m)
 
 
 def folder_note_ids(state: AppState, fid: str) -> list[str]:
@@ -160,6 +160,8 @@ def visible_note_ids(state: AppState) -> list[str]:
     for k in folders(state):
         if me_id() in members_of(state, k):
             ids.extend(folder_note_ids(state, k))
+    # 검토를 맡은 회의록 (프로젝트 멤버가 아니어도 목록 · 검색에 나오게)
+    ids.extend(mid for mid, m in repo.meetings().items() if is_reviewer(m) and mid not in ids)
     return ids
 
 
@@ -167,6 +169,8 @@ def folder_label(state: AppState, m: Meeting) -> str:
     fs = folders(state)
     if m.project_id in fs:  # 「주간 회의 / 11월 릴리즈 준비」
         return f"{repo.meeting_types()[m.directory_id].name} / {fs[m.project_id].name}"
+    if is_reviewer(m):
+        return "검토 요청 받은 회의"
     return "공유 받은 회의" if m.shared else ""
 
 
@@ -175,21 +179,86 @@ def by_date_desc(ids: list[str]) -> list[str]:
     return sorted(ids, key=lambda i: date_key(repo.meeting(i).date), reverse=True)
 
 
+def manages(m: Meeting) -> bool:
+    """이 회의록을 고치고 확정 · 전달할 수 있는 사람 (DB 규칙과 같음): 주관자 · 검토자.
+    신입 주관자와 윗사람(검토자) 둘 다 고치고 확정해요. 주관자가 아닌 사람이 쓴 회의록은 주관자가 맡아요."""
+    return me_id() in (m.host, m.reviewer)
+
+
+def owns(m: Meeting) -> bool:
+    """회의 삭제 · 공유를 할 수 있는 사람 (DB 규칙과 같음): 주관자 · 작성자. 검토자는 검토(편집 · 확정 · 전달)만 해요.
+    신입 주관자는 제출 뒤 고칠 수는 없어도 삭제 · 공유는 할 수 있어요."""
+    return me_id() in (m.host, m.author)
+
+
+def review_requested(state: AppState, m: Meeting) -> bool:
+    """다른 사람이 써서 나에게 검토를 요청한 회의록 (내가 검토자 · 아직 확정 전)."""
+    return m.id in state.review_requested or (
+        m.reviewer == me_id() and m.author not in ("", me_id()) and m.initial_status == "review")
+
+
+def position_of(pid: str) -> str:
+    """직급 senior | mid | junior (구성원 GET /api/people). 모르면 빈 값."""
+    return next((r.get("position") or "" for r in repo.people_rows() if r["user_id"] == pid), "")
+
+
+def needs_reviewer(state: AppState) -> bool:
+    """새 회의록: 내가 신입이고 내가 주관자 → 검토할 윗사람을 꼭 골라야 해요 (주관자가 다른 사람이면 주관자가 검토)."""
+    return bool(state.nn_host) and state.nn_host == me_id() and position_of(me_id()) == "junior"
+
+
+def reviewer_candidates(state: AppState) -> list[str]:
+    """검토자 후보: 신입이 아닌 활성 구성원 (같은 팀 → 시니어 → 이름 순)."""
+    rows = [r for r in repo.people_rows() if r["user_id"] != me_id() and r.get("is_active") is not False
+            and (r.get("position") or "") in ("mid", "senior")]
+    team = person(me_id()).team
+    rows.sort(key=lambda r: ((r.get("team") or "") != team, r.get("position") != "senior", r["name"]))
+    return [r["user_id"] for r in rows]
+
+
+def sent_shares(state: AppState) -> list:
+    """[공유한 회의] DB 에 저장된 공유 (GET /api/shares/sent) + 이 화면에서만 만든 공유."""
+    from state.store import SentShare
+
+    out = []
+    names = {t["team_id"]: t["name"] for t in repo.catalog("teams")} if repo.sent_share_rows() else {}
+    for r in repo.sent_share_rows():
+        to = person(r["recipient_user_id"]).name if r.get("recipient_user_id") else names.get(r.get("recipient_team_id"), "팀")
+        day = str(r.get("shared_on") or "")
+        out.append(SentShare(r["meeting_id"], to, r["scope"],
+                             f"{int(day[5:7])}/{int(day[8:10])}" if len(day) >= 10 else "", r["id"]))
+    return out + list(state.sent_shares)
+
+
+def is_reviewer(m: Meeting) -> bool:
+    """내가 이 회의록의 검토자 (신입이 쓴 회의록의 윗사람 · 주관자 본인은 빼고)."""
+    return bool(m.reviewer) and m.reviewer == me_id() and m.host != me_id()
+
+
 def my_role(m: Meeting) -> str:
-    """host(주관) | att(참석) | shared(공유받음) | member(미참석 폴더 멤버)"""
-    if m.shared:
-        return "shared"
+    """host(주관) | reviewer(검토자) | att(참석) | shared(공유받음) | member(미참석 폴더 멤버)"""
     if m.host == me_id():
         return "host"
+    if is_reviewer(m):  # 참석자 · 프로젝트 멤버가 아니어도 「검토자」 (미참석 · 공유받음으로 보이지 않게)
+        return "reviewer"
+    if m.shared:
+        return "shared"
     return "att" if me_id() in m.people else "member"
 
 
 ROLE_TAGS = {
     "host": ("주관", "host"),
+    "reviewer": ("검토자", "info"),
     "att": ("참석", "att"),
     "shared": ("공유받음", "shared"),
     "member": ("미참석", "abs"),
 }
+
+
+def deleted_todo_indexes(state: AppState, mid: str) -> list[int]:
+    """삭제한 할 일 번호: 이 세션에서 지운 것(작성 중 미리보기) + DB 에서 지운 것 (Todo.deleted)."""
+    session = list(state.deleted_todos.get(mid, []))
+    return session + [i for i in repo.deleted_todo_indexes(mid) if i not in session]
 
 
 def todo_items(state: AppState, mid: str) -> list[tuple[int, Todo]]:
@@ -197,7 +266,7 @@ def todo_items(state: AppState, mid: str) -> list[tuple[int, Todo]]:
 
     번호는 지우기 전 그대로라서, 번호로 저장한 완료 체크 · 담당자 지정 기록이 다른 할 일에 붙지 않아요.
     """
-    gone = set(state.deleted_todos.get(mid, []))
+    gone = set(deleted_todo_indexes(state, mid))
     out = []
     for i, t in enumerate(repo.meeting(mid).todos):
         if i in gone:
@@ -355,7 +424,7 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
     button, kind = "결과 보기", "view"
     if st == "fail" and _fail_is_tech(state, mid):  # 기술 이슈: 다시 보내도 실패 → 재시도 없음 (결과 보기)
         pass
-    elif is_host:  # 재시도 · 검토 · 전달은 주관자만
+    elif manages(m):  # 재시도 · 검토 · 전달은 고칠 수 있는 사람만 (주관자 · 검토자)
         button, kind = {
             "review": ("검토하기", "review"),
             "confirmed": ("전달하기", "deliver"),
@@ -429,6 +498,8 @@ def breadcrumbs(state: AppState) -> list[str]:
         m = repo.meeting(state.meeting_id)
         if m.project_id in fs:
             return ["회의록", types[m.directory_id].name, fs[m.project_id].name, m.title]  # 회의 종류 / 프로젝트 (머리말 폴더 이름과 같은 순서)
+        if is_reviewer(m):  # 프로젝트 멤버가 아닌 검토자
+            return ["검토 요청 받은 회의", m.title]
         return ["공유 받은 회의", m.title]
     if s == "deliver":
         return ["회의록", repo.meeting(state.delivery.meeting_id).title, "결과 전달"]
