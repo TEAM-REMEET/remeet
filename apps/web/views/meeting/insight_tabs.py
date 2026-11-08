@@ -145,13 +145,11 @@ def _details_card(s: AppState, m: Meeting, details: list[model.AgendaDetail]) ->
         for d in details:
             i = d.index - 1
             is_open = f"{m.id}:{i}" in opened
-            status, tone, _ = model.agenda_status(s, m, i)
             markup(f'<div id="agd-{m.id}-{i}" class="agd-anchor"></div>')
             with st.container(key=f"agdhead-{i}", horizontal=True, vertical_alignment="center", gap="small"):
                 button(f"{'▾' if is_open else '▸'} **{d.index}. {md_escape(d.title)}**  :gray[{_count_label(d)}]",
                        key=f"agh{i}", variant="pick", on_click=actions.toggle_agenda_detail, args=(m.id, i),
                        width="stretch")
-                st.html(tag(status, tone), width="content")
             if is_open:
                 _agenda_detail(s, m, d)
     if s.agenda_jump:  # 목차에서 누른 안건으로 한 번만 스크롤
