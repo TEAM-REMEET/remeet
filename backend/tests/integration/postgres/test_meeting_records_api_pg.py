@@ -97,7 +97,7 @@ class MeetingRecordApiTests(unittest.TestCase):
 
         self.call('POST', f'/api/meetings/{mid}/submit', self.U1, {})
         self.assertEqual(self.call('GET', '/api/drafts', self.U1), [])
-        self.assertEqual([m['id'] for m in self.call('GET', '/api/review-queue', self.U1)], [mid])
+        self.assertEqual(self.call('GET', '/api/review-queue', self.U1), [])           # 내가 주관한 회의는 검토 대기에 없음
         d = self.call('GET', f'/api/meetings/{mid}', self.U2)                          # 참석자는 생성 뒤 보임
         self.assertEqual((d['title'], d['initial_status'], d['directory_id']), ('주간 회의 (수정)', 'review', 'weekly'))
         self.assertEqual(d['summary']['text'], 'PG 수수료 2.5% 로 결정')

@@ -5,9 +5,12 @@
                                               아직 없는 id 면 그 id 로 새로 만듦 — AI 요약의 meeting_id 를 그대로)
                                               ⚠️ 고쳐 저장할 때도 전체(프로젝트 · 참석자 · 원문 …)를 다시 보내요. 빠진 값은 비워짐
     GET  /api/drafts                          내가 쓰다 만 미리보기, 최근 저장 순
-    POST /api/meetings/{meeting_id}/submit    회의록 생성 (draft → review) · 참석자에게 알림 · 검토자에게 검토 요청
-    POST /api/meetings/{meeting_id}/confirm   확정 (review → confirmed) · 검토자, 없으면 주관자만
-    GET  /api/review-queue                    내가 확정해야 할 회의록
+    POST /api/meetings/{meeting_id}/handoff   (작성자 ≠ 주관자) 분석이 끝난 미리보기를 주관자에게 넘김 · 주관자에게 알림
+                                              본문 {request: 작성 화면 입력값, draft: {nn_name …}} · 이후 작성자는 못 고침
+    GET  /api/meetings/{meeting_id}/handoff   (주관자) 넘겨받은 입력값 + 요약 JSON → 작성 2단계를 다시 열기
+    POST /api/meetings/{meeting_id}/submit    회의록 생성 (draft → review) · 참석자 · 주관자에게 알림 (주관자는 시니어 · 미드만)
+    POST /api/meetings/{meeting_id}/confirm   확정 (review → confirmed) · 주관자만
+    GET  /api/review-queue                    [홈 · 회의록 생성 검토 대기] 나에게 넘어온 회의록 (kind: handoff | review)
 
 회의 상세 (adapters/postgres/detail.py · minutes.py) — 응답은 web Meeting 과 같은 모양
     GET  /api/meetings/{meeting_id}?version=  상세 (요약 · 안건 · 원문 · 할 일 · 공유 정보). version 없으면 최신
@@ -65,7 +68,12 @@ class Draft(BaseModel):
 
 
 class Submit(BaseModel):
-    reviewer_id: str | None = None                # 신입이 주관자면 윗사람 (꼭)
+    reviewer_id: str | None = None                # 더 이상 쓰지 않음 (주면 400) · 주관자(시니어 · 미드)가 윗사람 역할
+
+
+class Handoff(BaseModel):
+    request: dict[str, Any]                       # 작성 화면 입력값 (POST /api/meeting-jobs 본문 그대로)
+    draft: dict[str, Any] | None = None           # 화면에서만 쓰는 값 (새 프로젝트 이름 nn_name 등)
 
 
 class SummaryVersion(BaseModel):
@@ -118,6 +126,17 @@ def save_draft(body: Draft, me: str = Depends(actor)):
 @router.get("/drafts")
 def my_drafts(me: str = Depends(actor)):
     return compose.list_my_drafts(actor_id=me)
+
+
+@router.post("/meetings/{meeting_id}/handoff")
+def handoff(meeting_id: str, body: Handoff, me: str = Depends(actor)):
+    row = compose.handoff_meeting(actor_id=me, meeting_id=meeting_id, request=body.request, draft=body.draft)
+    return {"id": row["id"], "host_user_id": row["host_user_id"], "handed_off_at": row["handed_off_at"]}
+
+
+@router.get("/meetings/{meeting_id}/handoff")
+def get_handoff(meeting_id: str, me: str = Depends(actor)):
+    return compose.get_handoff(actor_id=me, meeting_id=meeting_id)
 
 
 @router.post("/meetings/{meeting_id}/submit")
