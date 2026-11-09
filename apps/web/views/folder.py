@@ -132,7 +132,6 @@ class FolderPage:
 
     key: str  # 위젯 key 접두어
     title: str
-    host: str  # 멤버 알약에서 '주관'으로 표시할 사람
     is_host: bool  # 내가 만든 폴더인지 → 멤버 관리 / 폴더 삭제
     members: list[str]
     notes: list[str]  # 나에게 보이는 회의 (최근 순)
@@ -163,7 +162,7 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
             tags = "".join([tag("내가 만든 폴더" if fp.is_host else "멤버", "host" if fp.is_host else "att"), *fp.extra_tags])
             markup(f'<div style="display:flex;align-items:center;gap:10px"><h1 class="section-title" style="font-size:20px">'
                    f'{esc(fp.title)}</h1>{tags}</div>')
-            member_pills(f"멤버 {len(fp.members)}명", fp.host, fp.members)
+            member_pills(f"멤버 {len(fp.members)}명", None, fp.members)  # 프로젝트엔 주관자 표시 없음 (만든 사람은 folders.host_user_id 로만 저장)
         with st.container(horizontal=True, width="content", gap="small"):
             fn, args = fp.on_members
             manage = fp.is_host if fp.can_manage is None else fp.can_manage
@@ -206,7 +205,6 @@ def _folder_screen(s: AppState, fid: str) -> None:
     render_folder_page(s, FolderPage(
         key="folder",
         title=f.name,
-        host=f.host,
         is_host=f.host == me_id(),
         members=sel.members_of(s, fid),
         notes=sel.folder_note_ids(s, fid),  # 참석·주관한 회의 + 빠졌지만 주관자가 공유해 준 회의
