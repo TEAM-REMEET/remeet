@@ -72,5 +72,23 @@ class ResendTests(unittest.TestCase):
         self.assertEqual(sent, [("회의록", ["u3"])])  # 못 받은 사람만 · 본문은 서버에 저장된 최종 회의록
 
 
+class FirstSendTests(unittest.TestCase):
+    setUp = ResendTests.setUp  # 같은 가짜 회의 · 할 일 (위 테스트를 한 번 더 돌리지 않게 상속 대신)
+
+    def test_mail_really_sends_without_session_minutes(self):
+        """서버를 다시 켰거나 기존 회의에서 바로 들어오면 세션에 최종 회의록이 없음 → 그래도 실제로 보냄 (흉내 X)."""
+        from state.store import ExportRun
+
+        s, sent = AppState(), []
+        s.export = ExportRun(meeting_id="M_1", picked=("mail",))
+        self.assertTrue(export.live(s, "mail"))
+        with patch.object(repo, "summary_json", lambda mid: {"saved": True}), \
+                patch("state.minutes_text.render_minutes", lambda m: "회의록" if m == {"saved": True} else "?"), \
+                patch.object(repo, "export_mail", lambda title, body, to: sent.append((body, to)) or
+                             {"items": [{"key": u, "ok": True, "sent": True} for u in to]}):
+            export.send(s)
+        self.assertEqual(sent, [("회의록", ["u1", "u2", "u3"])])  # 주관자 + 참석자 · 본문은 서버에 저장된 최종 회의록
+
+
 if __name__ == "__main__":
     unittest.main()
