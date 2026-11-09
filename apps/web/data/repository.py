@@ -583,6 +583,15 @@ def export_jira(meeting_title: str, items: list[dict]) -> dict:
                     timeout=EXPORT_TIMEOUT)
 
 
+def summary_json(mid: str) -> dict:
+    """서버에 저장된 최종 회의록 JSON (GET /api/meetings/{id}/summary-json) · 세션에 없을 때 (다시 보내기 등).
+    없으면 ApiError (메일 본문을 만들 수 없음)."""
+    data = api.call("GET", f"/api/meetings/{mid}/summary-json", token=_token())
+    if not data:
+        raise api.ApiError("저장된 최종 회의록이 없어 메일 본문을 만들 수 없어요.")
+    return data
+
+
 def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
     """회의록 글 → 참석자마다 메일 (POST /api/exports/mail). recipients: [user_id]
     → {items: [{key, ok, sent | error}]} · 연결 · 설정 실패는 ApiError."""
@@ -631,9 +640,27 @@ def save_record(payload: dict) -> dict:
     return _write("POST", "/api/drafts", payload)
 
 
-def submit_record(mid: str, reviewer_id: str | None = None) -> dict:
-    """회의록 생성 (draft → review) · 참석자 알림 · 주관자가 다른 사람이면 주관자에게 검토 요청."""
-    return _write("POST", f"/api/meetings/{mid}/submit", {"reviewer_id": reviewer_id})
+def submit_record(mid: str) -> dict:
+    """회의록 생성 (draft → review) · 참석자 · 주관자 알림. 주관자는 시니어 · 미드만 (신입이면 서버가 거절)."""
+    return _write("POST", f"/api/meetings/{mid}/submit", {})
+
+
+def handoff_record(mid: str, request: dict, draft: dict) -> dict:
+    """(작성자 ≠ 주관자) 분석이 끝난 미리보기를 주관자에게 넘김 (POST /api/meetings/{id}/handoff · 주관자에게 알림).
+    request = 작성 화면 입력값 (분석 요청 본문 그대로) · draft = 화면에서만 쓰는 값 (새 프로젝트 이름 nn_name)."""
+    return _write("POST", f"/api/meetings/{mid}/handoff", {"request": request, "draft": draft})
+
+
+def get_handoff(mid: str) -> dict:
+    """(주관자) 넘겨받은 입력값 + 요약 JSON (GET /api/meetings/{id}/handoff) → 작성 2단계를 다시 열 때.
+    → {meeting_id, author, handed_off_at, request, draft, result}"""
+    return api.call("GET", f"/api/meetings/{mid}/handoff", token=_token())
+
+
+def review_queue() -> list[dict]:
+    """[홈 · 회의록 생성 검토 대기] 나에게 넘어온 회의록 (GET /api/review-queue · 최근 순).
+    → [{id, title, kind: handoff | review, author_name, requested_at}]"""
+    return api.call("GET", "/api/review-queue", token=_token())
 
 
 def confirm_record(mid: str) -> dict:
@@ -774,7 +801,8 @@ def _api_failures(token: str, mid: str | None) -> list[dict]:
 
 def _failure(r: dict) -> ExportFailure:
     return ExportFailure(r["id"], r["tool_id"], r["meeting_id"], r["kind"], r["reason"], r.get("code") or "",
-                         _noti_when(r.get("failed_at")), r.get("meeting_title") or "")
+                         _noti_when(r.get("failed_at")), r.get("meeting_title") or "",
+                         tuple(r["failed_keys"]) if r.get("failed_keys") else None)
 
 
 def _failures_changed() -> None:
@@ -784,10 +812,13 @@ def _failures_changed() -> None:
     meetings_changed()  # 실패 해결 → 회의 상태(done)도 다시 받음
 
 
-def record_failure(mid: str, tool_id: str, kind: str, reason: str, code: str = "") -> ExportFailure:
-    """보내기 실패 기록 (POST /api/integrations/failures) · tech 면 서버가 관리자에게 알림."""
+def record_failure(mid: str, tool_id: str, kind: str, reason: str, code: str = "",
+                   keys: list[str] | None = None) -> ExportFailure:
+    """보내기 실패 기록 (POST /api/integrations/failures) · tech 면 서버가 관리자에게 알림.
+    keys: 실패한 것 (없으면 모름 → 다시 보낼 때 전부)."""
     r = api.call("POST", "/api/integrations/failures",
-                 {"meeting_id": mid, "tool_id": tool_id, "kind": kind, "reason": reason, "code": code}, _token())
+                 {"meeting_id": mid, "tool_id": tool_id, "kind": kind, "reason": reason, "code": code, "keys": keys},
+                 _token())
     _failures_changed()
     return _failure(r)
 
@@ -873,7 +904,7 @@ def tool_statuses() -> dict[str, str]:
 def set_tool_status(tool_id: str, status: str) -> None:
     """관리자: 도구 연결 상태 (PUT /api/integrations/tools/{id}/status). 실패하면 ApiError."""
     api.call("PUT", f"/api/integrations/tools/{tool_id}/status", {"status": status}, _token())
-    _api_integrations.clear()
+    _failures_changed()  # 다시 연결(on)하면 서버가 남은 기술 이슈를 주관자에게 넘김 (실패 기록 · 알림도 바뀜)
 
 
 def _failure_rows(mid: str | None) -> list[dict]:

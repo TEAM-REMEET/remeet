@@ -117,19 +117,20 @@ def meeting(cur, meeting_id: str) -> dict:
 
 
 def is_editor(m: dict, actor_id: str) -> bool:
-    """이 회의(행)를 지금 고칠 · 확정할 수 있는 사람인지 (migrations/019 의 meeting_editor 와 같음).
-    draft: 작성자 · 주관자
-    생성 뒤: 주관자 · 검토자(reviewer_id) — 신입 주관자도 검토자도 고치고 확정해요 (먼저 확정한 사람으로 끝).
-    주관자가 아닌 작성자는 생성 뒤 못 고쳐요 (주관자가 검토)."""
+    """이 회의(행)를 지금 고칠 · 확정할 수 있는 사람인지 (migrations/022 의 meeting_editor 와 같음).
+    draft: 작성자 · 주관자 — 단, 주관자에게 넘긴 뒤(handed_off_at)에는 주관자만
+    생성 뒤: 주관자 (+ 예전 방식으로 만든 회의록의 검토자 reviewer_id). 주관자가 아닌 작성자는 못 고쳐요."""
     if m["status"] == "draft":
+        if m.get("handed_off_at"):
+            return actor_id == m["host_user_id"]
         return actor_id in (m["created_by"], m["host_user_id"])
     return actor_id in (m["host_user_id"], m["reviewer_id"])
 
 
 def is_manager(m: dict, actor_id: str) -> bool:
-    """회의 삭제 · 공유를 할 수 있는 사람: 주관자 · 작성자 (migrations/018 의 meeting_manager 와 같음).
-    검토자는 검토(고치기 · 확정 · 결과 전달 = is_editor)만 하고 삭제 · 공유는 못 해요."""
-    return actor_id in (m["host_user_id"], m["created_by"])
+    """회의 삭제 · 공유를 할 수 있는 사람: 주관자만 (migrations/022 의 meeting_manager 와 같음).
+    작성 화면에서 주관자를 바꾸면 작성자는 주관자 역할이 없어요 · 검토자도 삭제 · 공유는 못 해요."""
+    return actor_id == m["host_user_id"]
 
 
 def can_manage_meeting(cur, meeting_id: str, actor_id: str) -> dict:
@@ -138,7 +139,7 @@ def can_manage_meeting(cur, meeting_id: str, actor_id: str) -> dict:
     m = meeting(cur, meeting_id)
     if is_manager(m, actor_id):
         return m
-    raise PermissionDenied("회의 삭제 · 공유는 주관자 · 작성자만 할 수 있습니다.")
+    raise PermissionDenied("회의 삭제 · 공유는 주관자만 할 수 있습니다.")
 
 
 def attended(cur, meeting_id: str, actor_id: str) -> bool:
@@ -164,6 +165,8 @@ def can_access_meeting(
 
     if m["status"] == "draft":
         if actor_id in (m["created_by"], m["host_user_id"]):
+            if write and not is_editor(m, actor_id):
+                raise PermissionDenied("주관자에게 넘긴 회의록은 주관자만 고칠 수 있습니다.")
             return m
         raise PermissionDenied("아직 작성 중인 회의록입니다.")
 

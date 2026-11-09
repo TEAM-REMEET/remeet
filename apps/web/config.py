@@ -84,9 +84,13 @@ ADMIN_EMAIL = "admin@remeet.example"
 # 로그인 화면의 테스트용 「바로 시작」 버튼 (데모 = 바트 u1, 관리자 = admin).
 # 비밀번호는 git에 안 올라가는 backend/seed/passwords.local.json 에서 읽어요.
 # 이 파일은 Docker 이미지에 안 들어가서, 서버(EC2)에서는 버튼이 자동으로 숨겨져요.
-_PASSWORDS = Path(__file__).resolve().parents[2] / "backend" / "seed" / "passwords.local.json"
+_CONFIG_PATH = Path(__file__).resolve()
+_PASSWORDS = (
+    _CONFIG_PATH.parents[2] / "backend" / "seed" / "passwords.local.json"
+    if len(_CONFIG_PATH.parents) > 2 else None
+)
 DEMO_ACCOUNTS: dict = {}
-if _PASSWORDS.exists():
+if _PASSWORDS is not None and _PASSWORDS.is_file():
     _pw = json.loads(_PASSWORDS.read_text(encoding="utf-8"))
     DEMO_ACCOUNTS = {k: _pw[k] for k in ("u1", "admin") if k in _pw}  # {"u1": {name, email, password}, ...}
 

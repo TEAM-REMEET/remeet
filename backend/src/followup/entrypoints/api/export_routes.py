@@ -8,11 +8,14 @@ body = {"meeting_title": "주간 회의", "body": "회의록 글", "recipients":
 
 POST /api/exports/jira
 
-body = {"meeting_title": "주간 회의", "items": [{"key": "m1:0", "title": "…", "owners": ["u1"], "due": "2026-11-10"}]}
+body = {"meeting_title": "주간 회의", "items": [{"key": "41", "title": "…", "owners": ["u1"], "due": "2026-11-10"}]}
+    key = 할 일 id (meeting_todos.id) → 이슈에 라벨 remeet-todo-{key}
 응답 = {"project_key": "KAN", "created": 2, "total": 3,
-        "items": [{"key": "m1:0", "ok": true, "issue_key": "KAN-12", "assigned": true},
-                  {"key": "m1:1", "ok": false, "error": "…"}]}
-    일부만 실패해도 200 (실패한 key 만 다시 보내면 됨 · 이미 만든 이슈는 다시 만들지 않게)
+        "items": [{"key": "41", "ok": true, "issue_key": "KAN-12", "assigned": true},
+                  {"key": "42", "ok": true, "issue_key": "KAN-9", "assigned": false, "existing": true},
+                  {"key": "43", "ok": false, "error": "…"}]}
+    일부만 실패해도 200 (실패한 key 만 다시 보내면 됨)
+    existing: 같은 라벨의 이슈가 이미 있어 새로 만들지 않음 (같은 할 일로 이슈가 두 번 생기지 않게)
 
 오류 응답 (아무것도 만들지 않음 · 사용자가 다시 보내도 해결 안 됨 → 관리자 문의)
     401  로그인하지 않음
@@ -35,7 +38,7 @@ router = APIRouter(prefix="/api/exports", tags=["exports"], dependencies=[Depend
 
 
 class Item(BaseModel):
-    key: str = Field(min_length=1, max_length=100)
+    key: str = Field(min_length=1, max_length=100, pattern=r"^[\w-]+$")  # 할 일 id · Jira 라벨 · JQL 에 들어감
     title: str = Field(min_length=1, max_length=255)  # Jira summary 최대 255자
     owners: list[str] = Field(default_factory=list, max_length=20)
     due: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")

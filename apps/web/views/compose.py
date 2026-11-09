@@ -6,8 +6,10 @@
      · 주관자는 참석자에 늘 들어가요 (참석자 고르기에서 체크된 채로 · 뺄 수 없음)
      · 고른 형식에서 벗어나거나 발화자가 참석자 안에 없으면 「다음 단계」에서 경고 창이 뜨고 넘어가지 못해요
   2) 분석 및 검토: 회의 상세와 같은 화면(원문 · 요약 · 안건 · 액션 아이템 …)으로 미리 보고 (담당자 지정은 확정 뒤)
-     · 주관자: 「확정하기」 → 확인 창 → 로딩 → 회의록 확정 화면(담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송)
-     · 주관자가 아닌 사람: 「검토 요청하기」 → 확인 창 → 로딩 → 주관자에게 검토 요청 알림 · 회의 상세로
+     · 내가 주관자: 「확정하기」 → 확인 창 → 로딩 → 회의록 확정 화면(담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송)
+     · 주관자가 다른 사람: 분석이 끝나면 바로 주관자에게 넘어가고(actions.compose_handoff) 나는 새 회의록 화면으로.
+       주관자는 홈 「회의록 생성 검토 대기」→「검토하기」로 이 2단계부터 이어서 해요 (actions.open_handoff).
+  주관자는 시니어 · 미드만 (신입이 쓰면 주관자 칸이 비어 있고 윗사람을 골라요).
 분석 규칙과 회의록 만들기는 state/compose_ai.py 에 있어요 (실제 서비스에서는 AI 서버가 대신함).
 """
 
@@ -90,26 +92,6 @@ def _project_field(s: AppState, n: int) -> None:
                  key="cp_type", style="seg", gap=None)
 
 
-_POSITION = {"senior": "시니어", "mid": "미드"}
-
-
-def _reviewer_field(s: AppState, n: int) -> None:
-    """신입이 주관한 회의록은 윗사람이 검토 · 확정해요 (백엔드 규칙). 후보: 신입이 아닌 구성원 (같은 팀이 먼저)."""
-    cands = sel.reviewer_candidates(s)
-    _label("검토자 (윗사람) *")
-    key = f"cp_reviewer_{n}"
-
-    def label(pid: str) -> str:
-        p = sel.person(pid)
-        return " · ".join(x for x in (p.name, p.team, _POSITION.get(sel.position_of(pid), "")) if x)
-
-    st.selectbox("검토자 (필수)", cands, index=cands.index(s.nn_reviewer) if s.nn_reviewer in cands else None,
-                 key=key, format_func=label, placeholder="검토할 윗사람을 골라 주세요", label_visibility="collapsed",
-                 on_change=actions.set_compose_reviewer, args=(key,))
-    markup('<span class="cp-hint">신입이 주관한 회의록은 윗사람이 검토 · 확정해요. '
-           '「검토 요청하기」를 누르면 고른 사람에게 알림이 가요.</span>')
-
-
 def _label(label: str) -> None:
     """입력칸 이름 · 끝이 「 *」면 필수 표시(*)만 주황색."""
     text, req = (label[:-2], True) if label.endswith(" *") else (label, False)
@@ -176,8 +158,14 @@ def _basic_info(s: AppState, n: int) -> None:
         with c2:
             _field("참석자", "cp_people_field", _people_text(s.nn_people), "참석자 선택",
                    ":material/group:", "cp_people")
-        if sel.needs_reviewer(s):  # 내가 신입이고 내가 주관자 → 검토할 윗사람 (꼭)
-            _reviewer_field(s, n)
+        if s.nn_host and not sel.can_host(s.nn_host):
+            markup('<span class="cp-hint">주관자는 시니어 · 미드만 될 수 있어요. 주관자를 다시 골라 주세요.</span>')
+        elif not s.nn_host:
+            markup('<span class="cp-hint">주관자를 시니어 · 미드 중에서 골라 주세요. 다른 사람을 고르면 분석이 끝나는 대로 '
+                   '그 주관자에게 넘어가고, 이후 검토 · 확정은 주관자가 해요.</span>')
+        elif s.nn_host != me_id():
+            markup(f'<span class="cp-hint">분석이 끝나면 주관자 {esc(sel.name_of(s.nn_host))}님에게 바로 넘어가요. '
+                   '이후 검토 · 확정 · 결과 전달은 주관자가 해요.</span>')
         _project_field(s, n)
     t = types[s.nn_type].name
     topic = s.nn_topic if s.nn_topic in sel.all_my_folder_ids(s) else _NEW
@@ -266,10 +254,23 @@ def _analyzing(s: AppState) -> None:
     """분석 진행 중 화면: 입력을 다시 고치거나 새로 등록할 수 없고, 다른 화면으로는 자유롭게 이동해요."""
     with st.container(key="wz-card-full", gap="medium"):
         _card_head("회의를 분석하고 있어요", "진행 중")
+        handoff = (f" 분석이 끝나면 주관자 {esc(sel.name_of(s.nn_host))}님에게 바로 넘어가요 "
+                   "(이 화면이나 「새 회의록」에 있을 때 넘겨요)." if s.nn_host != me_id() else "")
         _info(f"<b><i class=\"wz-spin\"></i>「{esc(s.nn_title)}」의 요약과 액션 아이템을 정리하고 있어요</b>"
               "<span>몇 분 걸릴 수 있어요. 다른 화면으로 이동해도 분석은 계속되고, 「새 회의록」으로 돌아오면 "
-              "이어서 확인할 수 있어요. 끝나기 전에는 새 회의록을 등록할 수 없어요.</span>")
+              f"이어서 확인할 수 있어요. 끝나기 전에는 새 회의록을 등록할 수 없어요.{handoff}</span>")
         _poll_analysis()
+
+
+def _handoff_failed(s: AppState) -> None:
+    """(작성자) 분석은 끝났는데 주관자에게 넘기지 못함 → 이유와 「다시 넘기기」."""
+    with st.container(key="wz-card-full", gap="medium"):
+        _card_head("주관자에게 넘기지 못했어요", "다시 시도")
+        _info(f"<b>「{esc(s.nn_title)}」 분석은 끝났어요</b><span>주관자 {esc(sel.name_of(s.nn_host))}님에게 넘기는 중에 "
+              f"문제가 생겼어요: {esc(s.cp_handoff_error or '알 수 없는 오류')}</span>", "warn")
+        with st.container(horizontal=True, horizontal_alignment="right"):
+            button("다시 넘기기", key="cp_handoff_retry", variant="primary", icon=":material/send:",
+                   on_click=actions.compose_handoff)
 
 
 def _step2(s: AppState) -> None:
@@ -279,25 +280,24 @@ def _step2(s: AppState) -> None:
     if s.preview_meeting is None:
         actions.compose_goto(1)
         st.rerun()
+    if s.nn_host != me_id() and not s.cp_handoff:  # 작성자 ≠ 주관자: 2단계 수정은 주관자가 (넘기기에 실패했을 때만 여기)
+        _handoff_failed(s)
+        return
     m = s.preview_meeting
     s.meeting_id = m.id  # 근거 강조 · 담당자 지정 등이 이 미리보기 회의를 보도록
-    direct = s.nn_host == me_id() and not sel.needs_reviewer(s)  # 바로 확정 (아니면 검토 요청)
-    reviewer = s.nn_reviewer if sel.needs_reviewer(s) else s.nn_host
-    who = f"{'검토자' if sel.needs_reviewer(s) else '주관자'} {sel.name_of(reviewer)}님"
     # 머리말: 회의 상세와 같은 자리 · 오른쪽 위 버튼(이전화면으로 · 확정하기)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         markup(f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
-            button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
-            # 주관자는 확정 · 주관자가 아니거나 신입이면 검토 요청 (둘 다 한 번 더 묻는 창 → 로딩)
-            button("확정하기" if direct else "검토 요청하기", key="cp_finish", variant="primary",
-                   icon=":material/task_alt:" if direct else ":material/rate_review:",
+            if not s.cp_handoff:  # 넘겨받은 회의록은 2단계부터 (입력값을 고치면 새로 분석하게 되므로 1단계로 못 감)
+                button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
+            button("확정하기", key="cp_finish", variant="primary", icon=":material/task_alt:",
                    on_click=actions.open_compose_confirm)
     with st.container(horizontal=True, vertical_alignment="center"):
         member_pills(f"{m.when} · 참석 {len(m.people)}명", m.host, list(m.people))
-        note = ("AI 분석 결과 — 「확정하기」를 눌러 회의록을 확정해 주세요" if direct
-                else f"AI 분석 결과 — 「검토 요청하기」를 누르면 {who}에게 알림이 가요")
+        note = (f"{sel.name_of(s.cp_handoff_author)}님이 넘긴 AI 분석 결과 — 검토 · 수정한 뒤 「확정하기」를 눌러 주세요"
+                if s.cp_handoff else "AI 분석 결과 — 「확정하기」를 눌러 회의록을 확정해 주세요")
         st.html(f'<span class="read-note">{esc(note)}</span>', width="content")
 
     # 본문: 회의 상세와 같은 원문 · 인사이트 탭
@@ -309,10 +309,7 @@ def _step2(s: AppState) -> None:
             render_insights(s, m, mode="preview")  # 담당자 지정은 확정 뒤 담당자 추천에서
 
     if s.cp_finishing:  # 확인 창에서 확정 · 검토 요청: 화면을 다 그린 뒤 로딩 화면을 덮고 회의록을 만듦
-        if direct:
-            loading_overlay("회의록을 확정하고 있어요", "분석 결과로 회의록을 만들고 담당자 추천을 준비하는 중이에요")
-        else:
-            loading_overlay("검토를 요청하고 있어요", f"회의록을 만들어 {who}에게 보내는 중이에요")
+        loading_overlay("회의록을 확정하고 있어요", "분석 결과로 회의록을 만들고 담당자 추천을 준비하는 중이에요")
         if actions.compose_review():  # 수정 반영 · 근거 연결 · 검증 (실패하면 안내 후 이 화면에 머무름)
             actions.compose_finish()
         st.rerun()

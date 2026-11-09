@@ -10,7 +10,6 @@ from components.dialogs.admin import contact_admin_dialog, member_edit_dialog, o
 from components.dialogs.assign import assign_dialog
 from components.dialogs.compose_pickers import (
     compose_confirm_dialog,
-    compose_review_dialog,
     format_error_dialog,
     host_picker_dialog,
     people_picker_dialog,
@@ -36,7 +35,6 @@ _DIALOGS = {
     "cp_people": people_picker_dialog,
     "cp_format_error": format_error_dialog,
     "cp_confirm": compose_confirm_dialog,
-    "cp_review": compose_review_dialog,
     "contact_admin": contact_admin_dialog,
     "org_picker": org_picker_dialog,
     "member_edit": member_edit_dialog,

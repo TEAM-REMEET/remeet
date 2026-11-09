@@ -131,23 +131,32 @@ class DeliveryAndReviewApiTests(unittest.TestCase):
         self.call('GET', f'/api/meetings/{mid}', self.U1, status=404)
         self.assertNotIn(mid, [m['id'] for m in self.call('GET', '/api/meetings', self.U1)])
 
-    def test_junior_needs_senior_reviewer(self):
-        """신입(u2)이 쓰고 본인이 주관 → 윗사람(검토자) 꼭 · 신입(u4)은 검토자가 될 수 없음 · 신입 주관자 · 검토자 둘 다 고치고 확정 (019)."""
-        pid = self.call('POST', '/api/projects', self.U2, {'name': '신입 회의', 'members': ['u3', 'u4']}, 201)['id']
-        body = {**self._body(pid), 'attendees': ['u3']}
+    def test_junior_writes_handoff_to_senior_host(self):
+        """신입(u2)이 씀 → 주관자는 시니어 · 미드만 (자기 · 신입 u4 X) → 분석 끝 → 넘김(API) → 주관자(u3)만 이어서 (022)."""
+        pid = self.call('POST', '/api/projects', self.U2, {'name': '신입 회의', 'members': ['u4']}, 201)['id']
+        body = {**self._body(pid), 'attendees': ['u4']}
         mid = self.call('POST', '/api/drafts', self.U2, body, 201)['id']
-        self.call('POST', f'/api/meetings/{mid}/submit', self.U2, {}, status=400)                     # 윗사람 없음
-        self.call('POST', f'/api/meetings/{mid}/submit', self.U2, {'reviewer_id': 'u4'}, status=400)  # 신입은 검토자 X
-        r = self.call('POST', f'/api/meetings/{mid}/submit', self.U2, {'reviewer_id': 'u3'})
-        self.assertEqual(r['reviewer_id'], 'u3')
-        d = self.call('GET', f'/api/meetings/{mid}', self.U3)
-        self.assertEqual((d['author'], d['reviewer'], d['can_edit']), ('u2', 'u3', True))
-        self.assertTrue(self.call('GET', f'/api/meetings/{mid}', self.U2)['can_edit'])                # 신입 주관자도 고침
+        self.call('POST', f'/api/meetings/{mid}/submit', self.U2, {}, status=400)                     # 신입 본인이 주관자
+        self.call('POST', '/api/drafts', self.U2, {**body, 'meeting_id': mid, 'host_id': 'u4'}, 201)
+        self.call('POST', f'/api/meetings/{mid}/handoff', self.U2, {'request': {}}, status=400)       # 신입 u4 도 주관자 X
+        self.call('POST', '/api/drafts', self.U2, {**body, 'meeting_id': mid, 'host_id': 'u3'}, 201)
+        r = self.call('POST', f'/api/meetings/{mid}/handoff', self.U2, {'request': {'title': '주간 회의'}, 'draft': {'nn_name': ''}})
+        self.assertEqual(r['host_user_id'], 'u3')
         self.assertIn('review', [n['kind'] for n in self.call('GET', '/api/notifications', self.U3)])
-        self.call('POST', f'/api/meetings/{mid}/confirm', self.U4, status=403)                         # 멤버는 X
-        self.call('POST', f'/api/meetings/{mid}/confirm', self.U2)                                     # 신입 주관자 확정 O
-        self.call('POST', f'/api/meetings/{mid}/confirm', self.U3, status=400)                         # 이미 확정
-
+        self.assertEqual([(x['id'], x['kind']) for x in self.call('GET', '/api/review-queue', self.U3)], [(mid, 'handoff')])
+        self.call('GET', f'/api/meetings/{mid}/handoff', self.U2, status=403)                         # 작성자는 못 엶
+        h = self.call('GET', f'/api/meetings/{mid}/handoff', self.U3)
+        self.assertEqual((h['author'], h['request']['title']), ('u2', '주간 회의'))
+        self.assertFalse(self.call('GET', f'/api/meetings/{mid}', self.U2)['can_edit'])                # 작성자는 손 못 댐
+        self.call('POST', '/api/drafts', self.U2, {**body, 'meeting_id': mid, 'host_id': 'u3'}, status=403)
+        self.call('POST', '/api/drafts', self.U3, {**body, 'meeting_id': mid, 'host_id': 'u3'}, 201)   # 주관자는 고쳐 저장
+        self.call('POST', f'/api/meetings/{mid}/submit', self.U3, {'reviewer_id': 'u1'}, status=400)  # 검토자 지정 X
+        self.call('POST', f'/api/meetings/{mid}/submit', self.U2, {}, status=403)
+        r = self.call('POST', f'/api/meetings/{mid}/submit', self.U3, {})
+        self.assertEqual((r['host_user_id'], r['reviewer_id']), ('u3', None))
+        self.call('POST', f'/api/meetings/{mid}/confirm', self.U2, status=403)                         # 작성자 X
+        self.call('POST', f'/api/meetings/{mid}/confirm', self.U3)                                     # 주관자 확정 O
+        self.call('DELETE', f'/api/meetings/{mid}', self.U2, status=403)
 
 if __name__ == '__main__':
     unittest.main()

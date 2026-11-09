@@ -226,6 +226,9 @@ class AppState:
     cp_result: dict | None = None  # 백엔드가 돌려준 요약 결과 (저장된 summary.json과 같은 내용)
     cp_final: dict | None = None  # 사용자 수정 · 근거 연결까지 반영한 최종 결과 (저장된 summary_final.json과 같은 내용)
     cp_result_request: dict | None = None  # cp_result를 만든 요청 (같으면 AI를 다시 호출하지 않음)
+    cp_handoff: str = ""  # (주관자) 넘겨받아 2단계부터 이어서 하는 회의 id · 빈 값이면 내가 쓴 회의록
+    cp_handoff_author: str = ""  # (주관자) 넘겨받은 회의록을 쓴 사람
+    cp_handoff_error: str = ""  # (작성자) 주관자에게 넘기지 못한 이유 → 2단계에서 「다시 넘기기」
     cp_finishing: bool = False  # 2단계 「확정하기」를 눌러 회의록을 만드는 중 (로딩 화면)
     cp_text_rev: int = 0  # 예시를 넣을 때마다 바뀌어 입력칸을 새로 그림
     cp_format_note: str = ""  # 회의 내용을 보고 형식을 자동으로 골랐다는 안내 (초록)
@@ -243,7 +246,6 @@ class AppState:
     new_meetings: dict[str, Meeting] = field(default_factory=dict)  # 「회의록 생성 완료」로 만든 회의
     created_notes: list[tuple[str, str]] = field(default_factory=list)  # (폴더 id, 회의 id)
     nn_host: str = ""  # 주관자 (로그인하면 나로 채움)
-    nn_reviewer: str = ""  # 검토자 (윗사람) · 내가 신입이고 내가 주관자일 때만 골라요
     nn_people: list[str] = field(default_factory=list)  # 참석자 (주관자는 늘 들어 있음)
     # 작성 화면의 선택 모달(폴더 · 주관자 · 참석자): 「선택」을 누르기 전까지는 여기 임시로 담아 둠
     pick_team: str = ""  # 보고 있는 팀 이름

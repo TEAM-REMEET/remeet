@@ -2,18 +2,18 @@
 
     ① save_draft()       status = draft. 작성 2단계(분석 및 검토)의 「미리보기」 회의록을 그대로 저장.
                           여러 번 저장해도 됨 (요약은 버전으로 쌓임). 작성자 · 주관자만 보임.
-    ② submit_meeting()   draft → review. 참석자에게 「회의록이 생성됐어요」 알림.
-    ③ confirm_meeting()  review → confirmed. 주관자 · 검토자(reviewer_id) 중 먼저 확정한 사람.
+    ①' handoff_meeting()  (작성자 ≠ 주관자) 분석이 끝난 미리보기를 주관자에게 넘김 · 주관자에게 review 알림
+                          이후 작성자는 못 고치고, 주관자가 홈 「회의록 생성 검토 대기」→「검토하기」로 2단계부터 이어서 함
+    ② submit_meeting()   draft → review. 참석자 · 주관자에게 「회의록이 생성됐어요」 알림.
+    ③ confirm_meeting()  review → confirmed. 주관자 (+ 예전 방식의 검토자).
 
-    흐름 (web compose_finish 와 같음)
-      내가 주관자          미리보기 → 생성 → (바로) 확정                         검토 단계 없음
-      주관자가 다른 사람   미리보기 → 생성 = 「검토 요청하기」 → 주관자 검토 · 수정 → 확정
-                           reviewer_id = 주관자 (자동) · 주관자에게 review 알림 · 작성자는 이제 못 고침
-      신입이 주관자        미리보기 → 생성 → 윗사람 검토 · 수정 → 확정            reviewer_id = 윗사람 (꼭 지정)
-                           신입 주관자도 계속 고치고 확정할 수 있어요 (migrations/019)
+    흐름 (web compose_* 와 같음 · migrations/022)
+      내가 주관자          미리보기 → 생성 → (바로) 확정
+      주관자가 다른 사람   (작성자) 분석 → 넘김 → 새 회의록 화면으로
+                           (주관자) 검토하기 → 2단계 미리보기 수정 → 생성 → 확정 → 결과 전달 → 외부 도구 전송
+      주관자는 시니어 · 미드만 (신입이 쓰면 윗사람을 주관자로). 검토자(reviewer_id) 단계는 없어요.
 
-누가 신입인지는 구성원 표(팀원 담당)에 생길 예정 → seniority() 한 곳만 그 표를 보게 바꾸면 돼요.
-    'junior' → (내가 주관자면) 윗사람 지정 필수 · 'senior' → 윗사람 지정하면 오류 · None(지금: 모름) → 넘긴 값을 따름
+누가 신입인지는 구성원 표 people.position (seniority()). None(모름) → 막지 않음.
 """
 from __future__ import annotations
 
@@ -48,6 +48,11 @@ def seniority(cur, user_id: str) -> str | None:
 def _notify(cur, user_id: str, kind: str, text: str, meeting_id: str) -> None:
     cur.execute("INSERT INTO notifications (id, user_id, kind, text, meeting_id) VALUES (%s, %s, %s, %s, %s)",
                 (f"n-{uuid4().hex[:16]}", user_id, kind, text, meeting_id))
+
+
+def _check_host_level(cur, host_id: str) -> None:
+    if seniority(cur, host_id) == "junior":
+        raise ValidationError("주관자는 시니어 · 미드만 될 수 있어요. 신입은 주관자로 정할 수 없어요.")
 
 
 def _check_user(cur, user_id: str, label: str) -> str:
@@ -111,7 +116,8 @@ def save_draft(*, actor_id: str, content: dict, meeting_id: str | None = None, t
             if m["status"] != "draft":
                 raise ValidationError("이미 생성된 회의록은 미리보기로 저장할 수 없습니다.")
             if not is_editor(m, actor_id):
-                raise PermissionDenied("이 미리보기를 고칠 수 없습니다.")
+                raise PermissionDenied("주관자에게 넘긴 회의록은 주관자만 고칠 수 있습니다." if m["handed_off_at"]
+                                       else "이 미리보기를 고칠 수 없습니다.")
             cur.execute(
                 """UPDATE meetings SET project_id = %s, directory_id = %s, host_user_id = %s, title = %s,
                        held_at = %s, time_label = %s, file_name = %s
@@ -180,19 +186,12 @@ def submit_meeting(*, actor_id: str, meeting_id: str, reviewer_id: str | None = 
         cur.execute("SELECT 1 FROM meeting_summaries WHERE meeting_id = %s LIMIT 1", (meeting_id,))
         if cur.fetchone() is None:
             raise ValidationError("미리보기를 먼저 저장해 주세요.")
-        level = seniority(cur, m["created_by"])
+        # 검토자는 따로 두지 않아요 (주관자가 윗사람 역할) · 주관자는 시니어 · 미드만
         if reviewer_id:
-            if level == "senior" and reviewer_id != m["host_user_id"]:
-                raise ValidationError("신입이 쓴 회의록만 윗사람 검토 단계를 거칩니다.")
-            _check_user(cur, reviewer_id, "검토자")
-            if reviewer_id == m["created_by"]:
-                raise ValidationError("작성자 본인을 검토자로 지정할 수 없습니다.")
-            if seniority(cur, reviewer_id) == "junior":
-                raise ValidationError("검토자는 신입이 아닌 윗사람이어야 합니다.")
-        elif m["created_by"] != m["host_user_id"]:
-            reviewer_id = m["host_user_id"]          # 주관자가 아닌 사람이 씀 → 주관자에게 검토 요청 (web)
-        elif level == "junior":
-            raise ValidationError("신입이 쓴 회의록은 검토할 윗사람을 지정해야 합니다.")
+            raise ValidationError("검토자는 따로 지정하지 않아요. 시니어 · 미드 주관자가 편집 · 확정해요.")
+        _check_host_level(cur, m["host_user_id"])
+        if actor_id != m["host_user_id"]:   # 작성자 ≠ 주관자 → 넘긴 뒤 주관자가 생성 (작성자는 주관자 역할 없음)
+            raise PermissionDenied("회의록 생성은 주관자만 할 수 있어요. 분석이 끝나면 주관자에게 넘겨 주세요.")
 
         cur.execute(
             """UPDATE meetings SET status = 'review', reviewer_id = %s, submitted_at = now()
@@ -212,25 +211,96 @@ def submit_meeting(*, actor_id: str, meeting_id: str, reviewer_id: str | None = 
 
 
 def list_review_queue(*, actor_id: str) -> list[dict]:
-    """내가 확정해야 할 회의록 (검토 대기): 내가 검토자인 것 + 검토자 없이 내가 주관자인 것."""
+    """[홈 · 회의록 생성 검토 대기] 나에게 넘어온 회의록 (최근 넘어온 순).
+
+    kind = 'handoff' : 작성자가 분석을 마치고 넘긴 미리보기 (draft) → 「검토하기」로 작성 2단계부터
+           'review'  : 예전 방식으로 검토를 요청받은 회의록 (review · 내가 검토자) → 회의 상세에서 확정
+    """
     with transaction(actor_id) as cur:
         require_user(cur, actor_id)
         cur.execute(
-            """SELECT id, title, created_by, host_user_id, reviewer_id, submitted_at
-               FROM meetings
-               WHERE status = 'review' AND deleted_at IS NULL
-                 AND COALESCE(reviewer_id, host_user_id) = %(a)s
-               ORDER BY submitted_at DESC NULLS LAST, created_at DESC""",
+            """SELECT m.id, m.title, m.created_by, m.host_user_id, m.reviewer_id, m.status,
+                      COALESCE(p.name, a.email, m.created_by) AS author_name,
+                      CASE WHEN m.status = 'draft' THEN 'handoff' ELSE 'review' END AS kind,
+                      COALESCE(m.handed_off_at, m.submitted_at) AS requested_at
+               FROM meetings m
+               LEFT JOIN people p ON p.user_id = m.created_by
+               LEFT JOIN accounts a ON a.user_id = m.created_by
+               WHERE m.deleted_at IS NULL
+                 AND ((m.status = 'draft' AND m.handed_off_at IS NOT NULL AND m.host_user_id = %(a)s)
+                      OR (m.status = 'review' AND m.reviewer_id = %(a)s AND m.created_by <> %(a)s))
+               ORDER BY requested_at DESC NULLS LAST, m.created_at DESC""",
             {"a": actor_id},
         )
         return cur.fetchall()
+
+
+def handoff_meeting(*, actor_id: str, meeting_id: str, request: dict, draft: dict | None = None) -> dict:
+    """작성자 → 주관자: 분석이 끝난 미리보기를 넘김 (작성자 ≠ 주관자 · draft · 한 번만).
+
+    request = 작성 화면 입력값 (POST /api/meeting-jobs 본문 그대로: 제목 · 날짜 · 주관자 · 참석자 · 형식 · 원문 …)
+    draft   = 화면에서만 쓰는 값 (새 프로젝트 이름 nn_name 등)
+    → 주관자가 「검토하기」를 누르면 이 값과 저장된 요약 JSON 으로 작성 2단계를 그대로 다시 열어요.
+    주관자가 그 프로젝트 멤버가 아니면 멤버로 넣어요 (미리보기를 고쳐 저장하려면 프로젝트에 쓸 수 있어야 함).
+    """
+    import json
+
+    with transaction(actor_id) as cur:
+        require_user(cur, actor_id)
+        cur.execute("SELECT * FROM meetings WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (meeting_id,))
+        m = cur.fetchone()
+        if m is None:
+            raise NotFoundError("회의를 찾을 수 없습니다.")
+        if m["created_by"] != actor_id:
+            raise PermissionDenied("회의록을 쓴 사람만 주관자에게 넘길 수 있습니다.")
+        if m["status"] != "draft" or m["handed_off_at"] is not None:
+            raise ValidationError("이미 주관자에게 넘긴 회의록입니다.")
+        if m["host_user_id"] == actor_id:
+            raise ValidationError("내가 주관자인 회의록은 넘기지 않고 바로 확정해요.")
+        _check_host_level(cur, m["host_user_id"])
+        cur.execute("SELECT 1 FROM meeting_summaries WHERE meeting_id = %s LIMIT 1", (meeting_id,))
+        if cur.fetchone() is None:
+            raise ValidationError("미리보기를 먼저 저장해 주세요.")
+        cur.execute("UPDATE meetings SET handed_off_at = now(), handoff = %s WHERE id = %s RETURNING *",
+                    (json.dumps({"request": request, "draft": draft or {}}, ensure_ascii=False), meeting_id))
+        row = cur.fetchone()
+        if row["project_id"]:
+            cur.execute("""INSERT INTO folder_members (folder_id, user_id, position, added_by)
+                           SELECT %(f)s, %(h)s, COALESCE(MAX(position) + 1, 0), %(a)s FROM folder_members WHERE folder_id = %(f)s
+                           ON CONFLICT (folder_id, user_id) DO NOTHING""",
+                        {"f": row["project_id"], "h": row["host_user_id"], "a": actor_id})
+        _notify(cur, row["host_user_id"], "review",
+                f"「{row['title'] or '회의'}」 회의록 분석이 끝났어요. 홈의 「회의록 생성 검토 대기」에서 검토해 주세요.", meeting_id)
+    invalidate("_base_meetings", "base_folders", "notifications")
+    return row
+
+
+def get_handoff(*, actor_id: str, meeting_id: str) -> dict:
+    """주관자가 「검토하기」로 작성 2단계를 다시 열 때: 넘겨받은 입력값 + 저장된 요약 JSON (주관자만 · draft 일 때만)."""
+    with transaction(actor_id) as cur:
+        require_user(cur, actor_id)
+        cur.execute("SELECT * FROM meetings WHERE id = %s AND deleted_at IS NULL", (meeting_id,))
+        m = cur.fetchone()
+        if m is None or m["handed_off_at"] is None:
+            raise NotFoundError("넘겨받은 회의록을 찾을 수 없습니다.")
+        if m["host_user_id"] != actor_id:
+            raise PermissionDenied("주관자만 검토할 수 있습니다.")
+        if m["status"] != "draft":
+            raise ValidationError("이미 생성된 회의록이에요. 회의 상세에서 이어서 진행해 주세요.")
+        cur.execute("""SELECT summary_json FROM meeting_summaries WHERE meeting_id = %s AND summary_json IS NOT NULL
+                       ORDER BY version DESC LIMIT 1""", (meeting_id,))
+        s = cur.fetchone()
+    handoff = m["handoff"] or {}
+    return {"meeting_id": meeting_id, "author": m["created_by"], "handed_off_at": m["handed_off_at"],
+            "request": handoff.get("request") or {}, "draft": handoff.get("draft") or {},
+            "result": s["summary_json"] if s else None}
 
 
 # =====================================================================
 # ④ 확정
 # =====================================================================
 def confirm_meeting(*, actor_id: str, meeting_id: str) -> dict:
-    """회의록 확정 (review → confirmed). 검토자(없으면 주관자)만."""
+    """회의록 확정 (review → confirmed). 주관자 (+ 예전 방식의 검토자)."""
     with transaction(actor_id) as cur:
         require_user(cur, actor_id)
         cur.execute("SELECT * FROM meetings WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (meeting_id,))
@@ -240,7 +310,7 @@ def confirm_meeting(*, actor_id: str, meeting_id: str) -> dict:
         if m["status"] != "review":
             raise ValidationError("검토 대기 중인 회의록만 확정할 수 있습니다.")
         if not is_editor(m, actor_id):
-            raise PermissionDenied("확정 권한이 없습니다 (주관자 · 검토자만 확정할 수 있어요).")
+            raise PermissionDenied("확정 권한이 없습니다 (주관자만 확정할 수 있어요).")
         cur.execute(
             """UPDATE meetings SET status = 'confirmed', confirmed_at = now(), confirmed_by = %s
                WHERE id = %s RETURNING *""",
