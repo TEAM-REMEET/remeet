@@ -3,7 +3,8 @@
 화면마다 고유한 URL 경로를 둡니다. (Streamlit 은 경로에 '/' 를 못 쓰고, 쿼리 파라미터는 브라우저
 뒤로가기 기록과 잘 맞지 않아서 회의·폴더 id 를 경로 안에 넣습니다.)
 
-  /                              새 회의록 (로그인 후 첫 화면)
+  /                              새 회의록
+  /home                          홈 (일반 사용자 로그인 후 첫 화면 · 내 할 일 대시보드)
   /meetings                      회의록 (월간·주간·일반 고르기)
   /meetings-weekly               회의 종류 (weekly | monthly | normal)의 회의 목록
   /search                        검색 결과 (회의록 첫 화면 검색칸에서)
@@ -123,6 +124,9 @@ def check_not_found(pages: dict[str, st.Page]) -> None:
         return
     s.url_checked = True
     path = urlparse(st.context.url or "").path.strip("/")
+    if not s.logged_in:
+        # 로그인 전엔 회의 · 폴더 주소가 아직 pages 에 없음 → 그대로 적어 두고 로그인 뒤 apply_pending 에서 확인
+        s.entry_path = path
     if path and path not in pages:
         s.not_found = "/" + path
         hide_page_not_found()
@@ -142,9 +146,12 @@ def apply_pending(pages: dict[str, st.Page]) -> None:
     if not screen:
         return
     s.pending_route = None
-    path = path_for(s, screen)
+    entry, s.entry_path = s.entry_path, ""
+    # 로그인 전에 들어온 주소가 있으면 그 화면으로 (내가 볼 수 없는 회의 · 폴더면 pages 에 없어 원래 화면으로)
+    path = entry if entry and entry in pages else path_for(s, screen)  # "/" 로 들어왔으면 원래대로 홈
     if path in pages:
         st.switch_page(pages[path])
+    s.not_found = "/" + path  # 갈 화면이 없음 (지워진 회의 · 폴더 등) → 조용히 무시하지 않고 404
 
 
 def sync_from_url(current_path: str) -> str:

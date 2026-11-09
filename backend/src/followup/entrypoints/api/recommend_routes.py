@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from followup.adapters.neo4j import action_items
-from followup.adapters.postgres import folders
+from followup.adapters.postgres import folders, meetings
 from followup.analysis.summary import ui_test
 from followup.analysis.summary.schemas import MeetingSummary
 from followup.application.recommend_assignees import recommend_for_meeting
@@ -98,6 +98,9 @@ def recommend(meeting_id: str, summary: MeetingSummary, me: str = Depends(actor)
     project = _project(me, summary.project_id)
     raw["project_name"] = project.get("name")
     raw["project_created_at"] = project["created_at"].isoformat() if project.get("created_at") else None
+    row = _meeting(me, meeting_id)
+    raw["meeting_created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
+    raw["meeting_created_by"] = row.get("created_by")
     try:
         items = recommend_for_meeting(raw)
     except Exception as e:
@@ -114,6 +117,15 @@ def _project(me: str, project_id: str | None) -> dict:
         return folders.get_folder(actor_id=me, folder_id=project_id)
     except Exception:
         logger.warning("프로젝트 조회 실패 %s", project_id, exc_info=True)
+        return {}
+
+
+def _meeting(me: str, meeting_id: str) -> dict:
+    """Neo4j Meeting 에 넣을 작성 정보 (만든 시각 · 작성자). 못 찾으면 {} (두 속성 없이 적재 계속)."""
+    try:
+        return meetings.get_meeting(actor_id=me, meeting_id=meeting_id)
+    except Exception:
+        logger.warning("회의 조회 실패 %s", meeting_id, exc_info=True)
         return {}
 
 
