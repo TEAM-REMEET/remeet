@@ -12,9 +12,10 @@ def ordered_host_first(host: str, people: list[str]) -> list[str]:
     return [host] + [p for p in people if p != host]
 
 
-def member_pills(lead: str, host: str, people: list[str]) -> None:
+def member_pills(lead: str, host: str | None, people: list[str]) -> None:
+    """host 가 None 이면 '주관' 표시 없이 그대로 (프로젝트 멤버 줄)."""
     pills = []
-    for pid in ordered_host_first(host, people):
+    for pid in ordered_host_first(host, people) if host else people:
         p = sel.person(pid)
         is_host = pid == host
         role = '<span class="role">주관</span>' if is_host else ""

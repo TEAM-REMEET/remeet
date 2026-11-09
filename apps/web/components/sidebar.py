@@ -57,14 +57,14 @@ class _Tree:
                    icon=":material/expand_more:" if is_open else ":material/chevron_right:")
         return is_open
 
-    def meeting(self, mid: str, label: str, level: int) -> None:
-        """회의 파일 한 줄. 누르면 그 회의 화면으로. 마우스를 올리면 회의 제목이 보여요."""
+    def meeting(self, mid: str, label: str, level: int, hint: str | None = None) -> None:
+        """회의 파일 한 줄. 누르면 그 회의 화면으로. 마우스를 올리면 hint (기본: 회의 제목)가 보여요."""
         node = f"m:{mid}"
         key = safe_key(node)
         with st.container(key=f"navrow-tree{level}-leaf_{key}", gap=None):
             button(label, key=f"tree_{key}", variant="treeon" if node == self.current else "tree",
                    on_click=actions.tree_click, args=(node,), icon=":material/description:", width="stretch",
-                   help=repo.meeting(mid).title)
+                   help=hint or repo.meeting(mid).title)
 
     def render(self) -> None:
         if not self.folder("root", "회의록", 0):
@@ -114,7 +114,7 @@ class _Tree:
             notes = sel.folder_note_ids(self.s, fid)  # 나에게 보이는 회의만 (최근 순)
             if self.folder(f"pf:{fid}", fs[fid].name, 2, len(notes), new=fs[fid].is_new):
                 for mid in notes:
-                    self.meeting(mid, arc.dotted(arc.meeting_day(mid)), 3)
+                    self.meeting(mid, repo.meeting(mid).title, 3, hint=arc.dotted(arc.meeting_day(mid)))
 
 
 def _group(ids: list[str], key) -> list[tuple[int, list[str]]]:
