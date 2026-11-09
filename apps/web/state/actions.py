@@ -1820,6 +1820,8 @@ def open_notification(nid: str) -> None:
     s.read_notifications.add(nid)
     repo.mark_notification_read(nid)  # 서버에도 읽음 (PATCH /api/notifications/{id})
     n = next(x for x in sel.notifications(s) if x.id == nid)
+    if n.kind == "handoff":  # 작성자: 주관자에게 넘겼다는 안내 (넘긴 회의록은 작성자가 열 수 없어 읽음 처리만)
+        return
     if n.kind == "fail":  # 관리자: 사용자 전송 실패 → MCP 관리
         go("adm_mcp")
     elif n.kind == "budget":  # 관리자: 예산 알림 → 비용 관리

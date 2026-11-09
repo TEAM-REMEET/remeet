@@ -33,6 +33,18 @@ def callback_overlay(title: str, sub: str = "") -> None:
     st.session_state["_clear_overlay"] = True
 
 
+def loading_cover(title: str, *subs: str) -> None:
+    """본문(사이드바 오른쪽 · 상단바 아래)만 뿌옇게 덮고 loading_overlay 와 같은 스피너.
+    뒤에 그린 화면이 흐리게 비쳐 보이고, 사이드바 · 알림은 그대로 쓸 수 있어요 (몇 분 걸리는 분석처럼 기다리는 동안
+    다른 화면으로 가도 되는 곳). subs = 설명 줄들."""
+    markup(
+        '<div class="ld-cover" role="status" aria-live="polite">'
+        f'<div class="ld-box">{_spinner()}<b>{esc(title)}</b>'
+        + "".join(f"<span>{esc(s)}</span>" for s in subs if s)
+        + "</div></div>"
+    )
+
+
 def loading_overlay(title: str, sub: str = "") -> None:
     markup(
         '<div class="ld-overlay" role="status" aria-live="polite">'

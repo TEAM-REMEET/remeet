@@ -29,7 +29,7 @@ from state.store import AppState, get_state
 from ui.buttons import button, button_group
 from ui.html import markup
 from ui.layout import page, step_header
-from ui.loading import loading_overlay
+from ui.loading import loading_cover, loading_overlay
 from ui.tags import tag
 from utils.dates import date_key, today
 from utils.files import ALLOWED_LABEL, read_text
@@ -251,15 +251,15 @@ def _poll_analysis() -> None:
 
 
 def _analyzing(s: AppState) -> None:
-    """분석 진행 중 화면: 입력을 다시 고치거나 새로 등록할 수 없고, 다른 화면으로는 자유롭게 이동해요."""
-    with st.container(key="wz-card-full", gap="medium"):
-        _card_head("회의를 분석하고 있어요", "진행 중")
-        handoff = (f" 분석이 끝나면 주관자 {esc(sel.name_of(s.nn_host))}님에게 바로 넘어가요 "
-                   "(이 화면이나 「새 회의록」에 있을 때 넘겨요)." if s.nn_host != me_id() else "")
-        _info(f"<b><i class=\"wz-spin\"></i>「{esc(s.nn_title)}」의 요약과 액션 아이템을 정리하고 있어요</b>"
-              "<span>몇 분 걸릴 수 있어요. 다른 화면으로 이동해도 분석은 계속되고, 「새 회의록」으로 돌아오면 "
-              f"이어서 확인할 수 있어요. 끝나기 전에는 새 회의록을 등록할 수 없어요.{handoff}</span>")
-        _poll_analysis()
+    """분석 진행 중 화면: 방금 쓴 「회의 내용 입력」 화면을 뒤에 흐리게 두고 확정 때와 같은 스피너를 덮어요.
+    입력은 고칠 수 없고(덮개가 막음), 사이드바로 다른 화면에는 자유롭게 이동해요."""
+    _step1(s, s.compose_nonce)  # 뒤에 흐리게 비치는 화면 (덮개 아래라 누를 수 없음)
+    handoff = (f"분석이 끝나면 주관자 {sel.name_of(s.nn_host)}님에게 바로 넘어가요." if s.nn_host != me_id() else "")
+    loading_cover("회의를 분석하고 있어요",
+                  f"「{s.nn_title}」의 요약과 액션 아이템을 정리하는 중이에요.",
+                  "몇 분 걸릴 수 있어요. 다른 화면으로 이동해도 분석은 계속돼요.",
+                  handoff)
+    _poll_analysis()
 
 
 def _handoff_failed(s: AppState) -> None:
