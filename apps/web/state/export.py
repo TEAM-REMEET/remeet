@@ -89,7 +89,8 @@ def _request(state: AppState, t: str, only: set[str] | None) -> dict | None:
     m = repo.meeting(mid)
     if t == "jira":
         items = _jira_items(state, mid, only)
-        return repo.export_jira(m.title, items) if items else None
+        # 첫 전송은 이슈가 없어도 보냄: 백엔드가 Jira 연결(인증)을 확인 · 실패하면 ApiError → 전송 실패
+        return repo.export_jira(m.title, items) if items or only is None else None
     to = [p for p in mail_recipients(mid) if only is None or p in only]
     return repo.export_mail(m.title, render_minutes(state.final_summaries[mid]), to) if to else None
 
@@ -112,7 +113,11 @@ def send(state: AppState) -> None:
         try:
             res = _request(state, t, only) or {"items": []}
         except api.ApiError as e:
-            x.errors[t] = str(e)
+            if t == "jira" and only is None and not _jira_items(state, x.meeting_id):
+                x.warnings[t] = str(e)  # 보낼 이슈 0건: 전송은 실패가 아님 (0/0) · 연결 오류만 알림
+                x.results[t] = {"items": []}
+            else:
+                x.errors[t] = str(e)
             continue
         merged = {r["key"]: r for r in (done or {}).get("items", [])} | {r["key"]: r for r in res["items"]}
         x.results[t] = {**(done or {}), **res, "items": list(merged.values())}
@@ -293,7 +298,7 @@ def sync(state: AppState) -> None:
                           "401 Unauthorized · 토큰 만료")
     p = progress(state)
     for t, v in p.exports.items():  # 보낸 도구 → 마지막 전송 시각 (관리자 · MCP 관리)
-        if v == "ok":
+        if v == "ok" and t not in x.warnings:  # 연결 오류가 있으면 보낸 게 아님
             try:
                 repo.record_export(mid, t)
             except api.ApiError:

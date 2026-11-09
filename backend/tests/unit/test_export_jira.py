@@ -103,6 +103,8 @@ class ExportTests(unittest.TestCase):
             yield
         with self.assertRaises(export_jira.JiraUnavailable):
             export_jira.export("회의", [item("m1:0", "할 일")], connect=broken, emails=lambda ids: {})
+        with self.assertRaises(export_jira.JiraUnavailable):  # 만들 이슈가 없어도 연결은 확인
+            export_jira.export("회의", [], connect=broken, emails=lambda ids: {})
 
 
 class ParseTests(unittest.TestCase):
@@ -138,7 +140,6 @@ class RouteTests(unittest.TestCase):
         bad_due = {**self.body, "items": [item("m1:0", "할 일", due="11/10")]}
         with patch.object(export_jira, "export") as run:
             self.assertEqual(self.client.post("/api/exports/jira", json=bad_due).status_code, 422)
-            self.assertEqual(self.client.post("/api/exports/jira", json={**self.body, "items": []}).status_code, 422)
         run.assert_not_called()
 
     def test_ok(self):
@@ -148,6 +149,13 @@ class RouteTests(unittest.TestCase):
             res = self.client.post("/api/exports/jira", json=self.body)
         self.assertEqual((res.status_code, res.json()), (200, result))
         run.assert_called_once_with("주간 회의", self.body["items"])
+
+    def test_empty_items_still_checks_connection(self):
+        self.login()  # 만들 이슈가 없어도 연결 실패면 502 (성공으로 보이면 안 됨)
+        with patch.object(export_jira, "export", side_effect=export_jira.JiraUnavailable("401")) as run:
+            res = self.client.post("/api/exports/jira", json={**self.body, "items": []})
+        self.assertEqual(res.status_code, 502)
+        run.assert_called_once_with("주간 회의", [])
 
     def test_errors_hide_internals(self):
         self.login()

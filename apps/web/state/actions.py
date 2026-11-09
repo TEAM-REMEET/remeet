@@ -1371,8 +1371,10 @@ def finish_export() -> None:
     """「전달 완료」 → 회의 상세로 · 마지막 단계라 확정 흐름(단계 표시)도 여기서 끝."""
     s = get_state()
     mid = s.export.meeting_id
+    failed = sel.open_export_failure(s, mid)
     open_meeting(mid)
-    _set(toast="외부 도구 전송을 마쳤어요.", fin_flow="" if s.fin_flow == mid else s.fin_flow)
+    _set(toast="보내지 못한 도구가 있어요. 해결되면 「전달 완료」로 바뀌어요." if failed else "외부 도구 전송을 마쳤어요.",
+         fin_flow="" if s.fin_flow == mid else s.fin_flow)
 
 
 def run_row_action(mid: str, kind: str) -> None:
@@ -1381,9 +1383,9 @@ def run_row_action(mid: str, kind: str) -> None:
         open_meeting(mid, editing=True)
     elif kind == "deliver":
         start_delivery(mid, 1)
-    elif kind == "retry":  # 외부 도구 전송이 실패했으면 외부 도구 전송 화면, 아니면 실패한 참석자에게 다시
+    elif kind == "retry":  # 외부 도구 전송이 실패했으면 회의록부터 (상단 실패 안내에서 다시 보내기), 아니면 실패한 참석자에게 다시
         if sel.open_export_failure(get_state(), mid):
-            open_export(mid)
+            open_meeting(mid)
         else:
             start_delivery(mid, 2)
     elif kind == "progress":

@@ -305,7 +305,9 @@ img.ico { display: inline-block; flex: none; vertical-align: middle; }
 [class*="st-key-b-card-"] button > div, [class*="st-key-b-src-"] button > div { justify-content: flex-start !important; width: 100%; }
 [class*="st-key-b-nav"] button > div > span, [class*="st-key-b-pick"] button > div > span, [class*="st-key-b-link-"] button > div > span,
 [class*="st-key-b-card-"] button > div > span, [class*="st-key-b-src-"] button > div > span { justify-content: flex-start !important; width: 100%; text-align: left; }
-[class*="st-key-mrow-"] [class*="st-key-b-"]:not([class*="st-key-b-link-"]) button { height: 38px; padding: 0 16px !important; }
+[class*="st-key-mrow-"] [class*="st-key-b-"]:not([class*="st-key-b-link-"]) button { height: auto; min-height: 38px; padding: 4px 16px !important; }
+/* 「외부 도구\n재전송」처럼 글자 안 줄바꿈을 살림 */
+[class*="st-key-mrow-"] [class*="st-key-b-"]:not([class*="st-key-b-link-"]) button p { white-space: pre-line; line-height: 1.3; }
 .st-key-sidebar-user [class*="st-key-b-ghost-"] { flex: none; }
 
 /* 로딩 화면: 화면 전체를 살짝 뿌옇게 덮고 점 12개가 도는 표시 (ui/loading.py) */

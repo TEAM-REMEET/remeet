@@ -393,11 +393,6 @@ _STATUS_VIEW = {
 }
 
 
-def _fail_is_tech(state: AppState, mid: str) -> bool:
-    f = open_export_failure(state, mid)
-    return bool(f and f.kind == "tech")
-
-
 def _fail_sub(state: AppState, mid: str) -> str:
     f = open_export_failure(state, mid)
     if not f:
@@ -420,13 +415,11 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
         "done": f"{dotted} 전달",
     }
     button, kind = "결과 보기", "view"
-    if st == "fail" and _fail_is_tech(state, mid):  # 기술 이슈: 다시 보내도 실패 → 재시도 없음 (결과 보기)
-        pass
-    elif manages(m):  # 재시도 · 검토 · 전달은 고칠 수 있는 사람만 (주관자 · 검토자)
+    if manages(m):  # 재시도 · 검토 · 전달은 고칠 수 있는 사람만 (주관자 · 검토자)
         button, kind = {
             "review": ("검토하기", "review"),
             "confirmed": ("전달하기", "deliver"),
-            "fail": ("재시도", "retry"),
+            "fail": ("외부 도구\n재전송" if open_export_failure(state, mid) else "결과 재전송", "retry"),
             "sending": ("진행 보기", "progress"),
         }.get(st, (button, kind))
     mine_keys = my_todo_keys(state, mid)

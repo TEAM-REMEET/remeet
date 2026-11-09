@@ -59,6 +59,7 @@ class ExportRun:
     # 실제로 보낸 도구(Jira · 메일)의 결과 {도구: {"items": [{key, ok, …}], …}} · 다시 보내면 key 별로 합침
     results: dict[str, dict] = field(default_factory=dict)
     errors: dict[str, str] = field(default_factory=dict)  # 도구 → 연결 · 설정 실패 (아무것도 못 보냄 → 관리자 문의)
+    warnings: dict[str, str] = field(default_factory=dict)  # 도구 → 보낼 게 없어 실패는 아니지만 난 연결 오류 (미리 고치게)
 
 
 @dataclass

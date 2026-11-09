@@ -43,7 +43,7 @@ class Item(BaseModel):
 
 class JiraExport(BaseModel):
     meeting_title: str = Field(min_length=1, max_length=200)
-    items: list[Item] = Field(min_length=1, max_length=100)
+    items: list[Item] = Field(max_length=100)  # 비어도 받음: 만들 이슈가 없어도 Jira 연결(인증)은 확인해야 함
 
 
 # shortcut: 회의 주관자인지 확인하지 않음 (회의가 아직 화면 목업에만 있음), 회의가 DB 로 옮겨지면 주관자 확인 추가

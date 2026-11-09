@@ -27,6 +27,8 @@ _VIEW = {"wait": ("대기", "wait"), "sending": ("보내는 중", "run"), "ok": 
 
 def _tool_sub(tool, mid: str) -> str:
     x = get_state().export
+    if w := x.warnings.get(tool.id):
+        return f"보낼 이슈가 없어요 (0/0건) · 연결 오류: {w} · 다음 전송 전에 관리자에게 알려 주세요"
     if x.results.get(tool.id):  # 실제로 보낸 결과 (Jira: 만든 이슈 · 메일: 보낸 사람)
         return export.summary(x, tool.id)
     n = len(sel.todo_items(get_state(), mid))
@@ -66,7 +68,9 @@ def _banner(p: export.Progress, mid: str) -> None:
         tone = "fail" if p.failed else "ok"
         head = f"전송 실패 · {p.failed}개 도구" if p.failed else f"{p.ok}개 도구로 모두 보냈어요"
         if not p.failed:
-            sub = "외부 도구 전송을 마쳤어요. 「전달 완료」를 누르면 회의 상세로 돌아가요."
+            warned = [repo.tool(t).name for t in p.exports if t in s.export.warnings]
+            sub = "외부 도구 전송을 마쳤어요. 「전달 완료」를 누르면 회의 상세로 돌아가요." + (
+                f" 다만 {', '.join(warned)} 연결에 오류가 있어요. 다음 전송 전에 관리자에게 알려 주세요." if warned else "")
         elif tech:
             sub = (f"{repo.tool(tech.tool).name} 연동(API · 인증) 문제라 다시 보내도 실패해요. 관리자에게 문의해 주세요."
                    + (" 일시적인 오류로 실패한 도구는 다시 보낼 수 있어요." if simple_fail else ""))
@@ -91,10 +95,11 @@ def _rows(p: export.Progress, mid: str) -> None:
             tool = repo.tool(tool_id)
             f = next((x for x in repo.export_failures(mid) if x.tool == tool_id), None)
             sub = (f.reason + (" · 관리자 문의 필요" if f.kind == "tech" else "")) if st_ == "fail" and f else _tool_sub(tool, mid)
-            label, tone = _VIEW[st_]
+            warned = st_ == "ok" and tool_id in get_state().export.warnings
+            label, tone = ("보낼 것 없음 · 오류 있음", "warn") if warned else _VIEW[st_]
             markup(f'<div class="dv-rc">{tool_mark(tool.id, esc(tool.mark), "dv-mark")}'
                    f'<span class="tx"><b>{esc(tool.name)}</b>'
-                   f'<span class="sub{" fail" if st_ == "fail" else ""}">{esc(sub)}</span></span>'
+                   f'<span class="sub{" fail" if st_ == "fail" or warned else ""}">{esc(sub)}</span></span>'
                    f'{tag(label, tone, pulse=st_ == "sending")}</div>')
 
 
@@ -138,7 +143,9 @@ def render() -> None:
                 if n_simple and x.attempt == 1:
                     button(f"실패한 {n_simple}개 다시 보내기", key="exp_retry", variant="danger", icon=":material/refresh:",
                            on_click=actions.retry_export)
-                button("전달 완료", key="exp_done", variant="primary", icon=":material/check:", on_click=actions.finish_export)
+                # 실패가 남아도 막지 않음: 기술 이슈는 관리자가 해결하니 사용자는 회의 상세로 나갈 수 있어야 함
+                button("회의록으로 돌아가기" if p.failed else "전달 완료", key="exp_done", variant="primary",
+                       icon=":material/arrow_back:" if p.failed else ":material/check:", on_click=actions.finish_export)
         if not host:
             markup('<p class="hint" style="font-size:14px">외부 도구 전송은 회의 주관자만 할 수 있어요.</p>')
             return
