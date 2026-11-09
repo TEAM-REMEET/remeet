@@ -52,10 +52,9 @@ LIVE = ("jira", "mail")  # 실제로 보내는 도구 (나머지는 시뮬레이
 
 def live(state: AppState, t: str) -> bool:
     """이 도구를 실제로 보내는 전송인지: 골랐고 보내기 시작할 때 연결(on) 상태 (인증 만료 표시면 목업처럼 실패만).
-    메일은 최종 회의록이 있는 회의만 (목업 회의는 시뮬레이션)."""
+    메일 본문은 세션의 최종 회의록, 없으면 서버에 저장된 것 (_request) · 세션에 없다고 흉내만 내면 안 보낸 걸 보냈다고 보임."""
     x = state.export
-    return (t in LIVE and t in x.picked and t not in x.expired
-            and (t != "mail" or x.meeting_id in state.final_summaries))
+    return t in LIVE and t in x.picked and t not in x.expired
 
 
 def failed(state: AppState, t: str) -> bool:
