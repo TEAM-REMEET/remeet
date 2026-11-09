@@ -20,6 +20,7 @@ _KIND_ICON = {
     "fail": ":material/error:",  # 관리자: 사용자 전송 실패 (기술 이슈)
     "delivered": ":material/task_alt:",  # 사용자: 관리자가 해결해 전달 완료
     "budget": ":material/payments:",  # 관리자: 예산 알림
+    "handoff": ":material/send:",  # 작성자: 주관자에게 회의록을 넘김
 }
 
 
