@@ -195,7 +195,8 @@ def close_modal() -> None:
 def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
-                cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False)
+                cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False,
+                cp_handoff="", cp_handoff_author="", cp_handoff_error="")
 
 
 def refresh_dashboard() -> None:
@@ -211,7 +212,7 @@ def open_new_note() -> None:
         return
     mtype = s.archive_type if s.screen == "archive" and s.archive_type else s.nn_type
     topic = s.folder_id if s.screen == "folder" and s.folder_id in sel.folders(s) else ""
-    go("compose", nn_type=mtype, nn_topic=topic, nn_name="", nn_host=me_id(), nn_people=[me_id()],
+    go("compose", nn_type=mtype, nn_topic=topic, nn_name="", nn_host=sel.default_host(), nn_people=[me_id()],
        compose_nonce=s.compose_nonce + 1, **_wizard_reset())
 
 
@@ -257,7 +258,7 @@ def compose_reset() -> None:
     """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
     s = get_state()
     _clear_job()
-    _set(compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", **_wizard_reset())
+    _set(compose_nonce=s.compose_nonce + 1, nn_host=sel.default_host(), nn_people=[me_id()], nn_name="", **_wizard_reset())
 
 
 def compose_sync(nonce: int) -> None:
@@ -328,11 +329,12 @@ def compose_next(nonce: int) -> None:
     missing = [n for n, ok in (("회의 제목", s.nn_title), ("주관자", s.nn_host)) if not ok]
     if s.nn_topic not in sel.all_my_folder_ids(s) and not s.nn_name.strip():
         missing.append("프로젝트")
-    if sel.needs_reviewer(s) and s.nn_reviewer not in sel.reviewer_candidates(s):
-        missing.append("검토자(윗사람)")  # 신입이 주관자면 윗사람 검토를 꼭 거쳐요
     parsed = compose_ai.parse(compose_text(s), s.cp_example)
     if missing:
         _format_error(" · ".join(missing) + "을(를) 입력해 주세요.")
+        return
+    if not sel.can_host(s.nn_host):  # 주관자는 시니어 · 미드만 (신입이 쓰면 윗사람을 주관자로)
+        _format_error("주관자는 시니어 · 미드만 될 수 있어요. 주관자를 다시 골라 주세요.")
         return
     # 회의 내용은 직접 입력과 파일 첨부 중 하나만, 파일도 한 개만
     if len(s.nn_files) > 1:
@@ -416,6 +418,75 @@ def _apply_result(s, result: dict) -> None:
 
     s.cp_result, s.cp_result_request, s.cp_job_running = result, s.cp_request, False
     s.preview_meeting = summary_view.apply_summary(_build_preview(s, PREVIEW_ID), result)
+    if s.nn_host and s.nn_host != me_id() and not s.cp_handoff:  # 주관자가 다른 사람 → 분석이 끝나면 바로 넘김
+        compose_handoff()
+
+
+def compose_handoff() -> None:
+    """(작성자 ≠ 주관자) 분석이 끝난 미리보기를 DB 에 저장하고 주관자에게 넘김 → 작성자는 새 회의록 화면으로.
+
+    넘긴 뒤에는 작성자가 더 고칠 수 없고, 주관자가 홈 「회의록 생성 검토 대기」→「검토하기」로 2단계부터 이어서 해요.
+    실패하면 2단계에 남아 「다시 넘기기」를 보여 줘요 (같은 id 로 다시 저장 · 넘기기).
+    """
+    from state import record_payload
+
+    s = get_state()
+    if s.cp_result is None or s.preview_meeting is None:
+        return
+    picked = s.nn_topic in sel.all_my_folder_ids(s)
+    fid = s.nn_topic if picked else s.cp_result["project_id"]  # 새 프로젝트 ID는 백엔드가 만든 값
+    mid = s.cp_result["meeting_id"]
+    meeting = replace(s.preview_meeting, id=mid, project_id=fid, directory_id=s.nn_type)
+    try:
+        if not repo.project_exists(fid):  # 새 프로젝트 → 같은 id 로 만듦 (주관자도 멤버로)
+            repo.create_project(s.nn_name.strip() or "새 프로젝트", [p for p in s.nn_people if p != me_id()], project_id=fid)
+        repo.save_record(record_payload.draft_payload(s, meeting, [], s.cp_result))
+        repo.handoff_record(mid, s.cp_request or {}, {"nn_name": s.nn_name})
+    except api.ApiError as e:
+        s.cp_handoff_error = str(e)
+        return
+    title, host = s.nn_title, sel.name_of(s.nn_host)
+    _clear_job()
+    for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
+        changes.pop(PREVIEW_ID, None)
+    _set(toast=f"분석이 끝나 「{title}」 회의록을 주관자 {host}님에게 넘겼어요. 이제 주관자가 검토 · 확정해요.",
+         compose_nonce=s.compose_nonce + 1, nn_host=sel.default_host(), nn_people=[me_id()], nn_name="",
+         **_wizard_reset())
+
+
+def open_handoff(mid: str) -> None:
+    """(주관자) 홈 「검토하기」: 넘겨받은 입력값 · 분석 결과로 작성 2단계(분석 및 검토)를 다시 열기.
+
+    이후 2단계 수정 → 확정하기 → 담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송은 내가 주관자인 흐름과 같아요.
+    """
+    from datetime import date as _date
+
+    from state import compose_ai
+
+    s = get_state()
+    try:
+        h = repo.get_handoff(mid)
+    except api.ApiError as e:
+        _set(toast=str(e))
+        return
+    req = h["request"]
+    if not h.get("result") or not req.get("transcript"):
+        _set(toast="넘겨받은 분석 결과를 찾을 수 없어요. 작성자에게 다시 등록해 달라고 해 주세요.")
+        return
+    reset = _wizard_reset()
+    reset.pop("cp_step")
+    _set(**reset)
+    s.nn_title, s.nn_date, s.nn_host = req["title"], _date.fromisoformat(req["date"]), req["host_user_id"]
+    s.nn_people = [a["user_id"] for a in req["attendees"]]
+    s.nn_type, s.cp_example, s.nn_text, s.nn_files = req["directory_id"], req["transcript_format"], req["transcript"], []
+    s.nn_topic, s.nn_name = req.get("project_id") or h["result"].get("project_id") or "new", h["draft"].get("nn_name", "")
+    labels = compose_ai.parse(req["transcript"], req["transcript_format"]).labels
+    s.nn_speaker_map = compose_ai.match_speakers(labels, s.nn_people)[0]
+    s.cp_request, s.cp_handoff, s.cp_handoff_author, s.cp_job_synced = req, mid, h["author"], True
+    _apply_result(s, h["result"])
+    s.compose_nonce += 1
+    go("compose", cp_step=2, meeting_id=PREVIEW_ID, insight_tab="sum", left_tab="raw", highlight=[], highlight_key="",
+       raw_query="")
 
 
 def _clear_job() -> None:
@@ -488,16 +559,15 @@ def unchecked_assignees(mid: str = PREVIEW_ID) -> list[str]:
 
 
 def open_compose_confirm() -> None:
-    """2단계 「확정하기」(주관자) · 「검토 요청하기」(주관자가 아닌 사람) → 한 번 더 묻는 창.
+    """2단계 「확정하기」(주관자) → 한 번 더 묻는 창.
 
-    주관자: 담당자 확인이 필요한 액션이 남아 있으면 막음 (그대로 확정하면 담당자 추천 · 적재에서 빠지기 때문).
+    담당자 확인이 필요한 액션이 남아 있으면 막음 (그대로 확정하면 담당자 추천 · 적재에서 빠지기 때문).
     """
-    s = get_state()
-    if s.nn_host == me_id() and not sel.needs_reviewer(s) and (left := unchecked_assignees()):
+    if left := unchecked_assignees():
         more = f" 외 {len(left) - 1}건" if len(left) > 1 else ""
         _set(insight_tab="todo", toast=f"담당자를 확인해 주세요: 「{left[0]}」{more}. 액션 아이템을 눌러 담당자를 고르거나 삭제하면 확정할 수 있어요.")
         return
-    open_modal("cp_confirm" if s.nn_host == me_id() and not sel.needs_reviewer(s) else "cp_review")
+    open_modal("cp_confirm")
 
 
 def compose_confirm() -> None:
@@ -510,8 +580,6 @@ def compose_review() -> bool:
     from state import review_request
 
     s = get_state()
-    if s.nn_host != me_id():  # 주관자가 아니면 수정 없이 주관자에게 검토 요청
-        return True
     try:
         s.cp_final = repo.review_meeting(s.cp_result["meeting_id"], review_request.build_edits(s))
     except api.ApiError as e:
@@ -553,8 +621,8 @@ def compose_finish() -> None:
         if not repo.project_exists(fid):  # 새 프로젝트 (또는 아직 DB 에 없는 목업 프로젝트) → 같은 id 로 만듦
             repo.create_project(project_name, [p for p in s.nn_people if p != me_id()], project_id=fid)
         repo.save_record(record_payload.draft_payload(s, meeting, gone, s.cp_final or s.cp_result))
-        # 참석자 알림 · 검토 요청(주관자가 다른 사람이면 주관자, 신입이 주관자면 고른 윗사람)은 서버가 보냄
-        repo.submit_record(mid, s.nn_reviewer if sel.needs_reviewer(s) else None)
+        # 참석자 · 주관자에게 「회의록이 생성됐어요」 알림은 서버가 보냄
+        repo.submit_record(mid)
     except api.ApiError as e:
         _set(toast=f"회의록을 저장하지 못했어요. 다시 눌러 주세요. ({e})")
         return
@@ -569,18 +637,13 @@ def compose_finish() -> None:
             store[f"{mid}:{key.split(':', 1)[1]}"] = store.pop(key)
     s.preview_meeting = None
     title = s.nn_title
-    if sel.needs_reviewer(s):  # 신입이 주관자 → 고른 윗사람이 검토 · 편집한 뒤 확정 (알림은 서버가 보냄)
-        open_meeting(mid)
-        toast = f"검토자 {sel.name_of(s.nn_reviewer)}님에게 「{title}」 회의록 검토를 요청했어요."
-    elif s.nn_host == me_id():  # 확정 → 담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송
-        start_finalize(mid)
-        toast = f"「{title}」 회의록을 확정했어요. 담당자를 확인해 주세요."
-    else:  # 다른 사람을 주관자로 정함 → 주관자에게 검토 요청 알림 (서버가 보냄 · 주관자가 검토 · 편집한 뒤 확정)
-        open_meeting(mid)
-        toast = f"주관자 {sel.name_of(s.nn_host)}님에게 「{title}」 회의록 검토를 요청했어요."
-    _clear_job()
+    # 확정 → 담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송 (넘겨받은 회의록도 같음)
+    start_finalize(mid)
+    toast = f"「{title}」 회의록을 확정했어요. 담당자를 확인해 주세요."
+    if not s.cp_handoff:  # 넘겨받은 회의록은 작성자의 분석 작업이라 내 작업은 지우지 않음
+        _clear_job()
     _set(toast=toast,
-         compose_nonce=s.compose_nonce + 1, nn_host=me_id(), nn_people=[me_id()], nn_name="", nn_reviewer="",
+         compose_nonce=s.compose_nonce + 1, nn_host=sel.default_host(), nn_people=[me_id()], nn_name="",
          **_wizard_reset())
 
 
@@ -588,18 +651,13 @@ def compose_finish() -> None:
 def open_picker(kind: str) -> None:
     """kind: cp_host(주관자) | cp_people(참석자) — 지금 값을 임시 선택으로 복사해 모달 열기."""
     s = get_state()
-    if kind == "cp_people" and s.nn_host not in s.nn_people:  # 주관자는 참석자에 늘 체크된 채로
+    if kind == "cp_people" and s.nn_host and s.nn_host not in s.nn_people:  # 주관자는 참석자에 늘 체크된 채로
         s.nn_people = [s.nn_host, *s.nn_people]
-    draft = [s.nn_host] if kind == "cp_host" else list(s.nn_people)
+    draft = ([s.nn_host] if s.nn_host else []) if kind == "cp_host" else list(s.nn_people)  # 신입이 쓰면 주관자가 비어 있음
     first = draft[0] if draft else me_id()
     open_modal(kind, pick_draft=draft, pick_team=sel.person(first).team, pick_folder=s.nn_topic,
                pick_name=s.nn_name, pick_type=s.nn_type,
                pick_query="", pick_nonce=s.pick_nonce + 1)
-
-
-def set_compose_reviewer(widget_key: str) -> None:
-    """새 회의록: 검토자(윗사람) 고르기 (내가 신입이고 내가 주관자일 때만 보이는 칸)."""
-    _set(nn_reviewer=st.session_state.get(widget_key) or "", nn_error="")
 
 
 def set_compose_type(mtype: str) -> None:
@@ -650,17 +708,19 @@ def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
         s.pick_draft = [value] if value else []
     else:
         s.pick_draft = [p for p in s.pick_draft if p not in team_ids] + list(value or [])
-        if s.modal == "cp_people" and s.nn_host not in s.pick_draft:  # 주관자는 뺄 수 없음
+        if s.modal == "cp_people" and s.nn_host and s.nn_host not in s.pick_draft:  # 주관자는 뺄 수 없음
             s.pick_draft.insert(0, s.nn_host)
 
 
 def confirm_pick(kind: str) -> None:
     s = get_state()
     if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 참석자에서 빠짐)
+        if s.pick_draft and not sel.can_host(s.pick_draft[0]):  # 신입은 주관자 X (조직도에서도 고를 수 없게 막아 둠)
+            return
         old, s.nn_host = s.nn_host, (s.pick_draft[0] if s.pick_draft else s.nn_host)
         s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in (old, s.nn_host)]
     elif kind == "cp_people":
-        s.nn_people = [s.nn_host] + [p for p in s.pick_draft if p != s.nn_host]
+        s.nn_people = [x for x in [s.nn_host] if x] + [p for p in s.pick_draft if p != s.nn_host]
     s.nn_error = ""
     close_modal()
 
@@ -1698,6 +1758,13 @@ def open_bell() -> None:
     s.bell_seen |= {n.id for n in sel.notifications(s)}
 
 
+def _queue() -> list[dict]:
+    try:
+        return repo.review_queue()
+    except api.ApiError:
+        return []
+
+
 def open_notification(nid: str) -> None:
     s = get_state()
     s.read_notifications.add(nid)
@@ -1707,6 +1774,8 @@ def open_notification(nid: str) -> None:
         go("adm_mcp")
     elif n.kind == "budget":  # 관리자: 예산 알림 → 비용 관리
         go("adm_cost")
+    elif n.kind == "review" and n.meeting and any(x["id"] == n.meeting and x["kind"] == "handoff" for x in _queue()):
+        open_handoff(n.meeting)  # 작성자가 넘긴 회의록 → 작성 2단계부터 검토
     elif n.meeting:
         open_meeting(n.meeting)
     elif n.folder and n.folder in sel.folders(s):  # 멤버로 추가됨 → 그 폴더로

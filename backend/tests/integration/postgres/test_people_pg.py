@@ -95,17 +95,19 @@ class PeopleTests(unittest.TestCase):
             sync_people([{**p, "user_id": "u10", "email": "u10@t.local"}, {**p, "user_id": "u11", "email": ""}])
         self.assertEqual(query("SELECT count(*) AS n FROM accounts WHERE user_id='u10'")[0]['n'], 0)
 
-    def test_junior_needs_reviewer_senior_does_not(self):
-        """compose.seniority() 가 people.position 을 봄 → 신입은 윗사람 검토 필수, mid · senior 는 검토 단계 없음."""
+    def test_junior_cannot_host_senior_can(self):
+        """compose.seniority() 가 people.position 을 봄 → 신입은 주관자 X (윗사람을 주관자로), mid · senior 는 주관자 O · 검토자 없음."""
         from followup.adapters.postgres import compose
         from followup.adapters.postgres.common import ValidationError
         content = {'summary': {'text': '요약', 'src': []}}
-        jr = compose.save_draft(actor_id='u2', content=content)['id']
-        with self.assertRaisesRegex(ValidationError, '윗사람'):
+        jr = compose.save_draft(actor_id='u2', content=content)['id']                  # 신입 본인이 주관자
+        with self.assertRaisesRegex(ValidationError, '주관자는 시니어 · 미드만'):
             compose.submit_meeting(actor_id='u2', meeting_id=jr)
-        self.assertEqual(compose.submit_meeting(actor_id='u2', meeting_id=jr, reviewer_id='u1')['reviewer_id'], 'u1')
+        jr2 = compose.save_draft(actor_id='u2', content=content, host_id='u1')['id']   # 윗사람을 주관자로 → 넘김
+        compose.handoff_meeting(actor_id='u2', meeting_id=jr2, request={})
+        self.assertIsNone(compose.submit_meeting(actor_id='u1', meeting_id=jr2)['reviewer_id'])
         sr = compose.save_draft(actor_id='u3', content=content)['id']
-        with self.assertRaisesRegex(ValidationError, '신입'):
+        with self.assertRaisesRegex(ValidationError, '검토자'):
             compose.submit_meeting(actor_id='u3', meeting_id=sr, reviewer_id='u1')
         self.assertIsNone(compose.submit_meeting(actor_id='u3', meeting_id=sr)['reviewer_id'])
 

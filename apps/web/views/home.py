@@ -1,4 +1,7 @@
-"""홈 (로그인 직후 첫 화면) · 내 Jira 할 일 대시보드.
+"""홈 (로그인 직후 첫 화면) · 회의록 생성 검토 대기 · 내 Jira 할 일 대시보드.
+
+회의록 생성 검토 대기: 작성자가 나를 주관자로 정하고 분석을 마쳐 넘긴 회의록 (GET /api/review-queue).
+「검토하기」를 누르면 작성 2단계(분석 및 검토)부터 이어서 해요 (actions.open_handoff).
 
 내가 담당자인 미완료 Jira 이슈를 보여 주기만 해요. 상태는 이슈를 눌러 Jira 에서 바꿔요 (이력에 본인 이름이 남게).
 범위(누구 이슈인지)는 백엔드가 로그인 정보로 정해요 (GET /api/dashboard/jira · 서버가 1분 캐시).
@@ -53,6 +56,40 @@ def _row(issue: dict, now: date) -> str:
             f'{_due_tag(d, now)}{tag(issue["status"] or "-", "info")}</div>')
 
 
+def _when(iso: str | None) -> str:
+    """'2026-11-09T14:03:00+09:00' → '11/9 14:03'."""
+    if not iso:
+        return ""
+    t = datetime.fromisoformat(str(iso))
+    return f"{t.month}/{t.day} {t:%H:%M}"
+
+
+def _review_queue() -> None:
+    """회의록 생성 검토 대기 (Jira 할 일 위). 비어 있어도 카드는 보여 줘요."""
+    try:
+        rows, error = repo.review_queue(), ""
+    except ApiError as e:
+        rows, error = [], str(e)
+    with card("home-review"):
+        card_title("회의록 생성 검토 대기", aside=f"{len(rows)}건" if rows else "")
+        if error:
+            notice(esc(error), "neutral")
+            return
+        if not rows:
+            empty_state("검토를 기다리는 회의록이 없어요. 다른 사람이 나를 주관자로 정해 회의록을 쓰면 분석이 끝나는 대로 여기에 보여요.")
+            return
+        for r in rows:
+            handoff = r["kind"] == "handoff"
+            with st.container(key=f"home-rv-{r['id']}", horizontal=True, vertical_alignment="center", gap="small"):
+                sub = (f"작성 {r.get('author_name') or '-'} · 분석 완료 {_when(r.get('requested_at'))}" if handoff
+                       else f"작성 {r.get('author_name') or '-'} · 검토 요청 {_when(r.get('requested_at'))}")
+                markup(f'<div class="dash-row" style="flex:1"><span class="dash-title"><b>{esc(r["title"] or "제목 없음")}</b>'
+                       f'<br><span style="color:var(--muted, #888);font-size:13px">{esc(sub)}</span></span>'
+                       f'{tag("검토 대기", "warn")}</div>')
+                button("검토하기", key=f"home_rv_{r['id']}", variant="primary", icon=":material/rate_review:",
+                       on_click=actions.open_handoff if handoff else actions.open_meeting, args=(r["id"],))
+
+
 def _synced(iso: str | None) -> str:
     """'2026-11-08T15:03:00+09:00' → '마지막 동기화 15:03'."""
     return f"마지막 동기화 {datetime.fromisoformat(iso):%H:%M}" if iso else ""
@@ -98,4 +135,5 @@ def render() -> None:
     with page("home"):
         page_header(f"{s.user_name}님, 안녕하세요",
                     "회의에서 맡은 일 중 아직 끝나지 않은 것을 모아 봤어요. 상태는 이슈를 눌러 Jira 에서 바꿔 주세요.")
+        _review_queue()
         _jira()

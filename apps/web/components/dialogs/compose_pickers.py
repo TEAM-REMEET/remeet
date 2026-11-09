@@ -13,6 +13,7 @@ import functools
 import streamlit as st
 
 from components.org_people import org_people_picker
+from data import repository as repo
 from state.store import me_id
 from state import actions
 from state import selectors as sel
@@ -45,7 +46,8 @@ def _person_option(pid: str) -> str:
 # - 모달을 새로 열면 맨 아래부터
 
 def people_picker(kind: str, *, single: bool, title: str | None = None, hint: str | None = None,
-                  featured: list[str] | None = None, featured_label: str = "") -> None:
+                  featured: list[str] | None = None, featured_label: str = "",
+                  locked: dict[str, str] | None = None) -> None:
     """사람 고르기 (고른 사람 칩 + 조직도 · 검색 · 최근 · 즐겨찾기). 고른 사람은 AppState.pick_draft.
 
     새 회의록의 주관자 · 참석자, 액션 아이템 담당자에서 같이 씁니다.
@@ -84,12 +86,15 @@ def people_picker(kind: str, *, single: bool, title: str | None = None, hint: st
                     else "이름을 누르면 선택 · 다시 누르거나 위 칩을 누르면 해제" + (" · 주관자는 늘 참석해요" if kind == "cp_people" else ""))
     markup(f'<div class="pick-section-head"><b>사람 찾기</b><span class="hint">{esc(hint)}</span></div>')
     org_people_picker(kind, chosen=list(s.pick_draft), single=single, featured=featured, featured_label=featured_label,
-                      on_pick=functools.partial(actions.pick_person, single=single), height=280)
+                      on_pick=functools.partial(actions.pick_person, single=single), height=280, locked=locked)
 
 
 @st.dialog("주관자 선택", width="medium", on_dismiss=actions.close_modal)
 def host_picker_dialog() -> None:
-    people_picker("cp_host", single=True)
+    # 주관자는 시니어 · 미드만 (신입은 고를 수 없게 막아 둠 · 신입이 쓰면 윗사람을 주관자로)
+    juniors = {r["user_id"]: "신입은 주관자가 될 수 없어요" for r in repo.people_rows() if r.get("position") == "junior"}
+    people_picker("cp_host", single=True, hint="이름을 누르면 주관자로 골라져요 · 시니어 · 미드만 고를 수 있어요",
+                  locked=juniors)
     _footer("cp_host", "선택", disabled=not get_state().pick_draft)
 
 
@@ -114,23 +119,16 @@ def format_error_dialog() -> None:
 
 
 def _compose_confirm_body() -> None:
-    """2단계 「확정하기」 · 「검토 요청하기」를 한 번 더 확인 → 로딩 화면."""
+    """2단계 「확정하기」를 한 번 더 확인 → 로딩 화면."""
     s = get_state()
-    junior = sel.needs_reviewer(s)  # 신입이 주관자 → 고른 윗사람에게 검토 요청
-    host = s.nn_host == me_id() and not junior
-    who = f"검토자 {sel.name_of(s.nn_reviewer)}님" if junior else f"주관자 {sel.name_of(s.nn_host)}님"
-    # 묻는 말 다음 줄에 설명
-    ask, lead = (("확정하시겠어요?", "확정하면 회의록이 만들어지고 담당자 추천 → 최종 회의록 확인으로 이어져요.") if host else
-                 (f"{who}에게 검토를 요청할까요?",
-                  f"회의록이 만들어지고 {who}에게 검토 요청 알림이 가요. 확정은 그 사람이 해요."))
-    markup(f'<div class="assign-target"><span class="assign-target-label">'
-           f'{"확정할" if host else "검토를 요청할"} 회의록</span><h3>{esc(s.nn_title)}</h3></div>'
-           f'<p class="confirm-lead">{esc(ask)}<br>{esc(lead)}</p>')
+    ask, lead = "확정하시겠어요?", "확정하면 회의록이 만들어지고 담당자 추천 → 최종 회의록 확인으로 이어져요."
+    markup(f'<div class="assign-target"><span class="assign-target-label">확정할 회의록</span>'
+           f'<h3>{esc(s.nn_title)}</h3></div><p class="confirm-lead">{esc(ask)}<br>{esc(lead)}</p>')
     with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
         if button("취소", key="cp_confirm_cancel", variant="secondary"):
             actions.close_modal()
             st.rerun()
-        if button("확정하기" if host else "검토 요청하기", key="cp_confirm_ok", variant="primary"):
+        if button("확정하기", key="cp_confirm_ok", variant="primary"):
             actions.compose_confirm()
             st.rerun()
 
@@ -139,7 +137,3 @@ def _compose_confirm_body() -> None:
 def compose_confirm_dialog() -> None:
     _compose_confirm_body()
 
-
-@st.dialog("검토 요청", width="small", on_dismiss=actions.close_modal)
-def compose_review_dialog() -> None:
-    _compose_confirm_body()

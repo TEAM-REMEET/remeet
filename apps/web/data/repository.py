@@ -640,9 +640,27 @@ def save_record(payload: dict) -> dict:
     return _write("POST", "/api/drafts", payload)
 
 
-def submit_record(mid: str, reviewer_id: str | None = None) -> dict:
-    """회의록 생성 (draft → review) · 참석자 알림 · 주관자가 다른 사람이면 주관자에게 검토 요청."""
-    return _write("POST", f"/api/meetings/{mid}/submit", {"reviewer_id": reviewer_id})
+def submit_record(mid: str) -> dict:
+    """회의록 생성 (draft → review) · 참석자 · 주관자 알림. 주관자는 시니어 · 미드만 (신입이면 서버가 거절)."""
+    return _write("POST", f"/api/meetings/{mid}/submit", {})
+
+
+def handoff_record(mid: str, request: dict, draft: dict) -> dict:
+    """(작성자 ≠ 주관자) 분석이 끝난 미리보기를 주관자에게 넘김 (POST /api/meetings/{id}/handoff · 주관자에게 알림).
+    request = 작성 화면 입력값 (분석 요청 본문 그대로) · draft = 화면에서만 쓰는 값 (새 프로젝트 이름 nn_name)."""
+    return _write("POST", f"/api/meetings/{mid}/handoff", {"request": request, "draft": draft})
+
+
+def get_handoff(mid: str) -> dict:
+    """(주관자) 넘겨받은 입력값 + 요약 JSON (GET /api/meetings/{id}/handoff) → 작성 2단계를 다시 열 때.
+    → {meeting_id, author, handed_off_at, request, draft, result}"""
+    return api.call("GET", f"/api/meetings/{mid}/handoff", token=_token())
+
+
+def review_queue() -> list[dict]:
+    """[홈 · 회의록 생성 검토 대기] 나에게 넘어온 회의록 (GET /api/review-queue · 최근 순).
+    → [{id, title, kind: handoff | review, author_name, requested_at}]"""
+    return api.call("GET", "/api/review-queue", token=_token())
 
 
 def confirm_record(mid: str) -> dict:

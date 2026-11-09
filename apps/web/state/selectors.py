@@ -200,9 +200,9 @@ def manages(m: Meeting) -> bool:
 
 
 def owns(m: Meeting) -> bool:
-    """회의 삭제 · 공유를 할 수 있는 사람 (DB 규칙과 같음): 주관자 · 작성자. 검토자는 검토(편집 · 확정 · 전달)만 해요.
-    신입 주관자는 제출 뒤 고칠 수는 없어도 삭제 · 공유는 할 수 있어요."""
-    return me_id() in (m.host, m.author)
+    """회의 삭제 · 공유를 할 수 있는 사람 (DB 규칙과 같음 · migrations/022): 주관자만.
+    작성 화면에서 주관자를 바꾸면 작성자는 주관자 역할이 없어요 · 검토자도 삭제 · 공유는 못 해요."""
+    return m.host == me_id()
 
 
 def review_requested(state: AppState, m: Meeting) -> bool:
@@ -216,18 +216,14 @@ def position_of(pid: str) -> str:
     return next((r.get("position") or "" for r in repo.people_rows() if r["user_id"] == pid), "")
 
 
-def needs_reviewer(state: AppState) -> bool:
-    """새 회의록: 내가 신입이고 내가 주관자 → 검토할 윗사람을 꼭 골라야 해요 (주관자가 다른 사람이면 주관자가 검토)."""
-    return bool(state.nn_host) and state.nn_host == me_id() and position_of(me_id()) == "junior"
+def can_host(pid: str) -> bool:
+    """새 회의록 주관자가 될 수 있는지: 시니어 · 미드만 (신입 X · 백엔드 submit · handoff 규칙). 직급을 모르면 막지 않아요."""
+    return position_of(pid) != "junior"
 
 
-def reviewer_candidates(state: AppState) -> list[str]:
-    """검토자 후보: 신입이 아닌 활성 구성원 (같은 팀 → 시니어 → 이름 순)."""
-    rows = [r for r in repo.people_rows() if r["user_id"] != me_id() and r.get("is_active") is not False
-            and (r.get("position") or "") in ("mid", "senior")]
-    team = person(me_id()).team
-    rows.sort(key=lambda r: ((r.get("team") or "") != team, r.get("position") != "senior", r["name"]))
-    return [r["user_id"] for r in rows]
+def default_host() -> str:
+    """새 회의록 주관자 기본값: 나 (내가 신입이면 비워 두고 시니어 · 미드 중에서 고르게)."""
+    return me_id() if can_host(me_id()) else ""
 
 
 def sent_shares(state: AppState) -> list:
