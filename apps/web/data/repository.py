@@ -9,7 +9,8 @@
     새 회의록 저장 · 생성 · 확정 · 편집(안건), 할 일 추가 · 수정 · 삭제 · 되돌리기, 안건 분리 요청, 회의 삭제,
     결과 전달 상태 · 전송 기록, 프로젝트 멤버 · 삭제, 공유 · 공유 취소                    (PostgreSQL)
 알림 · 외부 연동(도구 상태 · 전송 실패 · 조직 이름)도 백엔드 API (PostgreSQL)
-나머지(위키 · 담당자 후보 목업 · 비용 …)는 아직 data/mock/*.json 에서 읽어요.
+폴더 위키 · 그래프  GET /api/projects/{id}/wiki · /graph (Neo4j)
+나머지(담당자 후보 목업 · 비용 …)는 아직 data/mock/*.json 에서 읽어요.
 실제 API 로 바꿀 때는 이 파일의 함수 시그니처만 유지하고 내부 구현을 교체하면 됩니다.
 """
 
@@ -37,11 +38,8 @@ from data.models import (
     Discussion,
     Evidence,
     Folder,
-    GraphEdge,
-    GraphNode,
     ExportFailure,
     IntegrationTool,
-    KnowledgeGraph,
     Meeting,
     MeetingType,
     Notification,
@@ -49,7 +47,6 @@ from data.models import (
     Person,
     Predecessor,
     ShareInfo,
-    TimelineItem,
     Todo,
     Team,
     TeamMember,
@@ -538,29 +535,28 @@ def assignee_config() -> dict:
     }
 
 
-# ---------------------------------------------------------------- wiki graphs
-def _graph(raw: dict) -> KnowledgeGraph:
-    nodes = {
-        k: GraphNode(k, v["label"], v["kind"], v["x"], v["y"], v["desc"], v.get("initial", ""), v.get("person"))
-        for k, v in raw["nodes"].items()
-    }
-    edges = tuple(GraphEdge(e["a"], e["b"], e["label"], e["weight"]) for e in raw["edges"])
-    timeline = {
-        k: tuple(TimelineItem(t["when"], t["text"], t["meeting"], tuple(t["src"])) for t in v)
-        for k, v in raw["timeline"].items()
-    }
-    extra = {k: v for k, v in raw.items() if k not in ("nodes", "edges", "timeline")}
-    if "branch_timeline" in extra:
-        extra["branch_timeline"] = {
-            k: tuple(TimelineItem(t["when"], t["text"], t["meeting"], tuple(t["src"])) for t in v)
-            for k, v in extra["branch_timeline"].items()
-        }
-    return KnowledgeGraph(nodes, edges, timeline, extra)
+# ---------------------------------------------------------------- 폴더 위키
+# shortcut: 2분 캐시 (탭을 오갈 때마다 Neo4j 를 다녀오지 않게). 새 회의가 적재되면 최대 2분 늦게 보임.
+@st.cache_data(ttl=120, show_spinner=False)
+def _folder_wiki(fid: str, token: str) -> dict:
+    return api.call("GET", f"/api/projects/{fid}/wiki", token=token)
 
 
-@lru_cache(maxsize=1)
-def folder_wiki() -> KnowledgeGraph:
-    return _graph(_load("wiki_folder"))
+@st.cache_data(ttl=120, show_spinner=False)
+def _folder_graph(fid: str, token: str) -> dict:
+    return api.call("GET", f"/api/projects/{fid}/graph", token=token)
+
+
+def folder_graph(fid: str) -> dict:
+    """폴더 그래프 탭 (GET /api/projects/{id}/graph): {nodes: [{id, label, kind, caption, fields, lines?}],
+    edges: [{from, to, type}]} · 실패는 ApiError. 캐시는 위키와 같은 2분."""
+    return _folder_graph(fid, _token())
+
+
+def folder_wiki(fid: str) -> dict:
+    """폴더 위키 (GET /api/projects/{id}/wiki): {meetings: [{meeting_id, title, date}],
+    topics: [{topic_id, title, status: split|open|done, misc, rounds: [...]}]} · 실패는 ApiError."""
+    return _folder_wiki(fid, _token())
 
 
 # ---------------------------------------------------------------- 회의에 물어보기

@@ -249,7 +249,7 @@ data/mock/*.json 을 이 데이터클래스로 변환해서 씁니다. 화면에
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -456,52 +456,6 @@ class Predecessor:
     meeting: str  # 그 업무가 나온 회의
     date: str  # M/D
     user_id: str = ""  # 구성원 id (목업은 비어 있음 → 이름으로 찾음)
-
-
-@dataclass(frozen=True)
-class GraphNode:
-    id: str
-    label: str
-    kind: str  # me | project | topic | decision | person
-    x: float
-    y: float
-    desc: str
-    initial: str = ""
-    person: str | None = None
-
-
-@dataclass(frozen=True)
-class GraphEdge:
-    a: str
-    b: str
-    label: str
-    weight: float
-
-
-@dataclass(frozen=True)
-class TimelineItem:
-    when: str
-    text: str
-    meeting: str
-    src: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class KnowledgeGraph:
-    nodes: dict[str, GraphNode]
-    edges: tuple[GraphEdge, ...]
-    timeline: dict[str, tuple[TimelineItem, ...]]
-    extra: dict = field(default_factory=dict)
-
-    def neighbors(self, node_id: str) -> dict[str, str]:
-        """node_id 와 이어진 노드 → 관계 라벨."""
-        out: dict[str, str] = {}
-        for e in self.edges:
-            if e.a == node_id:
-                out[e.b] = e.label
-            elif e.b == node_id:
-                out[e.a] = e.label
-        return out
 
 
 @dataclass(frozen=True)

@@ -2155,3 +2155,74 @@
 .dash-all .dash-jira-logo { width: 18px; height: 18px; min-width: 18px; padding: 0; border: 0; background: none; }
 .dash-all .dash-jira-logo img { width: 18px; height: 18px; }
 @media (max-width: 640px) { .dash-stats { flex-direction: column; } .dash-title { white-space: normal; } }
+
+/* ---------------------------------------------------------------- 폴더 위키: 결정 흐름 · 미해결 이슈 (views/folder.py) */
+.wk-chip { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 3px; font-size: 12px; font-weight: 700; white-space: nowrap; flex: none; }
+.wk-prop { background: #E8F0FB; color: #2F5FB3; }
+.wk-con { background: #FDECEA; color: #B3261E; }
+.wk-ask { background: #F1EEFB; color: #5A3EA6; }
+.wk-gray { background: #EEF0F3; color: #4B515A; }
+.wk-hold { background: #FFF6D1; color: #6E5200; }
+.wk-open { background: var(--accent-soft); color: #9A4A0B; }
+.wk-ok { background: #E3F4EA; color: #146C3C; }
+.wk-decchip { background: #EEF3FB; color: #2F538F; box-shadow: inset 0 0 0 1px #2F538F; }
+.wk-dec { display: inline-block; max-width: 100%; padding: 1px 6px; border: 1.5px dashed #2F538F; border-radius: 3px; background: #F5F8FD;
+  color: #2F538F; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wk-dec.old { border-color: var(--line); background: #fff; color: var(--muted); text-decoration: line-through; }
+.wk-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid var(--accent); }
+
+.st-key-wkflow { background: #fff; border: 1px solid var(--line-soft); border-radius: 6px; padding: 6px 14px; }
+.st-key-wkhead, [class*="st-key-wkrow-"], .st-key-wkfold { border-bottom: 1px solid var(--line-faint); padding: 2px 6px; border-radius: 4px; }
+.st-key-wkhead > :first-child, [class*="st-key-wkrow-"] > :first-child { flex: 0 0 160px !important; width: 160px !important; }
+.st-key-wkhead > :last-child, [class*="st-key-wkrow-"] > :last-child { flex: 1 1 0 !important; min-width: 0; }
+[class*="st-key-wkrow-on-"] { background: var(--accent-soft); }
+[class*="st-key-wkrow-"] button p { font-weight: 700 !important; text-align: left; }
+.wk-lane-hd { font-size: 12px; color: var(--muted); font-weight: 700; }
+.wk-grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
+.wk-hd { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.4; padding: 6px 2px; }
+.wk-hd b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.wk-cell { position: relative; min-height: 42px; display: flex; align-items: center; justify-content: center; padding: 4px; }
+.wk-cell.on::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: var(--accent-line); }
+.wk-cell.first::before { left: 50%; }
+.wk-cell.last::before { right: 50%; }
+.wk-marks { position: relative; display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; max-width: 100%; }
+.wk-rest { font-size: 13px; color: var(--muted); }
+.wk-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 12px; color: var(--text-sub); margin: 4px 0 8px; }
+.wk-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+
+.st-key-wkdetail { background: #fff; border: 1px solid var(--line-soft); border-radius: 6px; padding: 16px 18px; }
+.wk-detail-head { display: flex; align-items: center; gap: 10px; }
+.wk-detail-head h3 { margin: 0; font-size: 17px; }
+[class*="st-key-wkround-"] { border-top: 1px solid var(--line-faint); padding-top: 10px; }
+[class*="st-key-wkround-"] > :first-child { flex: 1 1 0 !important; min-width: 0; }
+.wk-when { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: var(--text-sub); margin-bottom: 6px; }
+.wk-when b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.wk-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wk-lines li { display: flex; gap: 6px; align-items: flex-start; font-size: 14px; line-height: 1.55; }
+.wk-lines li > span:last-child { min-width: 0; }
+.wk-after { display: block; font-size: 12.5px; color: var(--muted); }
+
+/* 보드: 칸 = 흰 패널 + 위쪽 상태 색 띠, 카드 = 옅은 회색 상자 */
+[class*="st-key-wkcol-"] { background: #fff; border: 1px solid var(--line-soft); border-top: 3px solid var(--line); border-radius: 6px; padding: 14px; }
+.st-key-wkcol-split { border-top-color: #D9534F; }
+.st-key-wkcol-open { border-top-color: var(--accent); }
+.st-key-wkcol-done { border-top-color: #2E9E62; }
+.wk-col-hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding-bottom: 4px; }
+.wk-col-hd b { display: block; font-size: 15px; }
+.wk-col-hd small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+.wk-n { min-width: 26px; height: 22px; padding: 0 8px; border-radius: 99px; background: var(--bg-app); color: var(--text-sub);
+  font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.wk-none { margin: 0; padding: 8px 2px; font-size: 13px; color: var(--muted); }
+[class*="st-key-wkcard-"] { background: #F7F8FA; border: 1px solid var(--line-soft); border-radius: 6px; padding: 14px 16px; }
+.wk-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 15px; line-height: 1.4; }
+.wk-bar { display: inline-flex; gap: 2px; flex: none; }
+.wk-bar i { width: 9px; height: 5px; border-radius: 2px; background: var(--line); }
+.wk-bar i.x { background: var(--accent); }
+.wk-meta { margin-top: 2px; font-size: 12px; color: var(--muted); }
+.wk-body { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.wk-group { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.wk-group p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
+.wk-group p + p { padding-top: 4px; border-top: 1px dashed var(--line-soft); width: 100%; }
+.wk-foot { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; font-size: 12.5px; color: var(--text-sub); }
+.wk-foot b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+.wk-lines li { margin: 0 !important; padding: 0 !important; list-style: none; }  /* Streamlit 기본 li 들여쓰기 끄기 */
