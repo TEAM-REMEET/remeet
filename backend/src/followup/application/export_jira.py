@@ -50,6 +50,8 @@ def label(key: str) -> str:
 async def _existing(jira, cfg: dict[str, str], items: list[dict]) -> dict[str, dict]:
     """이미 만든 이슈 {item key: {issue_key, assigned}}. 검색이 실패하면 예외 → 아무것도 만들지 않음 (중복보다 안전).
     shortcut: Jira 검색은 이슈를 만든 직후 몇 초 늦게 반영됨, 그 사이 다시 보내면 드물게 중복 (실패한 것만 다시 보내서 좁힘)"""
+    if not items:  # 연결 확인만 하는 0건 전송 · labels in () 는 잘못된 JQL
+        return {}
     by_label = {label(i["key"]): i["key"] for i in items}
     jql = "labels in (" + ", ".join(f'"{lb}"' for lb in by_label) + ")"  # key 는 라우트가 [\w-] 만 허용
     rows = await jira.search(cfg["JIRA_CLOUD_ID"], jql, ["labels", "assignee"], min(100, 2 * len(items)))

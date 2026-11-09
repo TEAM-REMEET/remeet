@@ -59,6 +59,12 @@ class ExportTests(unittest.TestCase):
             with self.assertRaises(export_jira.JiraNotConfigured):
                 export_jira.export("회의", [item("40", "할 일")], emails=lambda ids: {})
 
+    def test_empty_items_checks_connection_only(self):
+        fake = FakeJira()
+        res = export_jira.export("회의", [], connect=connect_to(fake), emails=lambda ids: {})
+        self.assertEqual((res["created"], res["total"], res["items"]), (0, 0, []))
+        self.assertEqual(fake.searched, [])  # 빈 JQL 검색을 보내지 않음
+
     def test_partial_failure_and_assignee(self):
         fake = FakeJira(accounts={"a@x.com": "acc-a"}, fail_titles={"실패할 일"})
         res = export_jira.export(
