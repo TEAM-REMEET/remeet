@@ -930,7 +930,7 @@ def set_tool_status(tool_id: str, status: str) -> None:
 def _failure_rows(mid: str | None) -> list[dict]:
     """관리자는 전체, 사용자는 회의 단위로만 볼 수 있어요 (그 밖이면 빈 목록)."""
     token = _token()
-    if not token:
+    if not token or mid == "cp-preview":  # 작성 중 미리보기(state.actions.PREVIEW_ID)는 DB에 없어 실패 기록도 없음 → 묻지 않음 (404 · 원격 DB 왕복 방지)
         return []
     try:
         return _api_failures(token, mid)
