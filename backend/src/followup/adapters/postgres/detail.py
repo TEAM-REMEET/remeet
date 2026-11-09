@@ -474,6 +474,29 @@ def get_summary_json(*, actor_id: str, meeting_id: str) -> dict | None:
     return row["summary_json"] if row else None
 
 
+def update_summary_json(*, actor_id: str, meeting_id: str, summary_json: dict) -> dict:
+    """최신 버전 요약의 summary_json 만 새 JSON 으로 바꿈 (요약 내용 · 버전은 그대로).
+
+    담당자 추천 단계에서 담당자 · 마감일만 바뀐 최종 JSON 을 저장할 때 (회의록 글은 바뀌지 않아 새 버전을 만들지 않음).
+    고칠 수 있는 사람(is_editor)만. 저장된 요약이 없으면 NotFoundError.
+    돌려줌: {meeting_id, version}
+    """
+    if not isinstance(summary_json, dict) or not summary_json:
+        raise ValidationError("summary_json 이 비어 있습니다.")
+    with transaction(actor_id) as cur:
+        can_access_meeting(cur, meeting_id, actor_id, write=True)
+        _lock_meeting(cur, meeting_id)
+        cur.execute("""UPDATE meeting_summaries SET summary_json = %s
+                       WHERE meeting_id = %s
+                         AND version = (SELECT max(version) FROM meeting_summaries WHERE meeting_id = %s)
+                       RETURNING meeting_id, version""",
+                    (Jsonb(summary_json), meeting_id, meeting_id))
+        row = cur.fetchone()
+        if row is None:
+            raise NotFoundError("저장된 요약이 없습니다.")
+    return row
+
+
 def list_todos(*, actor_id: str, meeting_id: str, deleted: bool = False) -> list[dict]:
     """액션 아이템 (deleted=True 면 「삭제한 액션 아이템」 목록)."""
     with transaction(actor_id) as cur:

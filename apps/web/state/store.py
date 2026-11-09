@@ -227,6 +227,7 @@ class AppState:
     cp_handoff: str = ""  # (주관자) 넘겨받아 2단계부터 이어서 하는 회의 id · 빈 값이면 내가 쓴 회의록
     cp_handoff_author: str = ""  # (주관자) 넘겨받은 회의록을 쓴 사람
     cp_handoff_error: str = ""  # (작성자) 주관자에게 넘기지 못한 이유 → 2단계에서 「다시 넘기기」
+    cp_saved_id: str = ""  # (내가 주관자) 분석이 끝나 DB에 작성 중(draft)으로 저장한 회의 id (다시 분석 · 초기화하면 지움)
     cp_finishing: bool = False  # 2단계 「확정하기」를 눌러 회의록을 만드는 중 (로딩 화면)
     cp_text_rev: int = 0  # 예시를 넣을 때마다 바뀌어 입력칸을 새로 그림
     cp_format_note: str = ""  # 회의 내용을 보고 형식을 자동으로 골랐다는 안내 (초록)

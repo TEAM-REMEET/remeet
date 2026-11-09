@@ -120,6 +120,12 @@ class MeetingRecordApiTests(unittest.TestCase):
                          'PG 수수료 2.5% 로 결정')
         self.assertEqual(self.call('GET', f'/api/meetings/{mid}/summary-json', self.U1),
                          {'meeting_id': 'x', 'agendas': []})
+        # 담당자 추천 뒤 최종 JSON: 최신 버전(2)의 JSON 만 바뀜 · 참석자는 못 바꿈
+        final = {'meeting_id': 'x', 'agendas': [], 'assigned': True}
+        self.call('PUT', f'/api/meetings/{mid}/summary-json', self.U2, {'summary_json': final}, status=403)
+        self.assertEqual(self.call('PUT', f'/api/meetings/{mid}/summary-json', self.U1, {'summary_json': final}),
+                         {'meeting_id': mid, 'version': 2})
+        self.assertEqual(self.call('GET', f'/api/meetings/{mid}/summary-json', self.U1), final)
 
         self.assertEqual(set(self.call('PUT', f'/api/meetings/{mid}/attendees', self.U1, {'user_ids': ['u3']})),
                          {'u1', 'u3'})                                                  # 주관자는 늘 포함

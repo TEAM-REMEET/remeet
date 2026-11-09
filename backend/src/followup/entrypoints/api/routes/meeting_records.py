@@ -17,6 +17,7 @@
     GET  /api/meetings/{meeting_id}/summaries 요약 버전 이력
     PUT  /api/meetings/{meeting_id}/summary   요약 새 버전 저장 (화면 「편집」 · 주관자 · 검토자)
     GET  /api/meetings/{meeting_id}/summary-json  담당자 추천에 보낼 MeetingSummary JSON (저장해 둔 것)
+    PUT  /api/meetings/{meeting_id}/summary-json  최신 요약의 JSON만 바꾸기 (담당자 추천에서 담당자 · 마감일을 바꾼 최종 JSON)
     PUT  /api/meetings/{meeting_id}/attendees 참석자 바꾸기 (주관자는 늘 포함)
     GET  /api/meetings/{meeting_id}/sources   원본 파일 버전 목록 · GET .../sources/latest 최신 원본 내용 (원문 볼 권한)
     POST /api/meetings/{meeting_id}/branch-requests  안건 분리 요청 · GET 받은 요청 (주관자)
@@ -80,6 +81,10 @@ class SummaryVersion(BaseModel):
     content: dict[str, Any]
     todos: list[dict[str, Any]] | None = None
     summary_json: dict[str, Any] | None = None
+
+
+class SummaryJson(BaseModel):
+    summary_json: dict[str, Any]
 
 
 class Attendees(BaseModel):
@@ -173,6 +178,11 @@ def save_summary(meeting_id: str, body: SummaryVersion, me: str = Depends(actor)
 @router.get("/meetings/{meeting_id}/summary-json")
 def summary_json(meeting_id: str, me: str = Depends(actor)):
     return detail.get_summary_json(actor_id=me, meeting_id=meeting_id)
+
+
+@router.put("/meetings/{meeting_id}/summary-json")
+def update_summary_json(meeting_id: str, body: SummaryJson, me: str = Depends(actor)):
+    return detail.update_summary_json(actor_id=me, meeting_id=meeting_id, summary_json=body.summary_json)
 
 
 @router.put("/meetings/{meeting_id}/attendees")

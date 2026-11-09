@@ -270,5 +270,47 @@ class ComposeFlowTests(unittest.TestCase):
         with self.assertRaises(NotFoundError):
             detail.get_meeting_detail(actor_id='boss', meeting_id=mid)
 
+    def test_summary_json_follows_each_step(self):
+        """summary_json 저장 시점: ① 분석 직후(처음 JSON) → ② 확정하기(최종 JSON · 새 버전) → ③ 담당자 추천(최신 버전만 교체).
+
+        작성자(jr) ≠ 주관자(boss) 흐름 (migrations/022): ① 작성자가 저장하고 넘김 → ② · ③ 은 주관자만.
+        """
+        from followup.adapters.postgres import compose, detail, folders
+        from followup.adapters.postgres.common import NotFoundError, PermissionDenied, ValidationError
+        first, final = {'meeting_id': 'M1', 'step': 'ai'}, {'meeting_id': 'M1', 'step': 'final'}
+        assigned = {'meeting_id': 'M1', 'step': 'final', 'assignee': 'u2'}
+
+        # ① 분석 직후: 작성자(jr)가 draft 로 저장하고 주관자(boss)에게 넘김 (web compose_handoff)
+        pid = folders.create_folder(actor_id='jr', name='출시', members=['u2'])['id']
+        mid = self._draft(meeting_id='M1', host_id='boss', project_id=pid, summary_json=first)['id']
+        self.assertEqual(detail.get_summary_json(actor_id='jr', meeting_id=mid), first)
+        compose.handoff_meeting(actor_id='jr', meeting_id=mid, request={'title': '출시 회의', 'host_user_id': 'boss'})
+        self.assertEqual(compose.get_handoff(actor_id='boss', meeting_id=mid)['result'], first)  # 주관자는 처음 JSON 으로 2단계를 엶
+        # ② 확정하기: 주관자가 같은 draft 를 최종 JSON 으로 다시 저장 → 버전 2 · 생성
+        self.assertEqual(self._draft(actor_id='boss', meeting_id=mid, host_id='boss', project_id=pid,
+                                     summary_json=final)['summary_version'], 2)
+        self.assertEqual(detail.get_summary_json(actor_id='boss', meeting_id=mid), final)
+        compose.submit_meeting(actor_id='boss', meeting_id=mid)                # → review
+
+        # ③ 담당자 추천: 주관자만 최신 버전의 JSON 을 바꿈 (버전은 그대로) · 생성 뒤 작성자 · 참석자는 못 바꿈
+        for who in ('jr', 'u2'):
+            with self.subTest(who=who):
+                with self.assertRaises(PermissionDenied):
+                    detail.update_summary_json(actor_id=who, meeting_id=mid, summary_json=assigned)
+        with self.assertRaises(ValidationError):
+            detail.update_summary_json(actor_id='boss', meeting_id=mid, summary_json={})
+        self.assertEqual(detail.update_summary_json(actor_id='boss', meeting_id=mid, summary_json=assigned),
+                         {'meeting_id': mid, 'version': 2})
+        self.assertEqual(detail.get_summary_json(actor_id='boss', meeting_id=mid), assigned)
+        with self.transaction() as cur:
+            cur.execute('SELECT version, summary_json FROM meeting_summaries WHERE meeting_id=%s ORDER BY version', (mid,))
+            self.assertEqual([(r['version'], r['summary_json']) for r in cur.fetchall()], [(1, first), (2, assigned)])
+
+        # 요약이 하나도 없는 회의
+        with self.transaction() as cur:
+            cur.execute("INSERT INTO meetings (id, host_user_id, status, created_by) VALUES ('empty', 'boss', 'review', 'boss')")
+        with self.assertRaises(NotFoundError):
+            detail.update_summary_json(actor_id='boss', meeting_id='empty', summary_json=assigned)
+
 if __name__ == '__main__':
     unittest.main()
