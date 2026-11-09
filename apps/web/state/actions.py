@@ -197,7 +197,7 @@ def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
                 cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False,
-                cp_handoff="", cp_handoff_author="", cp_handoff_error="")
+                cp_handoff="", cp_handoff_author="", cp_handoff_error="", cp_saved_id="")
 
 
 def refresh_dashboard() -> None:
@@ -259,6 +259,7 @@ def compose_reset() -> None:
     """초기화: 1단계의 입력을 모두 비움 (기본 정보 포함)."""
     s = get_state()
     _clear_job()
+    _drop_saved_draft(s)
     _set(compose_nonce=s.compose_nonce + 1, nn_host=sel.default_host(), nn_people=[me_id()], nn_name="", **_wizard_reset())
 
 
@@ -398,6 +399,7 @@ def compose_goto(step: int) -> None:
             _format_error(str(e))
             return
         if request != s.cp_result_request:  # 내용이 같으면 받아 둔 결과를 다시 보여 주고 AI를 호출하지 않음
+            _drop_saved_draft(s)  # 내용을 바꿔 다시 분석 → 이전 분석으로 저장한 작성 중 회의록은 지움 (새 회의 id로 다시 저장)
             s.preview_meeting, s.cp_result, s.cp_final = None, None, None
             s.added_todos.pop(PREVIEW_ID, None)
             s.edited_todos.pop(PREVIEW_ID, None)
@@ -498,6 +500,46 @@ def _clear_job() -> None:
         pass
 
 
+def _save_analysis(s) -> None:
+    """분석이 끝나면 바로 DB 에 작성 중(draft) 회의록으로 저장 — summary_json = AI가 처음 만든 JSON (요약 버전 1).
+
+    저장 시점 (meeting_summaries.summary_json)
+      ① 분석 완료          여기 · 새 회의 draft + 요약 버전 1 (처음 JSON)
+      ② 「확정하기」        compose_finish · 요약 새 버전 (HITL 수정 · 근거 연결 · 검증까지 끝난 최종 JSON)
+      ③ 담당자 추천 완료    confirm_assignees · 최신 요약의 summary_json 만 교체 (담당자 · 마감일 반영)
+    새 프로젝트는 아직 만들지 않음 (project_id 없이 저장 → 「확정하기」 때 프로젝트를 만들고 함께 저장).
+    이미 저장된 회의(브라우저를 닫았다 와서 복원한 경우)는 다시 저장하지 않음. 실패해도 「확정하기」 때 다시 저장돼요.
+    내가 주관자일 때만: 주관자가 다른 사람이면 compose_handoff 가 ①을 저장하고 넘김 (넘긴 뒤엔 화면이 초기화돼 cp_result 가 없음).
+    """
+    from state import record_payload
+
+    if s.cp_result is None or s.cp_handoff or s.nn_host != me_id():
+        return
+    mid = s.cp_result["meeting_id"]
+    if s.cp_saved_id == mid:
+        return
+    picked = s.nn_topic if s.nn_topic in sel.all_my_folder_ids(s) else None
+    try:
+        if mid not in repo.my_draft_ids():
+            meeting = replace(s.preview_meeting, id=mid, project_id=picked, directory_id=s.nn_type)
+            repo.save_draft_record(record_payload.draft_payload(s, meeting, None, s.cp_result))
+    except api.ApiError as e:
+        s.toast = f"분석 결과를 저장하지 못했어요. 「확정하기」 때 다시 저장해요. ({e})"
+        return
+    s.cp_saved_id = mid
+
+
+def _drop_saved_draft(s) -> None:
+    """분석 직후 저장한 작성 중 회의록을 지움 (다시 분석 · 초기화). 실패해도 화면은 그대로 (목록에는 draft 가 나오지 않음)."""
+    if not s.cp_saved_id:
+        return
+    try:
+        repo.delete_draft_record(s.cp_saved_id)
+    except api.ApiError:
+        pass
+    s.cp_saved_id = ""
+
+
 def compose_poll() -> None:
     """분석이 끝났는지 확인: 끝나면 결과를 넣고, 실패하면 1단계로 돌아가 안내 (같은 내용으로 다시 보내면 이어서 진행)."""
     s = get_state()
@@ -507,6 +549,7 @@ def compose_poll() -> None:
         return
     if job["status"] == "done":
         _apply_result(s, job["result"])
+        _save_analysis(s)
     elif job["status"] != "running":
         s.cp_job_running, s.cp_step = False, 1
         _format_error(job.get("message") or "분석 작업을 찾을 수 없어요. 다시 시도해 주세요.")
@@ -548,6 +591,7 @@ def compose_resume() -> None:
         s.cp_job_running = True
     else:
         _apply_result(s, job["result"])
+        _save_analysis(s)
 
 
 def compose_clear_files() -> None:
@@ -621,6 +665,7 @@ def compose_finish() -> None:
     try:
         if not repo.project_exists(fid):  # 새 프로젝트 (또는 아직 DB 에 없는 목업 프로젝트) → 같은 id 로 만듦
             repo.create_project(project_name, [p for p in s.nn_people if p != me_id()], project_id=fid)
+        # 분석 직후 저장한 draft 를 고쳐 저장 → 요약 새 버전 (summary_json = HITL · 근거 연결까지 끝난 최종 JSON) · _save_analysis 참고
         repo.save_record(record_payload.draft_payload(s, meeting, gone, s.cp_final or s.cp_result))
         # 참석자 · 주관자에게 「회의록이 생성됐어요」 알림은 서버가 보냄
         repo.submit_record(mid)
@@ -1337,6 +1382,8 @@ def confirm_assignees(mid: str) -> None:
         try:
             if changes := _final_assignments(s, mid, final):
                 s.final_summaries[mid] = s.summaries[mid] = repo.save_final_assignees(mid, changes)
+            if repo.is_saved(mid):  # DB 최신 요약의 summary_json 도 이 최종 JSON 으로 (바뀐 게 없어도 같은 값으로 맞춤 · 다시 눌러도 안전)
+                repo.save_record_summary_json(mid, s.final_summaries[mid])
         except api.ApiError as e:
             s.toast = f"최종 회의록에 담당자 · 마감일을 저장하지 못했어요. 다시 눌러 주세요. ({e})"
             return

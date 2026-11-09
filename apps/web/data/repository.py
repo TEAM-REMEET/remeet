@@ -640,6 +640,21 @@ def save_record(payload: dict) -> dict:
     return _write("POST", "/api/drafts", payload)
 
 
+def save_draft_record(payload: dict) -> dict:
+    """분석 직후 작성 중(draft) 회의록 저장 (POST /api/drafts). draft 는 회의 목록에 나오지 않아 목록을 다시 받지 않음."""
+    return api.call("POST", "/api/drafts", payload, _token())
+
+
+def delete_draft_record(mid: str) -> None:
+    """작성 중(draft) 회의록 지우기 (다시 분석 · 초기화). 목록에 없던 회의라 목록을 다시 받지 않음."""
+    api.call("DELETE", f"/api/meetings/{mid}", token=_token())
+
+
+def my_draft_ids() -> set[str]:
+    """내가 쓰다 만 작성 중(draft) 회의 id (GET /api/drafts)."""
+    return {r["id"] for r in api.call("GET", "/api/drafts", token=_token())}
+
+
 def submit_record(mid: str) -> dict:
     """회의록 생성 (draft → review) · 참석자 · 주관자 알림. 주관자는 시니어 · 미드만 (신입이면 서버가 거절)."""
     return _write("POST", f"/api/meetings/{mid}/submit", {})
@@ -686,6 +701,11 @@ def restore_record_todo(todo_id: int) -> None:
 
 def request_record_branch(mid: str) -> None:
     _write("POST", f"/api/meetings/{mid}/branch-requests")
+
+
+def save_record_summary_json(mid: str, summary_json: dict) -> dict:
+    """최신 요약의 summary_json만 새 최종 JSON으로 바꿈 (PUT /api/meetings/{id}/summary-json · 담당자 추천 뒤)."""
+    return _write("PUT", f"/api/meetings/{mid}/summary-json", {"summary_json": summary_json})
 
 
 def save_record_summary(mid: str, content: dict) -> dict:
@@ -910,7 +930,7 @@ def set_tool_status(tool_id: str, status: str) -> None:
 def _failure_rows(mid: str | None) -> list[dict]:
     """관리자는 전체, 사용자는 회의 단위로만 볼 수 있어요 (그 밖이면 빈 목록)."""
     token = _token()
-    if not token:
+    if not token or mid == "cp-preview":  # 작성 중 미리보기(state.actions.PREVIEW_ID)는 DB에 없어 실패 기록도 없음 → 묻지 않음 (404 · 원격 DB 왕복 방지)
         return []
     try:
         return _api_failures(token, mid)

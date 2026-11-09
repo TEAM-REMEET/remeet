@@ -127,18 +127,19 @@ def save_draft(*, actor_id: str, content: dict, meeting_id: str | None = None, t
         row = cur.fetchone()
 
         cur.execute("DELETE FROM meeting_attendees WHERE meeting_id = %s", (meeting_id,))
-        for i, uid in enumerate(dict.fromkeys([host, *(attendees or [])])):
-            cur.execute("INSERT INTO meeting_attendees (meeting_id, user_id, position) VALUES (%s, %s, %s)",
-                        (meeting_id, required(uid, "참석자 ID"), i))
+        # 여러 줄은 executemany 로 한 번에 보냄 (pipeline · 원격 DB 에서 줄마다 왕복하면 화면 15초 제한을 넘김)
+        cur.executemany("INSERT INTO meeting_attendees (meeting_id, user_id, position) VALUES (%s, %s, %s)",
+                        [(meeting_id, required(uid, "참석자 ID"), i)
+                         for i, uid in enumerate(dict.fromkeys([host, *(attendees or [])]))])
         if transcript is not None:
             cur.execute("DELETE FROM transcript_lines WHERE meeting_id = %s", (meeting_id,))
-            for i, p in enumerate(lines):
-                cur.execute(
+            if lines:
+                cur.executemany(
                     """INSERT INTO transcript_lines (meeting_id, line_id, position, speaker, speaker_role, text,
                                                      source_line)
                        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                    (meeting_id, ids[i], i, p.get("speaker", ""), p.get("speaker_role", ""), p["text"],
-                     p.get("source_line")),
+                    [(meeting_id, ids[i], i, p.get("speaker", ""), p.get("speaker_role", ""), p["text"],
+                      p.get("source_line")) for i, p in enumerate(lines)],
                 )
         cur.execute("SELECT 1 FROM meeting_summaries WHERE meeting_id = %s LIMIT 1", (meeting_id,))
         first = cur.fetchone() is None

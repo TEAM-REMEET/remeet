@@ -133,36 +133,41 @@ def _lock_meeting(cur, meeting_id: str) -> None:
     cur.execute("SELECT 1 FROM meetings WHERE id = %s FOR UPDATE", (meeting_id,))
 
 
-def _insert_points(cur, sid: int, section: str, items: list[dict], *, agenda: int | None = None,
-                   topic: int | None = None) -> None:
-    for i, it in enumerate(items):
-        cur.execute(
-            """INSERT INTO summary_points (summary_id, section, agenda_position, topic_position, position,
-                                           label, kind, text, src, agendas)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            (sid, section, agenda, topic, i, it.get("label") or "", it.get("kind") or "", it["text"].strip(),
-             it["src"], list(it.get("agendas") or [])),
-        )
+def _point_rows(sid: int, section: str, items: list[dict], *, agenda: int | None = None,
+                topic: int | None = None) -> list[tuple]:
+    """summary_points 에 넣을 줄들 (insert_summary 가 모아서 한 번에 넣음)."""
+    return [(sid, section, agenda, topic, i, it.get("label") or "", it.get("kind") or "", it["text"].strip(),
+             it["src"], list(it.get("agendas") or [])) for i, it in enumerate(items)]
 
 
 def _insert_todos(cur, meeting_id: str, todos: list[dict], *, origin: str, summary_id: int | None,
                   created_by: str | None) -> list[int]:
     cur.execute("SELECT COALESCE(MAX(position) + 1, 0) AS p FROM meeting_todos WHERE meeting_id = %s", (meeting_id,))
     pos = cur.fetchone()["p"]
+    if not todos:
+        return []
+    # 여러 줄을 한 번에 보냄 (executemany = pipeline · 원격 DB 에서 줄마다 왕복하면 수십 초 걸림)
+    cur.executemany(
+        """INSERT INTO meeting_todos (meeting_id, position, text, due_label, due_date, src, urgent, origin,
+                                      summary_id, owner_raw, created_by, item_id, agenda_title)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+        [(meeting_id, pos + i, t["text"].strip(), t.get("due") or "",
+          _iso(t["due_date"]) if t.get("due_date") else None, _src(t.get("src"), "액션 아이템"),
+          bool(t.get("urgent")), origin, summary_id, t.get("owner_raw") or "", created_by,
+          t.get("item_id") or None, (t.get("agenda") or "").strip()) for i, t in enumerate(todos)],
+        returning=True,
+    )
     ids = []
-    for i, t in enumerate(todos):
-        cur.execute(
-            """INSERT INTO meeting_todos (meeting_id, position, text, due_label, due_date, src, urgent, origin,
-                                          summary_id, owner_raw, created_by, item_id, agenda_title)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
-            (meeting_id, pos + i, t["text"].strip(), t.get("due") or "",
-             _iso(t["due_date"]) if t.get("due_date") else None, _src(t.get("src"), "액션 아이템"),
-             bool(t.get("urgent")), origin, summary_id, t.get("owner_raw") or "", created_by,
-             t.get("item_id") or None, (t.get("agenda") or "").strip()),
-        )
-        tid = cur.fetchone()["id"]
-        ids.append(tid)
-        _replace_owners(cur, tid, t.get("owners") or [], created_by)
+    while True:
+        ids.append(cur.fetchone()["id"])
+        if not cur.nextset():
+            break
+    # 방금 만든 할 일이라 지울 담당자가 없음 → _replace_owners 의 DELETE 없이 한 번에 넣음
+    owner_rows = [(tid, uid, j, created_by) for tid, t in zip(ids, todos)
+                  for j, uid in enumerate(dict.fromkeys(o for o in (t.get("owners") or []) if o))]
+    if owner_rows:
+        cur.executemany("INSERT INTO meeting_todo_owners (todo_id, user_id, position, assigned_by) VALUES (%s, %s, %s, %s)",
+                        owner_rows)
     return ids
 
 
@@ -211,22 +216,31 @@ def insert_summary(cur, *, meeting_id: str, content: dict, todos: list[dict] | N
     summary = cur.fetchone()
     sid = summary["id"]
 
+    # 안건 · 소주제 · 요점을 모아서 표마다 한 번에 넣음 (executemany = pipeline · 줄마다 DB 왕복하지 않게)
+    agenda_rows, topic_rows, point_rows = [], [], []
     for i, a in enumerate(content.get("agendas") or []):
         detailed = bool(a.get("detailed")) or any(k in a for k in DETAIL_KEYS)
-        cur.execute(
-            """INSERT INTO summary_agendas (summary_id, position, title, status, tone, deep, src, detailed)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-            (sid, i, a["title"].strip(), a.get("status") or "", a.get("tone") or "info", bool(a.get("deep")),
-             _src(a.get("src"), "안건"), detailed),
-        )
+        agenda_rows.append((sid, i, a["title"].strip(), a.get("status") or "", a.get("tone") or "info",
+                            bool(a.get("deep")), _src(a.get("src"), "안건"), detailed))
         for key, section in _AGENDA_SECTIONS.items():
-            _insert_points(cur, sid, section, _lines(a.get(key), key), agenda=i)
+            point_rows += _point_rows(sid, section, _lines(a.get(key), key), agenda=i)
         for j, t in enumerate(a.get("topics") or []):
-            cur.execute("INSERT INTO summary_topics (summary_id, agenda_position, position, title) VALUES (%s, %s, %s, %s)",
-                        (sid, i, j, t["title"].strip()))
-            _insert_points(cur, sid, "topic_point", _lines(t.get("points"), "소주제 내용"), agenda=i, topic=j)
+            topic_rows.append((sid, i, j, t["title"].strip()))
+            point_rows += _point_rows(sid, "topic_point", _lines(t.get("points"), "소주제 내용"), agenda=i, topic=j)
     for key, section in _MEETING_SECTIONS.items():
-        _insert_points(cur, sid, section, _lines(content.get(key), key))
+        point_rows += _point_rows(sid, section, _lines(content.get(key), key))
+    if agenda_rows:
+        cur.executemany(
+            """INSERT INTO summary_agendas (summary_id, position, title, status, tone, deep, src, detailed)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""", agenda_rows)
+    if topic_rows:
+        cur.executemany("INSERT INTO summary_topics (summary_id, agenda_position, position, title) VALUES (%s, %s, %s, %s)",
+                        topic_rows)
+    if point_rows:
+        cur.executemany(
+            """INSERT INTO summary_points (summary_id, section, agenda_position, topic_position, position,
+                                           label, kind, text, src, agendas)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", point_rows)
 
     # 목록 화면 · 예전 코드용 한 줄 요약도 최신으로
     cur.execute("UPDATE meetings SET summary_text = %s, summary_src = %s WHERE id = %s",
@@ -472,6 +486,29 @@ def get_summary_json(*, actor_id: str, meeting_id: str) -> dict | None:
                        ORDER BY version DESC LIMIT 1""", (meeting_id,))
         row = cur.fetchone()
     return row["summary_json"] if row else None
+
+
+def update_summary_json(*, actor_id: str, meeting_id: str, summary_json: dict) -> dict:
+    """최신 버전 요약의 summary_json 만 새 JSON 으로 바꿈 (요약 내용 · 버전은 그대로).
+
+    담당자 추천 단계에서 담당자 · 마감일만 바뀐 최종 JSON 을 저장할 때 (회의록 글은 바뀌지 않아 새 버전을 만들지 않음).
+    고칠 수 있는 사람(is_editor)만. 저장된 요약이 없으면 NotFoundError.
+    돌려줌: {meeting_id, version}
+    """
+    if not isinstance(summary_json, dict) or not summary_json:
+        raise ValidationError("summary_json 이 비어 있습니다.")
+    with transaction(actor_id) as cur:
+        can_access_meeting(cur, meeting_id, actor_id, write=True)
+        _lock_meeting(cur, meeting_id)
+        cur.execute("""UPDATE meeting_summaries SET summary_json = %s
+                       WHERE meeting_id = %s
+                         AND version = (SELECT max(version) FROM meeting_summaries WHERE meeting_id = %s)
+                       RETURNING meeting_id, version""",
+                    (Jsonb(summary_json), meeting_id, meeting_id))
+        row = cur.fetchone()
+        if row is None:
+            raise NotFoundError("저장된 요약이 없습니다.")
+    return row
 
 
 def list_todos(*, actor_id: str, meeting_id: str, deleted: bool = False) -> list[dict]:
