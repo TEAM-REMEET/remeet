@@ -75,9 +75,10 @@ class AppState:
     token: str = ""  # 백엔드 출입증 (관리자 API 호출 · 새로고침 후 로그인 유지)
 
     # --- 라우팅
-    screen: str = "compose"  # compose | archive | search | folder | note | deliver | sent | recv | adm_cost | adm_members | adm_mcp
+    screen: str = "compose"  # home | compose | archive | search | folder | note | finalize | deliver | export | sent | recv | ask | adm_cost | adm_members | adm_mcp
     not_found: str = ""  # 없는 주소로 들어왔으면 그 주소 → 404 화면 (views/not_found.py)
     url_checked: bool = False  # 처음 들어온 주소를 확인했는지
+    entry_path: str = ""  # 로그인 전에 들어온 주소 → 로그인하면 홈 대신 이 화면으로 (공유 · 알림 링크)
     pending_route: str | None = None  # 콜백이 예약한 이동 (state/router.py)
     nav_by_action: bool = False
     last_route: str | None = None
