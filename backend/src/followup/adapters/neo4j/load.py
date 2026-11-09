@@ -114,6 +114,8 @@ def normalize_meeting(raw: dict[str, Any]) -> dict[str, Any]:
         "project_created_at": raw.get("project_created_at"),  # ISO 8601, 위와 같음
         "title": info.get("title") or f"{meeting_id} 회의",
         "held_at": info.get("date") or (raw.get("created_at") or "")[:10] or None,
+        "created_at": raw.get("meeting_created_at"),  # PostgreSQL meetings.created_at (ISO 8601), 추천 API가 채움
+        "created_by": raw.get("meeting_created_by"),  # PostgreSQL meetings.created_by (user_id), 위와 같음
         "attendees": [p["user_id"] for p in info.get("participants", []) if p.get("user_id")],
         "agendas": agendas,
     }
@@ -140,13 +142,15 @@ def _load_meeting_tx(tx: Any, meeting: dict[str, Any], llm: LLM) -> None:
         ON CREATE SET p.status = 'active'
         SET p.name = coalesce($pname, p.name, $pid),
             p.created_at = coalesce(p.created_at, datetime($pcreated))
-        CREATE (mt:Meeting {meeting_id: $mid, title: $title, held_at: datetime($at)})-[:IN]->(p)
+        CREATE (mt:Meeting {meeting_id: $mid, title: $title, held_at: datetime($at),
+                            created_at: datetime($created_at), created_by: $created_by})-[:IN]->(p)
         WITH mt
         UNWIND $attendees AS uid
         MATCH (u:Person {user_id: uid})
         MERGE (u)-[:ATTENDED]->(mt)
         """, pid=meeting["project_id"], pname=meeting["project_name"], pcreated=meeting["project_created_at"], mid=meeting["meeting_id"], title=meeting["title"],
-           at=meeting["held_at"], attendees=meeting["attendees"]).consume()
+           at=meeting["held_at"], created_at=meeting["created_at"], created_by=meeting["created_by"],
+           attendees=meeting["attendees"]).consume()
 
     for agenda in meeting["agendas"]:
         topic_id, score, reason = link_topic(tx, meeting, agenda, llm)

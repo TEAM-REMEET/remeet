@@ -55,6 +55,7 @@ def main() -> None:
     if not state.logged_in:
         if state.logged_out:
             browser.clear_cookie(LOGIN_COOKIE)
+            router.apply_pending(pages)  # 로그아웃 → 주소도 "/" 로 되돌림
         login.render()
         return
     router.apply_pending(pages)  # 버튼으로 예약된 이동 → URL 변경 (브라우저 기록에 남음)
