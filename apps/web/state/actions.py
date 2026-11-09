@@ -69,7 +69,8 @@ def start_session(token: str, user: dict, restore: bool = False) -> None:
 
 
 def logout() -> None:
-    reset_state(logged_out=True)
+    # url_checked: 보던 주소(예: /admin-members)를 '처음 들어온 주소'로 다시 기억해 다음 계정이 그리로 가지 않게
+    reset_state(logged_out=True, url_checked=True)
     router.request("compose")
 
 

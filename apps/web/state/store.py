@@ -303,4 +303,5 @@ def _fill_missing(state: AppState) -> None:
 
 def reset_state(**overrides) -> AppState:
     st.session_state[_KEY] = AppState(**overrides)
+    st.session_state.pop("_data_errors", None)  # 앞 계정의 불러오기 실패 안내(예: 관리자 비용)가 다음 계정에 남지 않게
     return st.session_state[_KEY]
