@@ -950,7 +950,7 @@ def submit_todo_edit(mid: str, index: int, text: str, owners: list[str], due: da
     if todo_id := _saved_todo(mid, index):  # DB 회의 → 저장 (PATCH /api/todos/{id})
         try:
             repo.update_record_todo(todo_id, {"text": edit["text"], "owners": list(edit["owners"]),
-                                              "due": shown, "due_date": iso[:10] or None})
+                                              "due": shown, "due_date": iso[:10] or None}, mid=mid)
         except api.ApiError as e:
             return _api_failed(e, "액션 아이템을 수정")
     else:
@@ -1045,7 +1045,7 @@ def delete_todo(mid: str, index: int) -> None:
     text = repo.meeting(mid).todos[index].text
     if todo_id := _saved_todo(mid, index):  # DB 회의 → 삭제 (되돌리기 가능 · 번호는 그대로 · Todo.deleted 로 표시)
         try:
-            repo.delete_record_todo(todo_id)
+            repo.delete_record_todo(todo_id, mid=mid)
         except api.ApiError as e:
             _api_failed(e, "액션 아이템을 삭제")
             return
@@ -1062,7 +1062,7 @@ def restore_todo(mid: str, index: int) -> None:
         return
     if todo_id := _saved_todo(mid, index):
         try:
-            repo.restore_record_todo(todo_id)
+            repo.restore_record_todo(todo_id, mid=mid)
         except api.ApiError as e:
             _api_failed(e, "액션 아이템을 되돌리")
             return
@@ -1080,7 +1080,7 @@ def restore_all_todos(mid: str) -> None:
     for index in gone:
         if todo_id := _saved_todo(mid, index):
             try:
-                repo.restore_record_todo(todo_id)
+                repo.restore_record_todo(todo_id, mid=mid)
             except api.ApiError as e:
                 _api_failed(e, "액션 아이템을 되돌리")
                 return
@@ -1394,7 +1394,8 @@ def confirm_assignees(mid: str) -> None:
                 due = parse_due(s.todo_due.get(key) or t.due_iso or t.due)
                 if t.todo_id:
                     repo.update_record_todo(t.todo_id, {"owners": list(sel.todo_owner_ids(s, key, t)),
-                                                        "due": f"{due.month}/{due.day}", "due_date": due.isoformat()})
+                                                        "due": f"{due.month}/{due.day}", "due_date": due.isoformat()},
+                                            mid=mid)
             if repo.meeting(mid).initial_status == "review":
                 repo.confirm_record(mid)
         except api.ApiError as e:
