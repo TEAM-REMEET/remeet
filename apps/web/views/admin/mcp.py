@@ -13,7 +13,7 @@ import streamlit as st
 from config import ADMIN_EMAIL
 from data import repository as repo
 from data.models import ExportFailure
-from state import actions
+from state import actions, export
 from state import selectors as sel
 from state.store import AppState, get_state
 from ui.buttons import button
@@ -61,7 +61,11 @@ def _fail_state(s: AppState, f: ExportFailure) -> None:
         markup(tag("다시 보냄", "ok"))
         return
     if repo.tool_status(f.tool) != "on":
-        markup(f'<span class="adm-cell muted">위에서 {esc(tool.name)}을(를) 다시 연결하면 보낼 수 있어요</span>')
+        markup(f'<span class="adm-cell muted">위에서 {esc(tool.name)}을(를) 다시 연결하면 주관자가 다시 보낼 수 있어요</span>')
+        return
+    if f.tool in export.LIVE:  # Jira · 메일: 관리자는 회의 내용을 볼 수 없어 직접 못 보냄 → 주관자에게 넘김
+        button("주관자에게 넘기기", key=f"adm_handover_{f.id}", variant="primary", icon=":material/forward:",
+               on_click=actions.hand_over_failures, args=(f.tool,))
         return
     button("다시 보내기", key=f"adm_resend_{f.id}", variant="primary", icon=":material/refresh:",
            on_click=actions.admin_resend, args=(f.id,))

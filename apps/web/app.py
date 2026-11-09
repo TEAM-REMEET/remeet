@@ -78,6 +78,8 @@ def main() -> None:
         else:
             current.run()
     render_active_dialog()
+    if st.session_state.pop("_clear_overlay", False):  # 버튼 콜백에서 띄운 로딩 화면 지우기 (ui/loading.callback_overlay)
+        st.rerun()
 
 
 try:

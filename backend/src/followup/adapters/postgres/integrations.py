@@ -2,10 +2,12 @@
 
 web 화면 흐름과 같은 규칙
     연결 / 해제 / 다시 연결          관리자만 (MCP 관리 · 조직 전체에 적용)        set_tool_status()
+        다시 연결(on) 하면 그 도구의 남은 tech 실패 → simple + 주관자에게 알림 (실제 재전송은 주관자가)
     보내기 성공                      회의 주관자                                    record_export()  → 마지막 전송 시각
     보내기 실패 기록                 회의 주관자 (전송을 시작한 사람)               record_failure()
         kind = simple  일시적 오류 → 주관자가 「다시 보내기」로 해결
         kind = tech    API · 인증 문제 → 관리자에게 알림, 관리자가 해결
+        keys           실패한 것 (Jira 할 일 id · 메일 user_id) · None = 모름 → 다시 보낼 때 전부 (migrations/022)
     전송 끝 → 회의 상태              실패가 남았으면 fail, 아니면 done             finish_delivery()
     다시 보내서 해결                 simple = 주관자 · tech = 관리자                resolve_failure()
         남은 실패가 없으면 회의 상태 fail → done. 관리자가 해결하면 주관자에게 「전달 완료」 알림
@@ -83,7 +85,15 @@ def set_tool_status(*, actor_id: str, tool_id: str, status: str) -> dict:
                            updated_at = EXCLUDED.updated_at, updated_by = EXCLUDED.updated_by
                        RETURNING *""", (tool_id, status, actor_id))
         row = cur.fetchone()
-    invalidate("integrations")
+        if status == "on":  # 관리자는 회의 내용을 볼 수 없어 보낼 수 없음 → 주관자가 다시 보낼 수 있게
+            cur.execute("""UPDATE failed_exports f SET kind = 'simple' FROM meetings m
+                           WHERE m.id = f.meeting_id AND f.tool_id = %s AND f.kind = 'tech' AND f.resolved_at IS NULL
+                           RETURNING f.meeting_id, m.host_user_id, m.title""", (tool_id,))
+            for r in cur.fetchall():
+                _notify(cur, r["host_user_id"], "integration",
+                        f"{t['name']} 연결이 복구됐어요. 「{r['title'] or r['meeting_id']}」 회의에서 「다시 보내기」를 눌러 주세요.",
+                        r["meeting_id"])
+    invalidate("integrations", "notifications")
     return row
 
 
@@ -100,16 +110,19 @@ def record_export(*, actor_id: str, meeting_id: str, tool_id: str) -> None:
 
 
 def record_failure(*, actor_id: str, meeting_id: str, tool_id: str, kind: str, reason: str,
-                   code: str = "") -> dict:
-    """보내기 실패 기록 (회의 주관자). tech 실패면 관리자 전원에게 알림."""
+                   code: str = "", keys: list[str] | None = None) -> dict:
+    """보내기 실패 기록 (회의 주관자). tech 실패면 관리자 전원에게 알림.
+    keys: 실패한 것 (None = 모름 → 다시 보낼 때 전부). 빈 목록은 「없음」과 「모름」이 섞이므로 거절."""
     if kind not in KINDS:
         raise ValidationError("실패 종류는 simple 또는 tech 입니다.")
+    if keys is not None and not keys:
+        raise ValidationError("실패한 항목이 없으면 keys 를 보내지 마세요 (빈 목록은 쓰지 않음).")
     with transaction(actor_id) as cur:
         m = can_access_meeting(cur, meeting_id, actor_id, write=True)
         t = _tool(cur, tool_id)
-        cur.execute("""INSERT INTO failed_exports (tool_id, meeting_id, kind, reason, code)
-                       VALUES (%s, %s, %s, %s, %s) RETURNING *""",
-                    (tool_id, meeting_id, kind, required(reason, "실패 이유"), code))
+        cur.execute("""INSERT INTO failed_exports (tool_id, meeting_id, kind, reason, code, failed_keys)
+                       VALUES (%s, %s, %s, %s, %s, %s) RETURNING *""",
+                    (tool_id, meeting_id, kind, required(reason, "실패 이유"), code, keys))
         row = cur.fetchone()
         if kind == "tech":
             cur.execute("SELECT user_id FROM accounts WHERE role = 'ADMIN'")

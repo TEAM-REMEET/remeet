@@ -24,6 +24,15 @@ def _spinner() -> str:
     return f'<div class="ld-wheel" aria-hidden="true">{"".join(dots)}</div>'
 
 
+def callback_overlay(title: str, sub: str = "") -> None:
+    """버튼 콜백 안에서 쓰는 로딩 표시. 콜백에서 그린 요소는 Streamlit 이 「다음」 실행 때 지우므로,
+    화면을 다 그린 뒤 한 번 더 다시 그리라고 표시해 둠 (app.py 끝에서 st.rerun)."""
+    import streamlit as st
+
+    loading_overlay(title, sub)
+    st.session_state["_clear_overlay"] = True
+
+
 def loading_overlay(title: str, sub: str = "") -> None:
     markup(
         '<div class="ld-overlay" role="status" aria-live="polite">'

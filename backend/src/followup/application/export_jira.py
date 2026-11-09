@@ -42,11 +42,34 @@ def _description(meeting_title: str, item: dict) -> str:
     return f"회의: {meeting_title}\nRE:MEET 액션 아이템: {item['key']}"
 
 
+def label(key: str) -> str:
+    """할 일 하나 = 라벨 하나 (key = 할 일 id). 만들기 전에 이 라벨을 찾아서 같은 할 일로 이슈가 두 번 생기지 않게."""
+    return f"remeet-todo-{key}"
+
+
+async def _existing(jira, cfg: dict[str, str], items: list[dict]) -> dict[str, dict]:
+    """이미 만든 이슈 {item key: {issue_key, assigned}}. 검색이 실패하면 예외 → 아무것도 만들지 않음 (중복보다 안전).
+    shortcut: Jira 검색은 이슈를 만든 직후 몇 초 늦게 반영됨, 그 사이 다시 보내면 드물게 중복 (실패한 것만 다시 보내서 좁힘)"""
+    by_label = {label(i["key"]): i["key"] for i in items}
+    jql = "labels in (" + ", ".join(f'"{lb}"' for lb in by_label) + ")"  # key 는 라우트가 [\w-] 만 허용
+    rows = await jira.search(cfg["JIRA_CLOUD_ID"], jql, ["labels", "assignee"], min(100, 2 * len(items)))
+    found: dict[str, dict] = {}
+    for r in rows:
+        for lb in r["fields"].get("labels") or []:
+            if lb in by_label:
+                found.setdefault(by_label[lb], {"issue_key": r["key"], "assigned": bool(r["fields"].get("assignee"))})
+    return found
+
+
 async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict], emails: dict[str, str]) -> list[dict]:
     accounts: dict[str, str | None] = {}  # 이메일 → accountId (한 번만 찾음)
     out = []
     deadline = time.monotonic() + settings.EXPORT_BUDGET_SECONDS
+    done = await _existing(jira, cfg, items)
     for item in items:
+        if item["key"] in done:  # 이미 만든 이슈 (다시 보내기 · 시간 초과 뒤 · 새로고침 뒤) → 새로 만들지 않음
+            out.append({"key": item["key"], "ok": True, **done[item["key"]], "existing": True})
+            continue
         if time.monotonic() > deadline:  # 화면이 기다리다 포기하기 전에 끝냄 · 남은 건 다시 보내기로
             out.append({"key": item["key"], "ok": False, "error": "시간 초과 (다시 보내 주세요)"})
             continue
@@ -62,7 +85,8 @@ async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict]
                 if account := accounts[email]:
                     break
             args = {"cloudId": cfg["JIRA_CLOUD_ID"], "projectKey": project_key(cfg), "issueType": cfg["JIRA_ISSUE_TYPE"],
-                    "summary": item["title"], "description": _description(meeting_title, item)}
+                    "summary": item["title"], "description": _description(meeting_title, item),
+                    "labels": [label(item["key"])]}
             if account:
                 args["assignee"] = account
             if item.get("due"):

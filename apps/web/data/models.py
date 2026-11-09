@@ -530,6 +530,7 @@ class ExportFailure:
     code: str
     when: str
     title: str = ""  # 회의 제목 (DB 기록에 같이 옴 · 관리자는 회의 자체를 못 봐서 이걸로 보여 줘요)
+    keys: tuple[str, ...] | None = None  # 실패한 것 (Jira 할 일 id · 메일 user_id) · None = 모름 → 다시 보낼 때 전부
 
 
 @dataclass(frozen=True)
