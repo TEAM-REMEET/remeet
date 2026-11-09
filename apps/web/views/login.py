@@ -110,6 +110,7 @@ from state.store import get_state
 from ui.buttons import button
 from ui.html import markup
 from ui.icons import brand_logo, icon
+from utils.browser import latin_keys
 from utils.text import esc
 
 # 히어로의 가치 3줄
@@ -190,6 +191,7 @@ def _form() -> None:
     with st.form("login", border=False, enter_to_submit=True):
         st.text_input("이메일", key="login_email", placeholder="name@company.com", autocomplete="username")
         st.text_input("비밀번호", key="login_pw", type="password", placeholder="비밀번호", autocomplete="current-password")
+        latin_keys("비밀번호")
         err = get_state().login_error
         if err:
             markup(f'<p class="login-err" role="alert">{esc(err)}</p>')

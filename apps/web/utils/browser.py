@@ -101,6 +101,45 @@ def ime_live(label: str) -> None:
     )
 
 
+# 두벌식 자판: 한글 낱자 → 같은 자리의 영문 키 (겹낱자는 두 키)
+_KEYS = dict(zip(
+    "ㄱㄲㄳㄴㄵㄶㄷㄸㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅃㅄㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ",
+    "r R rt s sw sg e E f fr fa fq ft fx fv fg a q Q qt t T d w W c z x v g "
+    "k o i O j p u P h hk ho hl y n nj np nl b m ml l".split(),
+))
+_CHO, _JUNG, _JONG = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ", "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ", " ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ"
+
+
+def latin_keys(label: str) -> None:
+    """비밀번호 칸처럼 영문만 받는 칸: 한글 자판으로 쳐도 같은 키의 영문으로 바로 바꿔 넣음 (ㅅㄷㄴㅅ → test). 공백은 안 들어감.
+
+    브라우저는 입력기(한/영)를 페이지에서 바꿀 수 없어서, 들어온 한글을 자판 위치대로 되돌립니다.
+    조합 중이면 입력칸을 잠깐 벗어났다(blur) 돌아와 조합을 끝낸 뒤 바꿉니다 (안 그러면 조합 글자가 다시 붙음).
+    label: st.text_input 의 label (비밀번호 보기 눈 버튼으로 type=text 가 돼도 같은 칸으로 찾음)
+    """
+    keys = json.dumps({"map": _KEYS, "cho": _CHO, "jung": _JUNG, "jong": _JONG}, ensure_ascii=False)
+    _run(
+        "window.__latinLabels = window.__latinLabels || [];"
+        f" if (window.__latinLabels.indexOf({json.dumps(label)}) < 0) window.__latinLabels.push({json.dumps(label)});"
+        " if (!window.__latinKeys) { window.__latinKeys = true;"
+        f"  var K = {keys}, HAN = /[\\u3131-\\u3163\\uac00-\\ud7a3\\s]/;"
+        "  var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;"
+        "  function one(ch) { var c = ch.charCodeAt(0) - 0xAC00;"
+        "   if (c < 0 || c > 11171) return K.map[ch] || ch;"
+        "   return K.map[K.cho[(c / 588) | 0]] + K.map[K.jung[((c % 588) / 28) | 0]] + (c % 28 ? K.map[K.jong[c % 28]] : ''); }"
+        "  function conv(s) { return s.replace(/\\s+/g, '').replace(/[\\u3131-\\u3163\\uac00-\\ud7a3]/g, one); }"
+        "  function fix(el) { var v = el.value; if (!HAN.test(v)) return;"
+        "   var at = conv(v.slice(0, el.selectionStart == null ? v.length : el.selectionStart)).length;"
+        "   setter.call(el, conv(v)); el.dispatchEvent(new Event('input', {bubbles: true}));"
+        "   try { el.setSelectionRange(at, at); } catch (_) {} }"
+        "  document.addEventListener('input', function (e) {"
+        "   var el = e.target; if (!el || el.tagName !== 'INPUT') return;"
+        "   if (window.__latinLabels.indexOf(el.getAttribute('aria-label') || '') < 0) return;"
+        "   if (e.isComposing) { el.blur(); fix(el); el.focus(); } else fix(el);"
+        "  }, true); }"
+    )
+
+
 def focus_input(label: str, nonce: str = "") -> None:
     """label 이 같은 입력칸에 커서를 두고 글자 끝으로 (검색 결과 페이지로 넘어와도 이어서 칠 수 있게)."""
     target = json.dumps(label)
