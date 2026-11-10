@@ -65,6 +65,9 @@ class MyIssuesTests(unittest.TestCase):
         dashboard_jira._cache.clear()
         dashboard_jira._changes.clear()
         dashboard_jira._refreshing.clear()
+        follows = patch.object(dashboard_jira, "_follow_info", lambda ids: {})  # Neo4j · DB 없이
+        follows.start()
+        self.addCleanup(follows.stop)
         self.addCleanup(dashboard_jira._cache.clear)
 
     def issues(self, fake, user="u1", todo_ids=(), **kw):
@@ -117,6 +120,20 @@ class MyIssuesTests(unittest.TestCase):
         t[0] = 61
         self.issues(fake, now=lambda: t[0], spawn=lambda work: work())
         self.assertEqual(len(fake.jql), 4)
+
+    def test_issue_shows_task_it_follows_up(self):
+        """상세 모달 「선행 업무」: 라벨의 할 일 id → 이전 회의 업무 · 조회가 실패해도 목록은 그대로."""
+        prev = {"todo_id": 7, "text": "견적서 초안 작성", "meeting_id": "M_A", "meeting": "견적 1차 회의", "date": "2026-11-03"}
+        with patch.object(dashboard_jira, "_follow_info", lambda ids: {41: [prev]} if 41 in ids else {}):
+            res = self.issues(FakeJira({"a@x.com": "acc"}))  # ROW 라벨 remeet-todo-41
+        self.assertEqual(res["issues"][0]["follows"], [prev])
+        dashboard_jira._cache.clear()
+
+        def boom(ids):
+            raise ConnectionError("neo4j down")
+        with patch.object(dashboard_jira, "_follow_info", boom), self.assertLogs(dashboard_jira.logger, level="WARNING"):
+            res = self.issues(FakeJira({"a@x.com": "acc"}))
+        self.assertNotIn("follows", res["issues"][0])
 
     def test_stale_list_returns_right_away_and_refreshes_behind(self):
         """캐시가 지나면 지난 목록을 바로 주고 Jira 는 뒤에서 (한 사람에 하나만) · 10분 넘게 지났으면 기다려서."""

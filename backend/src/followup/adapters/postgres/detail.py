@@ -550,6 +550,21 @@ def my_todo_ids(user_id: str, limit: int) -> list[int]:
     return [r["id"] for r in rows]
 
 
+def todo_briefs(todo_ids: list[int]) -> dict[int, dict]:
+    """할 일 id → {todo_id, text, owners: [user_id], meeting_id, meeting, date} (지운 할 일 · 지운 회의는 뺌) · 읽기만.
+    홈 대시보드 할 일 상세의 「선행 업무」(이전 회의 업무 제목 · 회의). 볼 수 있는 회의인지는 화면이 거름."""
+    if not todo_ids:
+        return {}
+    rows = query("""SELECT t.id, t.text, m.id AS meeting_id, m.title AS meeting, m.held_at,
+                           ARRAY(SELECT o.user_id FROM meeting_todo_owners o WHERE o.todo_id = t.id
+                                 ORDER BY o.position) AS owners
+                    FROM meeting_todos t JOIN meetings m ON m.id = t.meeting_id
+                    WHERE t.id = ANY(%s) AND t.deleted_at IS NULL AND m.deleted_at IS NULL""", (list(todo_ids),))
+    return {r["id"]: {"todo_id": r["id"], "text": r["text"], "owners": list(r["owners"] or []),
+                      "meeting_id": r["meeting_id"], "meeting": r["meeting"],
+                      "date": r["held_at"].date().isoformat() if r["held_at"] else None} for r in rows}
+
+
 def delete_todo(*, actor_id: str, todo_id: int) -> None:
     """삭제 (주관자만 · restore_todo 로 되돌리기 가능)."""
     with transaction(actor_id) as cur:
