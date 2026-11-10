@@ -99,6 +99,8 @@ def catalog(kind: str) -> list[dict]:
 
 
 def _people_changed() -> None:
+    global _people_version
+    _people_version += 1  # 기억한 사람 표(_people_memo)도 버림
     _people_rows.clear()
     _catalog.clear()  # 새 직무를 입력하면 직무 목록도 바뀜
     org_changed()  # 열려 있는 다른 화면도 새로 그림
@@ -190,14 +192,37 @@ def recommendation_config(item: dict) -> dict:
     }
 
 
+# 사람 표 기억 (출입증별): st.cache_data 는 꺼낼 때마다 목록을 통째로 복사해서,
+# 원문이 긴 회의(문단 700개+)는 문단마다 화자를 찾느라 회의 하나 여는 데 2~4초가 걸렸어요.
+# 만든 표를 잠깐(_PEOPLE_MEMO_TTL) 같이 쓰고, 구성원을 고치면(_people_changed) 바로 버려요.
+_PEOPLE_MEMO_TTL = 60  # 초 · 다른 곳(DB 직접 수정 · 메뉴의 Clear cache)의 변경은 최대 이만큼 늦게 보임
+_people_memo: dict[str, tuple[float, int, dict[str, Person], dict[str, str]]] = {}
+_people_version = 0  # _people_changed 마다 +1 → 기억한 표를 버림
+
+
+def _people_tables() -> tuple[dict[str, Person], dict[str, str]]:
+    token = _token()
+    hit = _people_memo.get(token)
+    if hit and hit[1] == _people_version and time.monotonic() - hit[0] < _PEOPLE_MEMO_TTL:
+        return hit[2], hit[3]
+    version = _people_version
+    by_id = {r["user_id"]: Person(r["user_id"], r["name"], r["name"], r["team"] or "") for r in people_rows()}
+    by_short = {p.short: p.id for p in by_id.values()}
+    if len(_people_memo) > 100:  # 오래된 출입증이 쌓이지 않게
+        _people_memo.clear()
+    _people_memo[token] = (time.monotonic(), version, by_id, by_short)
+    return by_id, by_short
+
+
 def people() -> dict[str, Person]:
-    """조직 구성원 (Neo4j). short는 원문 화자 이름인데 Neo4j에 따로 없어서 이름을 그대로 써요."""
-    return {r["user_id"]: Person(r["user_id"], r["name"], r["name"], r["team"] or "") for r in people_rows()}
+    """조직 구성원 (Neo4j). short는 원문 화자 이름인데 Neo4j에 따로 없어서 이름을 그대로 써요.
+    ⚠️ 여럿이 같이 쓰는 표라 고치지 말고 읽기만 하세요."""
+    return _people_tables()[0]
 
 
 def people_by_short_name() -> dict[str, str]:
     """원문 화자 이름(서윤) → 사람 id(yun)."""
-    return {p.short: p.id for p in people().values()}
+    return _people_tables()[1]
 
 
 # ---------------------------------------------------------------- meetings
@@ -283,6 +308,7 @@ def _meeting_only(d: dict) -> Meeting:
         branch_of=(d.get("branch_of") or {}).get("meeting"),
         author=d.get("author") or "",
         reviewer=d.get("reviewer") or "",
+        exported=bool(d.get("exported_at")),
     )
 
 
@@ -397,7 +423,7 @@ def _api_folders(token: str) -> dict[str, Folder]:
         notes = [r["id"] for r in _pages(f"/api/projects/{pid}/meetings", token)]  # 최신순
         brief = api.call("GET", f"/api/projects/{pid}/briefs", token=token)
         return Folder(pid, p["name"], p["host_user_id"], tuple(members), tuple(notes),
-                      tuple(BriefItem(b["label"], b["text"]) for b in brief))
+                      tuple(BriefItem(b["label"], b["text"]) for b in brief), can_delete=bool(p.get("can_delete")))
 
     projects = api.call("GET", "/api/projects", token=token)  # 내가 멤버 · 주관인 프로젝트
     with ThreadPoolExecutor(_DETAIL_WORKERS) as pool:
@@ -641,10 +667,12 @@ def ask(question: str) -> dict:
 
 
 # ---------------------------------------------------------------- 외부 도구 전송 · Jira
-def export_jira(meeting_title: str, items: list[dict]) -> dict:
-    """액션 아이템 → Jira 이슈 (POST /api/exports/jira). items: [{key, title, owners, due}]
+def export_jira(meeting_title: str, items: list[dict], meeting_date: str | None = None) -> dict:
+    """액션 아이템 → Jira 이슈 (POST /api/exports/jira). items: [{key, title, owners, due, agenda}]
+    meeting_date (YYYY-MM-DD) · agenda 는 이슈 설명에 적음.
     → {project_key, created, total, items: [{key, ok, issue_key | error, assigned}]} · 연결 · 설정 실패는 ApiError."""
-    return api.call("POST", "/api/exports/jira", {"meeting_title": meeting_title, "items": items}, _token(),
+    return api.call("POST", "/api/exports/jira",
+                    {"meeting_title": meeting_title, "meeting_date": meeting_date, "items": items}, _token(),
                     timeout=EXPORT_TIMEOUT)
 
 
@@ -668,14 +696,17 @@ def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
 def dashboard_jira(refresh: bool = False) -> dict:
     """내 Jira 할 일 (GET /api/dashboard/jira · 로그인한 사람이 담당자인 미완료 이슈, 서버가 1분 캐시).
     refresh: 「동기화」 (캐시를 건너뜀).
-    → {linked, issues: [{key, title, status, category, due, url}], all_url, synced_at} · 연결 · 설정 실패는 ApiError."""
+    → {linked, issues: [{key, title, status, category, due, url}], done: [같은 모양 · 최근 완료], all_url, synced_at}
+    연결 · 설정 실패는 ApiError."""
     return api.call("GET", "/api/dashboard/jira" + ("?refresh=true" if refresh else ""), token=_token(), timeout=30)
 
 
-# ---------------------------------------------------------------- 회의록 쓰기 (PostgreSQL · 백엔드 API)
-# 실패하면 api.ApiError (메시지는 화면에 그대로 보여 줘도 돼요). 쓴 뒤에는 meetings_changed() 로 캐시를 비워 바로 보이게 해요.
-#   mid    = 바뀐 회의 (그 회의만 다시 받음) · 모르면 None → 전부 다시 받음 (느리지만 늘 맞음)
-#   projects = 프로젝트 목록도 바뀌는지 (회의가 생기거나 지워질 때 · 회의 안 내용만 바뀌면 False)
+def dashboard_set_status(key: str, status: str) -> dict:
+    """홈 · 상태 드롭다운 (POST /api/dashboard/jira/{key}/status) · 내 일인지는 서버가 확인.
+    → {key, status, category} · 내 일이 아님(403) · 그 상태로 못 바꿈(409) · 연결 실패는 ApiError."""
+    return api.call("POST", f"/api/dashboard/jira/{key}/status", {"status": status}, _token(), timeout=60)
+
+
 def _write(method: str, path: str, body: dict | None = None, *, mid: str | None = None, projects: bool = True):
     res = api.call(method, path, body, _token())
     if mid:

@@ -38,7 +38,7 @@ from zoneinfo import ZoneInfo
 
 from psycopg.types.json import Jsonb
 
-from followup.adapters.postgres.db import transaction
+from followup.adapters.postgres.db import query, transaction
 from .common import (
     NotFoundError,
     PermissionDenied,
@@ -394,6 +394,9 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
             sender = f"{who['name']} · {who['team']}" if who and who["team"] else (who["name"] if who else sh["sender_id"])
         todos = _todos(cur, meeting_id)
         gone = _todos(cur, meeting_id, deleted=True)
+        # 외부 도구 전송을 마친 시각 (migrations/024 · 도구가 여럿이면 마지막) · 없으면 아직 안 보냄
+        cur.execute("SELECT max(exported_at) AS at FROM meeting_exports WHERE meeting_id = %s", (meeting_id,))
+        exported_at = cur.fetchone()["at"]
 
     when, md = _when(m["held_at"])
     return {
@@ -417,6 +420,7 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
         "can_view_raw": raw_ok, "is_host": m["host_user_id"] == actor_id,
         # 작성 흐름 (migrations/008): 작성자 · 검토자 · 지금 내가 고칠 수 있는지 (신입이 제출한 뒤면 False)
         "author": m["created_by"], "reviewer": m["reviewer_id"], "can_edit": is_editor(m, actor_id),
+        "exported_at": exported_at.isoformat() if exported_at else None,
     }
 
 
@@ -532,6 +536,18 @@ def add_todo(*, actor_id: str, meeting_id: str, text: str, owners: list[str] | N
         row = next(t for t in _todos(cur, meeting_id) if t["id"] == tid)
     invalidate("_base_meetings")
     return row
+
+
+def my_todo_ids(user_id: str, limit: int) -> list[int]:
+    """홈 대시보드: 이 사람이 담당자(공동 포함)인 할 일 id, 최근 것부터 (지운 할 일 · 지운 회의 · 작성 중 회의는 뺌).
+    Jira 이슈의 라벨 remeet-todo-{id} 로 이어져요 (export_jira.label). 표는 그대로 읽기만 함.
+    서버 안에서만 씀: user_id 는 로그인 토큰 값만 넘겨요 (범위가 그 사람으로 고정)."""
+    rows = query("""SELECT t.id FROM meeting_todos t
+                    JOIN meeting_todo_owners o ON o.todo_id = t.id
+                    JOIN meetings m ON m.id = t.meeting_id
+                    WHERE o.user_id = %s AND t.deleted_at IS NULL AND m.deleted_at IS NULL AND m.status <> 'draft'
+                    ORDER BY t.id DESC LIMIT %s""", (user_id, limit))
+    return [r["id"] for r in rows]
 
 
 def delete_todo(*, actor_id: str, todo_id: int) -> None:

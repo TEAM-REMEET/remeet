@@ -345,6 +345,34 @@ def status_of(state: AppState, mid: str) -> str:
     return repo.meeting(mid).initial_status
 
 
+def stage_of(state: AppState, mid: str) -> str:
+    """남은 단계까지 본 진행 상태: status_of + unexported (결과 전달은 마쳤지만 외부 도구 전송 전).
+
+    외부 도구 전송(6단계)까지 필수라, 결과 전달만 마친 done 은 아직 끝난 회의가 아니에요.
+    """
+    st = status_of(state, mid)
+    if st == "done" and not repo.meeting(mid).exported:
+        return "unexported"
+    if st == "fail" and not open_export_failure(state, mid):
+        return "deliver_fail"  # 외부 도구 실패가 아님 → 결과 전달(참석자)에서 실패 · 다시 보내기 전엔 외부 도구로 못 넘어감
+    return st
+
+
+def delivery_failed(state: AppState, mid: str) -> bool:
+    """결과 전달(5단계)에서 실패한 참석자가 남아 있는지 → 외부 도구 전송(6단계)으로 넘어가지 못함."""
+    return stage_of(state, mid) == "deliver_fail"
+
+
+def quick_stage(state: AppState, mid: str) -> str:
+    """stage_of 와 같은 뜻이지만 전송 실패 기록을 서버에 묻지 않아요 (사이드바처럼 회의가 많이 보이는 곳용).
+    전송 실패는 서버가 회의 상태(fail)로도 저장해서 이미 받은 회의 상태만으로 충분해요."""
+    m = repo.meeting(mid)
+    st = state.status_override.get(mid) or m.initial_status
+    if st == "done" and not m.exported:
+        return "unexported"
+    return st
+
+
 def open_export_failure(state: AppState, mid: str):
     """아직 해결되지 않은 외부 도구 전송 실패 (없으면 None)."""
     return next((f for f in repo.export_failures(mid) if failure_open(state, f.id)), None)
@@ -376,12 +404,13 @@ class MeetingRow:
     actions: int
     action_sub: str
     button: str
-    button_kind: str  # view | review | deliver | retry | progress
+    button_kind: str  # view | review | deliver | retry | progress | export
     absent_shared: bool = False  # 미참석했지만 주관자가 공유해 줌
+    stage: str = ""  # 진행 상태 (stage_of: review | confirmed | sending | deliver_fail | fail | unexported | done) → 남은 단계가 있으면 제목 옆 배지
 
 
 _STATUS_VIEW = {
-    "review": ("검토 대기", "warn"),
+    "review": ("검토 중", "warn"),
     "confirmed": ("확정 · 전달 전", "ok"),
     "sending": ("전달 중", "host"),
     "fail": ("전송 실패", "fail"),
@@ -410,6 +439,9 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
         "fail": _fail_sub(state, mid),
         "done": f"{dotted} 전달",
     }
+    stage = stage_of(state, mid)
+    if stage == "unexported":
+        sub_by_status["done"] = "외부 도구 전송 전"
     button, kind = "결과 보기", "view"
     if manages(m):  # 재시도 · 검토 · 전달은 고칠 수 있는 사람만 (주관자 · 검토자)
         button, kind = {
@@ -418,6 +450,8 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
             "fail": ("외부 도구\n재전송" if open_export_failure(state, mid) else "결과 재전송", "retry"),
             "sending": ("진행 보기", "progress"),
         }.get(st, (button, kind))
+        if stage == "unexported":
+            button, kind = "외부 도구\n전송", "export"
     mine_keys = my_todo_keys(state, mid)
     mine_text = f"내 할 일 {len(mine_keys)}" if mine_keys else "내 할 일 없음"
     label, tone = _STATUS_VIEW[st]
@@ -439,6 +473,7 @@ def meeting_row(state: AppState, mid: str) -> MeetingRow:
         button=button,
         button_kind=kind,
         absent_shared=is_absent_shared(state, mid),
+        stage=stage,
     )
 
 

@@ -15,6 +15,7 @@ from components.dialogs.compose_pickers import (
     people_picker_dialog,
 )
 from components.dialogs.folder import delete_folder_dialog, delete_meeting_dialog, members_dialog
+from components.dialogs.issue import issue_detail_dialog
 from components.dialogs.meeting_people import people_dialog
 from components.dialogs.share import share_dialog
 from components.dialogs.todo import add_todo_dialog, edit_todo_dialog, owner_change_dialog, todo_owner_dialog
@@ -36,6 +37,7 @@ _DIALOGS = {
     "cp_format_error": format_error_dialog,
     "cp_confirm": compose_confirm_dialog,
     "contact_admin": contact_admin_dialog,
+    "issue_detail": issue_detail_dialog,
     "org_picker": org_picker_dialog,
     "member_edit": member_edit_dialog,
 }

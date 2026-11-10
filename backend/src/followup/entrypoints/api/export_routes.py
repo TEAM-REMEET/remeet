@@ -42,10 +42,12 @@ class Item(BaseModel):
     title: str = Field(min_length=1, max_length=255)  # Jira summary 최대 255자
     owners: list[str] = Field(default_factory=list, max_length=20)
     due: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    agenda: str | None = Field(default=None, max_length=200)  # 이 일이 나온 안건 (이슈 설명에 적음)
 
 
 class JiraExport(BaseModel):
     meeting_title: str = Field(min_length=1, max_length=200)
+    meeting_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")  # 이슈 설명에 적음
     items: list[Item] = Field(max_length=100)  # 비어도 받음: 만들 이슈가 없어도 Jira 연결(인증)은 확인해야 함
 
 
@@ -53,7 +55,8 @@ class JiraExport(BaseModel):
 @router.post("/jira")
 def jira(body: JiraExport) -> dict[str, Any]:
     try:
-        return export_jira.export(body.meeting_title, [i.model_dump() for i in body.items])
+        return export_jira.export(body.meeting_title, [i.model_dump(exclude_none=True) for i in body.items],
+                                  meeting_date=body.meeting_date)
     except export_jira.JiraNotConfigured as e:
         raise HTTPException(status_code=503, detail="Jira 연동 설정이 없어요. 관리자에게 문의해 주세요.") from e
     except export_jira.JiraUnavailable as e:

@@ -173,6 +173,7 @@ def submit_meeting(*, actor_id: str, meeting_id: str, reviewer_id: str | None = 
     reviewer_id: 신입이 쓴 회의록을 검토할 윗사람. 안 주면 — 작성자가 주관자면 검토 없음(주관자가 바로 확정),
                  작성자가 주관자가 아니면 주관자가 검토자 (web 「검토 요청하기」).
     알림: 참석자 · 주관자(나 · 검토자 빼고) → created 「회의록이 생성됐어요」 / 검토자 → review 「검토 요청」
+    프로젝트 회의면 참석자 중 아직 멤버가 아닌 사람을 프로젝트 멤버로 넣어요 (미리보기 때는 참석자가 바뀔 수 있어 생성 시점에).
     """
     with transaction(actor_id) as cur:
         require_user(cur, actor_id)
@@ -200,6 +201,15 @@ def submit_meeting(*, actor_id: str, meeting_id: str, reviewer_id: str | None = 
             (reviewer_id or None, meeting_id),
         )
         row = cur.fetchone()
+        if row["project_id"]:   # 이미 있는 멤버는 그대로 · 새로 넣은 사람에게는 트리거가 member 알림을 보냄 (migrations/003 · 015)
+            cur.execute("""INSERT INTO folder_members (folder_id, user_id, position, added_by)
+                           SELECT %(f)s, a.user_id,
+                                  (SELECT COALESCE(MAX(position) + 1, 0) FROM folder_members WHERE folder_id = %(f)s)
+                                    + row_number() OVER (ORDER BY a.position) - 1,
+                                  %(a)s
+                           FROM meeting_attendees a WHERE a.meeting_id = %(m)s
+                           ON CONFLICT (folder_id, user_id) DO NOTHING""",
+                        {"f": row["project_id"], "m": meeting_id, "a": actor_id})
         title = row["title"] or "회의"
         cur.execute("SELECT user_id FROM meeting_attendees WHERE meeting_id = %s ORDER BY position", (meeting_id,))
         for uid in dict.fromkeys([row["host_user_id"], *(r["user_id"] for r in cur.fetchall())]):

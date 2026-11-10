@@ -7,26 +7,26 @@ import streamlit as st
 from components.member_pills import member_pills
 from data import repository as repo
 from data.models import Meeting
-from state import actions, delivery
+from state import actions
 from state import minutes_text
 from state import selectors as sel
 from state.store import AppState
 from ui.buttons import button
 from ui.html import markup
 from ui.layout import notice
-from ui.tags import tag
+from ui.tags import stage_badge, tag
 from utils.text import esc
 from views.meeting import model
 
 
-def _title(s: AppState, m: Meeting, tag_html: str, *, boxed: bool = False) -> None:
+def _title(s: AppState, m: Meeting, tag_html: str, *, boxed: bool = False, box_class: str = "") -> None:
     """boxed: 최종 회의록 머리말 — 제목 · 태그를 왼쪽 주황 줄 상자로 감싸 눈에 띄게 (.md-title-box · pages.css)
     (폴더 이름은 상자 밖 위에 · 상자와 살짝 띄움)
     """
     folder = sel.folder_label(s, m)  # 제목을 크게 · 위에 폴더(어느 회의인지)를 작은 글씨로
     row = f'<div class="md-title-row"><h1 class="md-title">{esc(m.title)}</h1>{tag_html}</div>'
     markup((f'<div class="md-eyebrow">{esc(folder)}</div>' if folder else "")
-           + (f'<div class="md-title-box">{row}</div>' if boxed else row))
+           + (f'<div class="md-title-box {box_class}">{row}</div>' if boxed else row))
 
 
 def _people_row(m: Meeting) -> None:
@@ -52,14 +52,6 @@ def _minutes_download(s: AppState, m: Meeting) -> None:
                            mime="text/plain", key="md_minutes", icon=":material/download:")
 
 
-def _delivery_failed(s: AppState, mid: str) -> int:
-    """이 회의의 마지막 결과 전달에서 전송에 실패한 참석자 수 (전달 중이거나 기록이 없으면 0)."""
-    if s.delivery.meeting_id != mid or s.delivery.started_at is None:
-        return 0
-    p = delivery.progress(s)
-    return p.failed if p.ended else 0
-
-
 def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
     """최종 회의록 머리말 (편집 없음): 삭제 · 회의록 다운로드 · 공유 · (deliver) 결과 전달 / (전달 뒤) 외부 도구 전송.
 
@@ -69,9 +61,16 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
     owner = sel.owns(m)  # 삭제 · 공유 (주관자 · 작성자 · 검토자는 못 함)
     role = sel.my_role(m)
     role_label, role_tone = ("내가 주관", "host") if role == "host" else sel.ROLE_TAGS[role]
+    status = sel.status_of(s, m.id)
+    stage = sel.stage_of(s, m.id)  # 결과 전달까지 마쳤어도 외부 도구 전송 전이면 unexported
+    deliver_in_flow = deliver  # 회의록 확정 4단계 화면 (finalize) · 단계 표시가 위에 있음
+    # 확정 흐름 밖에서 연 「확정 · 전달 전」 회의도 여기서 바로 결과 전달로 이어 갈 수 있게
+    deliver = deliver or status == "confirmed"
+    if s.fin_flow != m.id and not deliver_in_flow:  # 확정 흐름 중에는 위 단계 표시가 이미 알려 줌
+        _stage_panel(s, m, stage, host)
     with st.container(horizontal=True, vertical_alignment="bottom"):
         with st.container(gap="small"):
-            _title(s, m, tag("최종 회의록", "ok") + tag(role_label, role_tone), boxed=True)
+            _title(s, m, tag("최종 회의록", "ok") + stage_badge(stage) + tag(role_label, role_tone), boxed=True)
         with st.container(horizontal=True, width="content", gap="small"):
             if owner:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",
@@ -84,12 +83,11 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
                 if deliver:  # → 결과 전달 화면 (그다음 외부 도구 전송)
                     button("결과 전달", key="md_deliver", variant="primary", icon=":material/send:",
                            on_click=actions.deliver_final, args=(m.id,))
-                elif sel.status_of(s, m.id) in ("done", "fail"):  # 결과 전달이 끝난 회의: 외부 도구(MCP)로 (다시) 보내기
-                    failed = _delivery_failed(s, m.id)
-                    if failed:  # 결과 전달에서 한 명이라도 실패: 실패한 참석자에게만 다시 보내기 (모두 성공이면 안 보임)
-                        button("결과 전달", key="md_redeliver", variant="secondary", icon=":material/send:",
-                               help=f"전송에 실패한 {failed}명에게만 다시 보내요",
-                               on_click=actions.start_delivery, args=(m.id, 2))
+                elif stage == "deliver_fail":  # 결과 전달에서 실패한 참석자 → 먼저 다시 보내기 (외부 도구는 그다음)
+                    button("결과 재전송", key="md_redeliver", variant="primary", icon=":material/refresh:",
+                           help="전송에 실패한 참석자에게만 다시 보내요",
+                           on_click=actions.start_delivery, args=(m.id, 2))
+                elif status in ("done", "fail"):  # 결과 전달이 끝난 회의: 외부 도구(MCP)로 (다시) 보내기
                     button("외부 도구 전송", key="md_export", variant="primary", icon=":material/output:",
                            on_click=actions.open_export, args=(m.id,))
             else:
@@ -98,6 +96,49 @@ def render_final_header(s: AppState, m: Meeting, *, deliver: bool) -> None:
     _shared_notice(s)
     if not deliver:
         _export_notices(s, m)
+
+
+# 남은 단계가 있는 회의 → 회의 상세 맨 위 진행 상황 상자
+#   stage: (제목, 지금 차례인 단계(1~6, finalize.STEPS), 색, 주관자 안내, 그 밖의 사람 안내)
+_STAGE_PANEL = {
+    "review": ("검토 진행 중인 회의록이에요", 3, "warn",
+               "오른쪽 위 「확정하기」를 눌러 담당자 추천 → 최종 회의록 → 결과 전달 → 외부 도구 전송까지 마쳐 주세요.",
+               "주관자가 검토를 마치고 확정하면 최종 회의록이 돼요."),
+    "confirmed": ("최종 회의록은 만들어졌지만, 아직 결과를 전달하지 않았어요", 5, "warn",
+                  "오른쪽 위 「결과 전달」을 눌러 참석자에게 보내고, 이어서 외부 도구 전송까지 마쳐 주세요.",
+                  "주관자가 결과를 전달하면 할 일 알림을 받을 수 있어요."),
+    "sending": ("참석자에게 결과를 전달하는 중이에요", 5, "run", "", ""),
+    "unexported": ("결과는 전달했지만, 아직 외부 도구로 보내지 않았어요", 6, "warn",
+                   "오른쪽 위 「외부 도구 전송」을 눌러 Jira · 메일로 보내면 모든 단계가 끝나요.",
+                   "주관자가 외부 도구 전송까지 마치면 모든 단계가 끝나요."),
+    "deliver_fail": ("참석자 일부에게 결과를 전달하지 못했어요", 5, "fail",
+                     "오른쪽 위 「결과 재전송」을 눌러 실패한 참석자에게 다시 보내 주세요. "
+                     "모두 전달된 뒤에 외부 도구 전송으로 넘어갈 수 있어요.",
+                     "주관자가 결과를 다시 보내면 할 일 알림을 받을 수 있어요."),
+    "fail": ("외부 도구로 보내지 못한 곳이 있어 다시 보내야 해요", 6, "fail",
+             "아래 안내에서 다시 보내 주세요.", "주관자가 다시 보내면 모든 단계가 끝나요."),
+}
+
+
+def _stage_panel(s: AppState, m: Meeting, stage: str, host: bool) -> None:
+    """남은 단계가 있으면 맨 위에 색 상자: 제목 · 1~6단계 중 지금 어디인지 · 무엇을 하면 되는지."""
+    if stage not in _STAGE_PANEL:
+        return
+    from views.finalize import STEPS  # finalize 가 이 파일을 불러서 함수 안에서
+
+    title, step, tone, host_text, other_text = _STAGE_PANEL[stage]
+    items = []
+    for i, name in enumerate(STEPS, 1):
+        state = "done" if i < step else ("on" if i == step else "todo")
+        mark = "✓" if state == "done" else str(i)
+        items.append(f'<span class="sp-step {state}"><span class="dot">{mark}</span>{esc(name)}</span>')
+    arrow = '<span class="sp-arrow">›</span>'
+    text = host_text if host else other_text
+    markup(f'<div class="stage-panel stage-{tone}" role="status">'
+           f'<div class="sp-head"><span class="sp-title">{esc(title)}</span>'
+           f'<span class="sp-left">남은 단계 {len(STEPS) - step + 1}개</span></div>'
+           f'<div class="sp-steps">{arrow.join(items)}</div>'
+           + (f'<p class="sp-text">{esc(text)}</p>' if text else "") + "</div>")
 
 
 def render_header(s: AppState, m: Meeting) -> None:
@@ -116,11 +157,14 @@ def render_header(s: AppState, m: Meeting) -> None:
     role = sel.my_role(m)
     role_label, role_tone = ("내가 주관", "host") if role == "host" else sel.ROLE_TAGS[role]
 
+    if not editing and s.fin_flow != m.id:  # 확정 흐름 중에는 위 단계 표시가 이미 알려 줌
+        _stage_panel(s, m, "review", host)
     # 1행: (왼쪽) 제목·역할  /  (오른쪽) 삭제 · 공유 · (편집) · 확정하기 또는 읽기 전용 안내
     with st.container(horizontal=True, vertical_alignment="bottom"):
         with st.container(gap="small"):
-            _title(s, m, tag(role_label, role_tone)
-                   + (tag("검토 요청 받음", "warn") if host and sel.review_requested(s, m) else ""))
+            _title(s, m, stage_badge("review") + tag(role_label, role_tone)
+                   + (tag("검토 요청 받음", "warn") if host and sel.review_requested(s, m) else ""),
+                   boxed=True, box_class="review")
         with st.container(horizontal=True, width="content", gap="small"):
             if owner and not editing:
                 button("삭제", key="md_delete", variant="dangerline", icon=":material/delete:",

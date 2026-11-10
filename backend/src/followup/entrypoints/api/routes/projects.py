@@ -5,12 +5,12 @@ GET    /api/meeting-types                        정기 회의 종류 (이름 ·
 GET    /api/meeting-types/{type_id}/meetings     정기 회의(weekly · monthly · normal) 안의 회의, 최신순
 GET    /api/meetings                             내가 볼 수 있는 전체 회의, 최신순   (POST /api/meetings 는 요약 생성)
 GET    /api/meetings/{meeting_id}/status-history 상태 변경 이력 (누가 · 언제)
-GET    /api/projects                             내 프로젝트 목록
+GET    /api/projects                             내 프로젝트 목록 (+ can_delete: 「폴더 삭제」 버튼을 보여도 되는지)
 POST   /api/projects                             프로젝트 만들기 (만든 사람 = 주관자 · id 를 주면 그 id 로 — AI 요약의 project_id)
 GET    /api/projects/{project_id}                프로젝트 하나 (+ members: 멤버 user_id, 주관자 먼저)
 GET    /api/projects/{project_id}/members        멤버 user_id 목록
 PATCH  /api/projects/{project_id}                이름 바꾸기 (주관자)
-DELETE /api/projects/{project_id}                지우기 (주관자)
+DELETE /api/projects/{project_id}                지우기 (주관자 · 회의 0개 · 분석 중 아님 · PostgreSQL + Neo4j 실제 삭제)
 POST   /api/projects/{project_id}/members        멤버 추가 (주관자)
 DELETE /api/projects/{project_id}/members/{user_id}
 GET    /api/projects/{project_id}/meetings       프로젝트 안 회의, 최신순
@@ -29,8 +29,9 @@ from pydantic import BaseModel, Field
 
 from followup.adapters.neo4j import folder_graph as graph_rows
 from followup.adapters.neo4j import folder_wiki as wiki_rows
+from followup.adapters.neo4j import load as graph
 from followup.adapters.postgres import folders, meetings, minutes
-from followup.application import folder_graph, folder_wiki
+from followup.application import folder_graph, folder_wiki, meeting_jobs
 from followup.entrypoints.api.routes.actor import actor
 
 logger = logging.getLogger(__name__)
@@ -86,7 +87,9 @@ def status_history(meeting_id: str, me: str = Depends(actor)):
 # ---------------------------------------------------------------- 프로젝트
 @router.get("/projects")
 def list_projects(me: str = Depends(actor)):
-    return minutes.list_project_folders(actor_id=me)
+    # 회의가 하나도 없고(내가 못 보는 회의까지) 지금 분석 중인 사람도 없는 내 프로젝트만 지울 수 있음
+    return [{**p, "can_delete": p["host_user_id"] == me and not p["total_meetings"]
+             and not meeting_jobs.running_users(p["id"])} for p in minutes.list_project_folders(actor_id=me)]
 
 
 @router.post("/projects", status_code=201)
@@ -112,7 +115,8 @@ def rename_project(project_id: str, body: ProjectUpdate, me: str = Depends(actor
 
 @router.delete("/projects/{project_id}")
 def delete_project(project_id: str, me: str = Depends(actor)):
-    return folders.delete_folder(actor_id=me, folder_id=project_id)
+    return folders.delete_folder(actor_id=me, folder_id=project_id, analyzing=meeting_jobs.running_users(project_id),
+                                 before_commit=lambda: graph.delete_project(project_id))
 
 
 @router.post("/projects/{project_id}/members", status_code=204)
