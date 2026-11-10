@@ -26,12 +26,15 @@ FEATURES = (
     ("user-check", "담당자 없는 업무에, 딱 맞는 후보 추천",
      "담당자가 정해지지 않은 일은 스킬·부서·업무 여유로 상위 3명을 추천해요. 최종 선택은 주관자가 하고, 확정 전까지 바꿀 수 있어요.",
      ("추천 이유 표시", "추천 밖 선택 이유 기록", "확정 전 변경 가능")),
-    ("search", "지난 회의에 묻고, 근거로 답 받기",
-     "「PG사는 어디로 정했어요?」처럼 편하게 물으면 회의·안건·원문 발언을 찾아 답해요. 답 문장마다 근거 발언이 달려 있어 빠진 회의의 맥락도 바로 확인할 수 있어요.",
-     ("문장마다 근거 발언", "근거 있음 · 일부 근거 표시", "회의록으로 바로 이동")),
     ("send", "확정하면 참석자에게 바로 전달",
      "검토를 마치고 확정하면 요약·결정·할 일을 참석자에게 보내고, 할 일은 Jira 이슈로 이어 보내요. 실패한 사람·도구에만 다시 보낼 수 있어요.",
      ("실시간 진행 상황", "실패 건만 재시도", "다른 부서에 범위 지정 공유")),
+    ("flow", "RE:MAP — 회의가 쌓일수록 정리되는 프로젝트 지도",
+     "프로젝트의 회의를 주제별로 묶어 안건 → 논의 → 결정·할 일까지 펼쳐 봐요. 주제마다 '의견이 갈림 · 정해지지 않음 · 정리됨'으로 나눠 무엇이 남았는지 바로 알 수 있어요.",
+     ("주제 → 안건 → 결정까지 펼쳐 보기", "의견 갈림 · 미정 · 정리됨 자동 분류", "빠진 회차도 근거와 함께 따라잡기")),
+    ("search", "회의 아카이브 — 지난 회의에 묻고, 근거로 답 받기",
+     "쌓인 회의록 전체가 물어볼 수 있는 아카이브가 돼요. 「PG사는 어디로 정했어요?」처럼 물으면 회의·안건·원문 발언을 찾아, 문장마다 근거를 달아 답해요.",
+     ("문장마다 근거 발언", "근거 있음 · 일부 근거 표시", "회의록으로 바로 이동")),
 )
 
 STEPS = (
@@ -43,7 +46,7 @@ STEPS = (
 
 ROLES = (
     ("주관자", "host", "회의를 정리하고 확정해요", ("요약·안건 검토와 편집", "담당자 추천에서 최종 선택", "다른 부서에 범위를 정해 공유")),
-    ("참석자", "att", "내 할 일만 빠르게 확인해요", ("내 할 일과 마감일 모아 보기", "근거 발언으로 맥락 확인", "지난 회의에 물어 맥락 확인")),
+    ("참석자", "att", "내 할 일만 빠르게 확인해요", ("내 할 일과 마감일 모아 보기", "근거 발언으로 맥락 확인", "회의 아카이브 · RE:MAP으로 지난 맥락 확인")),
     ("다른 부서", "shared", "필요한 만큼만 받아 봐요", ("요약·결정만 / 원문 포함 선택", "읽기 전용으로 안전하게", "폴더 멤버가 아니어도 열람")),
 )
 
@@ -77,19 +80,40 @@ def _mock_assign() -> str:
 
 
 def _mock_ask() -> str:
-    """회의에 물어보기 (views/ask.py): 질문 → 근거 상태 · 답 문장 · 근거 발언 · 관련 회의."""
+    """회의 아카이브 (views/ask.py): 질문 → 근거 상태 · 답 문장 · 근거 발언 · 관련 회의."""
     return (
         '<div class="mk mk-ask">'
         '<div class="mk-q"><span>PG사는 어디로 정했어요?</span></div>'
         '<div class="mk-a">'
         '<div class="mk-a-head"><span class="mk-a-ok">근거 있음</span><span class="mk-a-src">회의 2건에서 찾았어요</span></div>'
-        '<p>PG사는 <b>토스페이먼츠</b>로 정했어요.<sup>1</sup> 수수료가 더 낮고 정산 주기가 짧다는 점이 이유였어요.<sup>2</sup></p>'
-        '<div class="mk-cite"><i>1</i><span><b>박도윤</b> 수수료가 0.2%p 낮으니 토스로 가죠.</span>'
+        '<p>PG사는 <b>A사</b>로 정했어요.<sup>1</sup> 수수료가 더 낮고 정산 주기가 짧다는 점이 이유였어요.<sup>2</sup></p>'
+        '<div class="mk-cite"><i>1</i><span><b>박도윤</b> 수수료가 0.2%p 낮으니 A사로 가죠.</span>'
         '<em>11/4 주간 회의</em></div>'
         '<div class="mk-cite"><i>2</i><span><b>이서윤</b> 정산도 D+1이라 운영이 편해요.</span><em>11/4 주간 회의</em></div>'
         '<div class="mk-a-links"><span>PG사 선정 회의 →</span><span>11월 릴리즈 준비 →</span></div>'
         "</div></div>"
     )
+
+
+def _mock_remap() -> str:
+    """RE:MAP (폴더 위키 · views/folder.py): 왼쪽 주제 트리 (하나만 펼침) · 오른쪽 주제별 상태판 세 칸."""
+    tree = (
+        '<div class="mk-tree">'
+        '<span class="mk-t root">11월 릴리즈 준비</span>'
+        '<span class="mk-t topic on">PG사 선정</span>'
+        '<span class="mk-t agenda">11.4 · 수수료 · 정산 비교</span>'
+        '<span class="mk-t leaf dec">결정 · A사로 계약</span>'
+        '<span class="mk-t leaf todo">할 일 · 계약서 검토 <em>박도윤</em></span>'
+        '<span class="mk-t topic">중복 결제 오류</span>'
+        '<span class="mk-t topic">신규 온보딩</span>'
+        "</div>"
+    )
+    cols = (("split", "의견이 갈림", "신규 온보딩", "우려 · 관심사 선택을 뒤로?"),
+            ("open", "정해지지 않음", "중복 결제 오류", "미해결 · 원인 로그 확인 중"),
+            ("done", "정리됨", "PG사 선정", "결정 · A사로 계약"))
+    board = "".join(f'<div class="mk-col-{k}"><b>{t}</b><div class="mk-card"><span>{topic}</span><em>{note}</em></div></div>'
+                    for k, t, topic, note in cols)
+    return f'<div class="mk mk-remap">{tree}<div class="mk-board">{board}</div></div>'
 
 
 def _mock_deliver() -> str:
@@ -102,7 +126,7 @@ def _mock_deliver() -> str:
             '<span class="mk-note">참석자 5명 중 4명 전달됨</span></div>')
 
 
-_MOCKS = (_mock_evidence, _mock_assign, _mock_ask, _mock_deliver)
+_MOCKS = (_mock_evidence, _mock_assign, _mock_deliver, _mock_remap, _mock_ask)  # FEATURES 와 같은 순서
 
 
 # ---------------------------------------------------------------- 섹션
@@ -136,7 +160,7 @@ def _features() -> None:
             f'<div class="vis">{mock()}</div></div>'
         )
     markup('<section class="ld-sec alt" id="features">'
-           + _section_head("FEATURES", "회의 하나로 끝나는 네 가지 흐름")
+           + _section_head("FEATURES", "회의 하나로 끝나는 다섯 가지 흐름")
            + "".join(rows) + "</section>")
 
 

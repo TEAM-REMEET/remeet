@@ -57,10 +57,13 @@ html {
 }
 .hero-main h1 {
   margin: 0;
-  font-size: 44px;
+  font-size: 58px;  /* 첫 화면에서 가장 먼저 눈에 들어오게 (예전 44) · 「할 일과 맥락이 남아요」가 글 영역 폭 580 안에 한 줄 */
   line-height: 1.28;
   font-weight: 800;
-  letter-spacing: -1.4px;
+  letter-spacing: -2px;
+}
+@media (max-width: 720px) {
+  .hero-main h1 { font-size: 40px; letter-spacing: -1.2px; }
 }
 .hero-main h1 em {
   font-style: normal;
@@ -72,25 +75,30 @@ html {
   color: #4a4f57;
   line-height: 1.65;
 }
+/* 가치 4개를 한 줄로 길게 (글 영역 폭 580 안에 들어가게 칩 여백 · 글자를 조금 줄임 · 좁은 화면에서만 줄바꿈) */
 .hero-values {
   list-style: none;
   margin: 6px 0 0 !important;
   padding: 0 !important;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
 }
 .hero-values li {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 5px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--ink-2);
   background: #ffffff;
   border: 1px solid var(--line-soft);
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 99px;
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .hero-values { flex-wrap: wrap; }
 }
 .hero-main .login-preview {
   margin-top: 18px;
@@ -470,7 +478,7 @@ html {
   border-radius: 3px;
 }
 
-/* 기능 03 · 회의에 물어보기: 질문 말풍선 → 답 카드 (근거 상태 · 각주 · 근거 발언 · 관련 회의) */
+/* 기능 05 · 회의 아카이브: 질문 말풍선 → 답 카드 (근거 상태 · 각주 · 근거 발언 · 관련 회의) */
 .mk-ask {
   display: flex;
   flex-direction: column;
@@ -566,6 +574,109 @@ html {
   border-radius: 99px;
   padding: 3px 10px;
   background: #ffffff;
+}
+
+/* 기능 04 · RE:MAP: 왼쪽 주제 트리(들여쓰기로 단계) · 오른쪽 주제별 상태판 세 칸 (실제 위키 화면 색) */
+.mk-remap {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.mk-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mk-t {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 99px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mk-t.root {
+  background: var(--dark);
+  color: #ffffff;
+  border-radius: 4px;
+}
+.mk-t.topic {
+  margin-left: 12px;
+  background: #fce4ec;
+  border: 1px solid #e8467c;
+  color: #1a1a1a;
+}
+.mk-t.topic.on {
+  background: #e8467c;
+  color: #ffffff;
+}
+.mk-t.agenda {
+  margin-left: 24px;
+  border-radius: 4px;
+  background: #eef0fd;
+  border: 1px solid #6c5ce7;
+}
+.mk-t.leaf {
+  margin-left: 36px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.mk-t.dec {
+  background: #e9f2ff;
+  color: #2f538f;
+}
+.mk-t.todo {
+  background: #e3f4ea;
+  color: #146c3c;
+}
+.mk-t em {
+  font-style: normal;
+  color: var(--muted);
+  margin-left: 4px;
+}
+.mk-board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mk-board > div {
+  border-top: 3px solid;
+  border-radius: 4px;
+  background: var(--bg-soft);
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mk-board b {
+  font-size: 11.5px;
+}
+.mk-col-split { border-color: #d64545 !important; }
+.mk-col-open { border-color: var(--accent) !important; }
+.mk-col-done { border-color: #2e9d5b !important; }
+.mk-card {
+  background: #ffffff;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mk-card span {
+  font-size: 12px;
+  font-weight: 600;
+}
+.mk-card em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--muted);
+}
+@media (max-width: 640px) {
+  .mk-remap { grid-template-columns: 1fr; }
 }
 
 .mk-step {
@@ -800,7 +911,7 @@ html {
   gap: 22px !important;
 }
 .hero-main h1 {
-  line-height: 1.42 !important;
+  line-height: 1.25 !important;  /* 글자가 커져서 줄 간격은 조금 좁혀 두 줄이 한 덩어리로 보이게 */
 }
 .hero-main p {
   line-height: 1.85 !important;

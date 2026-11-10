@@ -44,7 +44,7 @@ STATIC = {
     "search": ("search", "검색 결과"),
     "sent": ("shared-sent", "공유한 회의"),
     "recv": ("shared-received", "공유 받은 회의"),
-    "ask": ("ask", "회의에 물어보기"),
+    "ask": ("ask", "회의 아카이브"),
     "adm_cost": ("admin-cost", "비용 관리"),
     "adm_members": ("admin-members", "구성원 관리"),
     "adm_mcp": ("admin-mcp", "MCP 관리"),

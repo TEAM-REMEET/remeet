@@ -113,11 +113,12 @@ from ui.icons import brand_logo, icon
 from utils.browser import latin_keys
 from utils.text import esc
 
-# 히어로의 가치 3줄
+# 히어로의 가치 4개 (아래 기능 카드 순서와 같게: 정리 → 담당 → RE:MAP → 아카이브)
 _VALUES = (
     ("lines", "원문 근거와 함께 정리"),
     ("user-check", "담당자 추천 · 사람이 결정"),
-    ("search", "회의 기반 질의응답"),
+    ("flow", "RE:MAP으로 프로젝트 한눈에"),
+    ("search", "회의 아카이브로 묻고 답 받기"),
 )
 
 _PREVIEW = (
@@ -137,9 +138,9 @@ def _hero() -> None:
     )
     markup(
         '<div class="hero">'
-        f'<div class="login-brand">{brand_logo(30)}</div>'
+        f'<div class="login-brand">{brand_logo(38)}</div>'
         '<div class="hero-main">'
-        '<span class="eyebrow">텍스트 회의록 정리 · 담당자 추천 · 회의에 물어보기</span>'
+        '<span class="eyebrow">텍스트 회의록 정리 · 담당자 추천 · 회의 아카이브 · RE:MAP</span>'
         "<h1>회의가 끝나면,<br>할 일과 맥락이 <em>남아요</em></h1>"
         "<p>회의록을 올리면 안건·결정·할 일로 나누고,<br>담당자 추천부터 결과 전달까지 이어서 처리해요.</p>"
         f'<ul class="hero-values">{values}</ul>'
