@@ -117,7 +117,7 @@ from utils.text import esc
 _VALUES = (
     ("lines", "원문 근거와 함께 정리"),
     ("user-check", "담당자 추천 · 사람이 결정"),
-    ("wiki", "폴더별로 쌓이는 회의 위키"),
+    ("search", "회의 기반 질의응답"),
 )
 
 _PREVIEW = (
@@ -139,7 +139,7 @@ def _hero() -> None:
         '<div class="hero">'
         f'<div class="login-brand">{brand_logo(30)}</div>'
         '<div class="hero-main">'
-        '<span class="eyebrow">텍스트 회의록 정리 · 담당자 추천 · 회의 위키</span>'
+        '<span class="eyebrow">텍스트 회의록 정리 · 담당자 추천 · 회의에 물어보기</span>'
         "<h1>회의가 끝나면,<br>할 일과 맥락이 <em>남아요</em></h1>"
         "<p>회의록을 올리면 안건·결정·할 일로 나누고,<br>담당자 추천부터 결과 전달까지 이어서 처리해요.</p>"
         f'<ul class="hero-values">{values}</ul>'
