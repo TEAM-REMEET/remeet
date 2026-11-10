@@ -23,6 +23,8 @@
 .tag-on { background: #E7F6EE; color: #16653D; }
 .tag-expired { background: #FDECEA; color: #C5221F; }
 .tag-off { background: #EEF0F3; color: #5F646D; }
+.tag-stage { gap: 4px; padding: 0 8px 0 7px; font-weight: 700; }
+.tag-stage .ico { flex: none; }
 .tag.small { height: 20px; font-size: 11px; }
 
 .cnt { font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 3px; line-height: 18px; background: #EEF0F3; color: #6B7079; }
@@ -60,6 +62,7 @@
 .notice-neutral { background: #F6F7F9; border: 1px solid var(--line-soft); color: var(--ink-2); }
 .notice-success { background: #E7F5EC; color: #1D6B43; }
 .notice-danger { background: #FDECEA; color: #7A1C16; }
+.notice-warn { background: #FFF8DC; border: 1px solid #F2DC8C; color: #5C4500; }
 .notice.small { font-size: 13px; }
 .hint { margin: 0; color: var(--muted); font-size: 12px; }
 .empty {
@@ -239,6 +242,11 @@
 }
 [class*="st-key-mrow-"] { padding: 18px 20px; border-bottom: 1px solid #E6E8EB; background: #FFFFFF; }
 [class*="st-key-mrow-"]:hover { background: var(--bg-soft); }
+/* 남은 단계가 있는 회의 줄 (제목 옆 .tag-stage 배지가 있으면): 왼쪽 굵은 색 줄 + 옅은 바탕 */
+[class*="st-key-mrow-"]:has(.tag-stage) { background: #FFFBEA; box-shadow: inset 5px 0 0 #F2B705; }
+[class*="st-key-mrow-"]:has(.tag-stage.tag-run) { background: #FFF4EB; box-shadow: inset 5px 0 0 #F37321; }
+[class*="st-key-mrow-"]:has(.tag-stage.tag-fail) { background: #FEF3F2; box-shadow: inset 5px 0 0 #D93025; }
+[class*="st-key-mrow-"]:has(.tag-stage):hover { filter: brightness(0.985); }
 [class*="st-key-mrow-"] [data-testid="stHorizontalBlock"] { column-gap: 16px; }
 .cell { display: flex; flex-direction: column; gap: 4px; }
 .cell .main { font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 4px; }
@@ -354,3 +362,23 @@ body:has(.ld-cover) .st-key-topbar { z-index: 99995; }  /* 상단바(알림)는 
 .st-key-step-head .page-header h1 { font-size: 26px; font-weight: 800; line-height: 1.3; letter-spacing: -0.5px; }
 .st-key-step-head .page-header { gap: 4px; }
 .st-key-step-head-btns { flex: none !important; flex-wrap: nowrap !important; margin-top: -2px; }
+
+/* ---------- 회의 상세 맨 위 진행 상황 상자 (views/meeting/header._stage_panel) ---------- */
+.stage-panel { border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; border: 1px solid; border-left-width: 6px; }
+.stage-warn { background: #FFF8DC; border-color: #F2DC8C; border-left-color: #F2B705; }
+.stage-run { background: #FFF4EB; border-color: #FBD3B4; border-left-color: #F37321; }
+.stage-fail { background: #FEF3F2; border-color: #F6C6C2; border-left-color: #D93025; }
+.stage-panel .sp-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.stage-panel .sp-title { font-size: 17px; font-weight: 800; color: #1A1A1A; }
+.stage-panel .sp-left { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(0,0,0,.07); color: #3B4048; }
+.stage-panel .sp-steps { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stage-panel .sp-step { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #8A8F98; }
+.stage-panel .sp-step .dot { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; background: #E3E5E9; color: #5F646D; }
+.stage-panel .sp-step.done { color: #4B515A; }
+.stage-panel .sp-step.done .dot { background: #DDF1E4; color: #146C3C; }
+.stage-panel .sp-step.on { color: #1A1A1A; font-weight: 800; }
+.stage-panel .sp-step.on .dot { background: var(--accent); color: #FFFFFF; box-shadow: 0 0 0 3px rgba(243,115,33,.25); }
+.stage-fail .sp-step.on .dot { background: #D93025; box-shadow: 0 0 0 3px rgba(217,48,37,.2); }
+.stage-panel .sp-arrow { color: #B9BDC4; font-weight: 700; }
+.stHtml p.sp-text { margin: 12px 0 0; font-size: 14px; color: #3B4048; line-height: 1.5; word-break: keep-all; }

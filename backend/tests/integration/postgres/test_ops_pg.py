@@ -44,7 +44,7 @@ class OpsIntegrationTests(unittest.TestCase):
 
     def setUp(self):
         with self.transaction() as cur:
-            cur.execute('''TRUNCATE notifications, failed_exports, integration_status, integration_tools,
+            cur.execute('''TRUNCATE notifications, failed_exports, meeting_exports, integration_status, integration_tools,
                         meeting_status_history, meeting_shares, meetings, folders, accounts CASCADE''')
             cur.execute("""INSERT INTO accounts (user_id,email,role) VALUES
                        ('u1','u1@test.local','USER'), ('u2','u2@test.local','USER'),
@@ -110,6 +110,26 @@ class OpsIntegrationTests(unittest.TestCase):
         self._meeting()
         ig.record_export(actor_id='u1', meeting_id='m1', tool_id='slack')
         self.assertIsNotNone({t['id']: t for t in ig.list_tools(actor_id='u1')}['slack']['last_sync_at'])
+
+    def test_export_marks_meeting_exported(self):
+        """외부 도구 전송 성공 · 다시 보내서 해결 → 회의 상세 exported_at (migrations/024)."""
+        from followup.adapters.postgres import integrations as ig
+        from followup.adapters.postgres.detail import get_meeting_detail
+        self._meeting('m1')
+        self._meeting('m2')
+        self.assertIsNone(get_meeting_detail(actor_id='u1', meeting_id='m1')['exported_at'])   # 결과 전달만 함
+        ig.record_export(actor_id='u1', meeting_id='m1', tool_id='slack')
+        first = get_meeting_detail(actor_id='u1', meeting_id='m1')['exported_at']
+        self.assertIsNotNone(first)
+        ig.record_export(actor_id='u1', meeting_id='m1', tool_id='slack')                    # 다시 보내도 한 행
+        with self.transaction() as cur:
+            cur.execute("SELECT count(*) AS n FROM meeting_exports WHERE meeting_id='m1'")
+            self.assertEqual(cur.fetchone()['n'], 1)
+        self.assertIsNone(get_meeting_detail(actor_id='u1', meeting_id='m2')['exported_at'])   # 다른 회의는 그대로
+        f = ig.record_failure(actor_id='u1', meeting_id='m2', tool_id='slack', kind='simple', reason='오류')
+        self.assertIsNone(get_meeting_detail(actor_id='u1', meeting_id='m2')['exported_at'])   # 실패는 보낸 게 아님
+        ig.resolve_failure(actor_id='u1', failure_id=f['id'])
+        self.assertIsNotNone(get_meeting_detail(actor_id='u1', meeting_id='m2')['exported_at'])
 
     def test_failures_resend_flow(self):
         from followup.adapters.postgres import integrations as ig

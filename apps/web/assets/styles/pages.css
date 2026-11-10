@@ -359,6 +359,29 @@
   border-radius: 50%;
   background: var(--accent);
 }
+/* 사이드바 「새 회의록」: 분석 중(주황 · 깜빡이는 점) · 검토 대기(노랑) */
+.nav-trail.job {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+.nav-trail.job.run { background: #FDE3CF; color: #8A3B00; }
+.nav-trail.job.run i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: navjob-pulse 1.2s ease-in-out infinite;
+}
+.nav-trail.job.ready { background: #FFF1B8; color: #6E5200; }
+@keyframes navjob-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .nav-trail.job.run i { animation: none; } }
 .nav-trail.bullet {
   left: 14px;
   right: auto;
@@ -1998,6 +2021,7 @@
   background: #EBEDF0;
 }
 .md-title-box .md-title { font-weight: 700; }
+.md-title-box.review { background: #FFF8DC; border-left-color: #F2B705; }  /* 검토 중 (최종 회의록 전) */
 
 /* 회의록 확정 확인 창 */
 /* .stHtml p { margin: 0 } (base.css) 보다 구체적이어야 여백이 먹어요 · 위 제목 상자와 한 줄(22px) 띄움 */

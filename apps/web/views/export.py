@@ -17,7 +17,7 @@ from state.store import get_state, me_id
 from ui.buttons import button
 from ui.html import markup
 from ui.icons import tool_mark
-from ui.layout import page, step_header
+from ui.layout import notice, page, step_header
 from ui.tags import tag
 from utils.text import esc, md_escape
 from views import finalize
@@ -131,6 +131,14 @@ def render() -> None:
         host = repo.meeting(mid).host == me_id()
         x = s.export
         p = export.progress(s) if x.started_at is not None else None
+        if p is None and sel.delivery_failed(s, mid):  # 주소로 바로 들어옴 등: 결과 전달(5단계)부터 마쳐야 함
+            with step_header("외부 도구 전송", f"{repo.meeting(mid).title} · 결과 전달을 먼저 마쳐 주세요"):
+                button("← 이전화면으로", key="exp_back", variant="secondary", on_click=actions.open_meeting, args=(mid,))
+                if host:
+                    button("결과 재전송", key="exp_redeliver", variant="primary", icon=":material/refresh:",
+                           on_click=actions.start_delivery, args=(mid, 2))
+            notice("결과를 전달하지 못한 참석자가 있어요. 모두 전달된 뒤에 외부 도구로 보낼 수 있어요.", "danger")
+            return
         # 현재 단계 제목과 같은 줄 오른쪽: (고를 때) 이전화면으로 · 보내기 / (끝나면) 다시 보내기 · 전달 완료
         with step_header("외부 도구 전송", f"{repo.meeting(mid).title} · 결과를 보낼 외부 도구(Jira · Slack 등)를 골라 보내요"):
             if host and p is None:

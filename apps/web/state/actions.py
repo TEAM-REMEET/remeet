@@ -797,11 +797,12 @@ def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
 
 def confirm_pick(kind: str) -> None:
     s = get_state()
-    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 참석자에서 빠짐)
+    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 빠짐 · 작성자 '나'는 그대로 남음)
         if s.pick_draft and not sel.can_host(s.pick_draft[0]):  # 신입은 주관자 X (조직도에서도 고를 수 없게 막아 둠)
             return
         old, s.nn_host = s.nn_host, (s.pick_draft[0] if s.pick_draft else s.nn_host)
-        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in (old, s.nn_host)]
+        drop = {s.nn_host} if old == me_id() else {old, s.nn_host}
+        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in drop]
     elif kind == "cp_people":
         s.nn_people = [x for x in [s.nn_host] if x] + [p for p in s.pick_draft if p != s.nn_host]
     s.nn_error = ""
@@ -833,9 +834,11 @@ def add_members(fid: str, pids: list[str]) -> None:
     for pid in pids:
         add_member(fid, pid)
     get_state().member_nonce += 1
+    st.session_state["_members_changed"] = True  # 모달 뒤의 폴더 상단 멤버 줄까지 다시 그림 (members_dialog)
 
 
 def remove_member(fid: str, pid: str) -> None:
+    st.session_state["_members_changed"] = True  # 모달 뒤의 폴더 상단 멤버 줄까지 다시 그림 (members_dialog)
     if _saved_project(fid):
         try:
             repo.remove_project_member(fid, pid)
@@ -1457,6 +1460,9 @@ def open_export(mid: str) -> None:
     if not sel.manages(repo.meeting(mid)):
         return
     s = get_state()
+    if sel.delivery_failed(s, mid):  # 결과 전달(5단계)에 실패한 참석자가 남음 → 다시 보내기부터
+        s.toast = "결과를 전달하지 못한 참석자가 있어요. 「결과 재전송」으로 먼저 다시 보내 주세요."
+        return
     s.export = ExportRun(meeting_id=mid, picked=export.default_pick(mid))
     go("export")
 
@@ -1537,6 +1543,8 @@ def run_row_action(mid: str, kind: str) -> None:
     elif kind == "progress":
         get_state().delivery.meeting_id = mid
         go("deliver")
+    elif kind == "export":  # 결과 전달은 마쳤지만 외부 도구 전송 전
+        open_export(mid)
     else:
         open_meeting(mid)
 

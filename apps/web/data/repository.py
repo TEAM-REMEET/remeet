@@ -102,6 +102,8 @@ def catalog(kind: str) -> list[dict]:
 
 
 def _people_changed() -> None:
+    global _people_version
+    _people_version += 1  # 기억한 사람 표(_people_memo)도 버림
     _people_rows.clear()
     _catalog.clear()  # 새 직무를 입력하면 직무 목록도 바뀜
     org_changed()  # 열려 있는 다른 화면도 새로 그림
@@ -193,14 +195,37 @@ def recommendation_config(item: dict) -> dict:
     }
 
 
+# 사람 표 기억 (출입증별): st.cache_data 는 꺼낼 때마다 목록을 통째로 복사해서,
+# 원문이 긴 회의(문단 700개+)는 문단마다 화자를 찾느라 회의 하나 여는 데 2~4초가 걸렸어요.
+# 만든 표를 잠깐(_PEOPLE_MEMO_TTL) 같이 쓰고, 구성원을 고치면(_people_changed) 바로 버려요.
+_PEOPLE_MEMO_TTL = 60  # 초 · 다른 곳(DB 직접 수정 · 메뉴의 Clear cache)의 변경은 최대 이만큼 늦게 보임
+_people_memo: dict[str, tuple[float, int, dict[str, Person], dict[str, str]]] = {}
+_people_version = 0  # _people_changed 마다 +1 → 기억한 표를 버림
+
+
+def _people_tables() -> tuple[dict[str, Person], dict[str, str]]:
+    token = _token()
+    hit = _people_memo.get(token)
+    if hit and hit[1] == _people_version and time.monotonic() - hit[0] < _PEOPLE_MEMO_TTL:
+        return hit[2], hit[3]
+    version = _people_version
+    by_id = {r["user_id"]: Person(r["user_id"], r["name"], r["name"], r["team"] or "") for r in people_rows()}
+    by_short = {p.short: p.id for p in by_id.values()}
+    if len(_people_memo) > 100:  # 오래된 출입증이 쌓이지 않게
+        _people_memo.clear()
+    _people_memo[token] = (time.monotonic(), version, by_id, by_short)
+    return by_id, by_short
+
+
 def people() -> dict[str, Person]:
-    """조직 구성원 (Neo4j). short는 원문 화자 이름인데 Neo4j에 따로 없어서 이름을 그대로 써요."""
-    return {r["user_id"]: Person(r["user_id"], r["name"], r["name"], r["team"] or "") for r in people_rows()}
+    """조직 구성원 (Neo4j). short는 원문 화자 이름인데 Neo4j에 따로 없어서 이름을 그대로 써요.
+    ⚠️ 여럿이 같이 쓰는 표라 고치지 말고 읽기만 하세요."""
+    return _people_tables()[0]
 
 
 def people_by_short_name() -> dict[str, str]:
     """원문 화자 이름(서윤) → 사람 id(yun)."""
-    return {p.short: p.id for p in people().values()}
+    return _people_tables()[1]
 
 
 # ---------------------------------------------------------------- meetings
@@ -286,6 +311,7 @@ def _meeting_only(d: dict) -> Meeting:
         branch_of=(d.get("branch_of") or {}).get("meeting"),
         author=d.get("author") or "",
         reviewer=d.get("reviewer") or "",
+        exported=bool(d.get("exported_at")),
     )
 
 

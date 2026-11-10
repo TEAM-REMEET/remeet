@@ -29,6 +29,8 @@ def _add_members(fid: str, members: list[str]) -> None:
 
 @st.dialog("폴더 멤버", width="medium", on_dismiss=actions.close_modal)
 def members_dialog() -> None:
+    if st.session_state.pop("_members_changed", False):  # 모달 안의 조작은 모달만 다시 그려서, 전체를 다시 그려 상단 멤버 줄도 맞춤
+        st.rerun()
     s = get_state()
     fs = sel.folders(s)
     scope = [k for k in s.members_scope if k in fs]

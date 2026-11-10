@@ -109,9 +109,19 @@ class PostgresCRUDIntegrationTests(unittest.TestCase):
         self.assertEqual(len(meetings.get_transcript(actor_id='u1',meeting_id=m['id'])),2)
         updated=meetings.update_meeting(actor_id='u1',meeting_id=m['id'],status='confirmed')
         self.assertEqual(updated['status'],'confirmed')
+        def neo4j_down(): raise RuntimeError('neo4j down')
+        with self.assertRaises(RuntimeError):   # Neo4j 삭제가 실패하면 PostgreSQL 삭제도 취소
+            meetings.delete_meeting(actor_id='u1',meeting_id=m['id'],before_commit=neo4j_down)
+        self.assertEqual(meetings.get_meeting(actor_id='u1',meeting_id=m['id'])['id'],m['id'])
+        other=meetings.create_meeting(actor_id='u1',meeting_id='m-test-002',project_id=f['id'])
         meetings.delete_meeting(actor_id='u1',meeting_id=m['id'])
         with self.assertRaises(NotFoundError):
             meetings.get_meeting(actor_id='u1',meeting_id=m['id'])
+        from followup.adapters.postgres import folders
+        folders.get_folder(actor_id='u1',folder_id=f['id'])   # 회의가 남아 있으면 프로젝트도 남음
+        meetings.delete_meeting(actor_id='u1',meeting_id=other['id'])
+        with self.assertRaises(NotFoundError):                # 마지막 회의를 지우면 프로젝트도 지워짐 (024)
+            folders.get_folder(actor_id='u1',folder_id=f['id'])
 
     def test_summary_share_cannot_read_raw_and_revocation(self):
         from followup.adapters.postgres import meetings, shares
