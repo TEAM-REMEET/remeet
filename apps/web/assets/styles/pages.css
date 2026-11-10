@@ -2174,8 +2174,9 @@
 .dash-key a { color: var(--accent); text-decoration: none; }
 .dash-key a:hover { text-decoration: underline; }
 .dash-title { flex: 1; min-width: 0; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dash-due { flex: none; width: 120px; margin-left: 24px; display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 13px; }
-.dash-date { flex: none; width: 36px; font-variant-numeric: tabular-nums; }  /* 날짜 폭 고정 → D-day 태그가 같은 줄에서 시작 */
+.dash-due { flex: none; width: 120px; margin-left: 24px; margin-right: 14px; display: flex; align-items: center; justify-content: flex-end; gap: 12px; color: var(--text-sub); font-size: 13px; }
+.dash-due .tag { min-width: 76px; }  /* D-3 도 「오늘 마감」 폭으로 (가운데 정렬은 .tag 기본) */
+.dash-date { flex: none; width: 36px; text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; }  /* 날짜 폭 고정 → D-day 태그가 같은 줄에서 끝남 */
 .dash-state { flex: none; width: 130px; display: flex; justify-content: flex-start; }  /* 헤더 · 드롭다운 폭 130 과 같게 */
 /* 줄 = 할 일 · 상태 드롭다운 · 줄 구분선은 줄 전체에 */
 /* 줄 = [이슈 키] [제목 버튼 · 누르면 상세 모달] [마감일 · 상태] [완료] · 칸 사이 10px = 헤더(.dash-row gap)와 같게 */
@@ -2189,6 +2190,8 @@
 .dash-tail { display: flex; align-items: center; gap: 10px; }
 [class*="st-key-dash-r-"] .dash-key { display: inline-block; }  /* 줄에서는 혼자 있어 폭(72px)이 먹도록 */
 .dash-head { border-top: 0; padding: 6px 2px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.dash-head .dash-due { font-size: inherit; color: inherit; }  /* 헤더 「마감일」도 「상태」와 같은 글자 · 날짜 칸(.dash-date)에 넣어 날짜와 왼쪽 끝을 맞춤 */
+.dash-head .dash-title { color: inherit; }  /* 헤더 「할 일」도 다른 헤더와 같은 색 */
 /* Jira 파랑 (Atlassian 브랜드 색) · 로고와 함께 눈에 띄게 */
 .dash-all { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; margin: 0 0 6px; padding: 7px 14px;
   border: 1px solid #0C66E4; border-radius: 8px; background: #E9F2FF; color: #0C66E4; font-size: 13px; font-weight: 600; text-decoration: none; }

@@ -47,7 +47,7 @@ def _due_tag(d: date | None, now: date) -> str:
 
 
 _HEAD = ('<div class="dash-row dash-head"><span class="dash-key">이슈</span><span class="dash-title">할 일</span>'
-         '<span class="dash-due">마감일</span><span class="dash-state">상태</span></div>')
+         '<span class="dash-due"><span class="dash-date">마감일</span></span><span class="dash-state">상태</span></div>')
 
 
 def _cells(issue: dict, now: date, done: bool) -> tuple[str, str]:
@@ -56,8 +56,8 @@ def _cells(issue: dict, now: date, done: bool) -> tuple[str, str]:
     key = esc(issue["key"])
     link = f'<a href="{esc(issue["url"])}" target="_blank" rel="noopener">{key}</a>' if issue.get("url") else key
     return (f'<span class="dash-key">{link}</span>',
-            f'<span class="dash-tail"><span class="dash-due"><span class="dash-date">{f"{d.month}/{d.day}" if d else "없음"}</span>'
-            f'{"" if done else _due_tag(d, now)}</span></span>')
+            f'<span class="dash-tail"><span class="dash-due">{"" if done else _due_tag(d, now)}'
+            f'<span class="dash-date">{f"{d.month}/{d.day}" if d else "없음"}</span></span></span>')
 
 
 HIDDEN_STATUSES = ("검토 중",)  # Jira 워크플로엔 있지만 RE:MEET 드롭다운에선 안 씀 (지금 이 상태인 이슈는 그대로 보임)
