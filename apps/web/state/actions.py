@@ -674,15 +674,21 @@ def compose_resume() -> None:
     s.nn_speaker_map = compose_ai.match_speakers(labels, s.nn_people)[0]
     s.cp_request = req
     s.compose_nonce += 1
-    if job["status"] == "failed":
+    if job["status"] == "failed":  # 서버 재시작 · 시간 초과 등으로 멈춤 → 「분석이 중단된 회의록」 창 (어느 화면에서든)
         s.cp_step = 1
-        _format_error(job.get("message") or "분석에 실패했어요. 다시 시도해 주세요.")
+        _set(nn_error=job.get("message") or "분석에 실패했어요. 다시 시도해 주세요.", modal="cp_resume")
         return
     s.cp_step = 2
     if job["status"] == "running":
         s.cp_job_running = True
     else:
         _job_done(s, job)
+
+
+def compose_continue() -> None:
+    """중단된 분석 안내 창 「이어하기」 → 되살린 입력값 그대로 작성 화면 1단계 (「다음 단계」로 다시 보내면 이어서 진행).
+    새로고침 · 다시 로그인하면 어느 화면에서든 이 창이 떠요 (사이드바 compose_resume)."""
+    go("compose", modal=None, nn_error=get_state().nn_error)  # 입력칸 아래 안내도 그대로
 
 
 def compose_clear_files() -> None:
