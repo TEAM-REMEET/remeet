@@ -62,10 +62,37 @@ def start_session(token: str, user: dict, restore: bool = False) -> None:
     admin = user["permission"] == "admin"
     _set(logged_in=True, login_error="", is_admin=admin, token=token, user_id=user["user_id"],
          user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], nn_people=[user["user_id"]], cookie_written=restore)
+    _load_preferences()
     if not restore:
         screen = "adm_members" if admin else "home"  # 일반 사용자는 홈(내 할 일 대시보드)부터
         _set(screen=screen, not_found="")
         router.request(screen)
+
+
+# 즐겨찾기 · 최근: 서버 키 → 화면 상태 (세션 안에서는 이 값을 읽고, 바꿀 때마다 서버에 저장 · 새로고침 · 다시 로그인해도 남게)
+_PREFS = {"people_fav": "pp_fav", "people_recent": "pp_recent", "team_fav": "adm_org_fav", "team_recent": "adm_org_recent"}
+
+
+def _load_preferences() -> None:
+    """로그인 · 새로고침으로 되살릴 때 한 번. 못 불러와도 로그인은 그대로 (빈 즐겨찾기로 시작)."""
+    try:
+        saved = repo.preferences()
+    except api.ApiError:
+        return
+    s = get_state()
+    for key, attr in _PREFS.items():
+        if key in saved:
+            setattr(s, attr, set(saved[key]) if attr.endswith("fav") else list(saved[key]))
+
+
+def _save_preference(key: str) -> None:
+    s = get_state()
+    value = getattr(s, _PREFS[key])
+    try:
+        repo.save_preference(key, sorted(value) if isinstance(value, set) else list(value))
+    except api.ApiError as e:
+        if key.endswith("fav"):  # 최근 목록은 조용히 (다음에 고를 때 다시 저장됨)
+            s.toast = f"즐겨찾기를 저장하지 못했어요. 새로고침하면 사라질 수 있어요. ({e})"
 
 
 def logout() -> None:
@@ -774,7 +801,10 @@ def people_pick(ctx: str, pid: str, on_pick) -> None:
     """이름을 누름: 부르는 쪽의 고르기/빼기 + 「최근」에 넣기."""
     s = get_state()
     on_pick(pid)
-    s.pp_recent = [pid] + [p for p in s.pp_recent if p != pid][:7]
+    recent = [pid] + [p for p in s.pp_recent if p != pid][:7]
+    if recent != s.pp_recent:  # 맨 앞 사람을 다시 고르면 저장 안 함
+        s.pp_recent = recent
+        _save_preference("people_recent")
 
 
 def people_toggle(ctx: str, node: str) -> None:
@@ -789,6 +819,7 @@ def people_tab(ctx: str, tab: str) -> None:
 def people_fav(pid: str) -> None:
     s = get_state()
     s.pp_fav ^= {pid}
+    _save_preference("people_fav")
 
 
 def pick_person(pid: str, single: bool) -> None:
@@ -1818,6 +1849,7 @@ def org_query(widget_key: str) -> None:
 def org_fav(team: str) -> None:
     s = get_state()
     s.adm_org_fav ^= {team}
+    _save_preference("team_fav")
 
 
 def org_done() -> None:
@@ -1827,6 +1859,7 @@ def org_done() -> None:
         s.adm_team_pending = s.adm_org_pick
     if s.adm_org_pick:
         s.adm_org_recent = [s.adm_org_pick] + [x for x in s.adm_org_recent if x != s.adm_org_pick][:4]
+        _save_preference("team_recent")
     s.modal = None
 
 
