@@ -394,6 +394,9 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
             sender = f"{who['name']} · {who['team']}" if who and who["team"] else (who["name"] if who else sh["sender_id"])
         todos = _todos(cur, meeting_id)
         gone = _todos(cur, meeting_id, deleted=True)
+        # 외부 도구 전송을 마친 시각 (migrations/024 · 도구가 여럿이면 마지막) · 없으면 아직 안 보냄
+        cur.execute("SELECT max(exported_at) AS at FROM meeting_exports WHERE meeting_id = %s", (meeting_id,))
+        exported_at = cur.fetchone()["at"]
 
     when, md = _when(m["held_at"])
     return {
@@ -417,6 +420,7 @@ def get_meeting_detail(*, actor_id: str, meeting_id: str, version: int | None = 
         "can_view_raw": raw_ok, "is_host": m["host_user_id"] == actor_id,
         # 작성 흐름 (migrations/008): 작성자 · 검토자 · 지금 내가 고칠 수 있는지 (신입이 제출한 뒤면 False)
         "author": m["created_by"], "reviewer": m["reviewer_id"], "can_edit": is_editor(m, actor_id),
+        "exported_at": exported_at.isoformat() if exported_at else None,
     }
 
 

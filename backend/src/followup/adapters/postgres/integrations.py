@@ -3,7 +3,8 @@
 web 화면 흐름과 같은 규칙
     연결 / 해제 / 다시 연결          관리자만 (MCP 관리 · 조직 전체에 적용)        set_tool_status()
         다시 연결(on) 하면 그 도구의 남은 tech 실패 → simple + 주관자에게 알림 (실제 재전송은 주관자가)
-    보내기 성공                      회의 주관자                                    record_export()  → 마지막 전송 시각
+    보내기 성공                      회의 주관자                                    record_export()  → 마지막 전송 시각 · 회의별 전송 기록
+        meeting_exports (migrations/024): 회의마다 외부 도구 전송을 마쳤는지 (화면 「외부 도구 전송 전」 구분)
     보내기 실패 기록                 회의 주관자 (전송을 시작한 사람)               record_failure()
         kind = simple  일시적 오류 → 주관자가 「다시 보내기」로 해결
         kind = tech    API · 인증 문제 → 관리자에게 알림, 관리자가 해결
@@ -39,6 +40,14 @@ def _tool(cur, tool_id: str) -> dict:
     if row is None:
         raise NotFoundError(f"없는 연동 도구입니다: {tool_id}")
     return row
+
+
+def _mark_exported(cur, meeting_id: str, tool_id: str, actor_id: str) -> None:
+    """이 회의를 이 도구로 보냈음 (같은 도구로 다시 보내면 시각만 새로)."""
+    cur.execute("""INSERT INTO meeting_exports (meeting_id, tool_id, exported_by) VALUES (%s, %s, %s)
+                   ON CONFLICT (meeting_id, tool_id) DO UPDATE
+                   SET exported_at = now(), exported_by = EXCLUDED.exported_by""",
+                (meeting_id, tool_id, actor_id))
 
 
 def _notify(cur, user_id: str, kind: str, text: str, meeting_id: str | None) -> None:
@@ -101,12 +110,13 @@ def set_tool_status(*, actor_id: str, tool_id: str, status: str) -> dict:
 # 보내기 결과
 # =====================================================================
 def record_export(*, actor_id: str, meeting_id: str, tool_id: str) -> None:
-    """보내기 성공 → 도구의 마지막 전송 시각 갱신 (회의 주관자)."""
+    """보내기 성공 → 도구의 마지막 전송 시각 갱신 + 이 회의를 보냈다는 기록 (회의 주관자)."""
     with transaction(actor_id) as cur:
         can_access_meeting(cur, meeting_id, actor_id, write=True)
         _tool(cur, tool_id)
         cur.execute("UPDATE integration_tools SET last_sync_at = now() WHERE id = %s", (tool_id,))
-    invalidate("integrations")
+        _mark_exported(cur, meeting_id, tool_id, actor_id)
+    invalidate("integrations", "_base_meetings")
 
 
 def record_failure(*, actor_id: str, meeting_id: str, tool_id: str, kind: str, reason: str,
@@ -183,6 +193,7 @@ def resolve_failure(*, actor_id: str, failure_id: str) -> dict:
                     (actor_id, failure_id))
         row = cur.fetchone()
         cur.execute("UPDATE integration_tools SET last_sync_at = now() WHERE id = %s", (f["tool_id"],))
+        _mark_exported(cur, f["meeting_id"], f["tool_id"], actor_id)  # 다시 보내서 해결 = 보냄
         cur.execute("SELECT 1 FROM failed_exports WHERE meeting_id = %s AND resolved_at IS NULL LIMIT 1",
                     (f["meeting_id"],))
         if cur.fetchone() is None:
