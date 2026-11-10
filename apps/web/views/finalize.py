@@ -127,11 +127,13 @@ def _restore_assigned(s: AppState, m: Meeting) -> None:
 def _load_recommendations(s: AppState, m: Meeting) -> bool:
     """처음 들어올 때 한 번: 검토가 끝난 요약을 Neo4j에 적재하고 담당자를 추천받아 둠 (목업 회의는 건너뜀).
     실패하면 안내와 「다시 시도」를 보여 주고 False (같은 요청을 다시 보내도 됨)."""
-    if m.id not in s.summaries or m.id in s.recommendations:
+    if m.id in s.recommendations or not (m.id in s.summaries or repo.is_saved(m.id)):
         return True
     if not st.session_state.pop("_fin_rec_failed", None):  # 실패 직후 화면에서는 다시 부르지 않음 (「다시 시도」를 눌러야)
         loading_overlay("담당자를 추천하고 있어요", "회의록을 저장하고 액션 아이템마다 후보를 찾는 중이에요 · 1~2분 걸릴 수 있어요")
         try:
+            if m.id not in s.summaries:  # 새로고침 · 재로그인 · 중단 후 재시작: 세션엔 없으니 서버에서 (없으면 담당자 창이 목업 후보로 빠짐)
+                s.final_summaries[m.id] = s.summaries[m.id] = repo.summary_json(m.id)
             s.recommendations[m.id] = repo.recommend_assignees(s.summaries[m.id])
             _restore_assigned(s, m)
             st.rerun()  # 로딩 표시 지우기
