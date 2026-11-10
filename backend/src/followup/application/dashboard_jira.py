@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import threading
 import time
 from datetime import datetime
 from typing import Any, Callable
@@ -26,6 +27,9 @@ FIELDS = ["summary", "status", "duedate", "labels"]
 _ACCOUNT = re.compile(r"^[\w:-]+$")  # Jira accountId (예: 712020:uuid) · JQL 에 넣기 전에 형식 확인
 # shortcut: 서버 프로세스 메모리 캐시 (서버 한 대 가정), 여러 대로 늘리면 공용 캐시(Redis 등)로
 _cache: dict[str, tuple[float, dict]] = {}
+_changes: dict[str, int] = {}  # 사람마다 상태를 바꾼 횟수 · 바꾸기 전에 시작한 조회가 늦게 끝나 캐시를 덮지 않게
+_refreshing: set[str] = set()  # 뒤에서 새로 받는 중인 사람 (한 사람에 하나만)
+_lock = threading.Lock()
 logger = logging.getLogger(__name__)
 
 
@@ -77,18 +81,49 @@ async def _mine(jira, cloud: str, email: str | None, labels: list[str]) -> tuple
 
 def my_issues(user_id: str, *, refresh: bool = False, connect: Callable | None = None,
               emails: Callable[[set[str]], dict[str, str]] = emails_of,
-              todo_ids: Callable[[str], list[int]] = _my_todo_ids, now: Callable[[], float] = time.monotonic) -> dict[str, Any]:
+              todo_ids: Callable[[str], list[int]] = _my_todo_ids, now: Callable[[], float] = time.monotonic,
+              spawn: Callable[[Callable[[], None]], None] | None = None) -> dict[str, Any]:
     """→ {linked, issues: [{key, title, status, category, due, url}], done: [같은 모양], all_url, synced_at}
     issues = 미완료 · done = 최근 DASHBOARD_DONE_DAYS 일 안에 완료된 일 (최대 DASHBOARD_MAX_DONE).
     linked=False: 이메일이 없거나 Jira 에서 그 이메일의 계정을 못 찾음 (그래도 ② 할 일 라벨로 찾은 이슈는 보여 줌).
     refresh=True: 「동기화」 · 캐시를 건너뜀 (직전 동기화 뒤 DASHBOARD_REFRESH_MIN_SECONDS 안이면 캐시 그대로).
-    synced_at: Jira 에서 실제로 가져온 시각 (한국 시간 ISO)."""
+    synced_at: Jira 에서 실제로 가져온 시각 (한국 시간 ISO).
+    캐시가 지났어도 DASHBOARD_STALE_SECONDS 안이면 지난 목록을 바로 주고 Jira 는 뒤에서 새로 받음
+    (Jira 조회가 10초 넘게 걸려 홈을 다시 그릴 때마다 기다리지 않게 · 「동기화」는 늘 기다려서 새로)."""
     hit = _cache.get(user_id)
     if hit:
         age = now() - hit[0]
         fresh = settings.DASHBOARD_REFRESH_MIN_SECONDS if refresh else settings.DASHBOARD_CACHE_SECONDS
         if age < fresh:
             return hit[1]
+        if not refresh and age < settings.DASHBOARD_STALE_SECONDS:
+            with _lock:
+                start = user_id not in _refreshing
+                _refreshing.add(user_id)
+            if start:
+                (spawn or _spawn)(lambda: _refresh_quietly(user_id, connect, emails, todo_ids, now))
+            return hit[1]
+    return _fetch(user_id, connect, emails, todo_ids, now)
+
+
+def _spawn(work: Callable[[], None]) -> None:
+    threading.Thread(target=work, daemon=True, name="dashboard-refresh").start()
+
+
+def _refresh_quietly(user_id: str, connect, emails, todo_ids, now) -> None:
+    """뒤에서 새로 받기 · 실패하면 지난 목록을 그대로 두고 로그만 (화면엔 마지막 동기화 시각이 그대로 보임)."""
+    try:
+        _fetch(user_id, connect, emails, todo_ids, now)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("대시보드 Jira 뒤에서 새로 받기 실패 (%s): %s", user_id, e)
+    finally:
+        with _lock:
+            _refreshing.discard(user_id)
+
+
+def _fetch(user_id: str, connect, emails, todo_ids, now) -> dict[str, Any]:
+    """Jira 에서 내 목록을 받아 캐시에 넣음 (받는 동안 상태를 바꿨으면 캐시는 덮지 않음 · 바꾼 값이 되돌아가 보이지 않게)."""
+    changes = _changes.get(user_id, 0)
     cfg, email, labels = _context(user_id, emails, todo_ids)
     cloud = cfg["JIRA_CLOUD_ID"]
 
@@ -123,7 +158,9 @@ def my_issues(user_id: str, *, refresh: bool = False, connect: Callable | None =
     except Exception as e:  # 접속 · 인증 · 권한 · 네트워크 (원인은 라우트가 서버 로그에만 남김)
         raise JiraUnavailable(str(e)) from e
     out["synced_at"] = datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
-    _cache[user_id] = (now(), out)
+    with _lock:
+        if _changes.get(user_id, 0) == changes:
+            _cache[user_id] = (now(), out)
     return out
 
 
@@ -219,6 +256,8 @@ def comment_change(user_name: str, key: str, status: str, *, connect: Callable |
 def _move_in_cache(user_id: str, key: str, done: bool, status: str, category: str = "") -> None:
     """방금 바꾼 일을 캐시 안에서 바로 옮김 (남은 일 ↔ 완료). Jira 검색은 상태 변경이 몇 초 늦게 반영돼서
     바로 다시 불러오면 양쪽에 다 보임 → 캐시를 비우지 않고 고쳐 둠 (다음 동기화 땐 Jira 에도 반영돼 있음)."""
+    with _lock:
+        _changes[user_id] = _changes.get(user_id, 0) + 1
     hit = _cache.get(user_id)
     data = hit and hit[1]
     if not data or "issues" not in data:

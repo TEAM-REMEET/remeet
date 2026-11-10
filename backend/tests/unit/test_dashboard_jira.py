@@ -63,6 +63,8 @@ class MyIssuesTests(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
         dashboard_jira._cache.clear()
+        dashboard_jira._changes.clear()
+        dashboard_jira._refreshing.clear()
         self.addCleanup(dashboard_jira._cache.clear)
 
     def issues(self, fake, user="u1", todo_ids=(), **kw):
@@ -113,8 +115,57 @@ class MyIssuesTests(unittest.TestCase):
         self.issues(fake, now=lambda: t[0])
         self.assertEqual(len(fake.jql), 2)  # 60초 안에는 다시 부르지 않음 (미완료 · 완료 2번이 한 묶음)
         t[0] = 61
-        self.issues(fake, now=lambda: t[0])
+        self.issues(fake, now=lambda: t[0], spawn=lambda work: work())
         self.assertEqual(len(fake.jql), 4)
+
+    def test_stale_list_returns_right_away_and_refreshes_behind(self):
+        """캐시가 지나면 지난 목록을 바로 주고 Jira 는 뒤에서 (한 사람에 하나만) · 10분 넘게 지났으면 기다려서."""
+        fake, t, jobs = FakeJira({"a@x.com": "acc"}), [0.0], []
+        first = self.issues(fake, now=lambda: t[0])
+        t[0] = 100
+        self.assertIs(self.issues(fake, now=lambda: t[0], spawn=jobs.append), first)  # 기다리지 않고 지난 목록
+        self.issues(fake, now=lambda: t[0], spawn=jobs.append)
+        self.assertEqual((len(jobs), len(fake.jql)), (1, 2))  # 뒤에서 받기는 하나만 · 아직 Jira 안 부름
+        jobs[0]()
+        self.assertEqual(len(fake.jql), 4)
+        self.assertEqual(dashboard_jira._cache["u1"][0], 100)  # 새 목록으로 바뀜
+        self.assertNotIn("u1", dashboard_jira._refreshing)
+        t[0] = 100 + 601
+        self.issues(fake, now=lambda: t[0], spawn=jobs.append)
+        self.assertEqual((len(jobs), len(fake.jql)), (1, 6))  # 너무 오래됨 → 그 자리에서 새로
+
+    def test_refresh_started_before_status_change_does_not_overwrite(self):
+        """뒤에서 받는 중에 상태를 바꾸면, 늦게 끝난 (바꾸기 전) 조회가 캐시를 덮지 않음 → 바꾼 상태가 되돌아가 보이지 않게."""
+        fake, t, jobs = FakeJira({"a@x.com": "acc"}), [0.0], []
+        self.issues(fake, now=lambda: t[0])
+        t[0] = 100
+        self.issues(fake, now=lambda: t[0], spawn=jobs.append)
+        real_search = fake.search
+
+        async def change_midway(cloud_id, jql, fields, max_results):
+            if "statusCategory = Done" in jql:
+                dashboard_jira._move_in_cache("u1", "KAN-7", True, "완료", "done")
+            return await real_search(cloud_id, jql, fields, max_results)
+        fake.search = change_midway
+        jobs[0]()
+        self.assertEqual(dashboard_jira._cache["u1"][0], 0.0)  # 덮지 않음
+        self.assertIn("KAN-7", [i["key"] for i in dashboard_jira._cache["u1"][1]["done"]])
+
+    def test_failed_refresh_behind_keeps_old_list(self):
+        fake, t, jobs = FakeJira({"a@x.com": "acc"}), [0.0], []
+        first = self.issues(fake, now=lambda: t[0])
+
+        @asynccontextmanager
+        async def broken(email, token):
+            raise ConnectionError("Jira 다운")
+            yield
+        t[0] = 100
+        dashboard_jira.my_issues("u1", connect=broken, emails=lambda ids: {"u1": "a@x.com"}, todo_ids=lambda uid: [],
+                                 now=lambda: t[0], spawn=jobs.append)
+        with self.assertLogs(dashboard_jira.logger, level="WARNING"):
+            jobs[0]()
+        self.assertIs(dashboard_jira._cache["u1"][1], first)
+        self.assertNotIn("u1", dashboard_jira._refreshing)
 
     def test_refresh_skips_cache_but_not_within_min_interval(self):
         fake, t = FakeJira({"a@x.com": "acc"}), [0.0]

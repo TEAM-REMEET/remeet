@@ -2216,9 +2216,9 @@
 [class*="st-key-dash-st-"] button, [class*="st-key-dash-opt-"] button { display: flex !important; align-items: center !important; }
 [class*="st-key-dash-st-"] button > div, [class*="st-key-dash-opt-"] button > div { display: flex; align-items: center; }
 [class*="st-key-dash-st-"] button p, [class*="st-key-dash-opt-"] button p { margin: 0 !important; line-height: 1.5 !important; }
-[class*="st-key-dash-st-new-"] button { background: #DFE1E6 !important; color: #42526E !important; }
-[class*="st-key-dash-st-indeterminate-"] button { background: #CCE0FF !important; color: #0747A6 !important; }
-[class*="st-key-dash-st-done-"] button { background: #DCFFF1 !important; color: #216E4E !important; }
+[class*="st-key-dash-st-new-"] button { background: #EDEEF1 !important; color: #42526E !important; }
+[class*="st-key-dash-st-indeterminate-"] button { background: #DCEAFF !important; color: #0747A6 !important; }
+[class*="st-key-dash-st-done-"] button { background: #DFF4E9 !important; color: #23704A !important; }
 /* 펼친 목록 = 상태 버튼과 같은 폭(100) · 버튼은 글자 길이가 달라도 최소 100 으로 맞춤 (팝오버 목록은 버튼 밖에 떠서 폭을 따라가지 못함)
    한 줄 = 줄 전체가 그 상태 색 (안에 딱지를 따로 두지 않음) · 마우스를 올리면 살짝 진하게 */
 [data-testid="stPopoverBody"]:has([class*="st-key-dash-opt-"]) { width: 100px !important; min-width: 0 !important; max-height: none !important;
@@ -2229,6 +2229,6 @@
   border: 0 !important; border-radius: 0 !important; font-size: 12px; font-weight: 700; }
 [class*="st-key-dash-opt-"] button * { color: inherit !important; font-size: 12px; }
 [class*="st-key-dash-opt-"] button:hover { filter: brightness(.95); }
-[class*="st-key-dash-opt-new-"] button { background: #DFE1E6 !important; color: #42526E !important; }
-[class*="st-key-dash-opt-indeterminate-"] button { background: #CCE0FF !important; color: #0747A6 !important; }
-[class*="st-key-dash-opt-done-"] button { background: #DCFFF1 !important; color: #216E4E !important; }
+[class*="st-key-dash-opt-new-"] button { background: #EDEEF1 !important; color: #42526E !important; }
+[class*="st-key-dash-opt-indeterminate-"] button { background: #DCEAFF !important; color: #0747A6 !important; }
+[class*="st-key-dash-opt-done-"] button { background: #DFF4E9 !important; color: #23704A !important; }

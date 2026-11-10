@@ -39,10 +39,10 @@ def _due(issue: dict) -> date | None:
 def _due_tag(d: date | None, now: date) -> str:
     if d is None:
         return ""
-    if d < now:
-        return tag(f"{(now - d).days}일 지남", "warn")
+    if d < now:  # 지남 = 빨강 · 오늘 마감 · D-n = 노랑
+        return tag(f"{(now - d).days}일 지남", "fail")
     if d <= now + timedelta(days=SOON_DAYS):
-        return tag("오늘 마감" if d == now else f"D-{(d - now).days}", "hold")
+        return tag("오늘 마감" if d == now else f"D-{(d - now).days}", "warn")
     return ""
 
 
