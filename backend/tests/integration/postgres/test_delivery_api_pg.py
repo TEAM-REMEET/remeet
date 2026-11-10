@@ -127,7 +127,10 @@ class DeliveryAndReviewApiTests(unittest.TestCase):
     def test_delete_meeting(self):
         mid = self._confirmed()
         self.call('DELETE', f'/api/meetings/{mid}', self.U2, status=403)
-        self.call('DELETE', f'/api/meetings/{mid}', self.U1, status=204)
+        from unittest.mock import patch
+        with patch('followup.adapters.neo4j.load.delete_meeting') as graph_delete:   # Neo4j 도 같이 지움
+            self.call('DELETE', f'/api/meetings/{mid}', self.U1, status=204)
+        graph_delete.assert_called_once_with(mid)
         self.call('GET', f'/api/meetings/{mid}', self.U1, status=404)
         self.assertNotIn(mid, [m['id'] for m in self.call('GET', '/api/meetings', self.U1)])
 

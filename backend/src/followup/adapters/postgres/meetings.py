@@ -1,6 +1,7 @@
 """관리자 새 회의 만들 수 없음"""
 from __future__ import annotations
 from datetime import datetime
+from typing import Callable
 from followup.adapters.postgres.db import transaction
 from .common import (
     ValidationError,
@@ -111,13 +112,17 @@ def update_meeting(*,actor_id: str,meeting_id: str,project_id: str | None = None
     return row
 
 
-def delete_meeting(*,actor_id: str,meeting_id: str) -> dict:
+def delete_meeting(*,actor_id: str,meeting_id: str,before_commit: Callable[[], None] | None = None) -> dict:
     """회의 삭제 (주관자 · 작성자 · 검토자는 못 함). 신입 주관자는 제출 뒤 고칠 수 없어도 삭제는 할 수 있어서
-    RLS 의 수정 규칙 대신 migrations/018 의 remeet_internal.delete_meeting() 으로 지워요."""
+    RLS 의 수정 규칙 대신 migrations/018 · 024 의 remeet_internal.delete_meeting() 으로 지워요.
+    프로젝트에 남은 회의가 없으면 프로젝트(폴더)도 같이 지워요 (024 · Neo4j Project 노드와 같은 규칙).
+    before_commit: 같이 지울 다른 저장소(Neo4j). 여기서 실패하면 PostgreSQL 삭제도 취소돼요."""
     with transaction(actor_id) as cur:
         can_manage_meeting(cur,meeting_id,actor_id)
         cur.execute("SELECT * FROM remeet_internal.delete_meeting(%s)", (meeting_id,))
         row=cur.fetchone()
+        if row and before_commit:
+            before_commit()
     invalidate('_base_meetings','base_folders')
     return row
 

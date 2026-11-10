@@ -760,11 +760,12 @@ def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
 
 def confirm_pick(kind: str) -> None:
     s = get_state()
-    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 참석자에서 빠짐)
+    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 빠짐 · 작성자 '나'는 그대로 남음)
         if s.pick_draft and not sel.can_host(s.pick_draft[0]):  # 신입은 주관자 X (조직도에서도 고를 수 없게 막아 둠)
             return
         old, s.nn_host = s.nn_host, (s.pick_draft[0] if s.pick_draft else s.nn_host)
-        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in (old, s.nn_host)]
+        drop = {s.nn_host} if old == me_id() else {old, s.nn_host}
+        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in drop]
     elif kind == "cp_people":
         s.nn_people = [x for x in [s.nn_host] if x] + [p for p in s.pick_draft if p != s.nn_host]
     s.nn_error = ""
