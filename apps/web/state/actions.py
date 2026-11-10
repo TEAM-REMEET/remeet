@@ -796,9 +796,11 @@ def add_members(fid: str, pids: list[str]) -> None:
     for pid in pids:
         add_member(fid, pid)
     get_state().member_nonce += 1
+    st.session_state["_members_changed"] = True  # 모달 뒤의 폴더 상단 멤버 줄까지 다시 그림 (members_dialog)
 
 
 def remove_member(fid: str, pid: str) -> None:
+    st.session_state["_members_changed"] = True  # 모달 뒤의 폴더 상단 멤버 줄까지 다시 그림 (members_dialog)
     if _saved_project(fid):
         try:
             repo.remove_project_member(fid, pid)
