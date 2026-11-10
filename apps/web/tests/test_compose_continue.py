@@ -35,17 +35,17 @@ class ComposeContinueTests(unittest.TestCase):
 
     def test_continue_goes_to_compose_with_inputs(self):
         actions.compose_resume()  # 새로고침 뒤 사이드바가 부름
-        self.assertEqual((self.state.modal, self.state.cp_resumed, self.state.nn_title), ("cp_format_error", True, "주간 회의"))
+        self.assertEqual((self.state.modal, self.state.nn_title), ("cp_resume", "주간 회의"))  # 「분석이 중단된 회의록」 창
         actions.compose_continue()
         s = self.state
-        self.assertEqual((s.screen, s.modal, s.cp_step, s.cp_resumed), ("compose", None, 1, False))
+        self.assertEqual((s.screen, s.modal, s.cp_step), ("compose", None, 1))
         self.assertEqual((s.nn_title, s.nn_text), ("주간 회의", "바트: 안녕하세요."))  # 입력 그대로
         self.assertIn("중단", s.nn_error)
 
-    def test_closing_with_x_then_errors_say_ok_again(self):
+    def test_closing_with_x_keeps_screen(self):
         actions.compose_resume()
         actions.close_modal()
-        self.assertFalse(self.state.cp_resumed)
+        self.assertEqual((self.state.screen, self.state.modal), ("home", None))  # X 는 그냥 닫기
 
 
 if __name__ == "__main__":

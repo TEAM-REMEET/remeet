@@ -113,12 +113,25 @@ def format_error_dialog() -> None:
            f'<p>{esc(s.nn_error)}</p></div>'
            '<p class="hint" style="font-size:13px;margin-top:10px">고친 뒤 다시 「다음 단계」를 눌러 주세요.</p>')
     with st.container(horizontal=True, horizontal_alignment="right"):
-        if s.cp_resumed:  # 중단된 분석을 되살림 → 입력이 남은 작성 화면으로
-            if button("이어하기", key="cp_warn_continue", variant="primary"):
-                actions.compose_continue()
-                st.rerun()
-        elif button("확인", key="cp_warn_ok", variant="primary"):
+        if button("확인", key="cp_warn_ok", variant="primary"):
             actions.close_modal()
+            st.rerun()
+
+
+@st.dialog("분석이 중단된 회의록이 있어요", width="small", on_dismiss=actions.close_modal)
+def resume_dialog() -> None:
+    """새로고침 · 다시 로그인했는데 서버에 중단된 분석이 있음 (actions.compose_resume) → 어떤 회의인지 · 왜 멈췄는지 ·
+    「이어하기」 = 되살린 입력 그대로 작성 화면 1단계 (「다음 단계」로 다시 보내면 멈춘 단계부터)."""
+    s = get_state()
+    when = f" · {s.nn_date.month}월 {s.nn_date.day}일" if s.nn_date else ""
+    markup(f'<p class="cp-resume-meeting"><b>「{esc(s.nn_title or "제목 없음")}」</b>{esc(when)}</p>'
+           '<div class="cp-warn-dlg"><span class="cp-warn-ico">!</span>'
+           f'<p>{esc(s.nn_error)}</p></div>'
+           '<p class="hint" style="font-size:13px;margin-top:10px">입력한 내용은 그대로 남아 있어요. 「이어하기」를 누른 뒤 '
+           '「다음 단계」를 누르면 멈춘 단계부터 이어서 분석해요.</p>')
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        if button("이어하기", key="cp_resume_continue", variant="primary"):
+            actions.compose_continue()
             st.rerun()
 
 

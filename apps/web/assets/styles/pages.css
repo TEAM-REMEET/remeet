@@ -2232,3 +2232,6 @@
 [class*="st-key-dash-opt-new-"] button { background: #EDEEF1 !important; color: #42526E !important; }
 [class*="st-key-dash-opt-indeterminate-"] button { background: #DCEAFF !important; color: #0747A6 !important; }
 [class*="st-key-dash-opt-done-"] button { background: #DFF4E9 !important; color: #23704A !important; }
+
+/* 분석이 중단된 회의록 창: 어떤 회의인지 (제목 · 날짜) */
+.cp-resume-meeting { margin: 0 0 10px; font-size: 15px; color: var(--ink); }
