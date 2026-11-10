@@ -2235,6 +2235,8 @@
 
 /* 분석이 중단된 회의록 창: 어떤 회의인지 (제목 · 날짜) */
 .cp-resume-meeting { margin: 0 0 10px; font-size: 15px; color: var(--ink); }
-/* 입력 오류 · 분석 중단 창: 제목 앞 경고 아이콘 (st.dialog icon) 을 주황으로 · 본문 문구는 여백 없이 */
-div[role="dialog"]:has(.cp-warn-dlg) h2 [data-testid="stIconMaterial"] { color: #F37321; }
+/* 입력 오류 · 분석 중단 창: 제목 앞 경고 아이콘 (st.dialog icon · 제목 h2 옆 stDialogIcon) 주황 · 제목 글자(18px)와 같은 크기 */
+div[role="dialog"]:has(.cp-warn-dlg) [data-testid="stDialogIcon"] { display: inline-flex; align-items: center; color: #F37321; }
+div[role="dialog"]:has(.cp-warn-dlg) [data-testid="stDialogIcon"] span { font-size: 18px !important; width: 18px !important;
+  height: 18px !important; line-height: 1 !important; color: inherit !important; }
 .cp-warn-dlg p { margin: 0; }
