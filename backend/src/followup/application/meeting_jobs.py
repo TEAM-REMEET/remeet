@@ -2,6 +2,7 @@
 
     start_job    입력 확인 후 바로 돌아옴 → 뒤에서 summarize_submission 실행 → PostgreSQL 저장 · 주관자에게 넘김
                  (save_analysis · 브라우저를 닫아도 됨) → 끝나면 done · failed로 기록 (saved: draft · handoff)
+                 (done 이고 등록한 사람이 주관자면 「요약이 끝났어요」 알림)
     current_job  지금 작업 (입력값 포함, 완료면 결과 포함) — 화면을 벗어났거나 브라우저를 닫았어도 이어서 볼 수 있음
     clear_job    끝난 작업 지우기 (실행 중이면 지우지 않음)
 
@@ -41,6 +42,24 @@ class JobRunningError(RuntimeError):
     """이 사람의 작업이 이미 실행 중"""
 
 
+def _notify_summary_done(user_id: str, submission: MeetingSubmission) -> None:
+    """요약이 끝나 분석 및 검토 화면으로 넘어가는 시점 → 내가 작성하고 내가 주관하는 회의면 나에게 알림.
+
+    주관자가 다른 사람이면 분석 결과를 바로 넘기고 주관자에게 review 알림이 가요 (save_analysis · compose.handoff_meeting).
+    아직 작성 중(draft)이라 회의 상세가 아니라 작성 화면에서 검토해야 하므로 meeting_id 없이 보냄 (web open_notification).
+    알림을 못 보내도 분석 결과는 그대로 쓸 수 있어야 해서 실패는 로그만 남김.
+    """
+    if submission.host_user_id != user_id:
+        return
+    try:
+        from followup.adapters.postgres import notifications
+
+        notifications.create_notification(actor_id=user_id, user_id=user_id, kind="created",
+                                          text=f"「{submission.title}」 회의록 요약이 끝났어요. 분석 결과를 검토해 주세요.")
+    except Exception:
+        logger.exception("요약 완료 알림 실패 (%s)", user_id)
+
+
 def _run(user_id: str, job: dict, submission: MeetingSubmission, llm: StructuredLLM, store: SummaryStore) -> None:
     try:
         if ui_test.is_test_transcript(submission.transcript):   # 시험 모드: LLM 없이 저장된 결과 사용
@@ -61,6 +80,9 @@ def _run(user_id: str, job: dict, submission: MeetingSubmission, llm: Structured
     with _lock:
         store.write_job(user_id, json.dumps(job, ensure_ascii=False))
         _active.pop(user_id, None)
+    # 결과를 기록한 뒤에 알림 (누르면 바로 결과를 볼 수 있게) · 프로젝트가 지워졌으면(save_error) 화면이 1단계로 돌아가므로 보내지 않음
+    if job["status"] == "done" and not job.get("save_error"):
+        _notify_summary_done(user_id, submission)
 
 
 def _save(user_id: str, submission: MeetingSubmission, summary, job: dict) -> dict:

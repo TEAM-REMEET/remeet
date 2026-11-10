@@ -51,6 +51,9 @@ class Base(unittest.TestCase):
         app.dependency_overrides[get_store] = lambda: self.store
         app.dependency_overrides[get_llm] = lambda: self.llm
         app.dependency_overrides[current_user] = lambda: {"user_id": "u1", "permission": "member"}
+        notify = patch("followup.adapters.postgres.notifications.create_notification")  # DB 없이
+        notify.start()
+        self.addCleanup(notify.stop)
         self.client = TestClient(app, raise_server_exceptions=False)
 
     def start(self, body=None):
