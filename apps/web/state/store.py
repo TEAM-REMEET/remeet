@@ -99,7 +99,7 @@ class AppState:
 
     # --- 폴더
     folder_id: str = "all"  # all 이면 회의 종류 화면
-    folder_tab: str = "all"  # all(회의록 목록) | wiki
+    folder_tab: str = "all"  # all(회의록 목록) | wiki(그래프 · 미해결 이슈)
     folder_role: str = "todo"  # all | todo(내 할 일이 있는 회의 · 기본) | host | att
     show_brief: bool = False
     new_folders: list[NewFolder] = field(default_factory=list)
@@ -179,7 +179,7 @@ class AppState:
     fin_flow: str = ""  # 확정 흐름 중인 회의 id (회의 상세 · 결과 전달 · 외부 도구 전송에도 단계 표시 · 외부 도구 전송을 마치면 끝)
 
     # --- 위키
-    folder_wiki_node: str = "c"
+    wiki_view: str = "graph"  # 위키 탭 안: graph 그래프(주제 트리) | board 미해결 이슈
 
     # --- 외부 전송 (연결은 관리자 · MCP 관리에서)
     export_resent: set[str] = field(default_factory=set)  # 다시 보낸 전송 실패 기록 id (f1 · f2)
