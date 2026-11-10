@@ -161,7 +161,8 @@ def _admin_sidebar() -> None:
     with st.sidebar, st.container(key="sidebar"):
         with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 구성원 관리로
             markup(f'<div class="sb-logo">{brand_logo(20)}<span class="sb-admin-tag">관리자</span></div>')
-            button("구성원 관리로", key="logo_home", variant="ghost", on_click=actions.go, args=("adm_members",))
+            button("구성원 관리로", key="logo_home", variant="ghost", on_click=actions.go, args=("adm_members",),
+                   width="stretch")
         with st.container(key="sidebar-groups", gap=None):
             with st.container(key="navgroup-admin"):
                 _caption("관리")
@@ -191,7 +192,7 @@ def render_sidebar() -> None:
     with st.sidebar, st.container(key="sidebar"):
         with st.container(key="sb-logo-link", gap=None):  # 로고를 누르면 홈으로
             markup(f'<div class="sb-logo">{brand_logo(20)}</div>')
-            button("홈으로", key="logo_home", variant="ghost", on_click=actions.go, args=("home",))
+            button("홈으로", key="logo_home", variant="ghost", on_click=actions.go, args=("home",), width="stretch")
         with st.container(key="sidebar-groups", gap=None):
             with st.container(key="navgroup-main"):
                 _nav_item("홈", "home", on=s.screen == "home" and not s.not_found, on_click=actions.go, args=("home",),

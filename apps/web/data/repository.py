@@ -426,7 +426,7 @@ def _api_folders(token: str) -> dict[str, Folder]:
         notes = [r["id"] for r in _pages(f"/api/projects/{pid}/meetings", token)]  # 최신순
         brief = api.call("GET", f"/api/projects/{pid}/briefs", token=token)
         return Folder(pid, p["name"], p["host_user_id"], tuple(members), tuple(notes),
-                      tuple(BriefItem(b["label"], b["text"]) for b in brief))
+                      tuple(BriefItem(b["label"], b["text"]) for b in brief), can_delete=bool(p.get("can_delete")))
 
     projects = api.call("GET", "/api/projects", token=token)  # 내가 멤버 · 주관인 프로젝트
     with ThreadPoolExecutor(_DETAIL_WORKERS) as pool:
@@ -671,10 +671,12 @@ def ask(question: str) -> dict:
 
 
 # ---------------------------------------------------------------- 외부 도구 전송 · Jira
-def export_jira(meeting_title: str, items: list[dict]) -> dict:
-    """액션 아이템 → Jira 이슈 (POST /api/exports/jira). items: [{key, title, owners, due}]
+def export_jira(meeting_title: str, items: list[dict], meeting_date: str | None = None) -> dict:
+    """액션 아이템 → Jira 이슈 (POST /api/exports/jira). items: [{key, title, owners, due, agenda}]
+    meeting_date (YYYY-MM-DD) · agenda 는 이슈 설명에 적음.
     → {project_key, created, total, items: [{key, ok, issue_key | error, assigned}]} · 연결 · 설정 실패는 ApiError."""
-    return api.call("POST", "/api/exports/jira", {"meeting_title": meeting_title, "items": items}, _token(),
+    return api.call("POST", "/api/exports/jira",
+                    {"meeting_title": meeting_title, "meeting_date": meeting_date, "items": items}, _token(),
                     timeout=EXPORT_TIMEOUT)
 
 
@@ -694,18 +696,32 @@ def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
                     _token(), timeout=EXPORT_TIMEOUT)
 
 
+# ---------------------------------------------------------------- 내 화면 설정 (즐겨찾기 · 최근)
+def preferences() -> dict[str, list[str]]:
+    """GET /api/me/preferences → {people_fav, people_recent, team_fav, team_recent} (저장한 키만). 실패는 ApiError."""
+    return api.call("GET", "/api/me/preferences", None, _token())
+
+
+def save_preference(key: str, value: list[str]) -> None:
+    """PUT /api/me/preferences/{key} · 목록을 통째로 바꿈. 실패는 ApiError."""
+    api.call("PUT", f"/api/me/preferences/{key}", {"value": value}, _token())
+
+
 # ---------------------------------------------------------------- 홈 · 대시보드
 def dashboard_jira(refresh: bool = False) -> dict:
     """내 Jira 할 일 (GET /api/dashboard/jira · 로그인한 사람이 담당자인 미완료 이슈, 서버가 1분 캐시).
     refresh: 「동기화」 (캐시를 건너뜀).
-    → {linked, issues: [{key, title, status, category, due, url}], all_url, synced_at} · 연결 · 설정 실패는 ApiError."""
+    → {linked, issues: [{key, title, status, category, due, url}], done: [같은 모양 · 최근 완료], all_url, synced_at}
+    연결 · 설정 실패는 ApiError."""
     return api.call("GET", "/api/dashboard/jira" + ("?refresh=true" if refresh else ""), token=_token(), timeout=30)
 
 
-# ---------------------------------------------------------------- 회의록 쓰기 (PostgreSQL · 백엔드 API)
-# 실패하면 api.ApiError (메시지는 화면에 그대로 보여 줘도 돼요). 쓴 뒤에는 meetings_changed() 로 캐시를 비워 바로 보이게 해요.
-#   mid    = 바뀐 회의 (그 회의만 다시 받음) · 모르면 None → 전부 다시 받음 (느리지만 늘 맞음)
-#   projects = 프로젝트 목록도 바뀌는지 (회의가 생기거나 지워질 때 · 회의 안 내용만 바뀌면 False)
+def dashboard_set_status(key: str, status: str) -> dict:
+    """홈 · 상태 드롭다운 (POST /api/dashboard/jira/{key}/status) · 내 일인지는 서버가 확인.
+    → {key, status, category} · 내 일이 아님(403) · 그 상태로 못 바꿈(409) · 연결 실패는 ApiError."""
+    return api.call("POST", f"/api/dashboard/jira/{key}/status", {"status": status}, _token(), timeout=60)
+
+
 def _write(method: str, path: str, body: dict | None = None, *, mid: str | None = None, projects: bool = True):
     res = api.call(method, path, body, _token())
     if mid:

@@ -7,6 +7,7 @@ import sys
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from datetime import date
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -17,8 +18,10 @@ from state import export  # noqa: E402
 from state import selectors as sel  # noqa: E402
 from state.store import AppState  # noqa: E402
 
-MEETING = SimpleNamespace(title="주간 회의", host="u1", people=("u1", "u2", "u3"))
-TODOS = [(0, Todo("견적 비교", ("u2",), "11/10", (), todo_id=41)), (1, Todo("디자인 검토", (), "", (), todo_id=42)),
+MEETING = SimpleNamespace(title="주간 회의", host="u1", people=("u1", "u2", "u3"), held_on=date(2026, 11, 10))
+MINUTES = {"agendas": [{"agenda_title": "커버 디자인", "major_discussions": [{"item_id": "I-41"}]}]}  # AI 할 일 → 안건
+TODOS = [(0, Todo("견적 비교", ("u2",), "11/10", (), item_id="I-41", todo_id=41)),
+         (1, Todo("디자인 검토", (), "", (), todo_id=42, agenda="기타")),
          (2, Todo("아직 저장 안 됨", (), "", ()))]  # todo_id 0
 
 
@@ -31,6 +34,7 @@ class ResendTests(unittest.TestCase):
         self.calls = []  # (무엇을, 인자) 순서대로
         for target, name, fn in [
             (repo, "meeting", lambda mid: MEETING),
+            (repo, "summary_json", lambda mid: MINUTES),
             (sel, "todo_items", lambda state, mid: TODOS),
             (sel, "todo_owner_ids", lambda state, key, t: t.owners),
             (repo, "record_failure", lambda *a: self.calls.append(("record", a))),
@@ -41,8 +45,9 @@ class ResendTests(unittest.TestCase):
             self.addCleanup(p.stop)
 
     def jira(self, fail_keys=()):
-        def export_jira(title, items):
+        def export_jira(title, items, meeting_date=None):
             self.calls.append(("jira", [i["key"] for i in items]))
+            self.sent_items, self.meeting_date = items, meeting_date
             return {"project_key": "KAN", "items": [{"key": i["key"], "ok": i["key"] not in fail_keys, "error": "boom"}
                                                     for i in items]}
         return patch.object(repo, "export_jira", export_jira)
@@ -70,6 +75,25 @@ class ResendTests(unittest.TestCase):
                              {"items": [{"key": u, "ok": True, "sent": True} for u in to]}):
             self.assertEqual(export.resend_failure(AppState(), failure("mail", ("u3",))), "")
         self.assertEqual(sent, [("회의록", ["u3"])])  # 못 받은 사람만 · 본문은 서버에 저장된 최종 회의록
+
+
+class DescriptionTests(unittest.TestCase):
+    setUp = ResendTests.setUp
+    jira = ResendTests.jira
+
+    def test_sends_meeting_date_and_agenda(self):
+        with self.jira():
+            export.resend_failure(AppState(), failure("jira", ("41", "42")))
+        self.assertEqual(self.meeting_date, "2026-11-10")
+        self.assertEqual({i["key"]: i["agenda"] for i in self.sent_items},
+                         {"41": "커버 디자인", "42": "기타"})  # AI 할 일은 회의록 JSON 에서 · 직접 추가한 일은 Todo.agenda
+
+    def test_due_edited_in_assignee_step_reaches_jira(self):
+        """담당자 추천에서 고친 마감일은 '2026-11-14' (ISO) · 저장된 값은 '11/10' → 둘 다 Jira 마감일로."""
+        edited = [(0, Todo("견적 비교", ("u2",), "2026-11-14", (), todo_id=41)), TODOS[1]]
+        with self.jira(), patch.object(sel, "todo_items", lambda state, mid: edited):
+            export.resend_failure(AppState(), failure("jira", ("41", "42")))
+        self.assertEqual({i["key"]: i["due"] for i in self.sent_items}, {"41": "2026-11-14", "42": None})
 
 
 class FirstSendTests(unittest.TestCase):

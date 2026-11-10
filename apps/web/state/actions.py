@@ -62,10 +62,37 @@ def start_session(token: str, user: dict, restore: bool = False) -> None:
     admin = user["permission"] == "admin"
     _set(logged_in=True, login_error="", is_admin=admin, token=token, user_id=user["user_id"],
          user_name=user["name"], user_email=user["email"], nn_host=user["user_id"], nn_people=[user["user_id"]], cookie_written=restore)
+    _load_preferences()
     if not restore:
         screen = "adm_members" if admin else "home"  # 일반 사용자는 홈(내 할 일 대시보드)부터
         _set(screen=screen, not_found="")
         router.request(screen)
+
+
+# 즐겨찾기 · 최근: 서버 키 → 화면 상태 (세션 안에서는 이 값을 읽고, 바꿀 때마다 서버에 저장 · 새로고침 · 다시 로그인해도 남게)
+_PREFS = {"people_fav": "pp_fav", "people_recent": "pp_recent", "team_fav": "adm_org_fav", "team_recent": "adm_org_recent"}
+
+
+def _load_preferences() -> None:
+    """로그인 · 새로고침으로 되살릴 때 한 번. 못 불러와도 로그인은 그대로 (빈 즐겨찾기로 시작)."""
+    try:
+        saved = repo.preferences()
+    except api.ApiError:
+        return
+    s = get_state()
+    for key, attr in _PREFS.items():
+        if key in saved:
+            setattr(s, attr, set(saved[key]) if attr.endswith("fav") else list(saved[key]))
+
+
+def _save_preference(key: str) -> None:
+    s = get_state()
+    value = getattr(s, _PREFS[key])
+    try:
+        repo.save_preference(key, sorted(value) if isinstance(value, set) else list(value))
+    except api.ApiError as e:
+        if key.endswith("fav"):  # 최근 목록은 조용히 (다음에 고를 때 다시 저장됨)
+            s.toast = f"즐겨찾기를 저장하지 못했어요. 새로고침하면 사라질 수 있어요. ({e})"
 
 
 def logout() -> None:
@@ -130,7 +157,7 @@ def set_search_query(widget_key: str) -> None:
 
 def open_meeting_search(mid: str, q: str) -> None:
     """회의 내용 검색 결과 → 회의를 열고 원문에서 그 글자를 찾아 둠."""
-    open_meeting(mid)
+    open_meeting(mid, detail=True)
     _set(raw_query=q, left_tab="raw")
 
 
@@ -171,7 +198,13 @@ def open_folder(fid: str) -> None:
     go("folder", folder_id=fid, folder_tab="all", folder_role="todo")
 
 
-def open_meeting(mid: str, *, editing: bool = False) -> None:
+def open_meeting(mid: str, *, editing: bool = False, detail: bool = False) -> None:
+    """회의 열기. 내가 확정할 회의(주관자 · 검토자)가 검토 중이면 지금 단계(3 담당자 추천) 화면으로 바로
+    (상단 진행 상자가 3단계인데 회의 상세가 열리던 문제). detail=True · editing=True 면 회의 상세 그대로."""
+    if not (editing or detail) and sel.status_of(get_state(), mid) == "review" and sel.manages(repo.meeting(mid)):
+        start_finalize(mid)
+        if get_state().screen == "finalize":
+            return  # 편집한 안건 저장이 실패하면(토스트) 회의 상세로
     # 확정 흐름(fin_flow)은 지우지 않음 → 흐름 중에 회의 상세로 와도 단계 표시가 이어짐 (외부 도구 전송을 마칠 때 끝)
     go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="all")
     _set(editing=editing)
@@ -198,6 +231,43 @@ def _wizard_reset() -> dict:
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
                 cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False,
                 cp_handoff="", cp_handoff_author="", cp_handoff_error="", cp_saved_id="")
+
+
+def open_issue_detail(issue: dict) -> None:
+    """홈 · 할 일을 누르면 상세 모달 (components/dialogs/issue.py) · 고른 이슈는 모달이 읽어 감."""
+    st.session_state["_issue_detail"] = issue
+    open_modal("issue_detail")
+
+
+def open_issue_meeting(mid: str) -> None:
+    """상세 모달 「회의록 보기」 → 모달을 닫고 그 회의(최종 회의록)로."""
+    close_modal()
+    open_meeting(mid)
+
+
+def change_issue_status(key: str, status: str, menu: str | None = None) -> None:
+    """홈 · 상태 드롭다운에서 고름 → 드롭다운을 바로 닫고, 바꾸기는 화면을 다시 그린 뒤로 미룸 (apply_pending_status).
+    콜백 안에서 바로 바꾸면 화면이 다시 그려지기 전이라 Jira 를 기다리는 동안 드롭다운 창이 그대로 열려 있음."""
+    if menu:
+        st.session_state[menu] = False
+    st.session_state["_pending_status"] = (key, status)
+
+
+def apply_pending_status() -> None:
+    """홈 목록을 다 그린 뒤 · 고른 상태를 Jira 에 반영 (내 일인지는 서버가 확인 · 누른 사람은 Jira 댓글로) → 다시 그림."""
+    pending = st.session_state.pop("_pending_status", None)
+    if not pending:
+        return
+    from ui.loading import loading_overlay
+
+    key, status = pending
+    loading_overlay(f"{key} 을(를) 「{status}」(으)로 바꾸고 있어요", "Jira 에 반영하는 중이에요")
+    try:
+        repo.dashboard_set_status(key, status)
+        _set(toast=f"{key} 을(를) 「{status}」(으)로 바꿨어요.")
+    except api.ApiError as e:
+        _set(toast=f"{key} 상태를 바꾸지 못했어요. ({e})")
+    st.rerun()
 
 
 def refresh_dashboard() -> None:
@@ -448,6 +518,11 @@ def compose_handoff() -> None:
     except api.ApiError as e:
         s.cp_handoff_error = str(e)
         return
+    _handed_off(s)
+
+
+def _handed_off(s) -> None:
+    """넘기기가 끝남 (서버가 분석 직후 넘겼거나 「다시 넘기기」) → 작성자는 새 회의록 화면으로."""
     title, host = s.nn_title, sel.name_of(s.nn_host)
     _clear_job()
     for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
@@ -548,11 +623,28 @@ def compose_poll() -> None:
     except api.ApiError:  # 잠깐 연결이 안 돼도 다음 확인 때 다시 봄
         return
     if job["status"] == "done":
-        _apply_result(s, job["result"])
-        _save_analysis(s)
+        _job_done(s, job)
     elif job["status"] != "running":
         s.cp_job_running, s.cp_step = False, 1
         _format_error(job.get("message") or "분석 작업을 찾을 수 없어요. 다시 시도해 주세요.")
+
+
+def _job_done(s, job: dict) -> None:
+    """분석이 끝남. 서버가 이미 저장 · 넘겼으면(job.saved) 그 결과를 따르고, 서버 저장이 실패했으면 예전처럼 여기서 저장 · 넘김."""
+    if job.get("saved") or job.get("save_error"):  # 서버가 프로젝트를 만들었거나 · 프로젝트가 지워짐 → 목록 다시 받기
+        repo.meetings_changed()
+    if job.get("save_error"):  # 분석하는 사이 고른 프로젝트가 지워짐 → 1단계에서 다시 고르기
+        s.cp_job_running, s.cp_step = False, 1
+        _format_error(job["save_error"])
+        return
+    if job.get("saved") == "handoff":
+        s.cp_job_running = False
+        _handed_off(s)
+        return
+    if job.get("saved") == "draft":
+        s.cp_saved_id = job["result"]["meeting_id"]
+    _apply_result(s, job["result"])
+    _save_analysis(s)
 
 
 def compose_resume() -> None:
@@ -590,8 +682,7 @@ def compose_resume() -> None:
     if job["status"] == "running":
         s.cp_job_running = True
     else:
-        _apply_result(s, job["result"])
-        _save_analysis(s)
+        _job_done(s, job)
 
 
 def compose_clear_files() -> None:
@@ -716,7 +807,10 @@ def people_pick(ctx: str, pid: str, on_pick) -> None:
     """이름을 누름: 부르는 쪽의 고르기/빼기 + 「최근」에 넣기."""
     s = get_state()
     on_pick(pid)
-    s.pp_recent = [pid] + [p for p in s.pp_recent if p != pid][:7]
+    recent = [pid] + [p for p in s.pp_recent if p != pid][:7]
+    if recent != s.pp_recent:  # 맨 앞 사람을 다시 고르면 저장 안 함
+        s.pp_recent = recent
+        _save_preference("people_recent")
 
 
 def people_toggle(ctx: str, node: str) -> None:
@@ -731,6 +825,7 @@ def people_tab(ctx: str, tab: str) -> None:
 def people_fav(pid: str) -> None:
     s = get_state()
     s.pp_fav ^= {pid}
+    _save_preference("people_fav")
 
 
 def pick_person(pid: str, single: bool) -> None:
@@ -760,11 +855,12 @@ def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
 
 def confirm_pick(kind: str) -> None:
     s = get_state()
-    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 참석자에서 빠짐)
+    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 빠짐 · 작성자 '나'는 그대로 남음)
         if s.pick_draft and not sel.can_host(s.pick_draft[0]):  # 신입은 주관자 X (조직도에서도 고를 수 없게 막아 둠)
             return
         old, s.nn_host = s.nn_host, (s.pick_draft[0] if s.pick_draft else s.nn_host)
-        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in (old, s.nn_host)]
+        drop = {s.nn_host} if old == me_id() else {old, s.nn_host}
+        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in drop]
     elif kind == "cp_people":
         s.nn_people = [x for x in [s.nn_host] if x] + [p for p in s.pick_draft if p != s.nn_host]
     s.nn_error = ""
@@ -1759,6 +1855,7 @@ def org_query(widget_key: str) -> None:
 def org_fav(team: str) -> None:
     s = get_state()
     s.adm_org_fav ^= {team}
+    _save_preference("team_fav")
 
 
 def org_done() -> None:
@@ -1768,6 +1865,7 @@ def org_done() -> None:
         s.adm_team_pending = s.adm_org_pick
     if s.adm_org_pick:
         s.adm_org_recent = [s.adm_org_pick] + [x for x in s.adm_org_recent if x != s.adm_org_pick][:4]
+        _save_preference("team_recent")
     s.modal = None
 
 
@@ -1823,6 +1921,19 @@ def _queue() -> list[dict]:
         return []
 
 
+def _open_summary_result() -> None:
+    """「요약이 끝났어요」 알림 → 분석 및 검토 화면 (작성 화면이 서버의 분석 작업에서 복원 · compose_resume)."""
+    try:
+        job = repo.current_summary_job()
+    except api.ApiError as e:
+        _set(toast=str(e))
+        return
+    if job["status"] == "none":  # 확정하거나 초기화하면 분석 작업이 지워져요
+        _set(toast="이미 확정했거나 지운 분석 결과예요.")
+        return
+    go("compose")
+
+
 def open_notification(nid: str) -> None:
     s = get_state()
     s.read_notifications.add(nid)
@@ -1840,6 +1951,8 @@ def open_notification(nid: str) -> None:
         open_meeting(n.meeting)
     elif n.folder and n.folder in sel.folders(s):  # 멤버로 추가됨 → 그 폴더로
         open_folder(n.folder)
+    elif n.kind == "created":  # 회의 연결이 없는 created = 요약 완료 (작성 화면에서 이어서 검토)
+        _open_summary_result()
 
 def add_member_now(fid: str, pid: str) -> None:
     """폴더 멤버 모달 · 조직도에서 이름을 누르면 바로 멤버로 추가 → 목록 맨 아래로."""

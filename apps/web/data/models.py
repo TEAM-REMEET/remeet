@@ -427,6 +427,7 @@ class Folder:
     notes: tuple[str, ...]
     brief: tuple[BriefItem, ...] = ()
     is_new: bool = False
+    can_delete: bool = False  # 회의가 하나도 없고(내가 못 보는 회의까지) 분석 중인 사람도 없는 내 프로젝트 (GET /api/projects)
 
 
 @dataclass(frozen=True)

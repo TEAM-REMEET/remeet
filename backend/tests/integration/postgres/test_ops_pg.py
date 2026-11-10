@@ -173,6 +173,32 @@ class OpsIntegrationTests(unittest.TestCase):
         self.assertIn(('delivered', 'm1'), self._notis('u1'))
         self.assertEqual(ig.list_failures(actor_id='ad', open_only=True), [])
 
+    def test_my_todo_ids_for_dashboard(self):
+        """홈 대시보드: 내가 담당자(공동 포함)인 할 일 id · 지운 할 일은 뺌 (표는 읽기만)."""
+        from followup.adapters.postgres import detail
+        self._meeting()
+        a = detail.add_todo(actor_id='u1', meeting_id='m1', text='견적 비교', owners=['u2', 'u3'])
+        b = detail.add_todo(actor_id='u1', meeting_id='m1', text='디자인 검토', owners=['u3'])
+        detail.delete_todo(actor_id='u1', todo_id=b['id'])
+        self.assertEqual(detail.my_todo_ids('u3', 10), [a['id']])                # 공동 담당자 · 지운 일은 뺌
+        self.assertEqual(detail.my_todo_ids('u2', 10), [a['id']])
+        self.assertEqual(detail.my_todo_ids('u1', 10), [])                       # 주관자라도 담당자가 아니면 없음
+
+    def test_preferences_saved_per_user(self):
+        """026: 즐겨찾기 · 최근을 사람마다 저장 (다시 로그인해도 남음) · 허용 키 · 개수 · 중복 정리."""
+        from followup.adapters.postgres import preferences as pref
+        from followup.adapters.postgres.common import ValidationError
+        self.assertEqual(pref.get_preferences(actor_id='u1'), {})
+        self.assertEqual(pref.set_preference(actor_id='u1', key='people_fav', value=['u2', 'u3', 'u2']), ['u2', 'u3'])
+        pref.set_preference(actor_id='u1', key='team_recent', value=['서비스기획팀'])
+        pref.set_preference(actor_id='u1', key='people_fav', value=['u3'])  # 통째로 바꿈
+        self.assertEqual(pref.get_preferences(actor_id='u1'), {'people_fav': ['u3'], 'team_recent': ['서비스기획팀']})
+        self.assertEqual(pref.get_preferences(actor_id='u2'), {})  # 남의 설정은 안 보임
+        pref.set_preference(actor_id='ad', key='team_fav', value=['프로덕트부'])  # 관리자도 (구성원 관리의 팀 즐겨찾기)
+        for key, value in (('theme', ['dark']), ('people_recent', [f'u{i}' for i in range(9)]), ('team_fav', [''])):
+            with self.assertRaises(ValidationError):
+                pref.set_preference(actor_id='u1', key=key, value=value)
+
     def test_failed_keys_and_reconnect_hands_tech_to_host(self):
         """022: 실패한 것(key) 저장 · None = 모름 · 다시 연결하면 남은 tech → simple + 주관자에게 알림."""
         from followup.adapters.postgres import integrations as ig

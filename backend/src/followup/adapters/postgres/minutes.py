@@ -335,13 +335,14 @@ def list_all_meetings(*, actor_id: str, limit: int = 50, offset: int = 0) -> lis
 
 
 def list_project_folders(*, actor_id: str) -> list[dict]:
-    """[프로젝트] 내가 멤버 · 주관인 프로젝트 목록 + (내가 볼 수 있는) 회의 수 · 마지막 회의 날짜."""
+    """[프로젝트] 내가 멤버 · 주관인 프로젝트 목록 + (내가 볼 수 있는) 회의 수 · 마지막 회의 날짜 · 전체 회의 수."""
     with transaction(actor_id) as cur:
         require_user(cur, actor_id)
         cur.execute(
             f"""
             SELECT f.id, f.name, f.host_user_id, f.sort_order, f.created_at,
-                   count(m.id) AS meeting_count, max({_LATEST}) AS last_meeting_at
+                   count(m.id) AS meeting_count, max({_LATEST}) AS last_meeting_at,
+                   remeet_internal.folder_meeting_count(f.id) AS total_meetings   -- 내가 못 보는 회의까지 (폴더 삭제 가능 여부)
             FROM folders f
             LEFT JOIN meetings m ON m.project_id = f.id AND {_IN_MY_PROJECTS}
             WHERE f.deleted_at IS NULL

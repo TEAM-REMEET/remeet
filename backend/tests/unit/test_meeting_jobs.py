@@ -6,12 +6,13 @@ import threading
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
 from followup import settings as cfg
 from followup.adapters.storage.local_files import LocalFileStore
+from followup.analysis.summary.transcript_builder import MeetingSubmission
 from followup.application import meeting_jobs
 from followup.entrypoints.api.main import app
 from followup.entrypoints.api.routes.auth import current_user
@@ -39,11 +40,19 @@ class JobBase(unittest.TestCase):
         env = patch.dict(os.environ, {"OPENAI_MODEL": "fake-model", "LANGSMITH_TRACING": "false"})
         env.start()
         self.addCleanup(env.stop)
+        notify = patch("followup.adapters.postgres.notifications.create_notification")  # DB 없이
+        notify.start()
+        self.addCleanup(notify.stop)
         self.addCleanup(app.dependency_overrides.clear)
         self.store = LocalFileStore(self.root)
         self.llm = GatedLLM()
-        self.addCleanup(self.finish_jobs)
         self.user = {"user_id": "u1", "permission": "member"}
+        self.saved = []   # 분석이 끝나면 PostgreSQL 대신 여기에 (save_analysis)
+        save = patch.object(meeting_jobs.save_analysis, "save_result",
+                            lambda uid, sub, summary, draft: self.saved.append((uid, summary["meeting_id"])) or "draft")
+        save.start()
+        self.addCleanup(save.stop)
+        self.addCleanup(self.finish_jobs)   # 패치보다 먼저 정리되도록 뒤에 등록 (LIFO)
         app.dependency_overrides[get_store] = lambda: self.store
         app.dependency_overrides[get_llm] = lambda: self.llm
         app.dependency_overrides[current_user] = lambda: self.user
@@ -88,6 +97,49 @@ class TimeLimitTests(JobBase):
 
     def test_settings_default_to_30_and_10_minutes(self):
         self.assertEqual((cfg.SUMMARY_TIMEOUT_SECONDS, cfg.REVIEW_TIMEOUT_SECONDS), (1800, 600))
+
+
+class SummaryDoneNotificationTests(unittest.TestCase):
+    """요약이 끝나 분석 및 검토 화면으로 넘어가는 시점의 알림 (작업을 끝까지 동기로 실행)"""
+
+    def run_job(self, user_id="u1", saved=None, **limit):
+        submission = MeetingSubmission(**REQUEST)
+        limit = limit or {"return_value": MagicMock(meeting_id="M_1")}
+        with patch.object(meeting_jobs, "run_with_limit", **limit), \
+                patch.object(meeting_jobs, "_save", return_value=saved or {"saved": "draft"}), \
+                patch("followup.adapters.postgres.notifications.create_notification") as self.notify:
+            self.notify.side_effect = getattr(self, "notify_error", None)
+            self.store = MagicMock()
+            meeting_jobs._run(user_id, {"status": "running"}, submission, MagicMock(), self.store)
+
+    def written_status(self):
+        return json.loads(self.store.write_job.call_args.args[1])["status"]
+
+    def test_author_who_hosts_is_notified_after_result_is_recorded(self):
+        self.run_job()
+        self.notify.assert_called_once_with(actor_id="u1", user_id="u1", kind="created",
+                                            text=f"「{REQUEST['title']}」 회의록 요약이 끝났어요. 분석 결과를 검토해 주세요.")
+        self.assertEqual(self.written_status(), "done")
+
+    def test_author_who_is_not_host_gets_no_summary_notification(self):
+        self.run_job(user_id="u10")                     # 주관자(u1)에게 넘기는 흐름 → 넘길 때 review 알림
+        self.notify.assert_not_called()
+
+    def test_deleted_project_sends_nothing(self):
+        self.run_job(saved={"saved": None, "save_error": "프로젝트 삭제됨"})   # 화면이 1단계로 돌아감
+        self.notify.assert_not_called()
+        self.assertEqual(self.written_status(), "done")
+
+    def test_failed_summary_sends_nothing(self):
+        self.run_job(side_effect=RuntimeError("LLM 오류"))
+        self.notify.assert_not_called()
+        self.assertEqual(self.written_status(), "failed")
+
+    def test_notification_failure_keeps_finished_job(self):
+        self.notify_error = RuntimeError("DB 오류")
+        with self.assertLogs("followup.application.meeting_jobs", "ERROR"):
+            self.run_job()
+        self.assertEqual(self.written_status(), "done")
 
 
 class JobTests(JobBase):
@@ -182,3 +234,28 @@ class JobTests(JobBase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SaveAfterAnalysisTests(JobBase):
+    """분석이 끝나면 서버가 바로 저장 (브라우저와 상관없이) · 분석 중인 프로젝트는 폴더 삭제를 막음"""
+
+    def test_done_job_is_saved_by_server(self):
+        self.start({**REQUEST, "project_id": "P_A"})
+        self.assertEqual(meeting_jobs.running_users("P_A"), ["u1"])   # 실행 중 → 이 프로젝트는 못 지움
+        self.assertEqual(meeting_jobs.running_users("P_B"), [])
+        self.llm.gate.set()
+        job = self.wait_finished()
+        self.assertEqual((job["status"], job["saved"]), ("done", "draft"))
+        self.assertEqual(self.saved, [("u1", job["meeting_id"])])
+        self.assertEqual(meeting_jobs.running_users("P_A"), [])
+
+    def test_deleted_project_is_reported(self):
+        def gone(*_):
+            raise meeting_jobs.save_analysis.ProjectGone("P_A")
+        with patch.object(meeting_jobs.save_analysis, "save_result", gone):
+            self.start({**REQUEST, "project_id": "P_A"})
+            self.llm.gate.set()
+            job = self.wait_finished()
+        self.assertEqual((job["status"], job["saved"]), ("done", None))
+        self.assertEqual(job["save_error"], meeting_jobs.save_analysis.PROJECT_GONE)
+

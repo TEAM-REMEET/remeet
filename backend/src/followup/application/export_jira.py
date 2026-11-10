@@ -38,8 +38,13 @@ def project_key(cfg: dict[str, str]) -> str:
     return cfg["JIRA_PROJECT_KEY"]
 
 
-def _description(meeting_title: str, item: dict) -> str:
-    return f"회의: {meeting_title}\nRE:MEET 액션 아이템: {item['key']}"
+def _description(meeting_title: str, item: dict, meeting_date: str | None = None) -> str:
+    """이슈 설명 (마크다운 목록 → Jira 가 ADF 로 바꿈) · 회의 · 날짜 · 안건만 짧게."""
+    lines = [f"- **회의**: {meeting_title}" + (f" ({meeting_date})" if meeting_date else "")]
+    if item.get("agenda"):
+        lines.append(f"- **안건**: {item['agenda']}")
+    lines.append(f"- RE:MEET 액션 아이템 #{item['key']}")
+    return "\n".join(lines)
 
 
 def label(key: str) -> str:
@@ -63,7 +68,8 @@ async def _existing(jira, cfg: dict[str, str], items: list[dict]) -> dict[str, d
     return found
 
 
-async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict], emails: dict[str, str]) -> list[dict]:
+async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict], emails: dict[str, str],
+                meeting_date: str | None = None) -> list[dict]:
     accounts: dict[str, str | None] = {}  # 이메일 → accountId (한 번만 찾음)
     out = []
     deadline = time.monotonic() + settings.EXPORT_BUDGET_SECONDS
@@ -87,7 +93,7 @@ async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict]
                 if account := accounts[email]:
                     break
             args = {"cloudId": cfg["JIRA_CLOUD_ID"], "projectKey": project_key(cfg), "issueType": cfg["JIRA_ISSUE_TYPE"],
-                    "summary": item["title"], "description": _description(meeting_title, item),
+                    "summary": item["title"], "description": _description(meeting_title, item, meeting_date),
                     "labels": [label(item["key"])]}
             if account:
                 args["assignee"] = account
@@ -101,7 +107,7 @@ async def _send(jira, cfg: dict[str, str], meeting_title: str, items: list[dict]
     return out
 
 
-def export(meeting_title: str, items: list[dict], *, connect: Callable | None = None,
+def export(meeting_title: str, items: list[dict], *, meeting_date: str | None = None, connect: Callable | None = None,
            emails: Callable[[set[str]], dict[str, str]] = emails_of) -> dict[str, Any]:
     """items: [{key, title, owners: [user_id], due: "YYYY-MM-DD" | None}] → {project_key, created, total, items}"""
     cfg = settings.jira_config()
@@ -111,7 +117,7 @@ def export(meeting_title: str, items: list[dict], *, connect: Callable | None = 
 
     async def run():
         async with (connect or jira_mcp.connect)(cfg["ATLASSIAN_EMAIL"], cfg["ATLASSIAN_API_TOKEN"]) as jira:
-            return await _send(jira, cfg, meeting_title, items, found)
+            return await _send(jira, cfg, meeting_title, items, found, meeting_date)
 
     try:
         results = asyncio.run(run())

@@ -46,6 +46,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
+from followup.adapters.neo4j import load as graph
 from followup.adapters.postgres import compose, detail, integrations, meetings, minutes
 from followup.entrypoints.api.routes.actor import actor
 
@@ -250,7 +251,8 @@ def set_due(todo_id: int, body: Due, me: str = Depends(actor)):
 # ---------------------------------------------------------------- 삭제 · 결과 전달 상태
 @router.delete("/meetings/{meeting_id}", status_code=204)
 def delete_meeting(meeting_id: str, me: str = Depends(actor)):
-    meetings.delete_meeting(actor_id=me, meeting_id=meeting_id)
+    meetings.delete_meeting(actor_id=me, meeting_id=meeting_id,
+                            before_commit=lambda: graph.delete_meeting(meeting_id))
 
 
 @router.put("/meetings/{meeting_id}/status")
