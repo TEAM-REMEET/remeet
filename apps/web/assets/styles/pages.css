@@ -2240,3 +2240,9 @@
 [data-testid="stDialog"]:has(.cp-warn-dlg) [data-testid="stDialogIcon"] span { font-size: 1em !important; width: 1em !important;
   height: 1em !important; line-height: 1 !important; color: inherit !important; }
 .cp-warn-dlg p { margin: 0; }
+/* 할 일 상세 「선행 업무」: 정보 상자 아래 · 한 줄 = 업무 (담당자) + 회의 제목 링크 */
+.st-key-dash-follows { padding: 10px 14px; border: 1px solid var(--line-soft); border-radius: 6px; background: #fbfbfc; }
+.dash-follow-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.dash-follow { font-size: 14px; color: var(--ink); }
+.dash-follow em { font-style: normal; color: var(--muted); }
+[class*="st-key-dash-follow-"] button { min-height: 0 !important; padding: 0 !important; font-size: 14px !important; }

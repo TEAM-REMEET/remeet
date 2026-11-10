@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 
 from followup import settings
 from followup.adapters import jira_mcp
-from followup.application.export_jira import JiraNotConfigured, JiraUnavailable, emails_of, label
+from followup.application.export_jira import JiraNotConfigured, JiraUnavailable, emails_of, follow_ups, label
 
 FIELDS = ["summary", "status", "duedate", "labels"]
 _ACCOUNT = re.compile(r"^[\w:-]+$")  # Jira accountId (예: 712020:uuid) · JQL 에 넣기 전에 형식 확인
@@ -106,6 +106,31 @@ def my_issues(user_id: str, *, refresh: bool = False, connect: Callable | None =
     return _fetch(user_id, connect, emails, todo_ids, now)
 
 
+def _follow_info(todo_ids: list[int]) -> dict[int, list[dict]]:
+    """할 일 id → 그 일이 이어받은 이전 회의 업무 [{todo_id, text, meeting_id, meeting, date}] (Neo4j FOLLOWS_UP · PG)."""
+    from followup.adapters.postgres import detail
+
+    prevs = follow_ups([str(t) for t in todo_ids])
+    briefs = detail.todo_briefs(sorted({int(p) for ps in prevs.values() for p in ps}))
+    return {int(k): [briefs[int(p)] for p in ps if int(p) in briefs] for k, ps in prevs.items()}
+
+
+def _attach_follows(out: dict[str, Any]) -> None:
+    """목록의 RE:MEET 할 일마다 follows (상세 모달 「선행 업무」) · 목록 전체에 DB 조회 한 번씩 (Jira 호출 없음).
+    조회가 실패해도 목록은 그대로 (로그만)."""
+    items = [i for lst in (out.get("issues") or [], out.get("done") or []) for i in lst if i.get("todo_id")]
+    if not items:
+        return
+    try:
+        info = _follow_info([i["todo_id"] for i in items])
+    except Exception as e:  # noqa: BLE001 - 덤 정보
+        logger.warning("대시보드 선행 업무 조회 실패: %s", e)
+        return
+    for i in items:
+        if info.get(i["todo_id"]):
+            i["follows"] = info[i["todo_id"]]
+
+
 def _spawn(work: Callable[[], None]) -> None:
     threading.Thread(target=work, daemon=True, name="dashboard-refresh").start()
 
@@ -158,6 +183,7 @@ def _fetch(user_id: str, connect, emails, todo_ids, now) -> dict[str, Any]:
     except Exception as e:  # 접속 · 인증 · 권한 · 네트워크 (원인은 라우트가 서버 로그에만 남김)
         raise JiraUnavailable(str(e)) from e
     out["synced_at"] = datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
+    _attach_follows(out)
     with _lock:
         if _changes.get(user_id, 0) == changes:
             _cache[user_id] = (now(), out)

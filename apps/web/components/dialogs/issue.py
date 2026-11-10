@@ -29,6 +29,23 @@ def _find(todo_id: int | None):
     return next(((m, t) for m in repo.meetings().values() for t in m.todos if t.todo_id == todo_id), None)
 
 
+def _follows(issue: dict) -> None:
+    """선행 업무 (이전 회의 업무 · Neo4j 후속 업무) · 내가 볼 수 있는 회의 것만.
+    한 줄 = 「업무 (담당자)」 + 회의 제목 링크 (누르면 모달을 닫고 그 회의로)."""
+    seen = repo.meetings()
+    rows = [f for f in issue.get("follows") or [] if f.get("meeting_id") in seen]
+    if not rows:
+        return
+    with st.container(key="dash-follows", gap=None):
+        markup('<span class="dash-follow-label">선행 업무</span>')
+        for n, f in enumerate(rows):
+            owners = ", ".join(sel.name_of(u) for u in f.get("owners") or []) or "담당자 미지정"
+            with st.container(horizontal=True, vertical_alignment="center", gap="small", key=f"dash-follow-{n}"):
+                markup(f'<span class="dash-follow">{esc(f["text"])} <em>({esc(owners)})</em></span>')
+                button(f["meeting"], key=f"issue_follow_{n}", variant="link", icon=":material/link:",
+                       on_click=actions.open_issue_meeting, args=(f["meeting_id"],))
+
+
 def _evidence(m, t) -> str:
     lines = {p.id: p for p in m.paragraphs}
     quotes = [lines[i] for i in t.src if i in lines][:MAX_EVIDENCE]
@@ -55,6 +72,7 @@ def issue_detail_dialog() -> None:
                + f"<dt>담당자</dt><dd>{esc(owners)}</dd>"
                + (f"<dt>근거 발언</dt><dd>{evidence}</dd>" if evidence else "")
                + "</dl>")
+        _follows(issue)
     else:
         notice("RE:MEET 회의에서 만든 일이 아니거나 볼 수 없는 회의라 Jira 정보만 보여 줘요.")
     with st.container(horizontal=True, gap="small"):
