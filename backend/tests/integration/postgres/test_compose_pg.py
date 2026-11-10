@@ -91,6 +91,17 @@ class ComposeFlowTests(unittest.TestCase):
                                 draft={'nn_name': ''})
         return mid, pid
 
+    def test_submit_adds_new_attendees_to_project(self):
+        from followup.adapters.postgres import compose, folders
+        folders.create_folder(actor_id='boss', name='출시', folder_id='p1', members=['jr'])
+        mid = self._draft(actor_id='boss', project_id='p1', attendees=['jr', 'u2'])['id']
+        self.assertEqual(folders.list_members(actor_id='boss', folder_id='p1'), ['boss', 'jr'])  # 미리보기 때는 그대로
+        compose.submit_meeting(actor_id='boss', meeting_id=mid)
+        self.assertEqual(folders.list_members(actor_id='boss', folder_id='p1'), ['boss', 'jr', 'u2'])
+        self.assertIn('member', self._notis('u2'))
+        self.assertNotIn('member', self._notis('u3'))
+        self.assertEqual(self._notis('jr').count('member'), 1)                    # 원래 멤버는 다시 알리지 않음
+
     def test_self_host_creates_and_confirms(self):
         """작성자 = 주관자 (시니어): 미리보기 → 생성 → 바로 확정 · 넘기기 없음."""
         from followup.adapters.postgres import compose, detail, minutes
