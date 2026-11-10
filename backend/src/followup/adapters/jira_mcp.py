@@ -119,6 +119,17 @@ class Jira:
                                    {"cloudId": cloud_id, "jql": jql, "fields": fields, "maxResults": max_results})
         return pick_issues(payload)
 
+    async def transitions(self, cloud_id: str, key: str) -> list[dict]:
+        """이 이슈가 지금 갈 수 있는 상태 [{id, name, to: {name, statusCategory: {key: new | indeterminate | done}}}]."""
+        payload = await self._call("listJiraIssueTransitions", {"cloudId": cloud_id, "issueIdOrKey": key})
+        return [d for d in _walk(payload) if d.get("id") and isinstance(d.get("to"), dict)]
+
+    async def transition(self, cloud_id: str, key: str, transition_id: str) -> None:
+        await self._call("transitionJiraIssue", {"cloudId": cloud_id, "issueIdOrKey": key, "transitionId": str(transition_id)})
+
+    async def comment(self, cloud_id: str, key: str, text: str) -> None:
+        await self._call("addOrEditJiraIssueComment", {"cloudId": cloud_id, "issueIdOrKey": key, "commentBody": text})
+
     async def site_url(self, cloud_id: str) -> str | None:
         """이 사이트의 주소 (https://xxx.atlassian.net) · 이슈 링크를 만들 때."""
         payload = await self._call("getAccessibleAtlassianResources", {})
