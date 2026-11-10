@@ -158,6 +158,9 @@ def _step_assign(s: AppState, m: Meeting) -> None:
     waiting_left = [t for t in left if t.key in waiting]
     # 현재 단계 제목과 같은 줄 오른쪽: 다음 단계만 (「확정하기」를 누른 뒤라 분석 및 검토로 되돌아가지 않음)
     with step_header("담당자 추천", f"{m.title} · 액션 아이템 {len(items)}건 · 담당자와 마감일을 확인한 뒤 최종 회의록으로 넘어가요"):
+        # 검토 중인 회의는 열면 이 화면부터 → 내용 편집 · 삭제 · 공유는 회의 상세에서 (open_meeting detail=True)
+        button("회의록 보기", key="fin_detail", variant="secondary", icon=":material/article:",
+               on_click=actions.open_meeting, args=(m.id,), kwargs={"detail": True})
         button("최종 회의록 →", key="fin_next", variant="primary", icon=":material/description:", on_click=actions.confirm_assignees, args=(m.id,))
     with st.container(key="wz-card", gap="medium"):
         no_due = [t for t in items if not parse_due(t.raw_due)]
