@@ -26,6 +26,18 @@ def _nav_item(label: str, key: str, *, on: bool, on_click, args=(), icon_name: s
         button(label, key=f"nav_{key}", variant=variant, on_click=on_click, args=args, icon=icon_name, width="stretch")
 
 
+def _compose_trail(s) -> str:
+    """「새 회의록」 오른쪽 배지: 요약 · 액션 아이템을 뒤에서 만드는 중이면 「분석 중」, 끝나고 확정 전이면 「검토 대기」."""
+    if not s.cp_job_synced:  # 새로고침 · 다시 로그인: 서버에 돌고 있는 분석이 있으면 이어 받기 (세션마다 한 번)
+        actions.compose_resume()
+    if s.cp_job_running:
+        return ('<span class="nav-trail job run" title="요약문 · 액션 아이템을 만드는 중이에요. 다른 화면에 있어도 계속돼요.">'
+                '<i></i>분석 중</span>')
+    if s.cp_step == 2 and s.preview_meeting is not None:
+        return '<span class="nav-trail job ready" title="분석이 끝났어요. 검토한 뒤 「확정하기」를 눌러 주세요.">검토 대기</span>'
+    return ""
+
+
 def _caption(text: str) -> None:
     markup(f'<div class="nav-caption">{esc(text)}</div>')
 
@@ -190,7 +202,7 @@ def render_sidebar() -> None:
                 _nav_item("홈", "home", on=s.screen == "home" and not s.not_found, on_click=actions.go, args=("home",),
                           icon_name=":material/home:")
                 _nav_item("새 회의록", "compose", on=s.screen == "compose" and not s.not_found, on_click=actions.open_new_note,
-                          icon_name=":material/edit_square:")
+                          icon_name=":material/edit_square:", trail_html=_compose_trail(s))
 
             with st.container(key="navgroup-meetings", gap=None):
                 button_group([("time", "정기 회의"), ("project", "프로젝트")], s.tree_mode, actions.set_tree_mode,
