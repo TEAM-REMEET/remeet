@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import base64
+
 import streamlit as st
 
 from ui.html import markup
@@ -64,7 +66,7 @@ def _mock_evidence() -> str:
         '<div class="mk-col soft">'
         '<span class="mk-cap">핵심 요약</span>'
         '<div class="mk-sum on">온보딩을 <b>3단계로 줄이기로 확정</b>했어요.</div>'
-        '<div class="mk-chips"><span class="ok">결정</span><span class="warn">길어짐</span><span class="hold">보류</span></div>'
+        '<div class="mk-chips"><span class="dec">결정</span><span class="open">미해결</span><span class="todo">할 일</span></div>'
         "</div></div>"
     )
 
@@ -96,24 +98,32 @@ def _mock_ask() -> str:
 
 
 def _mock_remap() -> str:
-    """RE:MAP (폴더 위키 · views/folder.py): 왼쪽 주제 트리 (하나만 펼침) · 오른쪽 주제별 상태판 세 칸."""
-    tree = (
-        '<div class="mk-tree">'
-        '<span class="mk-t root">11월 릴리즈 준비</span>'
-        '<span class="mk-t topic on">PG사 선정</span>'
-        '<span class="mk-t agenda">11.4 · 수수료 · 정산 비교</span>'
-        '<span class="mk-t leaf dec">결정 · A사로 계약</span>'
-        '<span class="mk-t leaf todo">할 일 · 계약서 검토 <em>박도윤</em></span>'
-        '<span class="mk-t topic">중복 결제 오류</span>'
-        '<span class="mk-t topic">신규 온보딩</span>'
-        "</div>"
-    )
-    cols = (("split", "의견이 갈림", "신규 온보딩", "우려 · 관심사 선택을 뒤로?"),
-            ("open", "정해지지 않음", "중복 결제 오류", "미해결 · 원인 로그 확인 중"),
-            ("done", "정리됨", "PG사 선정", "결정 · A사로 계약"))
-    board = "".join(f'<div class="mk-col-{k}"><b>{t}</b><div class="mk-card"><span>{topic}</span><em>{note}</em></div></div>'
-                    for k, t, topic, note in cols)
-    return f'<div class="mk mk-remap">{tree}<div class="mk-board">{board}</div></div>'
+    """RE:MAP 그래프 (components/folder_tree.py): 폴더 → 주제 → 안건 → 주요 논의 → 할 일 · 미해결, 왼→오 곡선 연결.
+    칸 위치는 그림 영역의 % · 선은 SVG 를 이미지로 (st.html 에 svg 를 바로 넣지 않음) · 고른 칸(할 일)은 주황 테두리."""
+    nodes = {  # id: (x%, y%, 종류, 글자, 위 작은 글자) · 세로 간격을 넉넉히 (칸끼리 겹치지 않게)
+        "r": (11, 50, "root", "11월 릴리즈 준비", ""),
+        "t1": (30, 20, "topic on", "PG사 선정", ""), "t2": (30, 52, "topic", "중복 결제 오류", ""),
+        "t3": (30, 84, "topic", "신규 온보딩", ""),
+        "a1": (51, 14, "agenda", "수수료 비교", "11.4 1차 회의"), "a2": (51, 44, "agenda", "계약 조건", "11.11 2차 회의"),
+        "s1": (70, 7, "sub", "1. 수수료", ""), "s2": (70, 19, "sub", "2. 정산 주기", ""), "s3": (70, 31, "sub", "미해결 이슈", ""),
+        "l1": (88, 7, "todo pick", "할 일 계약서 검토", ""), "l2": (88, 31, "open", "미해결 환불 수수료", ""),
+    }
+    edges = (("r", "t1"), ("r", "t2"), ("r", "t3"), ("t1", "a1"), ("t1", "a2"),
+             ("a1", "s1"), ("a1", "s2"), ("a1", "s3"), ("s1", "l1"), ("s3", "l2"))
+    paths = "".join(
+        f'<path d="M{nodes[a][0]} {nodes[a][1]} C{(nodes[a][0] + nodes[b][0]) / 2} {nodes[a][1]} '
+        f'{(nodes[a][0] + nodes[b][0]) / 2} {nodes[b][1]} {nodes[b][0]} {nodes[b][1]}" '
+        'fill="none" stroke="#C9CCD2" stroke-width="1.6" vector-effect="non-scaling-stroke"/>'
+        for a, b in edges)
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">{paths}</svg>'
+    lines = base64.b64encode(svg.encode()).decode()
+    chips = "".join(
+        f'<span class="mk-n {kind}" style="left:{x}%;top:{y}%">' + (f"<small>{esc(cap)}</small>" if cap else "")
+        + f"{esc(label)}</span>" for x, y, kind, label, cap in nodes.values())
+    legend = "".join(f'<span class="{k}">{t}</span>' for k, t in (("topic", "주제"), ("agenda", "안건"), ("sub", "주요 논의"),
+                                                                 ("dec", "결정"), ("open", "미해결"), ("todo", "할 일")))
+    return (f'<div class="mk mk-remap"><div class="mk-legend">{legend}</div>'
+            f'<div class="mk-graph"><img class="mk-lines" alt="" src="data:image/svg+xml;base64,{lines}">{chips}</div></div>')
 
 
 def _mock_deliver() -> str:

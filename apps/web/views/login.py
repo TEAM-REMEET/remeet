@@ -113,7 +113,7 @@ from ui.icons import brand_logo, icon
 from utils.browser import latin_keys
 from utils.text import esc
 
-# 히어로의 가치 4개 (아래 기능 카드 순서와 같게: 정리 → 담당 → RE:MAP → 아카이브)
+# 히어로의 가치 4개 · 2×2 (윗줄 정리 · 담당 / 아랫줄 RE:MAP · 아카이브)
 _VALUES = (
     ("lines", "원문 근거와 함께 정리"),
     ("user-check", "담당자 추천 · 사람이 결정"),
@@ -121,10 +121,10 @@ _VALUES = (
     ("search", "회의 아카이브로 묻고 답 받기"),
 )
 
-_PREVIEW = (
-    ("안건 1", "신규 온보딩 플로우", "결정", "#1D6B43", "#E7F5EC"),
-    ("안건 2", "결제 오류 재발", "길어짐", "#7A5200", "#FFF5D9"),
-    ("안건 3", "11월 릴리즈 일정", "보류", "#474C55", "#F0F1F3"),
+_PREVIEW = (  # 태그 = 회의 결과 태그와 같은 말 · 색 (pages.css .res-ok 결정 · .res-open 미해결)
+    ("안건 1", "신규 온보딩 플로우", "결정", "#146C3C", "#E3F4EA"),
+    ("안건 2", "결제 오류 재발", "미해결", "#9A4A0B", "#FDEBDC"),
+    ("안건 3", "11월 릴리즈 일정", "결정", "#146C3C", "#E3F4EA"),
 )
 
 _HIDE_SIDEBAR = '<style>section[data-testid="stSidebar"]{display:none !important}</style>'
@@ -145,7 +145,7 @@ def _hero() -> None:
         "<p>회의록을 올리면 안건·결정·할 일로 나누고,<br>담당자 추천부터 결과 전달까지 이어서 처리해요.</p>"
         f'<ul class="hero-values">{values}</ul>'
         '<div class="login-preview" aria-hidden="true">'
-        '<div class="top"><span>주간 회의 — 10월 4주차</span><span class="mine">내 할 일 2</span></div>'
+        '<div class="top"><span>주간 회의 — 10월 4주차</span></div>'
         f"{preview}</div>"
         "</div>"
         '<a class="scroll-cue" href="#overview">RE:MEET 둘러보기<span>↓</span></a>'
