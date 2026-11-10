@@ -2235,3 +2235,6 @@
 
 /* 분석이 중단된 회의록 창: 어떤 회의인지 (제목 · 날짜) */
 .cp-resume-meeting { margin: 0 0 10px; font-size: 15px; color: var(--ink); }
+/* 입력 오류 · 분석 중단 창: 제목 앞 경고 아이콘 (st.dialog icon) 을 주황으로 · 본문 문구는 여백 없이 */
+div[role="dialog"]:has(.cp-warn-dlg) h2 [data-testid="stIconMaterial"] { color: #F37321; }
+.cp-warn-dlg p { margin: 0; }
