@@ -50,9 +50,30 @@ def node(raw: dict[str, Any]) -> dict[str, Any] | None:
     return out
 
 
+def _meeting_name(m: dict[str, Any]) -> tuple[str, str]:
+    """(날짜, 「제목 (날짜)」) — 날짜는 정렬용."""
+    date = next((f["value"] for f in m["fields"] if f["name"] == "회의 날짜"), "")
+    return date, (f'{m["caption"]} ({date})' if date else m["caption"])
+
+
 def build(raw: dict[str, list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
-    """raw: adapters/neo4j/folder_graph.read_graph 결과."""
+    """raw: adapters/neo4j/folder_graph.read_graph 결과.
+
+    회의 노드는 그리지 않는다 (폴더 안이라 모든 안건 · 사람이 회의에 이어져 복잡하기만 함).
+    대신 회의 엣지를 속성 한 줄로 옮긴다: 사람 「참석한 회의」 · 안건 「회의」.
+    """
     nodes = [n for n in map(node, raw["nodes"]) if n]
-    ids = {n["id"] for n in nodes}
+    meetings = {n["id"]: _meeting_name(n) for n in nodes if n["label"] == "Meeting"}
+    nodes = [n for n in nodes if n["label"] != "Meeting"]
+    by_id = {n["id"]: n for n in nodes}
+    attended: dict[str, list[tuple[str, str]]] = {}
+    for e in raw["edges"]:
+        if e["type"] == "ATTENDED" and e["to"] in meetings and e["from"] in by_id:
+            attended.setdefault(e["from"], []).append(meetings[e["to"]])
+        elif e["type"] == "HAS_AGENDA" and e["from"] in meetings and e["to"] in by_id:
+            by_id[e["to"]]["fields"].append({"name": "회의", "value": meetings[e["from"]][1]})
+    for pid, names in attended.items():
+        by_id[pid]["fields"].append({"name": "참석한 회의", "value": [name for _, name in sorted(names)]})  # 날짜순
+    ids = set(by_id)
     edges = [e for e in raw["edges"] if e["from"] in ids and e["to"] in ids]
     return {"nodes": nodes, "edges": edges}

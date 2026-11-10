@@ -40,19 +40,12 @@ def _empty_texts(role: str) -> tuple[str, str]:
     return "아직 회의록이 없어요", "이 주제로 회의를 하면 여기에 쌓여요."
 
 
-# ---------------------------------------------------------------- 위키 (결정 흐름 · 미해결 이슈)
+# ---------------------------------------------------------------- 위키 (그래프 · 미해결 이슈)
 _BOARD = (  # status → (칸 이름, 설명). 판정은 백엔드 application/folder_wiki
     ("split", "의견이 갈림", "반대·우려가 나왔는데 결정 없음"),
     ("open", "정해지지 않음", "미해결 이슈 · 보류 · 결정 없음"),
     ("done", "정리됨", "최근 안건에 결정, 남은 이슈 없음"),
 )
-_STATUS_TAG = {"split": ("의견이 갈림", "wk-con"), "open": ("정해지지 않음", "wk-open"), "done": ("정리됨", "wk-ok")}
-_POINT_CLASS = {"제안": "wk-prop", "반대·우려": "wk-con", "질문": "wk-ask", "정보": "wk-gray"}
-_FOLD_OVER, _FOLD_SHOW = 10, 8  # 주제가 10개를 넘으면 위에서 8개만 펼쳐 둠
-# shortcut: 결정 흐름은 최근 회의 8개 칸만 그림. 오래된 회의까지 봐야 하면 가로 스크롤 표로 바꾸기
-_MAX_COLS = 8
-
-
 def _chip(label: str, cls: str) -> str:
     return f'<span class="wk-chip {cls}">{esc(label)}</span>'
 
@@ -64,96 +57,6 @@ def _short(text: str, n: int = 14) -> str:
 def _src(rounds: list[dict]) -> tuple[str, ...]:
     """근거 발화 번호 → 원문 패널 id (state.summary_view._src 와 같은 p{n})."""
     return tuple(dict.fromkeys(f"p{i}" for r in rounds for ln in r["lines"] for i in ln["src"]))
-
-
-def _cell(r: dict | None) -> str:
-    if r is None:
-        return ""
-    parts = []
-    if r["decisions"]:
-        d = r["decisions"][-1]
-        more = f" +{len(r['decisions']) - 1}" if len(r["decisions"]) > 1 else ""
-        if d["superseded_by"]:
-            parts.append(f'<span class="wk-dec old" title="이후 바뀜: {esc(d["superseded_by"])}">{esc(_short(d["text"]))}</span>')
-        else:
-            parts.append(f'<span class="wk-dec" title="{esc(d["text"])}">{esc(_short(d["text"]))}{more}</span>')
-    if r["holds"]:
-        parts.append(_chip("보류", "wk-hold"))
-    if r["concerns"]:
-        parts.append(_chip("이견", "wk-con"))
-    if r["unresolved"]:
-        parts.append(_chip(f"미해결 {len(r['unresolved'])}", "wk-open"))
-    return "".join(parts) or '<span class="wk-dot"></span>'
-
-
-def _flow_row(t: dict, cols: list[dict]) -> str:
-    by_meeting = {r["meeting_id"]: r for r in t["rounds"]}
-    hit = [i for i, m in enumerate(cols) if m["meeting_id"] in by_meeting]
-    cells = []
-    for i, m in enumerate(cols):
-        line = ""
-        if hit and hit[0] <= i <= hit[-1] and len(hit) > 1:  # 처음 다룬 회의 ~ 마지막 회의를 잇는 선
-            line = " on" + (" first" if i == hit[0] else "") + (" last" if i == hit[-1] else "")
-        cells.append(f'<div class="wk-cell{line}"><div class="wk-marks">{_cell(by_meeting.get(m["meeting_id"]))}</div></div>')
-    return f'<div class="wk-grid" style="--cols:{len(cols)}">{"".join(cells)}</div>'
-
-
-def _flow_detail(t: dict, meetings: dict[str, dict]) -> None:
-    label, cls = _STATUS_TAG[t["status"]]
-    with st.container(key="wkdetail", gap="small"):
-        markup(f'<div class="wk-detail-head"><h3>{esc(t["title"])}</h3>{_chip(label, cls)}</div>')
-        for k, r in enumerate(t["rounds"]):
-            m = meetings[r["meeting_id"]]
-            replaced = {d["text"]: d["superseded_by"] for d in r["decisions"] if d["superseded_by"]}
-            rows = []
-            for ln in r["lines"]:
-                chips = (_chip(ln["tag"], _POINT_CLASS.get(ln["tag"], "wk-gray")) if ln["tag"] else "") + (
-                    _chip(ln["decision_tag"], "wk-hold" if ln["decision_tag"] == "보류" else "wk-decchip") if ln["decision_tag"] else "")
-                after = f'<span class="wk-after">→ 이후 바뀜: {esc(replaced[ln["text"]])}</span>' if ln["text"] in replaced else ""
-                rows.append(f"<li>{chips}<span>{esc(ln['text'])}{after}</span></li>")
-            rows += [f'<li>{_chip("미해결", "wk-open")}<span>{esc(u)}</span></li>' for u in r["unresolved"]]
-            rows += [f'<li>{_chip("다음 회의", "wk-gray")}<span>{esc(n)}</span></li>' for n in r["next_topics"]]
-            with st.container(horizontal=True, vertical_alignment="top", gap="small", key=f"wkround-{k}"):
-                markup(f'<div class="wk-when"><b>{esc(m["date"][5:].replace("-", "."))}</b>{esc(m["title"])}</div>'
-                       f'<ul class="wk-lines">{"".join(rows) or "<li><span>정리된 문장이 없어요</span></li>"}</ul>')
-                src = _src([r])
-                if src:
-                    button("근거 보기", key=f"wksrc_{k}", variant="src", on_click=actions.open_source, args=(r["meeting_id"], src))
-
-
-def _wiki_flow(s: AppState, topics: list[dict], meetings: list[dict]) -> None:
-    cols = meetings[-_MAX_COLS:]
-    folded = len(topics) > _FOLD_OVER and not s.wiki_more
-    shown = topics[:_FOLD_SHOW] if folded else topics
-    ids = [t["topic_id"] for t in topics]
-    selected = s.wiki_topic if s.wiki_topic in ids else ids[0]
-    if selected not in [t["topic_id"] for t in shown]:  # 고른 주제가 접힌 쪽에 있으면 펼쳐서 보여 줌
-        shown = topics
-
-    with st.container(key="wkflow", gap=None):
-        head = "".join(f'<div class="wk-hd"><b>{esc(m["date"][5:].replace("-", "."))}</b>{esc(_short(m["title"], 10))}</div>' for m in cols)
-        with st.container(horizontal=True, gap="small", key="wkhead"):
-            older = f"이전 회의 {len(meetings) - len(cols)}개 생략" if len(meetings) > len(cols) else "주제"
-            markup(f'<div class="wk-lane-hd">{older}</div>')
-            markup(f'<div class="wk-grid" style="--cols:{len(cols)}">{head}</div>')
-        for t in shown:
-            on = "on" if t["topic_id"] == selected else "off"
-            with st.container(horizontal=True, gap="small", vertical_alignment="center", key=f"wkrow-{on}-{safe_key(t['topic_id'])}"):
-                button(t["title"], key=f"wktopic_{safe_key(t['topic_id'])}", variant="link",
-                       on_click=actions.update, kwargs={"wiki_topic": t["topic_id"]})
-                markup(_flow_row(t, cols))
-        if folded:
-            rest = topics[_FOLD_SHOW:]
-            with st.container(horizontal=True, gap="small", vertical_alignment="center", key="wkfold"):
-                button(f"▸ 나머지 {len(rest)}개 주제 펼치기", key="wkmore", variant="link", on_click=actions.update, kwargs={"wiki_more": True})
-                markup(f'<span class="wk-rest">{esc(" · ".join(t["title"] for t in rest))}</span>')
-        elif len(topics) > _FOLD_OVER:
-            button("▴ 접기", key="wkless", variant="link", on_click=actions.update, kwargs={"wiki_more": False})
-    markup('<div class="wk-legend"><span><span class="wk-dot"></span>논의만</span>'
-           '<span><span class="wk-dec">결정</span></span><span><span class="wk-dec old">예전 결정</span>이후 바뀜</span>'
-           f'<span>{_chip("이견", "wk-con")}반대·우려</span><span>{_chip("보류", "wk-hold")}</span>'
-           f'<span>{_chip("미해결 n", "wk-open")}</span><span>주제를 누르면 회차별 내용이 아래에 펼쳐져요</span></div>')
-    _flow_detail(next(t for t in topics if t["topic_id"] == selected), {m["meeting_id"]: m for m in meetings})
 
 
 def _board_card(t: dict, meetings: list[dict]) -> None:
@@ -194,36 +97,30 @@ def _wiki_board(topics: list[dict], meetings: list[dict]) -> None:
                 _board_card(t, meetings)
 
 
-def _folder_wiki(s: AppState, fid: str) -> None:
+def _wiki_data(s: AppState, fid: str) -> dict | None:
+    """미해결 이슈 보드 데이터. 없거나 실패하면 빈 화면을 그리고 None."""
     f = sel.folders(s)[fid]
     if len(f.notes) < FOLDER_WIKI_MIN_NOTES:  # 회의록이 모자람
         markup(
             f'<div class="empty" style="padding:48px 24px">{icon("wiki", 28, "#F37321")}'
             '<span class="empty-title">아직 위키를 만들 회의록이 없어요</span>'
-            f'<span class="empty-text sub">회의록이 {FOLDER_WIKI_MIN_NOTES}개 이상 있으면 주제별 결정 흐름이 만들어져요 · 지금 {len(f.notes)}개</span></div>'
+            f'<span class="empty-text sub">회의록이 {FOLDER_WIKI_MIN_NOTES}개 이상 있으면 주제별 미해결 이슈가 정리돼요 · 지금 {len(f.notes)}개</span></div>'
         )
-        return
+        return None
     try:
         wiki = repo.folder_wiki(fid)
     except api.ApiError as e:
         empty_state(str(e), title="위키를 불러오지 못했어요", pad=48)
-        return
+        return None
     if not wiki["topics"]:  # 회의록은 있지만 확정 · 적재된 회의가 아직 없음
         markup(
             f'<div class="empty" style="padding:48px 24px">{icon("wiki", 28, "#F37321")}'
             '<span class="empty-title">아직 정리된 주제가 없어요</span>'
             '<span class="empty-text sub">회의록을 확정하면 주제 · 결정 · 미해결 이슈가 여기에 쌓여요</span></div>'
         )
-        return
-
-    with st.container(horizontal=True, vertical_alignment="center"):
-        button_group([("flow", "결정 흐름"), ("board", "미해결 이슈")], s.wiki_view,
-                     lambda v: actions.update(wiki_view=v), key="wkview", style="seg")
-        markup(f'<p class="hint" style="font-size:13px;color:#5F646D">이 폴더 회의 {len(wiki["meetings"])}개 · 주제 {len(wiki["topics"])}개 · 내가 빠진 회차도 들어가요</p>')
-    if s.wiki_view == "board":
-        _wiki_board(wiki["topics"], wiki["meetings"])
-    else:
-        _wiki_flow(s, wiki["topics"], wiki["meetings"])
+        return None
+    markup(f'<p class="hint" style="font-size:13px;color:#5F646D">이 폴더 회의 {len(wiki["meetings"])}개 · 주제 {len(wiki["topics"])}개 · 내가 빠진 회차도 들어가요</p>')
+    return wiki
 
 
 _VISIBILITY_HELP = (
@@ -256,10 +153,9 @@ class FolderPage:
     extra_tags: list[str] = field(default_factory=list)
 
 
-def _graph_tab(fp: FolderPage) -> None:
-    fids = [k for k in fp.wiki_folders if k in sel.folders(get_state())]
+def _wiki_graph(fid: str) -> None:
     try:
-        data = repo.folder_graph(fids[0]) if fids else {"nodes": []}
+        data = repo.folder_graph(fid)
     except api.ApiError as e:
         empty_state(str(e), title="그래프를 불러오지 못했어요", pad=48)
         return
@@ -270,12 +166,18 @@ def _graph_tab(fp: FolderPage) -> None:
 
 
 def _wiki_tab(s: AppState, fp: FolderPage) -> None:
-    fs = sel.folders(s)
-    fids = [k for k in fp.wiki_folders if k in fs]
+    """위키 탭: 그래프 | 미해결 이슈."""
+    fids = [k for k in fp.wiki_folders if k in sel.folders(s)]
     if not fids:
         empty_state("아직 위키를 만들 회의록이 없어요.", pad=40)
         return
-    _folder_wiki(s, fids[0])
+    view = "board" if s.wiki_view == "board" else "graph"
+    button_group([("graph", "그래프"), ("board", "미해결 이슈")], view,
+                 lambda v: actions.update(wiki_view=v), key="wkview", style="seg")
+    if view == "graph":
+        _wiki_graph(fids[0])
+    elif wiki := _wiki_data(s, fids[0]):
+        _wiki_board(wiki["topics"], wiki["meetings"])
 
 
 def render_folder_page(s: AppState, fp: FolderPage) -> None:
@@ -301,17 +203,14 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
             button("회의록 올리기", key="folder_upload", variant="primary", on_click=actions.open_new_note)
 
     button_group(
-        [("all", f"회의록 {len(fp.notes)}"), ("wiki", "위키"), ("graph", "그래프")],
-        s.folder_tab if s.folder_tab in ("all", "wiki", "graph") else "all",
+        [("all", f"회의록 {len(fp.notes)}"), ("wiki", "위키")],
+        s.folder_tab if s.folder_tab in ("all", "wiki") else "all",
         lambda v: actions.update(folder_tab=v, folder_role="todo"),
         key="ftab",
         style="tab",
     )
     if s.folder_tab == "wiki":
         _wiki_tab(s, fp)
-        return
-    if s.folder_tab == "graph":
-        _graph_tab(fp)
         return
 
     with st.container(horizontal=True, vertical_alignment="center", gap="small"):

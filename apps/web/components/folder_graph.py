@@ -65,6 +65,10 @@ const COLOR = {Project:"#57C7E3", Meeting:"#8FAADC", Agenda:"#C9C6FF", Topic:"#F
                ActionItem:"#F7B07A", Decision:"#9EE0A8", Person:"#D9C8AE"};
 const CHIPS = [["Topic","주제"],["Agenda","안건"],["ActionItem","할 일"],["*","전체"]];
 const TAG = {"반대·우려":"con","제안":"prop","결정":"dec","보류":"hold"};
+// 엣지 이름: 화살표 방향(A → B)으로 읽었을 때 B 가 A 의 무엇인지
+const REL = {HAS_AGENDA:"안건", ABOUT:"주제", HAS_DISCUSSION:"소주제", PRODUCED:"할 일", DECIDED:"결정",
+             ATTENDED:"참석", ASSIGNED_TO:"담당", FOLLOWS_UP:"후속 업무", SUPERSEDES:"결정 변경"};
+const rel = t => REL[t] || t;
 const byId = new Map(G.nodes.map(n => [n.id, n]));
 const adj = new Map(G.nodes.map(n => [n.id, []]));
 G.edges.forEach((e, i) => { e.id = i; adj.get(e.from).push({e, other: e.to, out: true}); adj.get(e.to).push({e, other: e.from, out: false}); });
@@ -73,6 +77,15 @@ const hay = new Map(G.nodes.map(n => [n.id, [n.caption, ...n.fields.flatMap(f =>
 let label = "Topic", query = "", selected = null;
 // 보이는 노드 = 라벨 칩(base) + 「이어진 노드」로 연 것(extra) + 펼친 노드(opened)와 그 이웃. 접기 = opened 에서 빼고 다시 계산
 let base = new Set(), extra = new Set(), opened = new Set();
+// 접기: 칩 · 「이어진 노드」로 연 노드에서 펼친 노드를 따라 닿지 않게 된 펼침은 같이 닫음 (주제를 접으면 그 아래 안건 · 소주제까지)
+function prune() {
+  const seen = new Set([...base, ...extra]);
+  const queue = [...seen].filter(id => opened.has(id));
+  while (queue.length) adj.get(queue.pop()).forEach(({other}) => {
+    if (!seen.has(other)) { seen.add(other); if (opened.has(other)) queue.push(other); }
+  });
+  [...opened].forEach(id => { if (!seen.has(id)) opened.delete(id); });
+}
 function visibleIds() {
   const v = new Set([...base, ...extra, ...opened]);
   opened.forEach(id => adj.get(id).forEach(({other}) => v.add(other)));
@@ -81,8 +94,11 @@ function visibleIds() {
 const nodes = new vis.DataSet(), edges = new vis.DataSet();
 const net = new vis.Network(document.getElementById("net"), {nodes, edges}, {
   nodes: {shape: "circle", borderWidth: 2, font: {size: 11, face: "Noto Sans KR, sans-serif"}, widthConstraint: {minimum: 72, maximum: 72}},
-  edges: {arrows: {to: {enabled: true, scaleFactor: .5}}, color: {color: "#55585F", highlight: "#7FE7F0"}, width: 1.2,
-          font: {size: 9, color: "#9A9DA3", strokeWidth: 0, align: "middle"}, smooth: {type: "continuous"}},
+  // 엣지 글자 = 선 위 어두운 알약 (선이 겹쳐도 읽히게) · 선을 굵게, 노드를 고르면 이어진 선이 하늘색
+  edges: {arrows: {to: {enabled: true, scaleFactor: .7}}, color: {color: "#6B6E75", highlight: "#7FE7F0", hover: "#A8ABB2"},
+          width: 2.2, selectionWidth: 1.5, hoverWidth: 1,
+          font: {size: 13, face: "Noto Sans KR, sans-serif", color: "#E8E9EB", background: "#2B2D33", strokeWidth: 0, align: "horizontal"},  // 선 기울기와 상관없이 가로로
+          smooth: {type: "continuous"}},
   physics: {solver: "forceAtlas2Based", forceAtlas2Based: {gravitationalConstant: -110, springLength: 150, avoidOverlap: 0.8}, stabilization: {iterations: 150}},
   interaction: {hover: true, doubleClickZoom: false}
 });
@@ -105,8 +121,10 @@ function render() {
   const want = G.edges.filter(e => keep.has(e.from) && keep.has(e.to));
   const wantIds = new Set(want.map(e => e.id));
   edges.remove(edges.getIds().filter(id => !wantIds.has(id)));
-  edges.update(want.map(e => ({id: e.id, from: e.from, to: e.to, label: e.type,
-    color: {color: query && !(matches(e.from) || matches(e.to)) ? "#33353A" : "#55585F", highlight: "#7FE7F0"}})));
+  edges.update(want.map(e => { const dim = query && !(matches(e.from) || matches(e.to));
+    return {id: e.id, from: e.from, to: e.to, label: rel(e.type),
+      color: {color: dim ? "#3A3C42" : "#6B6E75", highlight: "#7FE7F0", hover: "#A8ABB2"},
+      font: {color: dim ? "#6B6E75" : "#E8E9EB", background: dim ? "#232428" : "#2B2D33"}}; }));
   const c = document.getElementById("count");
   c.textContent = query ? [...keep].filter(matches).length + "개 찾음" : "노드 " + keep.size + "개";
 }
@@ -147,7 +165,7 @@ function panel() {
   const box = el("div", "f"); box.appendChild(el("b", null, "이어진 노드 " + near.length + "개"));
   const links = el("div", "links");
   near.forEach(({e, other, out}) => { const o = byId.get(other); const b = el("button"); b.type = "button";
-    b.appendChild(el("span", null, (out ? e.type + " →" : "← " + e.type) + " " + o.kind)); b.appendChild(document.createTextNode(short(o.caption)));
+    b.appendChild(el("span", null, (out ? rel(e.type) + " →" : "← " + rel(e.type)) + " " + o.kind)); b.appendChild(document.createTextNode(short(o.caption)));
     b.onclick = () => { extra.add(other); select(other); net.focus(other, {scale: 1.1, animation: true}); };
     links.appendChild(b); });
   box.appendChild(links); p.appendChild(box);
@@ -155,7 +173,7 @@ function panel() {
 function select(id) { selected = id; render(); panel(); net.selectNodes([id]); }
 net.on("click", ev => { if (ev.nodes.length) select(ev.nodes[0]); });
 net.on("doubleClick", ev => { if (!ev.nodes.length) return; const id = ev.nodes[0];
-  if (opened.has(id)) opened.delete(id); else opened.add(id);
+  if (opened.has(id)) { opened.delete(id); prune(); } else opened.add(id);
   select(id); });
 document.getElementById("q").addEventListener("input", ev => { query = ev.target.value.trim().toLowerCase(); render(); });
 document.getElementById("reset").onclick = () => { document.getElementById("q").value = ""; query = ""; reset(); };

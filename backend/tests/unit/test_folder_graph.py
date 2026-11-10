@@ -21,18 +21,30 @@ class FolderGraphTests(unittest.TestCase):
     def test_person_secrets_never_leave(self):
         out = build(self.raw)
         person = next(n for n in out["nodes"] if n["id"] == "u")
-        self.assertEqual(person["fields"], [{"name": "이름", "value": "바트"}, {"name": "직급", "value": "PM"}])
+        self.assertEqual(person["fields"][:2], [{"name": "이름", "value": "바트"}, {"name": "직급", "value": "PM"}])
         self.assertNotIn("a@b.c", str(out))
         self.assertNotIn("password", str(out))
 
     def test_unknown_labels_and_their_edges_dropped(self):
         out = build(self.raw)
         self.assertNotIn("s", [n["id"] for n in out["nodes"]])
-        self.assertEqual(out["edges"], [{"from": "u", "to": "m", "type": "ATTENDED"}])
+        self.assertEqual(out["edges"], [])  # 회의로 가는 엣지는 속성으로 옮겨짐 · 모르는 라벨 엣지는 버림
+
+    def test_meeting_becomes_fields_not_node(self):
+        raw = {"nodes": self.raw["nodes"] + [
+            {"id": "m2", "label": "Meeting", "props": {"title": "2차", "held_at": DateTime.from_native(datetime(2026, 11, 10))}},
+            {"id": "g", "label": "Agenda", "props": {"title": "기능"}}],
+            "edges": [{"from": "u", "to": "m2", "type": "ATTENDED"}, {"from": "u", "to": "m", "type": "ATTENDED"},
+                      {"from": "m", "to": "g", "type": "HAS_AGENDA"}, {"from": "g", "to": "d", "type": "HAS_DISCUSSION"}]}
+        out = build(raw)
+        nodes = {n["id"]: n for n in out["nodes"]}
+        self.assertNotIn("m", nodes)
+        self.assertEqual(out["edges"], [{"from": "g", "to": "d", "type": "HAS_DISCUSSION"}])
+        self.assertEqual(nodes["u"]["fields"][-1], {"name": "참석한 회의", "value": ["킥오프 (2026-11-09)", "2차 (2026-11-10)"]})
+        self.assertEqual(nodes["g"]["fields"][-1], {"name": "회의", "value": "킥오프 (2026-11-09)"})
 
     def test_readable_values(self):
         nodes = {n["id"]: n for n in build(self.raw)["nodes"]}
-        self.assertEqual(nodes["m"]["fields"][1], {"name": "회의 날짜", "value": "2026-11-09"})
         self.assertEqual(nodes["a"]["fields"][-1], {"name": "상태", "value": "진행 중"})
         self.assertEqual(nodes["d"]["lines"], [{"tag": "반대·우려", "decision_tag": "", "text": "비용"}])
         self.assertEqual(nodes["d"]["caption"], "배터리")
