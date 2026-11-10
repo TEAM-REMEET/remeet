@@ -291,6 +291,8 @@ def _step2(s: AppState) -> None:
                f'<h1 class="md-title">{esc(m.title)}</h1>{tag("미리보기", "host")}</div>')
         with st.container(horizontal=True, width="content", gap="small"):
             if not s.cp_handoff:  # 넘겨받은 회의록은 2단계부터 (입력값을 고치면 새로 분석하게 되므로 1단계로 못 감)
+                # 삭제 = 1단계 초기화와 같음: 분석 작업 캐시 · 분석 직후 저장한 draft(Postgres)를 지우고 빈 1단계로
+                button("삭제", key="cp_delete2", variant="danger", icon=":material/delete:", on_click=actions.compose_reset)
                 button("← 이전화면으로", key="cp_prev2", variant="secondary", on_click=actions.compose_goto, args=(1,))
             button("확정하기", key="cp_finish", variant="primary", icon=":material/task_alt:",
                    on_click=actions.open_compose_confirm)
