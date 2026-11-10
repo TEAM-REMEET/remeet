@@ -362,6 +362,8 @@ body:has(.ld-cover) .st-key-topbar { z-index: 99995; }  /* 상단바(알림)는 
 .st-key-step-head .page-header h1 { font-size: 26px; font-weight: 800; line-height: 1.3; letter-spacing: -0.5px; }
 .st-key-step-head .page-header { gap: 4px; }
 .st-key-step-head-btns { flex: none !important; flex-wrap: nowrap !important; margin-top: -2px; }
+.st-key-cp-step2-btns { gap: 7px !important; }
+.st-key-cp-step2-btns button { height: 38px !important; }  /* 2단계 머리말: 삭제 · 이전화면으로 · 확정하기 높이 맞춤 */
 
 /* ---------- 회의 상세 맨 위 진행 상황 상자 (views/meeting/header._stage_panel) ---------- */
 .stage-panel { border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; border: 1px solid; border-left-width: 6px; }
