@@ -821,10 +821,12 @@ hr.cp-divider {
 /* ---------- 사이드바 로고: 누르면 새 회의록 (투명 버튼을 로고 위에 겹침) ---------- */
 .st-key-sb-logo-link {
   position: relative;
+  width: fit-content !important;  /* 클릭 영역을 로고 글자 폭까지만 */
 }
 .st-key-sb-logo-link [class*="st-key-b-ghost-logo_home"] {
   position: absolute !important;
   inset: 0;
+  width: 100% !important;  /* Streamlit 의 content 폭 지정을 덮어 로고 전체를 클릭 영역으로 */
   z-index: 2;
 }
 .st-key-sb-logo-link [class*="st-key-b-ghost-logo_home"] button {
