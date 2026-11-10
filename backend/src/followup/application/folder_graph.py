@@ -45,6 +45,8 @@ def node(raw: dict[str, Any]) -> dict[str, Any] | None:
     fields = [{"name": name, "value": val} for key, name in FIELDS[label] if (val := _value(key, props.get(key))) is not None]
     caption = props.get(FIELDS[label][0][0]) or KIND[label]
     out = {"id": raw["id"], "label": label, "kind": KIND[label], "caption": str(caption), "fields": fields}
+    if label in ("Agenda", "Discussion") and props.get("order") is not None:
+        out["order"] = props["order"]  # 화면 번호 「안건-소주제」 (1-1.) 용
     if label == "Discussion":
         out["lines"] = [{k: ln[k] for k in ("tag", "decision_tag", "text")} for ln in discussion_lines(props)]
     return out

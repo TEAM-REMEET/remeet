@@ -179,7 +179,7 @@ class AppState:
     fin_flow: str = ""  # 확정 흐름 중인 회의 id (회의 상세 · 결과 전달 · 외부 도구 전송에도 단계 표시 · 외부 도구 전송을 마치면 끝)
 
     # --- 위키
-    wiki_view: str = "graph"  # 위키 탭 안: graph 그래프 | board 미해결 이슈
+    wiki_view: str = "graph"  # 위키 탭 안: graph 그래프(주제 트리) | board 미해결 이슈
 
     # --- 외부 전송 (연결은 관리자 · MCP 관리에서)
     export_resent: set[str] = field(default_factory=set)  # 다시 보낸 전송 실패 기록 id (f1 · f2)

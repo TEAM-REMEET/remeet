@@ -12,7 +12,7 @@ class FolderGraphTests(unittest.TestCase):
         self.raw = {"nodes": [
             {"id": "u", "label": "Person", "props": {"name": "바트", "position": "PM", "password_hash": "x", "email": "a@b.c"}},
             {"id": "m", "label": "Meeting", "props": {"title": "킥오프", "held_at": DateTime.from_native(datetime(2026, 11, 9))}},
-            {"id": "d", "label": "Discussion", "props": {"title": "배터리", "discussions": ["[반대·우려] 비용"],
+            {"id": "d", "label": "Discussion", "props": {"title": "배터리", "order": 2, "discussions": ["[반대·우려] 비용"],
                                                          "discussion_tags": ["반대·우려"], "decision_tags": [""], "evidence": ["3"]}},
             {"id": "a", "label": "ActionItem", "props": {"description": "단가 확인", "status": "open", "missing_skills": ["x"]}},
             {"id": "s", "label": "Skill", "props": {"name": "secret"}},
@@ -48,6 +48,8 @@ class FolderGraphTests(unittest.TestCase):
         self.assertEqual(nodes["a"]["fields"][-1], {"name": "상태", "value": "진행 중"})
         self.assertEqual(nodes["d"]["lines"], [{"tag": "반대·우려", "decision_tag": "", "text": "비용"}])
         self.assertEqual(nodes["d"]["caption"], "배터리")
+        self.assertEqual(nodes["d"]["order"], 2)
+        self.assertNotIn("order", nodes["a"])
 
 
 if __name__ == "__main__":

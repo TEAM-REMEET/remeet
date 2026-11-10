@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 import streamlit as st
 
-from components.folder_graph import folder_graph
+from components.folder_tree import folder_tree
 from components.meeting_table import meeting_table
 from components.member_pills import member_pills
 from state.store import me_id
@@ -153,7 +153,7 @@ class FolderPage:
     extra_tags: list[str] = field(default_factory=list)
 
 
-def _wiki_graph(fid: str) -> None:
+def _wiki_graph(fid: str, root: str) -> None:
     try:
         data = repo.folder_graph(fid)
     except api.ApiError as e:
@@ -162,7 +162,7 @@ def _wiki_graph(fid: str) -> None:
     if not data["nodes"]:
         empty_state("회의록을 확정하면 회의 · 안건 · 주제 · 할 일이 이어진 그래프가 여기에 그려져요.", title="아직 그래프가 없어요", pad=48)
         return
-    folder_graph(data)
+    folder_tree(data, root=root)
 
 
 def _wiki_tab(s: AppState, fp: FolderPage) -> None:
@@ -174,8 +174,8 @@ def _wiki_tab(s: AppState, fp: FolderPage) -> None:
     view = "board" if s.wiki_view == "board" else "graph"
     button_group([("graph", "그래프"), ("board", "미해결 이슈")], view,
                  lambda v: actions.update(wiki_view=v), key="wkview", style="seg")
-    if view == "graph":
-        _wiki_graph(fids[0])
+    if view != "board":
+        _wiki_graph(fids[0], sel.folders(s)[fids[0]].name)
     elif wiki := _wiki_data(s, fids[0]):
         _wiki_board(wiki["topics"], wiki["meetings"])
 
