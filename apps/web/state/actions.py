@@ -223,13 +223,14 @@ def open_modal(name: str, **extra) -> None:
 
 def close_modal() -> None:
     get_state().pp_nonce += 1  # 사람 고르기 검색칸 비우기 (다음에 열 때 새로)
-    _set(modal=None, assign_pending="", members_folder="", members_scope=[], delete_target=())
+    _set(modal=None, assign_pending="", members_folder="", members_scope=[], delete_target=(),
+         cp_resumed=False)  # X 로 닫으면 다음 입력 오류 창은 평소처럼 「확인」
 
 
 def _wizard_reset() -> dict:
     """새 회의록 2단계 작성을 처음(1단계 · 빈 칸)으로."""
     return dict(cp_step=1, nn_title="", nn_date=None, nn_text="", nn_files=[], nn_speaker_map={}, nn_error="",
-                cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False,
+                cp_example="plain", cp_format_note="", cp_format_warn="", cp_file_warn="", preview_meeting=None, cp_request=None, cp_result=None, cp_result_request=None, cp_final=None, cp_job_running=False, cp_resumed=False,
                 cp_handoff="", cp_handoff_author="", cp_handoff_error="", cp_saved_id="")
 
 
@@ -675,7 +676,7 @@ def compose_resume() -> None:
     s.cp_request = req
     s.compose_nonce += 1
     if job["status"] == "failed":
-        s.cp_step = 1
+        s.cp_step, s.cp_resumed = 1, True
         _format_error(job.get("message") or "분석에 실패했어요. 다시 시도해 주세요.")
         return
     s.cp_step = 2
@@ -683,6 +684,14 @@ def compose_resume() -> None:
         s.cp_job_running = True
     else:
         _job_done(s, job)
+
+
+def compose_continue() -> None:
+    """중단된 분석 안내 창 「이어하기」 → 되살린 입력값 그대로 작성 화면 1단계 (「다음 단계」로 다시 보내면 이어서 진행).
+    새로고침 · 다시 로그인하면 어느 화면에서든 이 창이 떠요 (사이드바 compose_resume)."""
+    s = get_state()
+    s.cp_resumed = False
+    go("compose", modal=None, nn_error=s.nn_error)  # 입력칸 아래 안내도 그대로
 
 
 def compose_clear_files() -> None:

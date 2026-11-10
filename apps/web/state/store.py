@@ -223,6 +223,7 @@ class AppState:
     cp_request: dict | None = None  # 보낸 분석 요청 (POST /api/meeting-jobs)
     cp_job_running: bool = False  # 뒤에서 분석 중 (다른 화면에 다녀와도 유지)
     cp_job_synced: bool = False  # 이번 세션에서 서버의 분석 작업을 확인했는지 (브라우저를 닫았다 와도 복원)
+    cp_resumed: bool = False  # 중단 · 실패한 분석의 입력값을 서버에서 되살림 → 안내 창 버튼이 「이어하기」(작성 화면으로)
     cp_result: dict | None = None  # 백엔드가 돌려준 요약 결과 (저장된 summary.json과 같은 내용)
     cp_final: dict | None = None  # 사용자 수정 · 근거 연결까지 반영한 최종 결과 (저장된 summary_final.json과 같은 내용)
     cp_result_request: dict | None = None  # cp_result를 만든 요청 (같으면 AI를 다시 호출하지 않음)

@@ -113,7 +113,11 @@ def format_error_dialog() -> None:
            f'<p>{esc(s.nn_error)}</p></div>'
            '<p class="hint" style="font-size:13px;margin-top:10px">고친 뒤 다시 「다음 단계」를 눌러 주세요.</p>')
     with st.container(horizontal=True, horizontal_alignment="right"):
-        if button("확인", key="cp_warn_ok", variant="primary"):
+        if s.cp_resumed:  # 중단된 분석을 되살림 → 입력이 남은 작성 화면으로
+            if button("이어하기", key="cp_warn_continue", variant="primary"):
+                actions.compose_continue()
+                st.rerun()
+        elif button("확인", key="cp_warn_ok", variant="primary"):
             actions.close_modal()
             st.rerun()
 
