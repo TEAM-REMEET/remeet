@@ -30,7 +30,8 @@ def _banner(p: delivery.Progress, total: int, mid: str) -> None:
     if p.ended:
         tone = "fail" if p.failed else "ok"
         head = f"전송 실패 · {p.failed}건" if p.failed else "참석자에게 모두 전달했어요"
-        sub = ("메신저가 잠깐 응답하지 않았어요. 다시 보내면 실패한 사람에게만 보내요." if p.failed
+        sub = ("메신저가 잠깐 응답하지 않았어요. 다시 보내면 실패한 사람에게만 보내요. "
+               "모두 전달된 뒤에 외부 도구 전송으로 넘어갈 수 있어요." if p.failed
                else f"참석자 {total}명에게 요약·결정·할 일을 보냈어요. "
                     "Jira · Slack 같은 외부 도구로도 보내려면 「외부 도구 전송」을 눌러 주세요.")
         dot = "#B3261E" if p.failed else "#2E9E62"
@@ -108,7 +109,7 @@ def render() -> None:
                 if p.failed and host:  # 다시 보내기는 주관자만: 실패한 참석자에게만
                     button(f"실패한 {p.failed}건 다시 보내기", key="dv_retry", variant="danger", icon=":material/refresh:",
                            on_click=actions.start_delivery, args=(mid, 2))
-                if host:  # 결과 전달이 끝나면 외부 도구(MCP)로 따로 보내기
+                if host and not p.failed:  # 모두 전달된 뒤에만 외부 도구(MCP)로 (실패가 남으면 다시 보내기부터)
                     button("외부 도구 전송 →" if finalize.in_flow(s, mid) else "외부 도구 전송", key="dv_export",
                            variant="primary", icon=":material/send:", on_click=actions.open_export, args=(mid,))
         running = not p.ended

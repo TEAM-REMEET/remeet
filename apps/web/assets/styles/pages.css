@@ -1998,6 +1998,7 @@
   background: #EBEDF0;
 }
 .md-title-box .md-title { font-weight: 700; }
+.md-title-box.review { background: #FFF8DC; border-left-color: #F2B705; }  /* 검토 중 (최종 회의록 전) */
 
 /* 회의록 확정 확인 창 */
 /* .stHtml p { margin: 0 } (base.css) 보다 구체적이어야 여백이 먹어요 · 위 제목 상자와 한 줄(22px) 띄움 */

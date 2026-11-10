@@ -8,7 +8,7 @@ from state import actions
 from state.selectors import MeetingRow
 from ui.buttons import button
 from ui.html import markup
-from ui.tags import tag
+from ui.tags import stage_badge, tag
 from utils.text import esc
 
 COLUMNS = (2.3, 1.25, 1.0, 1.35, 1.1, 0.95)
@@ -17,6 +17,7 @@ HEADERS = ("회의명", "회의 일시", "주관자", "진행 상태", "액션 �
 _BUTTON_VARIANT = {
     "review": "accentline",
     "deliver": "accentline",
+    "export": "accentline",
     "retry": "dangerline",
     "progress": "secondary",
     "view": "secondary",
@@ -35,6 +36,8 @@ def _row(row: MeetingRow, key: str) -> None:
         with c_title:
             with st.container(horizontal=True, vertical_alignment="center", gap="xsmall"):
                 button(row.title, key=f"{key}_open_{row.id}", variant="link", on_click=actions.open_meeting, args=(row.id,))
+                if badge := stage_badge(row.stage):  # 남은 단계가 있는 회의 (검토 중 · 전달 전 …)
+                    st.html(badge, width="content")
                 if row.is_deep:
                     st.html(tag("심화", "deep"), width="content")
                 if row.absent_shared:

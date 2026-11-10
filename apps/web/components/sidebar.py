@@ -11,6 +11,7 @@ from ui.avatar import avatar
 from ui.buttons import button, button_group
 from ui.html import markup
 from ui.icons import brand_logo
+from ui.tags import stage_trail
 from utils.text import esc, safe_key
 
 _TREE_ORDER = ("monthly", "weekly", "normal")  # 회의록 페이지와 같은 순서
@@ -36,7 +37,12 @@ class _Tree:
         self.s = get_state()
         self.current, _ = arc.node_of_location(self.s)
 
-    def folder(self, node: str, label: str, level: int, count: int | None = None, *, new: bool = False) -> bool:
+    def pending(self, ids: list[str]) -> int:
+        """남은 단계가 있는 회의 수 (검토 중 · 전달 전 · 외부 도구 전송 전 …)."""
+        return sum(1 for mid in ids if stage_trail(sel.quick_stage(self.s, mid)))
+
+    def folder(self, node: str, label: str, level: int, count: int | None = None, *, new: bool = False,
+               pending: int = 0) -> bool:
         """폴더 줄. 펼쳐져 있으면 True (호출한 쪽이 자식을 그림).
 
         - 화살표(> / v): 누르면 바로 펼치기/접기만 (화면 이동 없음)
@@ -46,6 +52,9 @@ class _Tree:
         trail = f'<span class="nav-trail count">{count}</span>' if count is not None else ""
         if new:
             trail += '<span class="nav-trail newdot tree"></span>'
+        if pending:  # 접어 둬도 안에 남은 단계가 있는 회의가 있다는 걸 알 수 있게
+            trail += (f'<span class="nav-trail pend{" shift" if new else ""}" '
+                      f'title="남은 단계가 있는 회의 {pending}개">{pending}</span>')
         on = node == self.current
         key = safe_key(node)
         with st.container(key=f"navrow-tree{level}-{key}", gap=None):
@@ -62,6 +71,8 @@ class _Tree:
         node = f"m:{mid}"
         key = safe_key(node)
         with st.container(key=f"navrow-tree{level}-leaf_{key}", gap=None):
+            if trail := stage_trail(sel.quick_stage(self.s, mid)):  # 남은 단계 (검토 중 · 전달 전 …)
+                markup(trail)
             button(label, key=f"tree_{key}", variant="treeon" if node == self.current else "tree",
                    on_click=actions.tree_click, args=(node,), icon=":material/description:", width="stretch",
                    help=hint or repo.meeting(mid).title)
@@ -79,7 +90,7 @@ class _Tree:
         types = repo.meeting_types()
         for t in _TREE_ORDER:
             ids = arc.meeting_ids_of_type(self.s, t)  # 최근 순
-            if not self.folder(f"t:{t}", types[t].name, 1, len(ids)):
+            if not self.folder(f"t:{t}", types[t].name, 1, len(ids), pending=self.pending(ids)):
                 continue
             if t == "normal":
                 for mid in ids:
@@ -88,7 +99,7 @@ class _Tree:
             # 주간 회의는 그 주 월요일 기준으로 연도 · 월을 나눠요 (주차 계산과 같은 기준)
             anchor = (lambda mid: arc.week_of(arc.meeting_day(mid))[0]) if t == "weekly" else arc.meeting_day
             for year, year_ids in _group(ids, lambda mid: anchor(mid).year):
-                if not self.folder(f"y:{t}:{year}", f"{year}년", 2, len(year_ids)):
+                if not self.folder(f"y:{t}:{year}", f"{year}년", 2, len(year_ids), pending=self.pending(year_ids)):
                     continue
                 if t == "monthly":
                     for mid in year_ids:
@@ -96,7 +107,8 @@ class _Tree:
                         self.meeting(mid, f"{d.month}월 ({arc.dotted(d)})", 3)
                     continue
                 for month, month_ids in _group(year_ids, lambda mid: anchor(mid).month):
-                    if self.folder(f"ym:{t}:{year}:{month}", f"{month}월", 3, len(month_ids)):
+                    if self.folder(f"ym:{t}:{year}:{month}", f"{month}월", 3, len(month_ids),
+                                   pending=self.pending(month_ids)):
                         for mid in month_ids:
                             d = arc.meeting_day(mid)
                             self.meeting(mid, f"{arc.week_of(d)[1]}주차 ({arc.dotted(d)})", 4)
@@ -112,7 +124,8 @@ class _Tree:
             return
         for fid in fids:
             notes = sel.folder_note_ids(self.s, fid)  # 나에게 보이는 회의만 (최근 순)
-            if self.folder(f"pf:{fid}", fs[fid].name, 2, len(notes), new=fs[fid].is_new):
+            if self.folder(f"pf:{fid}", fs[fid].name, 2, len(notes), new=fs[fid].is_new,
+                           pending=self.pending(notes)):
                 for mid in notes:
                     self.meeting(mid, repo.meeting(mid).title, 3, hint=arc.dotted(arc.meeting_day(mid)))
 
