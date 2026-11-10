@@ -66,7 +66,7 @@ class _Tree:
             trail += '<span class="nav-trail newdot tree"></span>'
         if pending:  # 접어 둬도 안에 남은 단계가 있는 회의가 있다는 걸 알 수 있게
             trail += (f'<span class="nav-trail pend{" shift" if new else ""}" '
-                      f'title="남은 단계가 있는 회의 {pending}개">{pending}</span>')
+                      f'title="남은 단계가 있는 회의 {pending}개">!</span>')
         on = node == self.current
         key = safe_key(node)
         with st.container(key=f"navrow-tree{level}-{key}", gap=None):
