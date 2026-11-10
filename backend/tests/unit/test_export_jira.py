@@ -18,7 +18,12 @@ class FakeJira:
     def __init__(self, accounts=None, fail_titles=(), existing=None, search_error=None):
         self.accounts, self.fail_titles = accounts or {}, set(fail_titles)
         self.existing, self.search_error = existing or {}, search_error  # existing: 라벨 → 이미 있는 이슈 키
-        self.lookups, self.created, self.searched = [], [], []
+        self.lookups, self.created, self.searched, self.links = [], [], [], []
+
+    async def link(self, cloud_id, inward, outward, link_type="Relates"):
+        if inward == "FAIL":
+            raise RuntimeError("createJiraIssueLink 실패")
+        self.links.append((inward, outward, link_type))
 
     async def search(self, cloud_id, jql, fields, max_results):
         if self.search_error:
@@ -50,9 +55,33 @@ def item(key, title, owners=(), due=None):
 
 class ExportTests(unittest.TestCase):
     def setUp(self):
-        patcher = patch.dict("os.environ", ENV)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        for patcher in (patch.dict("os.environ", ENV), patch.object(export_jira, "follow_ups", lambda ids: {})):
+            patcher.start()  # 후속 업무 조회(Neo4j · DB) 는 기본으로 없음
+            self.addCleanup(patcher.stop)
+
+    def test_follow_up_links_to_previous_issue(self):
+        """후속 업무(Neo4j FOLLOWS_UP) → 이전 업무가 Jira 로 간 적 있으면 Relates 로 이음 · 못 찾으면 건너뜀."""
+        fake = FakeJira(existing={"remeet-todo-7": "KAN-3"})  # 이전 회의 할 일 7 은 예전에 KAN-3 으로 보냄 (8 은 안 보냄)
+        res = export_jira.export("회의", [item("40", "후속 일"), item("41", "새 일")], connect=connect_to(fake),
+                                 emails=lambda ids: {}, follows=lambda ids: {"40": ["7", "8"]})
+        by_key = {r["key"]: r for r in res["items"]}
+        self.assertEqual(fake.links, [("KAN-1", "KAN-3", "Relates")])
+        self.assertEqual((by_key["40"]["linked_to"], "linked_to" in by_key["41"]), (["KAN-3"], False))
+        self.assertEqual(fake.searched[-1], 'labels in ("remeet-todo-7", "remeet-todo-8")')  # 이전 이슈는 한 번에 찾음
+
+    def test_follow_up_link_is_optional(self):
+        """연결 · 조회가 실패해도 이슈 결과는 그대로 · 다시 보내기로 이미 있던 이슈는 다시 잇지 않음."""
+        fake = FakeJira(existing={"remeet-todo-7": "KAN-3", "remeet-todo-40": "KAN-9"})
+        res = export_jira.export("회의", [item("40", "이미 있음")], connect=connect_to(fake), emails=lambda ids: {},
+                                 follows=lambda ids: {"40": ["7"]})
+        self.assertEqual((res["created"], fake.links), (1, []))
+
+        def boom(ids):
+            raise ConnectionError("neo4j down")
+        with self.assertLogs(export_jira.logger, level="WARNING"):
+            res = export_jira.export("회의", [item("41", "새 일")], connect=connect_to(FakeJira()), emails=lambda ids: {},
+                                     follows=boom)
+        self.assertEqual(res["created"], 1)
 
     def test_not_configured(self):
         with patch.dict("os.environ", {"JIRA_CLOUD_ID": ""}):

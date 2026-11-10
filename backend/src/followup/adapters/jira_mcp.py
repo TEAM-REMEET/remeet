@@ -127,6 +127,11 @@ class Jira:
     async def transition(self, cloud_id: str, key: str, transition_id: str) -> None:
         await self._call("transitionJiraIssue", {"cloudId": cloud_id, "issueIdOrKey": key, "transitionId": str(transition_id)})
 
+    async def link(self, cloud_id: str, inward: str, outward: str, link_type: str = "Relates") -> None:
+        """이슈 두 개 잇기 (linkType 은 Jira 사이트의 링크 종류 이름 · listJiraIssueLinkTypes)."""
+        await self._call("createJiraIssueLink", {"cloudId": cloud_id, "linkType": link_type,
+                                                 "inwardIssue": inward, "outwardIssue": outward})
+
     async def comment(self, cloud_id: str, key: str, text: str) -> None:
         await self._call("addOrEditJiraIssueComment", {"cloudId": cloud_id, "issueIdOrKey": key, "commentBody": text})
 

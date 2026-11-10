@@ -2271,3 +2271,10 @@
 .wk-group p + p { padding-top: 4px; border-top: 1px dashed var(--line-soft); width: 100%; }
 .wk-foot { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; font-size: 12.5px; color: var(--text-sub); }
 .wk-foot b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+
+/* 할 일 상세 「선행 업무」: 정보 상자 아래 · 한 줄 = 업무 (담당자) + 회의 제목 링크 */
+.st-key-dash-follows { padding: 10px 14px; border: 1px solid var(--line-soft); border-radius: 6px; background: #fbfbfc; }
+.dash-follow-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.dash-follow { font-size: 14px; color: var(--ink); }
+.dash-follow em { font-style: normal; color: var(--muted); }
+[class*="st-key-dash-follow-"] button { min-height: 0 !important; padding: 0 !important; font-size: 14px !important; }

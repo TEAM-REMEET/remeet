@@ -184,6 +184,19 @@ class OpsIntegrationTests(unittest.TestCase):
         self.assertEqual(detail.my_todo_ids('u2', 10), [a['id']])
         self.assertEqual(detail.my_todo_ids('u1', 10), [])                       # 주관자라도 담당자가 아니면 없음
 
+    def test_todo_briefs_for_follow_up_line(self):
+        """대시보드 상세 「선행 업무」: 할 일 id → 업무 · 회의 이름 · 날짜 (지운 할 일은 뺌)."""
+        from followup.adapters.postgres import detail
+        self._meeting()
+        a = detail.add_todo(actor_id='u1', meeting_id='m1', text='견적서 초안 작성', owners=['u2'])
+        b = detail.add_todo(actor_id='u1', meeting_id='m1', text='지운 일', owners=['u2'])
+        detail.delete_todo(actor_id='u1', todo_id=b['id'])
+        briefs = detail.todo_briefs([a['id'], b['id']])
+        self.assertEqual(list(briefs), [a['id']])
+        self.assertEqual((briefs[a['id']]['text'], briefs[a['id']]['owners'], briefs[a['id']]['meeting_id'],
+                          briefs[a['id']]['meeting']), ('견적서 초안 작성', ['u2'], 'm1', 'm1 회의'))
+        self.assertEqual(detail.todo_briefs([]), {})
+
     def test_preferences_saved_per_user(self):
         """026: 즐겨찾기 · 최근을 사람마다 저장 (다시 로그인해도 남음) · 허용 키 · 개수 · 중복 정리."""
         from followup.adapters.postgres import preferences as pref
