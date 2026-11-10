@@ -42,13 +42,13 @@ class JobBase(unittest.TestCase):
         self.addCleanup(app.dependency_overrides.clear)
         self.store = LocalFileStore(self.root)
         self.llm = GatedLLM()
-        self.addCleanup(self.finish_jobs)
         self.user = {"user_id": "u1", "permission": "member"}
         self.saved = []   # 분석이 끝나면 PostgreSQL 대신 여기에 (save_analysis)
         save = patch.object(meeting_jobs.save_analysis, "save_result",
                             lambda uid, sub, summary, draft: self.saved.append((uid, summary["meeting_id"])) or "draft")
         save.start()
         self.addCleanup(save.stop)
+        self.addCleanup(self.finish_jobs)   # 패치보다 먼저 정리되도록 뒤에 등록 (LIFO)
         app.dependency_overrides[get_store] = lambda: self.store
         app.dependency_overrides[get_llm] = lambda: self.llm
         app.dependency_overrides[current_user] = lambda: self.user
