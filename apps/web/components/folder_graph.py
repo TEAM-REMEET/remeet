@@ -1,6 +1,6 @@
 """폴더 그래프 탭: Neo4j Browser 처럼 노드 · 엣지를 그대로 보여 주는 화면 (vis-network, iframe 안에서 전부 처리).
 
-클릭 = 오른쪽에 내용 · 더블클릭 = 이어진 노드 펼치기 · 라벨 칩 = 그 종류만 · 검색 = 글자가 들어간 노드만 강조, 나머지 회색.
+클릭 = 오른쪽에 내용 · 더블클릭 = 이어진 노드 펼치기 / 다시 더블클릭 = 접기 · 라벨 칩 = 그 종류만 · 검색 = 글자가 들어간 노드만 강조, 나머지 회색.
 vis-network 는 assets/vendor 에 넣어 둔 파일을 그대로 넣음 (인터넷 없이도 뜨게 · 9.1.9, Apache-2.0 OR MIT).
 데이터의 글자는 전부 textContent 로만 넣음 (회의록 문장에 HTML 이 섞여 있어도 실행되지 않게).
 """
@@ -56,7 +56,7 @@ aside h3{margin:6px 0 14px;font-size:17px;line-height:1.4}
 <div class="search"><input id="q" type="search" placeholder="보이는 노드에서 검색" aria-label="보이는 노드에서 검색"><span class="count" id="count"></span>
 <button class="ghost" id="reset" type="button">처음으로</button></div></div>
 <div class="main"><div id="net"></div><aside id="panel" aria-live="polite"></aside></div>
-<div class="hint">클릭: 내용 보기 · 더블클릭: 이어진 노드 펼치기 · 드래그: 옮기기 · 휠: 확대/축소</div>
+<div class="hint">클릭: 내용 보기 · 더블클릭: 이어진 노드 펼치기 / 다시 더블클릭: 접기 (점선 테두리 = 펼친 노드) · 드래그: 옮기기 · 휠: 확대/축소</div>
 </div>
 <script>__VIS__</script>
 <script>
@@ -70,7 +70,14 @@ const adj = new Map(G.nodes.map(n => [n.id, []]));
 G.edges.forEach((e, i) => { e.id = i; adj.get(e.from).push({e, other: e.to, out: true}); adj.get(e.to).push({e, other: e.from, out: false}); });
 const hay = new Map(G.nodes.map(n => [n.id, [n.caption, ...n.fields.flatMap(f => [].concat(f.value)), ...(n.lines || []).map(l => l.text)].join(" ").toLowerCase()]));
 
-let label = "Topic", query = "", selected = null, visible = new Set();
+let label = "Topic", query = "", selected = null;
+// 보이는 노드 = 라벨 칩(base) + 「이어진 노드」로 연 것(extra) + 펼친 노드(opened)와 그 이웃. 접기 = opened 에서 빼고 다시 계산
+let base = new Set(), extra = new Set(), opened = new Set();
+function visibleIds() {
+  const v = new Set([...base, ...extra, ...opened]);
+  opened.forEach(id => adj.get(id).forEach(({other}) => v.add(other)));
+  return v;
+}
 const nodes = new vis.DataSet(), edges = new vis.DataSet();
 const net = new vis.Network(document.getElementById("net"), {nodes, edges}, {
   nodes: {shape: "circle", borderWidth: 2, font: {size: 11, face: "Noto Sans KR, sans-serif"}, widthConstraint: {minimum: 72, maximum: 72}},
@@ -87,10 +94,12 @@ function look(n) {
   return {id: n.id, label: short(n.caption),
     color: {background: hit ? COLOR[n.label] : "#3A3C42", border: on ? "#7FE7F0" : (query && hit ? "#FFFFFF" : (hit ? COLOR[n.label] : "#4A4C52")),
             highlight: {background: hit ? COLOR[n.label] : "#4A4C52", border: "#7FE7F0"}, hover: {background: hit ? COLOR[n.label] : "#4A4C52", border: "#E8E9EB"}},
+    shapeProperties: {borderDashes: opened.has(n.id) ? [5, 4] : false},
     borderWidth: on ? 4 : (query && hit ? 3 : 2), font: {color: hit ? "#1A1A1A" : "#8A8D93"}};
 }
 function render() {
-  const keep = new Set(visible);
+  const keep = visibleIds();
+  if (selected && !keep.has(selected)) { selected = null; panel(); }  // 접혀서 사라진 노드를 보고 있었으면 패널 비움
   nodes.remove(nodes.getIds().filter(id => !keep.has(id)));
   nodes.update([...keep].map(id => look(byId.get(id))));
   const want = G.edges.filter(e => keep.has(e.from) && keep.has(e.to));
@@ -111,14 +120,14 @@ function chips() {
   });
 }
 function reset() {
-  visible = new Set(G.nodes.filter(n => label === "*" || n.label === label).map(n => n.id));
+  base = new Set(G.nodes.filter(n => label === "*" || n.label === label).map(n => n.id)); extra = new Set(); opened = new Set();
   selected = null; chips(); render(); panel(); net.once("stabilized", () => net.fit({animation: true})); setTimeout(() => net.fit(), 1200);  // stabilized 가 안 올 때(변화 없음) 대비
 }
 function el(tag, cls, text) { const x = document.createElement(tag); if (cls) x.className = cls; if (text != null) x.textContent = text; return x; }
 function panel() {
   const p = document.getElementById("panel"); p.textContent = "";
   const n = selected && byId.get(selected);
-  if (!n) { p.appendChild(el("p", "empty", "노드를 누르면 내용이 여기에 보여요. 더블클릭하면 이어진 노드가 펼쳐져요.")); return; }
+  if (!n) { p.appendChild(el("p", "empty", "노드를 누르면 내용이 여기에 보여요. 더블클릭하면 이어진 노드가 펼쳐지고, 다시 더블클릭하면 접혀요.")); return; }
   const k = el("span", "kind", n.kind); k.style.background = COLOR[n.label]; p.appendChild(k);
   p.appendChild(el("h3", null, n.caption));
   n.fields.slice(1).forEach(f => {
@@ -139,14 +148,15 @@ function panel() {
   const links = el("div", "links");
   near.forEach(({e, other, out}) => { const o = byId.get(other); const b = el("button"); b.type = "button";
     b.appendChild(el("span", null, (out ? e.type + " →" : "← " + e.type) + " " + o.kind)); b.appendChild(document.createTextNode(short(o.caption)));
-    b.onclick = () => { visible.add(other); select(other); net.focus(other, {scale: 1.1, animation: true}); };
+    b.onclick = () => { extra.add(other); select(other); net.focus(other, {scale: 1.1, animation: true}); };
     links.appendChild(b); });
   box.appendChild(links); p.appendChild(box);
 }
 function select(id) { selected = id; render(); panel(); net.selectNodes([id]); }
 net.on("click", ev => { if (ev.nodes.length) select(ev.nodes[0]); });
 net.on("doubleClick", ev => { if (!ev.nodes.length) return; const id = ev.nodes[0];
-  adj.get(id).forEach(({other}) => visible.add(other)); select(id); });
+  if (opened.has(id)) opened.delete(id); else opened.add(id);
+  select(id); });
 document.getElementById("q").addEventListener("input", ev => { query = ev.target.value.trim().toLowerCase(); render(); });
 document.getElementById("reset").onclick = () => { document.getElementById("q").value = ""; query = ""; reset(); };
 reset();
