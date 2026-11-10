@@ -157,7 +157,7 @@ def set_search_query(widget_key: str) -> None:
 
 def open_meeting_search(mid: str, q: str) -> None:
     """회의 내용 검색 결과 → 회의를 열고 원문에서 그 글자를 찾아 둠."""
-    open_meeting(mid)
+    open_meeting(mid, detail=True)
     _set(raw_query=q, left_tab="raw")
 
 
@@ -198,7 +198,13 @@ def open_folder(fid: str) -> None:
     go("folder", folder_id=fid, folder_tab="all", folder_role="todo")
 
 
-def open_meeting(mid: str, *, editing: bool = False) -> None:
+def open_meeting(mid: str, *, editing: bool = False, detail: bool = False) -> None:
+    """회의 열기. 내가 확정할 회의(주관자 · 검토자)가 검토 중이면 지금 단계(3 담당자 추천) 화면으로 바로
+    (상단 진행 상자가 3단계인데 회의 상세가 열리던 문제). detail=True · editing=True 면 회의 상세 그대로."""
+    if not (editing or detail) and sel.status_of(get_state(), mid) == "review" and sel.manages(repo.meeting(mid)):
+        start_finalize(mid)
+        if get_state().screen == "finalize":
+            return  # 편집한 안건 저장이 실패하면(토스트) 회의 상세로
     # 확정 흐름(fin_flow)은 지우지 않음 → 흐름 중에 회의 상세로 와도 단계 표시가 이어짐 (외부 도구 전송을 마칠 때 끝)
     go("note", meeting_id=mid, insight_tab="sum", left_tab="raw", just_shared=False, todo_scope="all")
     _set(editing=editing)
