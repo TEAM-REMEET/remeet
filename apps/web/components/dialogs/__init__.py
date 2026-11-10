@@ -13,6 +13,7 @@ from components.dialogs.compose_pickers import (
     format_error_dialog,
     host_picker_dialog,
     people_picker_dialog,
+    resume_dialog,
 )
 from components.dialogs.folder import delete_folder_dialog, delete_meeting_dialog, members_dialog
 from components.dialogs.issue import issue_detail_dialog
@@ -35,6 +36,7 @@ _DIALOGS = {
     "cp_host": host_picker_dialog,
     "cp_people": people_picker_dialog,
     "cp_format_error": format_error_dialog,
+    "cp_resume": resume_dialog,
     "cp_confirm": compose_confirm_dialog,
     "contact_admin": contact_admin_dialog,
     "issue_detail": issue_detail_dialog,

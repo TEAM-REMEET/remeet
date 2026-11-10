@@ -105,16 +105,33 @@ def people_picker_dialog() -> None:
     _footer("cp_people", f"{n}명 선택" if n else "선택 안 함")
 
 
-@st.dialog("입력 내용을 확인해 주세요", width="small", on_dismiss=actions.close_modal)
+@st.dialog("입력 내용을 확인해 주세요", width="small", icon=":material/error:", on_dismiss=actions.close_modal)
 def format_error_dialog() -> None:
     """1단계 「다음 단계」: 형식에 맞지 않거나 발화자가 참석자 안에 없으면 경고 창 (다음 단계로 넘어가지 않음)."""
     s = get_state()
-    markup('<div class="cp-warn-dlg"><span class="cp-warn-ico">!</span>'
+    markup('<div class="cp-warn-dlg">'
            f'<p>{esc(s.nn_error)}</p></div>'
            '<p class="hint" style="font-size:13px;margin-top:10px">고친 뒤 다시 「다음 단계」를 눌러 주세요.</p>')
     with st.container(horizontal=True, horizontal_alignment="right"):
         if button("확인", key="cp_warn_ok", variant="primary"):
             actions.close_modal()
+            st.rerun()
+
+
+@st.dialog("분석이 중단된 회의록이 있어요", width="small", icon=":material/error:", on_dismiss=actions.close_modal)
+def resume_dialog() -> None:
+    """새로고침 · 다시 로그인했는데 서버에 중단된 분석이 있음 (actions.compose_resume) → 어떤 회의인지 · 왜 멈췄는지 ·
+    「이어하기」 = 되살린 입력 그대로 작성 화면 1단계 (「다음 단계」로 다시 보내면 멈춘 단계부터)."""
+    s = get_state()
+    when = f" · {s.nn_date.month}월 {s.nn_date.day}일" if s.nn_date else ""
+    markup(f'<p class="cp-resume-meeting"><b>「{esc(s.nn_title or "제목 없음")}」</b>{esc(when)}</p>'
+           '<div class="cp-warn-dlg">'
+           f'<p>{esc(s.nn_error)}</p></div>'
+           '<p class="hint" style="font-size:13px;margin-top:10px">입력한 내용은 그대로 남아 있어요. 「이어하기」를 누른 뒤 '
+           '「다음 단계」를 누르면 멈춘 단계부터 이어서 분석해요.</p>')
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        if button("이어하기", key="cp_resume_continue", variant="primary"):
+            actions.compose_continue()
             st.rerun()
 
 

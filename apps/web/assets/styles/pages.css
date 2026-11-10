@@ -2233,6 +2233,14 @@
 [class*="st-key-dash-opt-indeterminate-"] button { background: #DCEAFF !important; color: #0747A6 !important; }
 [class*="st-key-dash-opt-done-"] button { background: #DFF4E9 !important; color: #23704A !important; }
 
+/* 분석이 중단된 회의록 창: 어떤 회의인지 (제목 · 날짜) */
+.cp-resume-meeting { margin: 0 0 10px; font-size: 15px; color: var(--ink); }
+/* 입력 오류 · 분석 중단 창: 제목 앞 경고 아이콘 (st.dialog icon · 제목 h2 옆 stDialogIcon) 주황 · 제목 글자와 같은 크기 (아이콘 칸 기본 lg 크기 대신 제목 크기를 물려받음) */
+[data-testid="stDialog"]:has(.cp-warn-dlg) [data-testid="stDialogIcon"] { display: inline-flex; align-items: center; color: #F37321; font-size: inherit !important; }
+[data-testid="stDialog"]:has(.cp-warn-dlg) [data-testid="stDialogIcon"] span { font-size: 1em !important; width: 1em !important;
+  height: 1em !important; line-height: 1 !important; color: inherit !important; }
+.cp-warn-dlg p { margin: 0; }
+
 /* ---------------------------------------------------------------- 폴더 위키: 결정 흐름 · 미해결 이슈 (views/folder.py) */
 .wk-chip { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 3px; font-size: 12px; font-weight: 700; white-space: nowrap; flex: none; }
 .wk-prop { background: #E8F0FB; color: #2F5FB3; }
