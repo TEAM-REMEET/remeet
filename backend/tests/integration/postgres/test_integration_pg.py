@@ -118,10 +118,17 @@ class PostgresCRUDIntegrationTests(unittest.TestCase):
         with self.assertRaises(NotFoundError):
             meetings.get_meeting(actor_id='u1',meeting_id=m['id'])
         from followup.adapters.postgres import folders
-        folders.get_folder(actor_id='u1',folder_id=f['id'])   # 회의가 남아 있으면 프로젝트도 남음
+        from followup.adapters.postgres.db import query
+        self.assertEqual(query("SELECT count(*) AS n FROM meetings WHERE id=%s",(m['id'],))[0]['n'],0)   # 실제 삭제 (025)
+        from followup.adapters.postgres.common import ValidationError
+        with self.assertRaises(ValidationError):              # 회의가 남은 프로젝트는 못 지움
+            folders.delete_folder(actor_id='u1',folder_id=f['id'])
         meetings.delete_meeting(actor_id='u1',meeting_id=other['id'])
-        with self.assertRaises(NotFoundError):                # 마지막 회의를 지우면 프로젝트도 지워짐 (024)
-            folders.get_folder(actor_id='u1',folder_id=f['id'])
+        folders.get_folder(actor_id='u1',folder_id=f['id'])   # 마지막 회의를 지워도 프로젝트는 남음
+        with self.assertRaises(ValidationError):              # 분석 중인 사람이 있으면 못 지움
+            folders.delete_folder(actor_id='u1',folder_id=f['id'],analyzing=['u2'])
+        folders.delete_folder(actor_id='u1',folder_id=f['id'])
+        self.assertEqual(query("SELECT count(*) AS n FROM folders WHERE id=%s",(f['id'],))[0]['n'],0)
 
     def test_summary_share_cannot_read_raw_and_revocation(self):
         from followup.adapters.postgres import meetings, shares

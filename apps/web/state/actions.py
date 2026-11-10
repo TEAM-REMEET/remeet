@@ -485,6 +485,11 @@ def compose_handoff() -> None:
     except api.ApiError as e:
         s.cp_handoff_error = str(e)
         return
+    _handed_off(s)
+
+
+def _handed_off(s) -> None:
+    """넘기기가 끝남 (서버가 분석 직후 넘겼거나 「다시 넘기기」) → 작성자는 새 회의록 화면으로."""
     title, host = s.nn_title, sel.name_of(s.nn_host)
     _clear_job()
     for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
@@ -585,11 +590,28 @@ def compose_poll() -> None:
     except api.ApiError:  # 잠깐 연결이 안 돼도 다음 확인 때 다시 봄
         return
     if job["status"] == "done":
-        _apply_result(s, job["result"])
-        _save_analysis(s)
+        _job_done(s, job)
     elif job["status"] != "running":
         s.cp_job_running, s.cp_step = False, 1
         _format_error(job.get("message") or "분석 작업을 찾을 수 없어요. 다시 시도해 주세요.")
+
+
+def _job_done(s, job: dict) -> None:
+    """분석이 끝남. 서버가 이미 저장 · 넘겼으면(job.saved) 그 결과를 따르고, 서버 저장이 실패했으면 예전처럼 여기서 저장 · 넘김."""
+    if job.get("saved") or job.get("save_error"):  # 서버가 프로젝트를 만들었거나 · 프로젝트가 지워짐 → 목록 다시 받기
+        repo.meetings_changed()
+    if job.get("save_error"):  # 분석하는 사이 고른 프로젝트가 지워짐 → 1단계에서 다시 고르기
+        s.cp_job_running, s.cp_step = False, 1
+        _format_error(job["save_error"])
+        return
+    if job.get("saved") == "handoff":
+        s.cp_job_running = False
+        _handed_off(s)
+        return
+    if job.get("saved") == "draft":
+        s.cp_saved_id = job["result"]["meeting_id"]
+    _apply_result(s, job["result"])
+    _save_analysis(s)
 
 
 def compose_resume() -> None:
@@ -627,8 +649,7 @@ def compose_resume() -> None:
     if job["status"] == "running":
         s.cp_job_running = True
     else:
-        _apply_result(s, job["result"])
-        _save_analysis(s)
+        _job_done(s, job)
 
 
 def compose_clear_files() -> None:

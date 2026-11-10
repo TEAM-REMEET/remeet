@@ -44,6 +44,11 @@ class JobBase(unittest.TestCase):
         self.llm = GatedLLM()
         self.addCleanup(self.finish_jobs)
         self.user = {"user_id": "u1", "permission": "member"}
+        self.saved = []   # 분석이 끝나면 PostgreSQL 대신 여기에 (save_analysis)
+        save = patch.object(meeting_jobs.save_analysis, "save_result",
+                            lambda uid, sub, summary, draft: self.saved.append((uid, summary["meeting_id"])) or "draft")
+        save.start()
+        self.addCleanup(save.stop)
         app.dependency_overrides[get_store] = lambda: self.store
         app.dependency_overrides[get_llm] = lambda: self.llm
         app.dependency_overrides[current_user] = lambda: self.user
@@ -182,3 +187,28 @@ class JobTests(JobBase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SaveAfterAnalysisTests(JobBase):
+    """분석이 끝나면 서버가 바로 저장 (브라우저와 상관없이) · 분석 중인 프로젝트는 폴더 삭제를 막음"""
+
+    def test_done_job_is_saved_by_server(self):
+        self.start({**REQUEST, "project_id": "P_A"})
+        self.assertEqual(meeting_jobs.running_users("P_A"), ["u1"])   # 실행 중 → 이 프로젝트는 못 지움
+        self.assertEqual(meeting_jobs.running_users("P_B"), [])
+        self.llm.gate.set()
+        job = self.wait_finished()
+        self.assertEqual((job["status"], job["saved"]), ("done", "draft"))
+        self.assertEqual(self.saved, [("u1", job["meeting_id"])])
+        self.assertEqual(meeting_jobs.running_users("P_A"), [])
+
+    def test_deleted_project_is_reported(self):
+        def gone(*_):
+            raise meeting_jobs.save_analysis.ProjectGone("P_A")
+        with patch.object(meeting_jobs.save_analysis, "save_result", gone):
+            self.start({**REQUEST, "project_id": "P_A"})
+            self.llm.gate.set()
+            job = self.wait_finished()
+        self.assertEqual((job["status"], job["saved"]), ("done", None))
+        self.assertEqual(job["save_error"], meeting_jobs.save_analysis.PROJECT_GONE)
+
