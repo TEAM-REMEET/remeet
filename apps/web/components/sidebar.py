@@ -90,8 +90,7 @@ class _Tree:
                    help=hint or repo.meeting(mid).title)
 
     def render(self) -> None:
-        if not self.folder("root", "회의록", 0):
-            return
+        # 맨 위 「회의록」 · 「프로젝트」 폴더는 그리지 않음 (탭 이름이 이미 알려 줌) → 회의 종류 · 프로젝트가 바로 첫 줄
         if self.s.tree_mode == "project":
             self._projects()
         else:
@@ -102,44 +101,41 @@ class _Tree:
         types = repo.meeting_types()
         for t in _TREE_ORDER:
             ids = arc.meeting_ids_of_type(self.s, t)  # 최근 순
-            if not self.folder(f"t:{t}", types[t].name, 1, len(ids), pending=self.pending(ids)):
+            if not self.folder(f"t:{t}", types[t].name, 0, len(ids), pending=self.pending(ids)):
                 continue
             if t == "normal":
                 for mid in ids:
-                    self.meeting(mid, arc.dotted(arc.meeting_day(mid)), 2)
+                    self.meeting(mid, arc.dotted(arc.meeting_day(mid)), 1)
                 continue
             # 주간 회의는 그 주 월요일 기준으로 연도 · 월을 나눠요 (주차 계산과 같은 기준)
             anchor = (lambda mid: arc.week_of(arc.meeting_day(mid))[0]) if t == "weekly" else arc.meeting_day
             for year, year_ids in _group(ids, lambda mid: anchor(mid).year):
-                if not self.folder(f"y:{t}:{year}", f"{year}년", 2, len(year_ids), pending=self.pending(year_ids)):
+                if not self.folder(f"y:{t}:{year}", f"{year}년", 1, len(year_ids), pending=self.pending(year_ids)):
                     continue
                 if t == "monthly":
                     for mid in year_ids:
                         d = arc.meeting_day(mid)
-                        self.meeting(mid, f"{d.month}월 ({arc.dotted(d)})", 3)
+                        self.meeting(mid, f"{d.month}월 ({arc.dotted(d)})", 2)
                     continue
                 for month, month_ids in _group(year_ids, lambda mid: anchor(mid).month):
-                    if self.folder(f"ym:{t}:{year}:{month}", f"{month}월", 3, len(month_ids),
+                    if self.folder(f"ym:{t}:{year}:{month}", f"{month}월", 2, len(month_ids),
                                    pending=self.pending(month_ids)):
                         for mid in month_ids:
                             d = arc.meeting_day(mid)
-                            self.meeting(mid, f"{arc.week_of(d)[1]}주차 ({arc.dotted(d)})", 4)
+                            self.meeting(mid, f"{arc.week_of(d)[1]}주차 ({arc.dotted(d)})", 3)
 
     def _projects(self) -> None:
-        """프로젝트 단위: 프로젝트 ─ 프로젝트 폴더 ─ 회의.
+        """프로젝트 단위: 프로젝트 폴더 ─ 회의.
 
         shortcut: 지금은 기존 프로젝트 폴더를 그대로 프로젝트로 보여줌, 회의 ↔ 프로젝트 매핑 규약이 생기면 교체
         """
         fs = sel.folders(self.s)
-        fids = sel.all_my_folder_ids(self.s)
-        if not self.folder("proj", "프로젝트", 1, len(fids)):
-            return
-        for fid in fids:
+        for fid in sel.all_my_folder_ids(self.s):
             notes = sel.folder_note_ids(self.s, fid)  # 나에게 보이는 회의만 (최근 순)
-            if self.folder(f"pf:{fid}", fs[fid].name, 2, len(notes), new=fs[fid].is_new,
+            if self.folder(f"pf:{fid}", fs[fid].name, 0, len(notes), new=fs[fid].is_new,
                            pending=self.pending(notes)):
                 for mid in notes:
-                    self.meeting(mid, repo.meeting(mid).title, 3, hint=arc.dotted(arc.meeting_day(mid)))
+                    self.meeting(mid, repo.meeting(mid).title, 1, hint=arc.dotted(arc.meeting_day(mid)))
 
 
 def _group(ids: list[str], key) -> list[tuple[int, list[str]]]:
