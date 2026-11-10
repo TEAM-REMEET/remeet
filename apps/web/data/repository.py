@@ -692,6 +692,17 @@ def export_mail(meeting_title: str, body: str, recipients: list[str]) -> dict:
                     _token(), timeout=EXPORT_TIMEOUT)
 
 
+# ---------------------------------------------------------------- 내 화면 설정 (즐겨찾기 · 최근)
+def preferences() -> dict[str, list[str]]:
+    """GET /api/me/preferences → {people_fav, people_recent, team_fav, team_recent} (저장한 키만). 실패는 ApiError."""
+    return api.call("GET", "/api/me/preferences", None, _token())
+
+
+def save_preference(key: str, value: list[str]) -> None:
+    """PUT /api/me/preferences/{key} · 목록을 통째로 바꿈. 실패는 ApiError."""
+    api.call("PUT", f"/api/me/preferences/{key}", {"value": value}, _token())
+
+
 # ---------------------------------------------------------------- 홈 · 대시보드
 def dashboard_jira(refresh: bool = False) -> dict:
     """내 Jira 할 일 (GET /api/dashboard/jira · 로그인한 사람이 담당자인 미완료 이슈, 서버가 1분 캐시).

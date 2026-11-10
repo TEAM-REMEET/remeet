@@ -44,7 +44,7 @@ DROP TABLE IF EXISTS
     meeting_summaries, meeting_sources,
     meeting_shares, meeting_keywords, transcript_lines, meeting_speakers, meeting_analyses,
     meetings, folder_briefs, folder_members, folders, meeting_types,
-    accounts, app_settings,
+    accounts, app_settings, user_preferences,  -- user_preferences: migrations/026 (지우면 026 이 다시 만듦)
     -- 예전 버전(Neo4j 와 겹치던 표)도 남아 있으면 지움
     todo_assignees, todos, agenda_points, agendas, meeting_findings, meeting_discussions, paragraphs,
     -- ⚠️ 구성원 표(users · teams · user_skills …)는 팀원 담당이라 여기서 지우지 않음. 이름을 여기 넣지 마세요.
