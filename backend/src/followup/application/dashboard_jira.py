@@ -1,12 +1,16 @@
 """대시보드 · 내 Jira 할 일: 로그인한 사람이 담당자인 미완료 이슈 (관리자 토큰으로 읽기만).
 
-범위는 백엔드가 정한다: 로그인 토큰의 user_id → 이메일(PostgreSQL accounts) → Jira 계정 → JQL assignee.
-요청으로 다른 사람을 고를 수 없다. 상태 변경은 하지 않는다 (각자 Jira 에서 바꿔야 이력에 본인 이름이 남음).
+범위는 백엔드가 정한다 (요청으로 다른 사람을 고를 수 없음). 두 갈래를 OR 로 합친다:
+  ① Jira 담당자가 나:  user_id → 이메일(accounts) → Jira 계정 → assignee
+  ② RE:MEET 에서 내가 담당자(공동 포함)인 할 일: user_id → 할 일 id(meeting_todo_owners) → 라벨 remeet-todo-{id}
+     Jira 담당자는 한 명뿐이라 ① 만으로는 공동 담당자 · Jira 계정을 못 찾은 사람에게 안 보임 (표는 그대로 읽기만)
+상태 변경은 하지 않는다 (각자 Jira 에서 바꿔야 이력에 본인 이름이 남음).
 """
 
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import time
 from datetime import datetime
@@ -16,26 +20,67 @@ from zoneinfo import ZoneInfo
 
 from followup import settings
 from followup.adapters import jira_mcp
-from followup.application.export_jira import JiraNotConfigured, JiraUnavailable, emails_of
+from followup.application.export_jira import JiraNotConfigured, JiraUnavailable, emails_of, label
 
-FIELDS = ["summary", "status", "duedate"]
+FIELDS = ["summary", "status", "duedate", "labels"]
 _ACCOUNT = re.compile(r"^[\w:-]+$")  # Jira accountId (예: 712020:uuid) · JQL 에 넣기 전에 형식 확인
 # shortcut: 서버 프로세스 메모리 캐시 (서버 한 대 가정), 여러 대로 늘리면 공용 캐시(Redis 등)로
 _cache: dict[str, tuple[float, dict]] = {}
+logger = logging.getLogger(__name__)
+
+
+_TODO_LABEL = re.compile(r"^remeet-todo-(\d+)$")  # export_jira.label 의 반대 · 상세 창에서 RE:MEET 할 일 · 회의를 찾음
 
 
 def _issue(row: dict, site: str | None) -> dict:
     f = row["fields"]
     status = f.get("status") or {}
+    todo = next((int(m[1]) for lb in f.get("labels") or () if (m := _TODO_LABEL.match(lb))), None)
     return {"key": row["key"], "title": f.get("summary") or "", "status": status.get("name") or "",
             "category": (status.get("statusCategory") or {}).get("name") or "", "due": f.get("duedate"),
-            "url": f"{site}/browse/{row['key']}" if site else None}
+            "url": f"{site}/browse/{row['key']}" if site else None, "todo_id": todo}
+
+
+def _my_todo_ids(user_id: str) -> list[int]:
+    from followup.adapters.postgres import detail
+
+    return detail.my_todo_ids(user_id, settings.DASHBOARD_MAX_ISSUES)
+
+
+class NotMine(RuntimeError):
+    """대시보드 범위(내가 Jira 담당자 · RE:MEET 에서 내가 담당자인 할 일) 밖의 이슈 → 바꿀 수 없음."""
+
+
+class NoTransition(RuntimeError):
+    """그 상태(완료 · 진행 중)로 바꾸는 전환이 Jira 워크플로에 없음."""
+
+
+_ISSUE_KEY = re.compile(r"^[A-Z][A-Z0-9_]+-\d+$")  # JQL 에 넣기 전에 형식 확인
+
+
+def _context(user_id: str, emails, todo_ids) -> tuple[dict[str, str], str | None, list[str]]:
+    cfg = settings.jira_config()
+    if cfg is None:
+        raise JiraNotConfigured("Jira 연동 설정이 없어요.")
+    labels = [label(str(i)) for i in todo_ids(user_id)]  # 할 일 id 는 DB 정수 → 라벨 · JQL 에 그대로 넣어도 안전
+    return cfg, emails({user_id}).get(user_id), labels
+
+
+async def _mine(jira, cloud: str, email: str | None, labels: list[str]) -> tuple[bool, str | None]:
+    """→ (Jira 계정을 찾았나, 「내 일」 JQL 조건 (없으면 None)) · 목록과 완료 처리가 같은 범위를 씀."""
+    account = await jira.find_account(cloud, email) if email else None
+    linked = bool(account and _ACCOUNT.match(account))
+    mine = ([f'assignee = "{account}"'] if linked else []) + (
+        ["labels in (" + ", ".join(f'"{lb}"' for lb in labels) + ")"] if labels else [])
+    return linked, f"({' OR '.join(mine)})" if mine else None
 
 
 def my_issues(user_id: str, *, refresh: bool = False, connect: Callable | None = None,
-              emails: Callable[[set[str]], dict[str, str]] = emails_of, now: Callable[[], float] = time.monotonic) -> dict[str, Any]:
-    """→ {linked, issues: [{key, title, status, category, due, url}], all_url, synced_at}
-    linked=False: 이메일이 없거나 Jira 에서 그 이메일의 계정을 못 찾음.
+              emails: Callable[[set[str]], dict[str, str]] = emails_of,
+              todo_ids: Callable[[str], list[int]] = _my_todo_ids, now: Callable[[], float] = time.monotonic) -> dict[str, Any]:
+    """→ {linked, issues: [{key, title, status, category, due, url}], done: [같은 모양], all_url, synced_at}
+    issues = 미완료 · done = 최근 DASHBOARD_DONE_DAYS 일 안에 완료된 일 (최대 DASHBOARD_MAX_DONE).
+    linked=False: 이메일이 없거나 Jira 에서 그 이메일의 계정을 못 찾음 (그래도 ② 할 일 라벨로 찾은 이슈는 보여 줌).
     refresh=True: 「동기화」 · 캐시를 건너뜀 (직전 동기화 뒤 DASHBOARD_REFRESH_MIN_SECONDS 안이면 캐시 그대로).
     synced_at: Jira 에서 실제로 가져온 시각 (한국 시간 ISO)."""
     hit = _cache.get(user_id)
@@ -44,21 +89,33 @@ def my_issues(user_id: str, *, refresh: bool = False, connect: Callable | None =
         fresh = settings.DASHBOARD_REFRESH_MIN_SECONDS if refresh else settings.DASHBOARD_CACHE_SECONDS
         if age < fresh:
             return hit[1]
-    cfg = settings.jira_config()
-    if cfg is None:
-        raise JiraNotConfigured("Jira 연동 설정이 없어요.")
+    cfg, email, labels = _context(user_id, emails, todo_ids)
     cloud = cfg["JIRA_CLOUD_ID"]
-    email = emails({user_id}).get(user_id)
 
     async def run() -> dict[str, Any]:
         async with (connect or jira_mcp.connect)(cfg["ATLASSIAN_EMAIL"], cfg["ATLASSIAN_API_TOKEN"]) as jira:
-            account = await jira.find_account(cloud, email) if email else None
-            if not account or not _ACCOUNT.match(account):
-                return {"linked": False, "issues": [], "all_url": None}
+            linked, mine = await _mine(jira, cloud, email, labels)
+            if not mine:
+                return {"linked": linked, "issues": [], "done": [], "statuses": [], "all_url": None}
             site = await jira.site_url(cloud)
-            jql = f'assignee = "{account}" AND statusCategory != Done ORDER BY duedate ASC, updated DESC'
+            jql = f"{mine} AND statusCategory != Done ORDER BY duedate ASC, updated DESC"
             rows = await jira.search(cloud, jql, FIELDS, settings.DASHBOARD_MAX_ISSUES)
-            return {"linked": True, "issues": [_issue(r, site) for r in rows],
+            done = await jira.search(
+                cloud, f"{mine} AND statusCategory = Done AND statusCategoryChangedDate >= -{settings.DASHBOARD_DONE_DAYS}d "
+                       "ORDER BY statusCategoryChangedDate DESC", FIELDS, settings.DASHBOARD_MAX_DONE)
+            # 상태 드롭다운 · 색: 프로젝트 워크플로의 상태 목록을 이슈 하나에서 한 번만 물어봄 (이슈마다 묻지 않게)
+            # shortcut: 이슈마다 워크플로가 같다고 봄 (한 프로젝트 · 한 이슈 유형), 유형별로 달라지면 이슈별로 물어보기
+            first = (rows or done)[:1]
+            statuses = list({t["to"].get("name"): {"name": t["to"].get("name"), "category": _category(t), "id": t["id"]}
+                             for t in (await jira.transitions(cloud, first[0]["key"]) if first else [])}.values())
+            cats = {x["name"]: x["category"] for x in statuses}
+            issues = [_issue(r, site) for r in rows]
+            finished = [_issue(r, site) for r in done]
+            for i in issues:
+                i["category_key"] = cats.get(i["status"], "indeterminate")
+            for i in finished:
+                i["category_key"] = "done"
+            return {"linked": linked, "issues": issues, "done": finished, "statuses": statuses,
                     "all_url": f"{site}/issues/?jql={quote(jql)}" if site else None}
 
     try:
@@ -68,3 +125,111 @@ def my_issues(user_id: str, *, refresh: bool = False, connect: Callable | None =
     out["synced_at"] = datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
     _cache[user_id] = (now(), out)
     return out
+
+
+def _category(t: dict) -> str:
+    return (t["to"].get("statusCategory") or {}).get("key") or "new"
+
+
+def set_status(user_id: str, user_name: str, key: str, status: str, **deps) -> dict[str, str]:
+    """대시보드 상태 드롭다운: 그 이름의 상태로 (Jira 워크플로에 그 상태로 가는 전환이 있어야 함)."""
+    return _change(user_id, user_name, key, lambda ts: next((t for t in ts if t["to"].get("name") == status), None),
+                   **deps)
+
+
+def _cached(user_id: str, now: Callable[[], float]) -> dict:
+    """1분 안에 불러온 이 사람의 대시보드 (없거나 오래됐으면 빈 dict)."""
+    hit = _cache.get(user_id)
+    return hit[1] if hit and now() - hit[0] < settings.DASHBOARD_CACHE_SECONDS else {}
+
+
+def _change(user_id: str, user_name: str, key: str, pick: Callable[[list[dict]], dict | None], *,
+            connect: Callable | None = None, emails: Callable[[set[str]], dict[str, str]] = emails_of,
+            todo_ids: Callable[[str], list[int]] = _my_todo_ids, now: Callable[[], float] = time.monotonic) -> dict[str, str]:
+    """내 일인지 확인하고 Jira 상태를 바꿈 (상태 드롭다운). 누른 사람 댓글은 응답 뒤에 따로 (comment_change).
+    빠르게: 1분 안에 불러온 내 목록에 있는 이슈면 「내 일」 확인(계정 찾기 · 검색)을 건너뛰고,
+    그때 받아 둔 전환 번호를 씀 (이 이슈에 안 맞으면 그때만 새로 받아 한 번 더).
+    → {key, status, category} · 내 일이 아니면 NotMine · 갈 상태가 없으면 NoTransition · 연결 실패는 JiraUnavailable."""
+    if not _ISSUE_KEY.match(key):
+        raise NotMine(key)
+    cached = _cached(user_id, now)
+    known = any(i["key"] == key for lst in (cached.get("issues") or [], cached.get("done") or []) for i in lst)
+    ready = [{"id": x["id"], "to": {"name": x["name"], "statusCategory": {"key": x["category"]}}}
+             for x in cached.get("statuses") or [] if x.get("id")]
+    cfg, email, labels = _context(user_id, emails, todo_ids) if not known else (_require_cfg(), None, [])
+    cloud = cfg["JIRA_CLOUD_ID"]
+
+    async def run() -> dict[str, str] | NotMine | NoTransition:
+        async with (connect or jira_mcp.connect)(cfg["ATLASSIAN_EMAIL"], cfg["ATLASSIAN_API_TOKEN"]) as jira:
+            if not known:  # 목록에 없던 이슈 (직접 API 를 부른 경우 등) → 지금처럼 확인
+                _, mine = await _mine(jira, cloud, email, labels)
+                try:  # 없는 이슈 키면 Jira 가 검색 자체를 거절함 → 그것도 「내 일 아님」
+                    found = bool(mine) and bool(await jira.search(cloud, f'{mine} AND key = "{key}"', ["status"], 1))
+                except RuntimeError:  # MCP 도구가 거절 (연결 · 인증 실패는 다른 예외라 아래에서 JiraUnavailable)
+                    found = False
+                if not found:
+                    return NotMine(key)  # 남의 이슈 키를 보내도 여기서 막힘 (예외는 세션을 닫은 뒤에 · 아래 참고)
+            t = pick(ready)
+            try:
+                if t is None:
+                    raise LookupError
+                await jira.transition(cloud, key, t["id"])
+            except (LookupError, RuntimeError):  # 받아 둔 전환 번호가 이 이슈 워크플로에 안 맞음 → 새로 받아 한 번 더
+                t = pick(await jira.transitions(cloud, key))
+                if t is None:
+                    return NoTransition(key)
+                await jira.transition(cloud, key, t["id"])
+            return {"key": key, "status": t["to"].get("name") or "", "category": _category(t)}
+
+    try:
+        out = asyncio.run(run())
+    except Exception as e:  # 접속 · 인증 · 권한 · 네트워크
+        raise JiraUnavailable(str(e)) from e
+    # MCP 세션 안에서 일으킨 예외는 anyio 가 ExceptionGroup 으로 감싸서 종류를 잃음 → 결과로 받아 여기서 일으킴
+    if isinstance(out, (NotMine, NoTransition)):
+        raise out
+    _move_in_cache(user_id, key, out["category"] == "done", out["status"], out["category"])
+    return out
+
+
+def _require_cfg() -> dict[str, str]:
+    cfg = settings.jira_config()
+    if cfg is None:
+        raise JiraNotConfigured("Jira 연동 설정이 없어요.")
+    return cfg
+
+
+def comment_change(user_name: str, key: str, status: str, *, connect: Callable | None = None) -> None:
+    """상태를 바꾼 뒤 Jira 에 「누가 바꿨는지」 댓글 (응답을 돌려준 뒤 따로 · 기다리지 않게).
+    관리자 토큰으로 바꾸므로 Jira 이력엔 관리자 계정이 남음 → 실제로 누른 사람을 적어 둠. 실패해도 로그만."""
+    cfg = settings.jira_config()
+    if cfg is None or not _ISSUE_KEY.match(key):
+        return
+
+    async def run() -> None:
+        async with (connect or jira_mcp.connect)(cfg["ATLASSIAN_EMAIL"], cfg["ATLASSIAN_API_TOKEN"]) as jira:
+            await jira.comment(cfg["JIRA_CLOUD_ID"], key, f"RE:MEET 에서 {user_name}님이 상태를 「{status}」(으)로 변경했어요.")
+
+    try:
+        asyncio.run(run())
+    except Exception as e:  # noqa: BLE001 - 기록용 댓글 · 상태 변경은 이미 끝남
+        logger.warning("Jira 댓글 실패 (%s): %s", key, e)
+
+
+def _move_in_cache(user_id: str, key: str, done: bool, status: str, category: str = "") -> None:
+    """방금 바꾼 일을 캐시 안에서 바로 옮김 (남은 일 ↔ 완료). Jira 검색은 상태 변경이 몇 초 늦게 반영돼서
+    바로 다시 불러오면 양쪽에 다 보임 → 캐시를 비우지 않고 고쳐 둠 (다음 동기화 땐 Jira 에도 반영돼 있음)."""
+    hit = _cache.get(user_id)
+    data = hit and hit[1]
+    if not data or "issues" not in data:
+        _cache.pop(user_id, None)
+        return
+    lists = {"issues": data["issues"], "done": data.get("done") or []}
+    item = next((i for lst in lists.values() for i in lst if i["key"] == key), None)
+    if item is None:
+        _cache.pop(user_id, None)  # 목록에 없던 일 → 다음에 새로 불러옴
+        return
+    moved = {**item, "status": status, "category_key": category or ("done" if done else item.get("category_key", "new"))}
+    src, dst = ("issues", "done") if done else ("done", "issues")
+    data[src] = [i for i in lists[src] if i["key"] != key]
+    data[dst] = [moved] + [i for i in lists[dst] if i["key"] != key]

@@ -2137,9 +2137,12 @@
 .ask-contacts .why { color: #5F646D; font-size: 13px; }
 
 /* 홈 · 내 Jira 할 일 대시보드 (views/home.py) */
+/* 요약 칸 (예전 카드 그대로) · 누르면 ?filter= 로 그 조건만 보여 줌 · 고른 칸은 주황 테두리 */
 .dash-stats { display: flex; gap: 10px; margin: 4px 0 10px; }
-.dash-stats span { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line-soft);
-  border-radius: 10px; background: var(--bg-soft); font-size: 12px; color: var(--muted); }
+.dash-stats a { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line-soft);
+  border-radius: 10px; background: var(--bg-soft); font-size: 12px; color: var(--muted); text-decoration: none; }
+.dash-stats a:hover { border-color: var(--line); }
+.dash-stats a.on { border-color: var(--accent-line); background: var(--accent-soft); }
 .dash-stats b { font-size: 20px; font-weight: 700; color: var(--ink); }
 .dash-list { display: flex; flex-direction: column; }
 .dash-row { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--line-faint); font-size: 14px; }
@@ -2147,11 +2150,61 @@
 .dash-key a { color: var(--accent); text-decoration: none; }
 .dash-key a:hover { text-decoration: underline; }
 .dash-title { flex: 1; min-width: 0; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dash-due { flex: none; color: var(--text-sub); font-size: 13px; }
+.dash-due { flex: none; width: 120px; margin-left: 24px; display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 13px; }
+.dash-date { flex: none; width: 36px; font-variant-numeric: tabular-nums; }  /* 날짜 폭 고정 → D-day 태그가 같은 줄에서 시작 */
+.dash-state { flex: none; width: 130px; display: flex; justify-content: flex-start; }  /* 헤더 · 드롭다운 폭 130 과 같게 */
+/* 줄 = 할 일 · 상태 드롭다운 · 줄 구분선은 줄 전체에 */
+/* 줄 = [이슈 키] [제목 버튼 · 누르면 상세 모달] [마감일 · 상태] [완료] · 칸 사이 10px = 헤더(.dash-row gap)와 같게 */
+[class*="st-key-dash-r-"] { border-top: 1px solid var(--line-faint); gap: 10px !important; padding: 8px 2px; min-height: 48px; font-size: 14px; }
+[class*="st-key-dash-r-"] > * { margin: 0 !important; }  /* 칸마다 붙는 기본 바깥 여백 없이 → 위아래 같게 */
+[class*="st-key-dash-r-"] > .stElementContainer:has(.dash-key),
+[class*="st-key-dash-r-"] > .stElementContainer:has(.dash-tail) { flex: none !important; width: auto !important; }
+[class*="st-key-dash-r-"] > [class*="st-key-b-link-home_detail_"] { flex: 1 1 0 !important; min-width: 0; }
+[class*="st-key-b-link-home_detail_"] button { justify-content: flex-start; text-align: left; color: var(--ink) !important; }
+[class*="st-key-b-link-home_detail_"] button p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-tail { display: flex; align-items: center; gap: 10px; }
+[class*="st-key-dash-r-"] .dash-key { display: inline-block; }  /* 줄에서는 혼자 있어 폭(72px)이 먹도록 */
+.dash-head { border-top: 0; padding: 6px 2px; font-size: 12px; font-weight: 600; color: var(--muted); }
 /* Jira 파랑 (Atlassian 브랜드 색) · 로고와 함께 눈에 띄게 */
 .dash-all { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; margin: 0 0 6px; padding: 7px 14px;
   border: 1px solid #0C66E4; border-radius: 8px; background: #E9F2FF; color: #0C66E4; font-size: 13px; font-weight: 600; text-decoration: none; }
 .dash-all:hover { background: #CCE0FF; }
 .dash-all .dash-jira-logo { width: 18px; height: 18px; min-width: 18px; padding: 0; border: 0; background: none; }
 .dash-all .dash-jira-logo img { width: 18px; height: 18px; }
-@media (max-width: 640px) { .dash-stats { flex-direction: column; } .dash-title { white-space: normal; } }
+@media (max-width: 640px) { .dash-stats { flex-direction: column; } .dash-title { white-space: normal; }
+  .dash-due { width: auto; margin-left: 0; } .dash-state { width: auto; } }
+
+/* 할 일 상세 모달 (components/dialogs/issue.py) · 정보 상자는 「관리자에게 문의」의 .ca-info 를 그대로 */
+.ca-info.dash-info { background: #fbfbfc; border: 1px solid var(--line-faint); }  /* 상세 모달만 더 밝게 (관리자 문의 창은 그대로) */
+.dash-detail-title { margin: 0 0 4px; font-size: 16px; color: var(--ink); }
+.dash-detail-sub { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.dash-quote { margin: 4px 0 0; padding: 6px 10px; border-left: 3px solid var(--line); background: var(--bg-soft);
+  font-size: 13px; color: var(--text-sub); }
+.dash-quote b { margin-right: 6px; color: var(--ink); }
+
+/* 상태 (Jira 처럼) · 지금 상태 = 색 딱지 ▾ · 누르면 다른 상태 딱지 목록 · 범주는 감싼 컨테이너 key 로
+   해야 할 일(new) 회색 · 진행 중 · 검토 중(indeterminate) 파랑 · 완료(done) 초록 · Jira 기본 색 */
+[class*="st-key-dash-st-"] button { min-height: 0 !important; height: 26px !important; padding: 0 8px !important; min-width: 100px;  /* 높이 = 옆 마감 태그(.tag 26px) */
+  border: 0 !important; border-radius: 3px !important; font-size: 12px; font-weight: 700; }
+[class*="st-key-dash-st-"] button * { color: inherit !important; font-size: 12px; }
+/* 세로 가운데: 상태 칸 자체 · 버튼 / 목록 줄 안의 글자와 ▾ (Streamlit 글자 문단의 기본 여백 · 줄 높이를 없앰) */
+[class*="st-key-dash-st-"] { justify-content: center; align-self: center; }
+[class*="st-key-dash-st-"] button, [class*="st-key-dash-opt-"] button { display: flex !important; align-items: center !important; }
+[class*="st-key-dash-st-"] button > div, [class*="st-key-dash-opt-"] button > div { display: flex; align-items: center; }
+[class*="st-key-dash-st-"] button p, [class*="st-key-dash-opt-"] button p { margin: 0 !important; line-height: 1.5 !important; }
+[class*="st-key-dash-st-new-"] button { background: #DFE1E6 !important; color: #42526E !important; }
+[class*="st-key-dash-st-indeterminate-"] button { background: #CCE0FF !important; color: #0747A6 !important; }
+[class*="st-key-dash-st-done-"] button { background: #DCFFF1 !important; color: #216E4E !important; }
+/* 펼친 목록 = 상태 버튼과 같은 폭(100) · 버튼은 글자 길이가 달라도 최소 100 으로 맞춤 (팝오버 목록은 버튼 밖에 떠서 폭을 따라가지 못함)
+   한 줄 = 줄 전체가 그 상태 색 (안에 딱지를 따로 두지 않음) · 마우스를 올리면 살짝 진하게 */
+[data-testid="stPopoverBody"]:has([class*="st-key-dash-opt-"]) { width: 100px !important; min-width: 0 !important; max-height: none !important;
+  padding: 0 !important; overflow: hidden; border: 1px solid var(--line-soft) !important; border-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(9, 30, 66, .15) !important; }
+[data-testid="stPopoverBody"]:has([class*="st-key-dash-opt-"]) [data-testid="stVerticalBlock"] { gap: 0 !important; }
+[class*="st-key-dash-opt-"] button { justify-content: flex-start !important; min-height: 0 !important; padding: 6px 8px !important;
+  border: 0 !important; border-radius: 0 !important; font-size: 12px; font-weight: 700; }
+[class*="st-key-dash-opt-"] button * { color: inherit !important; font-size: 12px; }
+[class*="st-key-dash-opt-"] button:hover { filter: brightness(.95); }
+[class*="st-key-dash-opt-new-"] button { background: #DFE1E6 !important; color: #42526E !important; }
+[class*="st-key-dash-opt-indeterminate-"] button { background: #CCE0FF !important; color: #0747A6 !important; }
+[class*="st-key-dash-opt-done-"] button { background: #DCFFF1 !important; color: #216E4E !important; }

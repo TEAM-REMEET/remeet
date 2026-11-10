@@ -38,7 +38,7 @@ from zoneinfo import ZoneInfo
 
 from psycopg.types.json import Jsonb
 
-from followup.adapters.postgres.db import transaction
+from followup.adapters.postgres.db import query, transaction
 from .common import (
     NotFoundError,
     PermissionDenied,
@@ -532,6 +532,18 @@ def add_todo(*, actor_id: str, meeting_id: str, text: str, owners: list[str] | N
         row = next(t for t in _todos(cur, meeting_id) if t["id"] == tid)
     invalidate("_base_meetings")
     return row
+
+
+def my_todo_ids(user_id: str, limit: int) -> list[int]:
+    """홈 대시보드: 이 사람이 담당자(공동 포함)인 할 일 id, 최근 것부터 (지운 할 일 · 지운 회의 · 작성 중 회의는 뺌).
+    Jira 이슈의 라벨 remeet-todo-{id} 로 이어져요 (export_jira.label). 표는 그대로 읽기만 함.
+    서버 안에서만 씀: user_id 는 로그인 토큰 값만 넘겨요 (범위가 그 사람으로 고정)."""
+    rows = query("""SELECT t.id FROM meeting_todos t
+                    JOIN meeting_todo_owners o ON o.todo_id = t.id
+                    JOIN meetings m ON m.id = t.meeting_id
+                    WHERE o.user_id = %s AND t.deleted_at IS NULL AND m.deleted_at IS NULL AND m.status <> 'draft'
+                    ORDER BY t.id DESC LIMIT %s""", (user_id, limit))
+    return [r["id"] for r in rows]
 
 
 def delete_todo(*, actor_id: str, todo_id: int) -> None:

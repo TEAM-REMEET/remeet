@@ -200,6 +200,43 @@ def _wizard_reset() -> dict:
                 cp_handoff="", cp_handoff_author="", cp_handoff_error="", cp_saved_id="")
 
 
+def open_issue_detail(issue: dict) -> None:
+    """홈 · 할 일을 누르면 상세 모달 (components/dialogs/issue.py) · 고른 이슈는 모달이 읽어 감."""
+    st.session_state["_issue_detail"] = issue
+    open_modal("issue_detail")
+
+
+def open_issue_meeting(mid: str) -> None:
+    """상세 모달 「회의록 보기」 → 모달을 닫고 그 회의(최종 회의록)로."""
+    close_modal()
+    open_meeting(mid)
+
+
+def change_issue_status(key: str, status: str, menu: str | None = None) -> None:
+    """홈 · 상태 드롭다운에서 고름 → 드롭다운을 바로 닫고, 바꾸기는 화면을 다시 그린 뒤로 미룸 (apply_pending_status).
+    콜백 안에서 바로 바꾸면 화면이 다시 그려지기 전이라 Jira 를 기다리는 동안 드롭다운 창이 그대로 열려 있음."""
+    if menu:
+        st.session_state[menu] = False
+    st.session_state["_pending_status"] = (key, status)
+
+
+def apply_pending_status() -> None:
+    """홈 목록을 다 그린 뒤 · 고른 상태를 Jira 에 반영 (내 일인지는 서버가 확인 · 누른 사람은 Jira 댓글로) → 다시 그림."""
+    pending = st.session_state.pop("_pending_status", None)
+    if not pending:
+        return
+    from ui.loading import loading_overlay
+
+    key, status = pending
+    loading_overlay(f"{key} 을(를) 「{status}」(으)로 바꾸고 있어요", "Jira 에 반영하는 중이에요")
+    try:
+        repo.dashboard_set_status(key, status)
+        _set(toast=f"{key} 을(를) 「{status}」(으)로 바꿨어요.")
+    except api.ApiError as e:
+        _set(toast=f"{key} 상태를 바꾸지 못했어요. ({e})")
+    st.rerun()
+
+
 def refresh_dashboard() -> None:
     """홈 · 「동기화」 → 이번 화면에서 Jira 를 다시 불러옴 (서버 캐시를 건너뜀 · views/home.py)."""
     st.session_state["_home_refresh"] = True

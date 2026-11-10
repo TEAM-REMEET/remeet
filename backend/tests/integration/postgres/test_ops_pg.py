@@ -153,6 +153,17 @@ class OpsIntegrationTests(unittest.TestCase):
         self.assertIn(('delivered', 'm1'), self._notis('u1'))
         self.assertEqual(ig.list_failures(actor_id='ad', open_only=True), [])
 
+    def test_my_todo_ids_for_dashboard(self):
+        """홈 대시보드: 내가 담당자(공동 포함)인 할 일 id · 지운 할 일은 뺌 (표는 읽기만)."""
+        from followup.adapters.postgres import detail
+        self._meeting()
+        a = detail.add_todo(actor_id='u1', meeting_id='m1', text='견적 비교', owners=['u2', 'u3'])
+        b = detail.add_todo(actor_id='u1', meeting_id='m1', text='디자인 검토', owners=['u3'])
+        detail.delete_todo(actor_id='u1', todo_id=b['id'])
+        self.assertEqual(detail.my_todo_ids('u3', 10), [a['id']])                # 공동 담당자 · 지운 일은 뺌
+        self.assertEqual(detail.my_todo_ids('u2', 10), [a['id']])
+        self.assertEqual(detail.my_todo_ids('u1', 10), [])                       # 주관자라도 담당자가 아니면 없음
+
     def test_failed_keys_and_reconnect_hands_tech_to_host(self):
         """022: 실패한 것(key) 저장 · None = 모름 · 다시 연결하면 남은 tech → simple + 주관자에게 알림."""
         from followup.adapters.postgres import integrations as ig

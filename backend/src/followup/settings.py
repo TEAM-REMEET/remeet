@@ -65,6 +65,8 @@ EXPORT_BUDGET_SECONDS = 80
 DASHBOARD_CACHE_SECONDS = 60  # 대시보드 · 내 Jira 할 일: 사람마다 이 시간 동안은 Jira 를 다시 부르지 않음
 DASHBOARD_REFRESH_MIN_SECONDS = 10  # 「동기화」를 눌러도 직전 동기화 뒤 이 시간 안이면 캐시 (연타로 Jira 를 계속 부르지 않게)
 DASHBOARD_MAX_ISSUES = 50     # 대시보드에 보여 줄 내 미완료 이슈 최대 수 (마감일 빠른 순)
+DASHBOARD_DONE_DAYS = 30      # 「완료」 칸: 최근 이 날 수 안에 완료된 일만 (오래된 건 Jira 에서 전체 보기)
+DASHBOARD_MAX_DONE = 20       # 「완료」 칸 최대 수 (최근 완료 순)
 
 # 외부 도구 전송 · 메일 (SMTP). Gmail 이면 smtp.gmail.com:587 + 앱 비밀번호
 MAIL_KEYS = ("SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "MAIL_FROM")
