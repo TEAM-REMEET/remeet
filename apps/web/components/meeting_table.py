@@ -44,7 +44,8 @@ def _row(row: MeetingRow, key: str) -> None:
                     st.html(tag("미참석 · 공유받음", "shared"), width="content")
             markup(f'<div class="cell"><span class="sub">{esc(row.sub)}</span></div>')
         with c_date:
-            markup(f'<div class="cell"><span class="main">{esc(row.date_str)}</span><span class="sub">{esc(row.time)}</span></div>')
+            # 날짜만 (작성 화면이 회의 시각을 받지 않아 아랫줄은 늘 「-」 였음)
+            markup(f'<div class="cell"><span class="main">{esc(row.date_str)}</span></div>')
         with c_host:
             me = '<span class="me">(나)</span>' if row.is_me else ""
             # 주관자 이름 (아래 줄은 참석 인원)

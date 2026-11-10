@@ -334,6 +334,15 @@
   pointer-events: none;
   z-index: 2;
 }
+/* 숫자 · 배지는 같은 폭(18px) 상자 안 가운데 → 트리 개수 · 공유한 회의 · 공유 받은 회의 숫자가 세로로 한 줄 */
+.nav-trail.count,
+.nav-trail.badge {
+  min-width: 18px;
+  text-align: center;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
 .nav-trail.count {
   font-size: 12px;
   color: var(--muted);
@@ -343,9 +352,8 @@
   font-weight: 700;
   color: #ffffff;
   background: var(--accent);
-  padding: 0 6px;
+  padding: 0 4px;
   border-radius: 3px;
-  line-height: 18px;
 }
 .nav-trail.dot {
   width: 7px;
