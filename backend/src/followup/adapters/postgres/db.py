@@ -50,13 +50,34 @@ def _masked(url: str) -> str:
     return re.sub(r"://([^:@/]+):[^@]*@", r"://\1:***@", url)  # 비밀번호는 가림 (로그 · 화면)
 
 
+DEFAULT_POOL_MAX = 20
+
+
+def pool_max_size() -> int:
+    """동시에 쓸 수 있는 DB 연결 수 (환경 변수 DB_POOL_MAX · 기본 20 · 1~100).
+
+    요청마다 연결 하나를 잠깐 빌려 써요. 연결이 모자라면 남은 요청은 빌 때까지 줄을 서요.
+    화면은 회의 상세를 8개씩 동시에 받고(web _DETAIL_WORKERS) 3초마다 알림도 확인해서 5개로는 자주 밀려요.
+    PostgreSQL 기본 최대 연결은 100개 · 백엔드 프로세스(worker)를 늘리면 프로세스마다 이만큼씩 열려요.
+    """
+    raw = os.environ.get("DB_POOL_MAX", "").strip()
+    if not raw:
+        return DEFAULT_POOL_MAX
+    try:
+        n = int(raw)
+    except ValueError:
+        logging.getLogger(__name__).warning("DB_POOL_MAX=%r 은 숫자가 아니라 기본값 %d 을 써요.", raw, DEFAULT_POOL_MAX)
+        return DEFAULT_POOL_MAX
+    return min(max(n, 1), 100)
+
+
 @lru_cache(maxsize=1)
 def pool() -> ConnectionPool:
     """앱 전체가 같이 쓰는 커넥션 풀 (처음 부를 때 한 번만 만듦)."""
     p = ConnectionPool(
         database_url(),
         min_size=1,
-        max_size=5,
+        max_size=pool_max_size(),  # 필요할 때만 늘어나고, 한동안 안 쓰면 다시 줄어요 (기본 10분)
         kwargs={"row_factory": dict_row},  # 결과 행을 {"컬럼": 값} dict 로
         open=True,
     )

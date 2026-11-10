@@ -49,9 +49,9 @@ def members_dialog() -> None:
             p = sel.person(pid)
             host = pid == f.host
             with st.container(key=f"memrow-{pid}", horizontal=True, vertical_alignment="center", gap="small"):
-                markup(f'<div class="plist-row" style="border:none;padding:0">{avatar(p.initial, size=34, host=host)}'
+                markup(f'<div class="plist-row" style="border:none;padding:0">{avatar(p.initial, size=34)}'
                        f'<span class="who"><b>{esc(p.name)}{" (나)" if pid == me_id() else ""}</b><span>{esc(p.team)}</span></span>'
-                       f'<span class="tag tag-{"host" if host else "att"}">{"폴더 주관" if host else "멤버"}</span></div>')
+                       '<span class="tag tag-att">멤버</span></div>')
                 if is_host and not host:
                     button("", key=f"mem_rm_{pid}", variant="ghost", icon=":material/close:", help="폴더에서 빼기",
                            on_click=actions.remove_member, args=(fid, pid))

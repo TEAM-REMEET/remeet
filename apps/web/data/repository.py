@@ -17,6 +17,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from functools import lru_cache
@@ -324,14 +326,61 @@ def _detail(row: dict, token: str) -> dict | None:
     return d
 
 
-# cache_resource: 같은 객체를 그대로 돌려줌 (cache_data 처럼 부를 때마다 복사하지 않음 · Meeting 은 바뀌지 않는 객체라 공유해도 됨)
-# token 이 캐시 키라서 사람마다 따로 저장돼요.
-@st.cache_resource(ttl=_MEETINGS_TTL, show_spinner="회의록을 불러오는 중…")
+# 회의 상세는 회의마다 따로 기억해요 → 회의 하나를 고치면 그 회의만 다시 받음 (예전: 회의 수만큼 전부 다시 받음)
+#   {(token, 회의 id): (받은 시각, Meeting · 지워졌거나 권한이 없으면 None)} · 1분이 지나면 다시 받음 (다른 사람이 고친 내용)
+# 화면 여러 개(세션)가 같이 쓰고, 상세는 스레드 여러 개가 동시에 받아서 잠금(_detail_lock)을 써요.
+_detail_cache: dict[tuple[str, str], tuple[float, Meeting | None]] = {}
+_detail_lock = threading.Lock()
+_detail_epoch = 0  # 캐시를 비울 때마다 +1 · 받는 도중 비워졌으면 그 결과는 기억하지 않음 (고치기 전 내용이 남지 않게)
+
+
+def _cached_detail(row: dict, token: str) -> Meeting | None:
+    key = (token, row["id"])
+    with _detail_lock:
+        hit = _detail_cache.get(key)
+        epoch = _detail_epoch
+    if hit and time.monotonic() - hit[0] < _MEETINGS_TTL:
+        return hit[1]
+    d = _detail(row, token)
+    m = _meeting(d) if d else None
+    with _detail_lock:
+        if epoch == _detail_epoch:
+            _detail_cache[key] = (time.monotonic(), m)
+    return m
+
+
+def _drop_old_details() -> None:
+    """1분 넘은 것은 지움 (로그아웃한 사람 · 목록에서 빠진 회의가 계속 쌓이지 않게)."""
+    now = time.monotonic()
+    with _detail_lock:
+        for key in [k for k, (at, _) in _detail_cache.items() if now - at >= _MEETINGS_TTL]:
+            del _detail_cache[key]
+        for token in [t for t, (at, _, _) in _list_cache.items() if now - at >= _MEETINGS_TTL]:
+            del _list_cache[token]
+
+
+# 사람(token)마다 화면에 보여 줄 회의 묶음 {token: (만든 시각, 만들 때의 _detail_epoch, {id: Meeting})}
+# 1분이 지나거나 누가 회의를 고치면(epoch 가 바뀜) 다시 만들어요: 목록은 새로 받고(요청 1번), 상세는 위 캐시에 없는 회의만 받음.
+# (st.cache_resource 를 쓰지 않는 이유: 받는 도중에 누가 고치면 고치기 전 묶음이 그대로 1분 동안 남음)
+# Meeting 은 바뀌지 않는 객체라 같은 객체를 여러 화면이 같이 써도 돼요.
+_list_cache: dict[str, tuple[float, int, dict[str, Meeting]]] = {}
+
+
 def _api_meetings(token: str) -> dict[str, Meeting]:
-    rows = _pages("/api/meetings", token)  # 내가 볼 수 있는 회의 (내 프로젝트 + 공유받은 회의), 최신순
-    with ThreadPoolExecutor(_DETAIL_WORKERS) as pool:
-        details = pool.map(lambda r: _detail(r, token), rows)
-        return {d["id"]: _meeting(d) for d in details if d}
+    with _detail_lock:
+        hit = _list_cache.get(token)
+        epoch = _detail_epoch
+    if hit and hit[1] == epoch and time.monotonic() - hit[0] < _MEETINGS_TTL:
+        return hit[2]
+    with st.spinner("회의록을 불러오는 중…"):
+        rows = _pages("/api/meetings", token)  # 내가 볼 수 있는 회의 (내 프로젝트 + 공유받은 회의), 최신순
+        _drop_old_details()
+        with ThreadPoolExecutor(_DETAIL_WORKERS) as pool:
+            out = {m.id: m for m in pool.map(lambda r: _cached_detail(r, token), rows) if m}
+    with _detail_lock:
+        if epoch == _detail_epoch:  # 받는 도중에 아무도 안 고쳤을 때만 기억
+            _list_cache[token] = (time.monotonic(), epoch, out)
+    return out
 
 
 @st.cache_resource(ttl=_MEETINGS_TTL, show_spinner=False)
@@ -387,9 +436,29 @@ def data_errors() -> dict[str, str]:
     return dict(st.session_state.get("_data_errors", {}))
 
 
-def meetings_changed() -> None:
-    """회의 · 프로젝트 캐시 비우기 (다음 화면에서 백엔드에서 다시 받음)."""
-    _api_meetings.clear()
+def meetings_changed(*mids: str, projects: bool = True) -> None:
+    """회의 · 프로젝트 캐시 비우기 (다음 화면에서 백엔드에서 다시 받음).
+
+    mids 없음  → 모든 회의 상세를 버림 (어느 회의가 바뀌었는지 모를 때 · 예전과 같음)
+    mids 있음  → 그 회의 상세만 버림. 목록은 다시 받고(요청 1번), 나머지 회의는 기억해 둔 상세를 그대로 써요.
+    projects   → 프로젝트 · 회의 종류도 다시 받음 (회의가 생기거나 · 지워지거나 · 프로젝트가 바뀔 때).
+                 회의 안의 내용(상태 · 요약 · 할 일)만 바뀌면 False.
+    """
+    global _detail_epoch
+    with _detail_lock:
+        _detail_epoch += 1
+        if mids:
+            for key in [k for k in _detail_cache if k[1] in mids]:
+                del _detail_cache[key]
+        else:
+            _detail_cache.clear()
+        # 회의 묶음(_list_cache)은 epoch 가 바뀌어 다음에 다시 만들어요 (목록 1번 + 버린 회의 상세만)
+    if projects:
+        _projects_changed()
+
+
+def _projects_changed() -> None:
+    """프로젝트 · 회의 종류(안 보이는 폴더 수) 캐시만 비우기."""
     _api_meeting_types.clear()
     _api_folders.clear()
 
@@ -605,9 +674,14 @@ def dashboard_jira(refresh: bool = False) -> dict:
 
 # ---------------------------------------------------------------- 회의록 쓰기 (PostgreSQL · 백엔드 API)
 # 실패하면 api.ApiError (메시지는 화면에 그대로 보여 줘도 돼요). 쓴 뒤에는 meetings_changed() 로 캐시를 비워 바로 보이게 해요.
-def _write(method: str, path: str, body: dict | None = None):
+#   mid    = 바뀐 회의 (그 회의만 다시 받음) · 모르면 None → 전부 다시 받음 (느리지만 늘 맞음)
+#   projects = 프로젝트 목록도 바뀌는지 (회의가 생기거나 지워질 때 · 회의 안 내용만 바뀌면 False)
+def _write(method: str, path: str, body: dict | None = None, *, mid: str | None = None, projects: bool = True):
     res = api.call(method, path, body, _token())
-    meetings_changed()
+    if mid:
+        meetings_changed(mid, projects=projects)
+    else:
+        meetings_changed()
     return res
 
 
@@ -628,12 +702,14 @@ def project_exists(project_id: str) -> bool:
 
 def create_project(name: str, members: list[str], project_id: str | None = None) -> dict:
     """프로젝트 만들기 (POST /api/projects). project_id 를 주면 그 id 로 (AI 요약의 project_id · Neo4j 와 같게)."""
-    return _write("POST", "/api/projects", {"name": name, "members": members, "id": project_id})
+    res = api.call("POST", "/api/projects", {"name": name, "members": members, "id": project_id}, _token())
+    _projects_changed()  # 새 프로젝트엔 아직 회의가 없어서 회의 캐시는 그대로
+    return res
 
 
 def save_record(payload: dict) -> dict:
     """미리보기 회의록 저장 (POST /api/drafts). payload 는 state/record_payload.draft_payload()."""
-    return _write("POST", "/api/drafts", payload)
+    return _write("POST", "/api/drafts", payload, mid=payload.get("meeting_id"))
 
 
 def save_draft_record(payload: dict) -> dict:
@@ -653,13 +729,13 @@ def my_draft_ids() -> set[str]:
 
 def submit_record(mid: str) -> dict:
     """회의록 생성 (draft → review) · 참석자 · 주관자 알림. 주관자는 시니어 · 미드만 (신입이면 서버가 거절)."""
-    return _write("POST", f"/api/meetings/{mid}/submit", {})
+    return _write("POST", f"/api/meetings/{mid}/submit", {}, mid=mid)  # 목록 · 프로젝트에 새로 나타남
 
 
 def handoff_record(mid: str, request: dict, draft: dict) -> dict:
     """(작성자 ≠ 주관자) 분석이 끝난 미리보기를 주관자에게 넘김 (POST /api/meetings/{id}/handoff · 주관자에게 알림).
     request = 작성 화면 입력값 (분석 요청 본문 그대로) · draft = 화면에서만 쓰는 값 (새 프로젝트 이름 nn_name)."""
-    return _write("POST", f"/api/meetings/{mid}/handoff", {"request": request, "draft": draft})
+    return _write("POST", f"/api/meetings/{mid}/handoff", {"request": request, "draft": draft}, mid=mid)
 
 
 def get_handoff(mid: str) -> dict:
@@ -676,51 +752,52 @@ def review_queue() -> list[dict]:
 
 def confirm_record(mid: str) -> dict:
     """확정 (review → confirmed) · 검토자, 없으면 주관자만."""
-    return _write("POST", f"/api/meetings/{mid}/confirm")
+    return _write("POST", f"/api/meetings/{mid}/confirm", mid=mid, projects=False)
 
 
 def add_record_todo(mid: str, body: dict) -> dict:
-    return _write("POST", f"/api/meetings/{mid}/todos", body)
+    return _write("POST", f"/api/meetings/{mid}/todos", body, mid=mid, projects=False)
 
 
-def update_record_todo(todo_id: int, body: dict) -> dict:
-    return _write("PATCH", f"/api/todos/{todo_id}", body)
+# 할 일 API 는 할 일 id 만 받아요 → 어느 회의인지(mid)를 같이 주면 그 회의만 다시 받음 (안 주면 전부)
+def update_record_todo(todo_id: int, body: dict, mid: str | None = None) -> dict:
+    return _write("PATCH", f"/api/todos/{todo_id}", body, mid=mid, projects=False)
 
 
-def delete_record_todo(todo_id: int) -> None:
-    _write("DELETE", f"/api/todos/{todo_id}")
+def delete_record_todo(todo_id: int, mid: str | None = None) -> None:
+    _write("DELETE", f"/api/todos/{todo_id}", mid=mid, projects=False)
 
 
-def restore_record_todo(todo_id: int) -> None:
-    _write("POST", f"/api/todos/{todo_id}/restore")
+def restore_record_todo(todo_id: int, mid: str | None = None) -> None:
+    _write("POST", f"/api/todos/{todo_id}/restore", mid=mid, projects=False)
 
 
 def request_record_branch(mid: str) -> None:
-    _write("POST", f"/api/meetings/{mid}/branch-requests")
+    _write("POST", f"/api/meetings/{mid}/branch-requests")  # 새 회의가 생길 수 있어 전부 다시 받음
 
 
 def save_record_summary_json(mid: str, summary_json: dict) -> dict:
     """최신 요약의 summary_json만 새 최종 JSON으로 바꿈 (PUT /api/meetings/{id}/summary-json · 담당자 추천 뒤)."""
-    return _write("PUT", f"/api/meetings/{mid}/summary-json", {"summary_json": summary_json})
+    return _write("PUT", f"/api/meetings/{mid}/summary-json", {"summary_json": summary_json}, mid=mid, projects=False)
 
 
 def save_record_summary(mid: str, content: dict) -> dict:
     """회의 상세 「편집」 결과를 요약 새 버전으로 저장 (PUT /api/meetings/{id}/summary · 이전 버전은 남음)."""
-    return _write("PUT", f"/api/meetings/{mid}/summary", {"content": content})
+    return _write("PUT", f"/api/meetings/{mid}/summary", {"content": content}, mid=mid, projects=False)
 
 
 def delete_record(mid: str) -> None:
-    _write("DELETE", f"/api/meetings/{mid}")
+    _write("DELETE", f"/api/meetings/{mid}", mid=mid)  # 프로젝트의 회의 목록에서도 빠짐
 
 
 def set_record_status(mid: str, status: str) -> None:
     """결과 전달 상태 (sending | done | fail). 실패해도 화면은 그대로 이어가요 (서버 기록만 늦음)."""
-    _write("PUT", f"/api/meetings/{mid}/status", {"status": status})
+    _write("PUT", f"/api/meetings/{mid}/status", {"status": status}, mid=mid, projects=False)
 
 
 def finish_record_delivery(mid: str) -> str:
     """외부 도구 전송이 끝남 → 남은 실패가 있으면 fail, 없으면 done (서버가 정함)."""
-    return _write("POST", f"/api/meetings/{mid}/delivery/finish")["status"]
+    return _write("POST", f"/api/meetings/{mid}/delivery/finish", mid=mid, projects=False)["status"]
 
 
 # ---------------------------------------------------------------- 프로젝트 멤버 · 삭제 (PostgreSQL)
@@ -821,11 +898,15 @@ def _failure(r: dict) -> ExportFailure:
                          tuple(r["failed_keys"]) if r.get("failed_keys") else None)
 
 
-def _failures_changed() -> None:
+def _failures_changed(mid: str | None = None) -> None:
+    """mid: 그 회의의 실패만 바뀜 (그 회의만 다시 받음) · None 이면 회의 전부 (도구 연결 상태처럼 여러 회의에 걸칠 때)."""
     _api_failures.clear()
     _api_integrations.clear()
     _api_notifications.clear()
-    meetings_changed()  # 실패 해결 → 회의 상태(done)도 다시 받음
+    if mid:
+        meetings_changed(mid, projects=False)  # 실패 해결 → 그 회의 상태(done)만 다시 받음
+    else:
+        meetings_changed()
 
 
 def record_failure(mid: str, tool_id: str, kind: str, reason: str, code: str = "",
@@ -955,7 +1036,7 @@ def resolve_failure(fid: str) -> None:
     """다시 보내서 해결 (POST .../resolve) · 남은 실패가 없으면 서버가 회의를 done 으로 · 주관자에게 알림."""
     row = api.call("POST", f"/api/integrations/failures/{fid}/resolve", None, _token())
     _remember([row])  # 해결 시각이 바로 보이게 (is_resolved)
-    _failures_changed()
+    _failures_changed(row.get("meeting_id"))
 
 
 def is_resolved(fid: str) -> bool:
