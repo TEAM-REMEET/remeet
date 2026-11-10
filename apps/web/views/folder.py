@@ -138,6 +138,7 @@ class FolderPage:
     wiki_folders: list[str]  # 위키 탭에서 보여 줄 프로젝트 폴더
     can_manage: bool | None = None  # 멤버 관리 가능 여부 (None 이면 is_host 와 같음)
     on_members: tuple[Callable, tuple] = (actions.open_members, ())
+    on_delete: tuple[Callable, tuple] | None = None  # 회의가 하나도 없는 내 프로젝트만 (서버가 정한 Folder.can_delete)
     extra_tags: list[str] = field(default_factory=list)
 
 
@@ -167,6 +168,9 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
             manage = fp.is_host if fp.can_manage is None else fp.can_manage
             button("멤버 관리" if manage else "멤버 보기", key="open_members", variant="secondary",
                    on_click=fn, args=args)
+            if fp.on_delete:
+                fn, args = fp.on_delete
+                button("폴더 삭제", key="open_delete", variant="dangerline", icon=":material/delete:", on_click=fn, args=args)
             button("회의록 올리기", key="folder_upload", variant="primary", on_click=actions.open_new_note)
 
     button_group(
@@ -206,6 +210,7 @@ def _folder_screen(s: AppState, fid: str) -> None:
         notes=sel.folder_note_ids(s, fid),  # 참석·주관한 회의 + 빠졌지만 주관자가 공유해 준 회의
         wiki_folders=[fid],
         on_members=(actions.open_members, (fid,)),
+        on_delete=(actions.open_delete, ("folder", fid)) if f.can_delete else None,
     ))
 
 

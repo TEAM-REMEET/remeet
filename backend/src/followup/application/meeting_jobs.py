@@ -1,6 +1,7 @@
 """요약 · 액션 추출 백그라운드 실행 — 사람마다 작업 하나 (실행 중이면 새 등록을 막음)
 
-    start_job    입력 확인 후 바로 돌아옴 → 뒤에서 summarize_submission 실행 → 끝나면 done · failed로 기록
+    start_job    입력 확인 후 바로 돌아옴 → 뒤에서 summarize_submission 실행 → PostgreSQL 저장 · 주관자에게 넘김
+                 (save_analysis · 브라우저를 닫아도 됨) → 끝나면 done · failed로 기록 (saved: draft · handoff)
     current_job  지금 작업 (입력값 포함, 완료면 결과 포함) — 화면을 벗어났거나 브라우저를 닫았어도 이어서 볼 수 있음
     clear_job    끝난 작업 지우기 (실행 중이면 지우지 않음)
 
@@ -19,6 +20,7 @@ from followup import settings as cfg
 from followup.analysis.summary import ui_test
 from followup.analysis.summary.preprocessing import TranscriptFormatError
 from followup.analysis.summary.transcript_builder import MeetingSubmission, build_meeting_text
+from followup.application import save_analysis
 from followup.application.ports import StructuredLLM, SummaryStore
 from followup.application.summarize_meeting import LLMInputLimitError, summarize_submission
 from followup.application.time_limit import TimeLimitExceeded, run_with_limit
@@ -31,7 +33,7 @@ INPUT_LIMIT_MESSAGE = "회의 내용이 길어 분석할 수 있는 입력 길�
 INTERRUPTED_MESSAGE = "서버가 다시 시작되어 분석이 중단됐어요. 같은 내용으로 다시 시도하면 이어서 진행해요."
 
 _lock = threading.Lock()
-_active: set[str] = set()
+_active: dict[str, str | None] = {}   # 실행 중인 사람 → 고른 프로젝트 id (폴더 삭제를 막는 데 씀 · running_users)
 _executor = ThreadPoolExecutor(max_workers=cfg.MAX_SUMMARY_JOBS, thread_name_prefix="summary-job")
 
 
@@ -46,7 +48,7 @@ def _run(user_id: str, job: dict, submission: MeetingSubmission, llm: Structured
         else:
             summary = run_with_limit(lambda deadline: summarize_submission(submission, llm=llm, store=store, deadline=deadline),
                                      cfg.SUMMARY_TIMEOUT_SECONDS)
-        job = {**job, "status": "done", "meeting_id": summary.meeting_id}
+        job = {**job, "status": "done", "meeting_id": summary.meeting_id, **_save(user_id, submission, summary, job)}
     except TimeLimitExceeded:
         logger.warning("요약 작업 시간 초과 (%s)", user_id)
         job = {**job, "status": "failed", "message": TIMEOUT_MESSAGE}
@@ -58,7 +60,25 @@ def _run(user_id: str, job: dict, submission: MeetingSubmission, llm: Structured
         job = {**job, "status": "failed", "message": FAILED_MESSAGE}
     with _lock:
         store.write_job(user_id, json.dumps(job, ensure_ascii=False))
-        _active.discard(user_id)
+        _active.pop(user_id, None)
+
+
+def _save(user_id: str, submission: MeetingSubmission, summary, job: dict) -> dict:
+    """분석 결과를 PostgreSQL 에 저장 · 넘김. 실패해도 분석은 done (작성자 화면이 예전처럼 저장 · 넘기기를 다시 해요)."""
+    try:
+        return {"saved": save_analysis.save_result(user_id, submission, summary.model_dump(mode="json"),
+                                                   job.get("draft") or {})}
+    except save_analysis.ProjectGone:
+        return {"saved": None, "save_error": save_analysis.PROJECT_GONE}
+    except Exception:
+        logger.exception("분석 결과 저장 실패 (%s) · 작성자 화면에서 다시 저장해요", user_id)
+        return {"saved": None}
+
+
+def running_users(project_id: str) -> list[str]:
+    """지금 이 프로젝트로 분석(LLM)이 돌고 있는 사람 (프로세스 안 기록 · 서버 하나 전제)."""
+    with _lock:
+        return [uid for uid, pid in _active.items() if pid == project_id]
 
 
 def start_job(user_id: str, submission: MeetingSubmission, draft: dict, *, llm: StructuredLLM, store: SummaryStore) -> dict:
@@ -73,7 +93,7 @@ def start_job(user_id: str, submission: MeetingSubmission, draft: dict, *, llm: 
     with _lock:
         if user_id in _active:
             raise JobRunningError(user_id)
-        _active.add(user_id)
+        _active[user_id] = submission.project_id
         store.write_job(user_id, json.dumps(job, ensure_ascii=False))
     _executor.submit(_run, user_id, job, submission, llm, store)
     return job

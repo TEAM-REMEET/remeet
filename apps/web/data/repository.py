@@ -426,7 +426,7 @@ def _api_folders(token: str) -> dict[str, Folder]:
         notes = [r["id"] for r in _pages(f"/api/projects/{pid}/meetings", token)]  # 최신순
         brief = api.call("GET", f"/api/projects/{pid}/briefs", token=token)
         return Folder(pid, p["name"], p["host_user_id"], tuple(members), tuple(notes),
-                      tuple(BriefItem(b["label"], b["text"]) for b in brief))
+                      tuple(BriefItem(b["label"], b["text"]) for b in brief), can_delete=bool(p.get("can_delete")))
 
     projects = api.call("GET", "/api/projects", token=token)  # 내가 멤버 · 주관인 프로젝트
     with ThreadPoolExecutor(_DETAIL_WORKERS) as pool:
