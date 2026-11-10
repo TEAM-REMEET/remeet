@@ -101,6 +101,14 @@ class ExportTests(unittest.TestCase):
                                  connect=connect_to(fake), emails=lambda ids: {"u1": "a@x.com"})
         self.assertEqual(res["items"][0], {"key": "40", "ok": True, "issue_key": "KAN-1", "assigned": False})
 
+    def test_description_has_meeting_date_and_agenda(self):
+        fake = FakeJira()
+        export_jira.export("주간 회의", [{**item("40", "견적 비교"), "agenda": "커버 디자인"}, item("41", "안건 없음")],
+                           meeting_date="2026-11-10", connect=connect_to(fake), emails=lambda ids: {})
+        self.assertEqual(fake.created[0]["description"],
+                         "- **회의**: 주간 회의 (2026-11-10)\n- **안건**: 커버 디자인\n- RE:MEET 액션 아이템 #40")
+        self.assertNotIn("안건", fake.created[1]["description"])  # 안건을 모르면 줄을 빼요
+
     def test_never_creates_same_todo_twice(self):
         fake = FakeJira(existing={"remeet-todo-40": "KAN-9"})  # 40 은 예전에 이미 만듦 (시간 초과 · 새로고침 뒤 다시 보내기)
         res = export_jira.export("회의", [item("40", "이미 있음"), item("41", "새 일")],
@@ -179,14 +187,14 @@ class RouteTests(unittest.TestCase):
         with patch.object(export_jira, "export", return_value=result) as run:
             res = self.client.post("/api/exports/jira", json=self.body)
         self.assertEqual((res.status_code, res.json()), (200, result))
-        run.assert_called_once_with("주간 회의", self.body["items"])
+        run.assert_called_once_with("주간 회의", self.body["items"], meeting_date=None)
 
     def test_empty_items_still_checks_connection(self):
         self.login()  # 만들 이슈가 없어도 연결 실패면 502 (성공으로 보이면 안 됨)
         with patch.object(export_jira, "export", side_effect=export_jira.JiraUnavailable("401")) as run:
             res = self.client.post("/api/exports/jira", json={**self.body, "items": []})
         self.assertEqual(res.status_code, 502)
-        run.assert_called_once_with("주간 회의", [])
+        run.assert_called_once_with("주간 회의", [], meeting_date=None)
 
     def test_errors_hide_internals(self):
         self.login()

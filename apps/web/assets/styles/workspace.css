@@ -121,6 +121,36 @@ div:has(> .st-key-grp-seg-tree_mode),
 [class*="st-key-navrow-tree"] .nav-trail.newdot.tree {
   right: 30px;
 }
+/* 남은 단계 (검토 중 · 전달 전 · 외부 도구 전송 전 …) — 회의 줄: 짧은 배지 / 폴더 줄: 노란 동그라미 숫자 */
+.nav-trail.stage {
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 17px;
+  padding: 0 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.nav-trail.stage.tone-warn { background: #FFF1B8; color: #6E5200; }
+.nav-trail.stage.tone-run { background: #FDE3CF; color: #8A3B00; }
+.nav-trail.stage.tone-fail { background: #FDECEA; color: #B3261E; }
+[class*="st-key-navrow-tree"]:has(.nav-trail.stage) [class*="st-key-b-tree"] button {
+  padding-right: 58px !important; /* 배지와 회의 이름이 겹치지 않게 */
+}
+.nav-trail.pend {
+  right: 30px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  box-sizing: border-box;
+}
+.nav-trail.pend.shift { right: 42px; } /* 새 폴더 점과 겹치지 않게 */
 
 /* 회의록 페이지 카드: 첫 번째 html 을 버튼 위에 겹치기 */
 [class*="st-key-acard-"] {
@@ -791,10 +821,12 @@ hr.cp-divider {
 /* ---------- 사이드바 로고: 누르면 새 회의록 (투명 버튼을 로고 위에 겹침) ---------- */
 .st-key-sb-logo-link {
   position: relative;
+  width: fit-content !important;  /* 클릭 영역을 로고 글자 폭까지만 */
 }
 .st-key-sb-logo-link [class*="st-key-b-ghost-logo_home"] {
   position: absolute !important;
   inset: 0;
+  width: 100% !important;  /* Streamlit 의 content 폭 지정을 덮어 로고 전체를 클릭 영역으로 */
   z-index: 2;
 }
 .st-key-sb-logo-link [class*="st-key-b-ghost-logo_home"] button {

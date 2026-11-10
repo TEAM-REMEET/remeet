@@ -18,16 +18,16 @@ Jira · 메일 (연결됨 · on) 은 실제로 보냄
 
 from __future__ import annotations
 
-import re
 import time
 from dataclasses import dataclass, field
 
-from config import DELIVERY_EVENT_INTERVAL, DELIVERY_FIRST_EVENT_DELAY, YEAR
+from config import DELIVERY_EVENT_INTERVAL, DELIVERY_FIRST_EVENT_DELAY
 from data import api
 from data import repository as repo
 from data.models import ExportFailure, IntegrationTool
 from state import selectors as sel
 from state.store import AppState, ExportRun
+from utils.dates import parse_due
 
 DEFAULT_TOOLS = ("slack", "jira")  # 처음 화면에서 미리 골라 둘 도구 (회의 결과 공유 · 액션 아이템 이슈)
 
@@ -62,18 +62,18 @@ def failed(state: AppState, t: str) -> bool:
     return live(state, t) and bool(x.errors.get(t) or any(not r["ok"] for r in x.results.get(t, {}).get("items", ())))
 
 
-def _iso_due(due: str) -> str | None:
-    """'11/2' → '2026-11-02' (Jira 마감일 형식).
-    shortcut: 연도는 config.YEAR 로 고정, 마감일에 연도가 저장되면 그 값을 그대로 씀"""
-    m = re.fullmatch(r"(\d{1,2})/(\d{1,2})", due or "")
-    return f"{YEAR}-{int(m[1]):02d}-{int(m[2]):02d}" if m else None
+def _iso_due(t) -> str | None:
+    """Jira 마감일 (YYYY-MM-DD). 담당자 추천에서 고친 값은 '2026-11-11', 저장된 값은 '11/11' 처럼 형식이 섞여 있어
+    둘 다 읽는 parse_due 를 씀 (전에는 '11/11' 만 알아봐서 고친 마감일이 Jira 에 빠졌음)."""
+    d = parse_due(t.due or t.due_iso)
+    return d.isoformat() if d else None
 
 
 def _jira_items(state: AppState, mid: str, only: set[str] | None = None) -> tuple[list[dict], list[dict]]:
     """보낼 액션 아이템 · key = DB 할 일 id (→ Jira 라벨 remeet-todo-{id} · 같은 할 일로 이슈가 두 번 생기지 않게).
     담당자는 담당자 추천 · 지정에서 확정한 사람. only: 이 key 만 (다시 보내기).
     → (보낼 것, 저장 안 된 할 일의 실패 결과) · id 가 없으면 라벨을 못 붙여 중복을 못 막으니 보내지 않음."""
-    items, unsaved = [], []
+    items, unsaved, agendas = [], [], None
     for i, t in sel.todo_items(state, mid):
         key = str(t.todo_id) if t.todo_id else f"unsaved-{i}"
         if only is not None and key not in only:
@@ -81,9 +81,25 @@ def _jira_items(state: AppState, mid: str, only: set[str] | None = None) -> tupl
         if not t.todo_id:
             unsaved.append({"key": key, "ok": False, "error": "저장되지 않은 액션 아이템이에요. 회의록을 다시 열어 주세요."})
             continue
-        items.append({"key": key, "title": t.text[:255], "due": _iso_due(t.due),
-                      "owners": list(sel.todo_owner_ids(state, sel.todo_key(mid, i), t))})
+        if not t.agenda and agendas is None:
+            agendas = _agenda_titles(state, mid)
+        items.append({"key": key, "title": t.text[:255], "due": _iso_due(t),
+                      "owners": list(sel.todo_owner_ids(state, sel.todo_key(mid, i), t)),
+                      "agenda": (t.agenda or (agendas or {}).get(t.item_id, ""))[:200] or None})
     return items, unsaved
+
+
+def _agenda_titles(state: AppState, mid: str) -> dict[str, str]:
+    """AI 가 만든 할 일(item_id) → 안건 제목. DB 할 일에는 안건이 없어서 최종 회의록 JSON 에서 찾음 (직접 추가한 일은 Todo.agenda).
+    회의록을 못 가져오면 빈 dict (안건 없이 보냄 · 전송을 막을 일은 아님)."""
+    minutes = state.final_summaries.get(mid)
+    if minutes is None:
+        try:
+            minutes = repo.summary_json(mid)
+        except api.ApiError:
+            return {}
+    return {d["item_id"]: a.get("agenda_title") or "" for a in minutes.get("agendas") or ()
+            for d in a.get("major_discussions") or () if d.get("item_id")}
 
 
 def _request(state: AppState, mid: str, t: str, only: set[str] | None) -> dict | None:
@@ -96,7 +112,8 @@ def _request(state: AppState, mid: str, t: str, only: set[str] | None) -> dict |
         # 첫 전송은 이슈가 없어도 보냄: 백엔드가 Jira 연결(인증)을 확인 · 실패하면 ApiError → 전송 실패
         if not (items or unsaved or only is None):
             return None
-        res = repo.export_jira(m.title, items) if items or only is None else {"project_key": "", "items": []}
+        res = (repo.export_jira(m.title, items, sel.meeting_date(m).isoformat()) if items or only is None
+               else {"project_key": "", "items": []})
         return {**res, "items": res["items"] + unsaved}
     to = [p for p in mail_recipients(mid) if only is None or p in only]
     minutes = state.final_summaries.get(mid) or repo.summary_json(mid)  # 다시 보내기는 새로 로그인한 뒤일 수 있음

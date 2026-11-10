@@ -390,6 +390,7 @@ class Meeting:
     branch_of: str | None = None  # 안건 분리로 생긴 회의라면 원래 회의 id
     results: tuple[MeetingResult, ...] = ()  # 회의 결과 (없으면 결정·미해결로 대신 만듦)
     author: str = ""  # 회의록을 쓴 사람 (DB · 미리보기는 빈 값)
+    exported: bool = False  # 외부 도구 전송(6단계)을 마쳤는지 (DB meeting_exports · migrations/024)
     reviewer: str = ""  # 검토자 (DB). 있으면 이 사람이, 없으면 주관자가 고치고 확정해요 (신입이 쓴 회의록 → 윗사람)
 
     @property
@@ -426,6 +427,7 @@ class Folder:
     notes: tuple[str, ...]
     brief: tuple[BriefItem, ...] = ()
     is_new: bool = False
+    can_delete: bool = False  # 회의가 하나도 없고(내가 못 보는 회의까지) 분석 중인 사람도 없는 내 프로젝트 (GET /api/projects)
 
 
 @dataclass(frozen=True)

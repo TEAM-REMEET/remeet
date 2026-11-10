@@ -65,7 +65,7 @@ def empty_state(text: str, *, title: str = "", icon_html: str = "", pad: int = 3
 
 
 def notice(text_html: str, tone: str = "neutral") -> None:
-    """한 줄 안내 배너. tone: neutral | success | danger"""
+    """한 줄 안내 배너. tone: neutral | success | warn | danger"""
     markup(f'<div class="notice notice-{tone}" role="status">{text_html}</div>')
 
 

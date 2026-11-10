@@ -123,6 +123,59 @@ def normalize_meeting(raw: dict[str, Any]) -> dict[str, Any]:
 
 # ─────────────────────────────── 회의 적재 ───────────────────────────────
 
+# 회의를 지울 때 그 회의에서 생긴 것만 지운다 (회의 1건 = 트랜잭션 1개).
+#   지움   Meeting · Agenda · Discussion · ActionItem, 이 회의 안건만 결정한 Decision
+#          → 붙은 엣지(ATTENDED · ASSIGNED_TO · RECOMMENDED_FOR · REQUIRES_SKILL · FOLLOWS_UP · SUPERSEDES …)도 같이
+#          이제 아무도 가리키지 않는 Topic (Project 는 남김 · 「폴더 삭제」 때 DELETE_PROJECT 로 지움)
+#   되돌림 이 회의 Decision 이 대체(superseded)했던 옛 Decision → 다른 대체가 없으면 active
+#          남는 Topic 의 last_discussed_at → 남은 회의 중 가장 최근
+#   안 건드림 Person · Team · Role · Skill
+DELETE_MEETING = """
+MATCH (mt:Meeting {meeting_id: $mid})
+WITH mt,
+     COLLECT { MATCH (mt)-[:HAS_AGENDA]->(:Agenda)-[:ABOUT]->(t:Topic) RETURN DISTINCT t } AS topics,
+     COLLECT { MATCH (mt)-[:HAS_AGENDA|HAS_DISCUSSION|PRODUCED*]->(n) RETURN DISTINCT n } AS parts,
+     COLLECT { MATCH (mt)-[:HAS_AGENDA]->(:Agenda)-[:DECIDED]->(d:Decision)
+               WHERE NOT EXISTS { MATCH (other:Agenda)-[:DECIDED]->(d) WHERE NOT (mt)-[:HAS_AGENDA]->(other) }
+               RETURN DISTINCT d } AS decisions
+WITH mt, topics, parts, decisions,
+     COLLECT { UNWIND decisions AS d MATCH (d)-[:SUPERSEDES]->(o:Decision) WHERE NOT o IN decisions
+               RETURN DISTINCT o } AS superseded
+FOREACH (n IN parts + decisions | DETACH DELETE n)
+DETACH DELETE mt
+WITH topics, superseded
+CALL (superseded) {
+  UNWIND superseded AS o
+  WITH o WHERE NOT EXISTS { (:Decision)-[:SUPERSEDES]->(o) }
+  SET o.status = 'active'
+}
+CALL (topics) {
+  UNWIND topics AS t
+  OPTIONAL MATCH (m:Meeting)-[:HAS_AGENDA]->(:Agenda)-[:ABOUT]->(t)
+  WITH t, max(m.held_at) AS last
+  SET t.last_discussed_at = last
+  WITH t WHERE NOT EXISTS { (t)<-[:ABOUT|SUBTOPIC_OF]-() }
+  DETACH DELETE t
+}"""
+
+# 「폴더 삭제」(회의가 0개인 프로젝트): Project 와 그 안에 남은 Topic · Topic 에 붙은 Decision 을 지운다.
+DELETE_PROJECT = """
+MATCH (p:Project {project_id: $pid})
+OPTIONAL MATCH (t:Topic)-[:IN]->(p)
+OPTIONAL MATCH (d:Decision)-[:ABOUT]->(t)
+DETACH DELETE d, t, p"""
+
+
+def delete_meeting(meeting_id: str) -> None:
+    """적재 안 된 회의면 아무 일도 안 한다 (다시 불러도 안전)."""
+    get_driver().execute_query(DELETE_MEETING, mid=meeting_id)
+
+
+def delete_project(project_id: str) -> None:
+    """적재 안 된 프로젝트면 아무 일도 안 한다 (다시 불러도 안전)."""
+    get_driver().execute_query(DELETE_PROJECT, pid=project_id)
+
+
 def load_meeting(raw: dict[str, Any], llm: LLM) -> bool:
     """회의 1건 = 트랜잭션 1개 (중간에 실패하면 아무것도 남지 않음). 이미 적재된 회의면 건너뛰고 False."""
     meeting = normalize_meeting(raw)

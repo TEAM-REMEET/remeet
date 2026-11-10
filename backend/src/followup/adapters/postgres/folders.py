@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Callable
 from uuid import uuid4
 from followup.adapters.postgres.db import transaction
 from .common import (
@@ -9,6 +10,7 @@ from .common import (
     can_access_folder,
     require_user,
     invalidate,
+    person_label,
 )
 
 
@@ -76,13 +78,26 @@ def update_folder(*, actor_id: str, folder_id: str, name: str) -> dict:
     return row
 
 
-def delete_folder(*, actor_id: str, folder_id: str) -> dict:
-    """Soft delete folder; do not cascade-delete existing meeting records."""
+def delete_folder(*, actor_id: str, folder_id: str, analyzing: list[str] = (),
+                  before_commit: Callable[[], None] | None = None) -> dict:
+    """프로젝트 실제 삭제 (주관자 · 회의가 하나도 없을 때만 · 멤버 · 브리프 · 알림도 같이). migrations/025.
+
+    analyzing     지금 이 프로젝트로 분석(LLM)이 돌고 있는 사람 (application/meeting_jobs.running_users) → 있으면 막음
+    before_commit 같이 지울 다른 저장소(Neo4j). 여기서 실패하면 PostgreSQL 삭제도 취소돼요.
+    회의 수는 내가 못 보는 회의(다른 사람의 작성 중 회의 등)까지 셈. 같은 순간 회의가 저장되면 FK 가 삭제를 막아요.
+    """
     with transaction(actor_id) as cur:
         can_access_folder(cur,folder_id,actor_id,write=True)
-        cur.execute("""UPDATE folders SET deleted_at=now()
-                       WHERE id=%s AND deleted_at IS NULL RETURNING *""", (folder_id,))
+        if analyzing:
+            names = ", ".join(person_label(cur, uid) for uid in analyzing)
+            raise ValidationError(f"{names} 님이 이 프로젝트로 회의록을 분석하고 있어요. 끝난 뒤에 지워 주세요.")
+        cur.execute("SELECT remeet_internal.folder_meeting_count(%s) AS n", (folder_id,))
+        if cur.fetchone()["n"]:
+            raise ValidationError("회의록이 있는 프로젝트는 지울 수 없어요.")
+        cur.execute("DELETE FROM folders WHERE id=%s RETURNING *", (folder_id,))
         row=cur.fetchone()
+        if row and before_commit:
+            before_commit()
     invalidate('_base_meetings', 'base_folders')
     return row
 

@@ -200,6 +200,43 @@ def _wizard_reset() -> dict:
                 cp_handoff="", cp_handoff_author="", cp_handoff_error="", cp_saved_id="")
 
 
+def open_issue_detail(issue: dict) -> None:
+    """홈 · 할 일을 누르면 상세 모달 (components/dialogs/issue.py) · 고른 이슈는 모달이 읽어 감."""
+    st.session_state["_issue_detail"] = issue
+    open_modal("issue_detail")
+
+
+def open_issue_meeting(mid: str) -> None:
+    """상세 모달 「회의록 보기」 → 모달을 닫고 그 회의(최종 회의록)로."""
+    close_modal()
+    open_meeting(mid)
+
+
+def change_issue_status(key: str, status: str, menu: str | None = None) -> None:
+    """홈 · 상태 드롭다운에서 고름 → 드롭다운을 바로 닫고, 바꾸기는 화면을 다시 그린 뒤로 미룸 (apply_pending_status).
+    콜백 안에서 바로 바꾸면 화면이 다시 그려지기 전이라 Jira 를 기다리는 동안 드롭다운 창이 그대로 열려 있음."""
+    if menu:
+        st.session_state[menu] = False
+    st.session_state["_pending_status"] = (key, status)
+
+
+def apply_pending_status() -> None:
+    """홈 목록을 다 그린 뒤 · 고른 상태를 Jira 에 반영 (내 일인지는 서버가 확인 · 누른 사람은 Jira 댓글로) → 다시 그림."""
+    pending = st.session_state.pop("_pending_status", None)
+    if not pending:
+        return
+    from ui.loading import loading_overlay
+
+    key, status = pending
+    loading_overlay(f"{key} 을(를) 「{status}」(으)로 바꾸고 있어요", "Jira 에 반영하는 중이에요")
+    try:
+        repo.dashboard_set_status(key, status)
+        _set(toast=f"{key} 을(를) 「{status}」(으)로 바꿨어요.")
+    except api.ApiError as e:
+        _set(toast=f"{key} 상태를 바꾸지 못했어요. ({e})")
+    st.rerun()
+
+
 def refresh_dashboard() -> None:
     """홈 · 「동기화」 → 이번 화면에서 Jira 를 다시 불러옴 (서버 캐시를 건너뜀 · views/home.py)."""
     st.session_state["_home_refresh"] = True
@@ -448,6 +485,11 @@ def compose_handoff() -> None:
     except api.ApiError as e:
         s.cp_handoff_error = str(e)
         return
+    _handed_off(s)
+
+
+def _handed_off(s) -> None:
+    """넘기기가 끝남 (서버가 분석 직후 넘겼거나 「다시 넘기기」) → 작성자는 새 회의록 화면으로."""
     title, host = s.nn_title, sel.name_of(s.nn_host)
     _clear_job()
     for changes in (s.added_todos, s.edited_todos, s.deleted_todos):
@@ -548,11 +590,28 @@ def compose_poll() -> None:
     except api.ApiError:  # 잠깐 연결이 안 돼도 다음 확인 때 다시 봄
         return
     if job["status"] == "done":
-        _apply_result(s, job["result"])
-        _save_analysis(s)
+        _job_done(s, job)
     elif job["status"] != "running":
         s.cp_job_running, s.cp_step = False, 1
         _format_error(job.get("message") or "분석 작업을 찾을 수 없어요. 다시 시도해 주세요.")
+
+
+def _job_done(s, job: dict) -> None:
+    """분석이 끝남. 서버가 이미 저장 · 넘겼으면(job.saved) 그 결과를 따르고, 서버 저장이 실패했으면 예전처럼 여기서 저장 · 넘김."""
+    if job.get("saved") or job.get("save_error"):  # 서버가 프로젝트를 만들었거나 · 프로젝트가 지워짐 → 목록 다시 받기
+        repo.meetings_changed()
+    if job.get("save_error"):  # 분석하는 사이 고른 프로젝트가 지워짐 → 1단계에서 다시 고르기
+        s.cp_job_running, s.cp_step = False, 1
+        _format_error(job["save_error"])
+        return
+    if job.get("saved") == "handoff":
+        s.cp_job_running = False
+        _handed_off(s)
+        return
+    if job.get("saved") == "draft":
+        s.cp_saved_id = job["result"]["meeting_id"]
+    _apply_result(s, job["result"])
+    _save_analysis(s)
 
 
 def compose_resume() -> None:
@@ -590,8 +649,7 @@ def compose_resume() -> None:
     if job["status"] == "running":
         s.cp_job_running = True
     else:
-        _apply_result(s, job["result"])
-        _save_analysis(s)
+        _job_done(s, job)
 
 
 def compose_clear_files() -> None:
@@ -760,11 +818,12 @@ def pick_people(team_ids: list[str], widget_key: str, single: bool) -> None:
 
 def confirm_pick(kind: str) -> None:
     s = get_state()
-    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 참석자에서 빠짐)
+    if kind == "cp_host":  # 주관자는 참석자에 항상 들어가요 (바꾸면 예전 주관자는 빠짐 · 작성자 '나'는 그대로 남음)
         if s.pick_draft and not sel.can_host(s.pick_draft[0]):  # 신입은 주관자 X (조직도에서도 고를 수 없게 막아 둠)
             return
         old, s.nn_host = s.nn_host, (s.pick_draft[0] if s.pick_draft else s.nn_host)
-        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in (old, s.nn_host)]
+        drop = {s.nn_host} if old == me_id() else {old, s.nn_host}
+        s.nn_people = [s.nn_host] + [p for p in s.nn_people if p not in drop]
     elif kind == "cp_people":
         s.nn_people = [x for x in [s.nn_host] if x] + [p for p in s.pick_draft if p != s.nn_host]
     s.nn_error = ""
@@ -1422,6 +1481,9 @@ def open_export(mid: str) -> None:
     if not sel.manages(repo.meeting(mid)):
         return
     s = get_state()
+    if sel.delivery_failed(s, mid):  # 결과 전달(5단계)에 실패한 참석자가 남음 → 다시 보내기부터
+        s.toast = "결과를 전달하지 못한 참석자가 있어요. 「결과 재전송」으로 먼저 다시 보내 주세요."
+        return
     s.export = ExportRun(meeting_id=mid, picked=export.default_pick(mid))
     go("export")
 
@@ -1502,6 +1564,8 @@ def run_row_action(mid: str, kind: str) -> None:
     elif kind == "progress":
         get_state().delivery.meeting_id = mid
         go("deliver")
+    elif kind == "export":  # 결과 전달은 마쳤지만 외부 도구 전송 전
+        open_export(mid)
     else:
         open_meeting(mid)
 
@@ -1848,7 +1912,7 @@ def open_notification(nid: str) -> None:
         open_meeting(n.meeting)
     elif n.folder and n.folder in sel.folders(s):  # 멤버로 추가됨 → 그 폴더로
         open_folder(n.folder)
-    elif n.kind == "created":  # 회의 연결이 없는 created = 요약 완료 (아직 회의록이 저장되기 전)
+    elif n.kind == "created":  # 회의 연결이 없는 created = 요약 완료 (작성 화면에서 이어서 검토)
         _open_summary_result()
 
 def add_member_now(fid: str, pid: str) -> None:
