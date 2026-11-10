@@ -1818,6 +1818,19 @@ def _queue() -> list[dict]:
         return []
 
 
+def _open_summary_result() -> None:
+    """「요약이 끝났어요」 알림 → 분석 및 검토 화면 (작성 화면이 서버의 분석 작업에서 복원 · compose_resume)."""
+    try:
+        job = repo.current_summary_job()
+    except api.ApiError as e:
+        _set(toast=str(e))
+        return
+    if job["status"] == "none":  # 확정하거나 초기화하면 분석 작업이 지워져요
+        _set(toast="이미 확정했거나 지운 분석 결과예요.")
+        return
+    go("compose")
+
+
 def open_notification(nid: str) -> None:
     s = get_state()
     s.read_notifications.add(nid)
@@ -1835,6 +1848,8 @@ def open_notification(nid: str) -> None:
         open_meeting(n.meeting)
     elif n.folder and n.folder in sel.folders(s):  # 멤버로 추가됨 → 그 폴더로
         open_folder(n.folder)
+    elif n.kind == "created":  # 회의 연결이 없는 created = 요약 완료 (아직 회의록이 저장되기 전)
+        _open_summary_result()
 
 def add_member_now(fid: str, pid: str) -> None:
     """폴더 멤버 모달 · 조직도에서 이름을 누르면 바로 멤버로 추가 → 목록 맨 아래로."""
