@@ -203,7 +203,7 @@ def render_folder_page(s: AppState, fp: FolderPage) -> None:
             button("회의록 올리기", key="folder_upload", variant="primary", on_click=actions.open_new_note)
 
     button_group(
-        [("all", f"회의록 {len(fp.notes)}"), ("wiki", "위키")],
+        [("all", f"회의록 {len(fp.notes)}"), ("wiki", "RE:MAP")],
         s.folder_tab if s.folder_tab in ("all", "wiki") else "all",
         lambda v: actions.update(folder_tab=v, folder_role="todo"),
         key="ftab",

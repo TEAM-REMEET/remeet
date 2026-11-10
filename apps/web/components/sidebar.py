@@ -215,7 +215,7 @@ def render_sidebar() -> None:
                           trail_html=f'<span class="nav-trail badge">{len(repo.received_meeting_ids())}</span>')
 
             with st.container(key="navgroup-ask"):  # 공유 아래 · 회의 기록에 묻는 온보딩 에이전트
-                _nav_item("회의에 물어보기", "ask", on=s.screen == "ask", on_click=actions.go, args=("ask",),
+                _nav_item("회의 아카이브", "ask", on=s.screen == "ask", on_click=actions.go, args=("ask",),
                           icon_name=":material/forum:")
 
         with st.container(key="sidebar-user", horizontal=True, vertical_alignment="center", gap="small", wrap=False):

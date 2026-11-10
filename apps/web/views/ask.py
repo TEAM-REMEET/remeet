@@ -1,4 +1,4 @@
-"""회의에 물어보기 (온보딩 에이전트).
+"""회의 아카이브 · 지난 회의에 묻기 (온보딩 에이전트).
 
 회의 기록에 자연어로 물으면, 회의 · 안건 · 원문 발화를 근거로 단 답을 보여 줘요.
 답 형식은 온보딩 에이전트 ask 결과 JSON 그대로예요 (POST /api/ask → data/repository.py 의 ask, 명세는
@@ -33,7 +33,8 @@ def _ask_box(s: AppState) -> None:
         with st.container(horizontal=True, vertical_alignment="center", gap="small"):
             st.text_input("회의에 물어볼 질문", key=key, label_visibility="collapsed", icon=":material/forum:",
                           placeholder="예: PG사는 어디로 정했어요?  ·  1차 회의에서 뭘 했어요?  ·  결제 오류는 누구한테 물어봐요?")
-            st.form_submit_button("물어보기", type="primary", on_click=actions.ask_submit, args=(key,))
+            st.form_submit_button("", icon=":material/send:", help="물어보기", type="primary",
+                                  on_click=actions.ask_submit, args=(key,))
 
 
 # ---------------------------------------------------------------- 답 한 개
@@ -184,7 +185,7 @@ def _history(s: AppState, current: str) -> None:
 def render() -> None:
     s = get_state()
     with page("ask"):
-        page_header("회의에 물어보기",
+        page_header("회의 아카이브",
                     "회의에서 정한 것 · 진행 과정 · 할 일과 담당자 · 누구에게 물어볼지 물어보세요. 모든 답에 근거 회의가 달려요.")
         _ask_box(s)
         if not s.ask_history:

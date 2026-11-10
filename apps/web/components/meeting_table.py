@@ -11,7 +11,7 @@ from ui.html import markup
 from ui.tags import stage_badge, tag
 from utils.text import esc
 
-COLUMNS = (2.3, 1.25, 1.0, 1.35, 1.1, 0.95)
+COLUMNS = (2.15, 1.25, 1.0, 1.35, 1.1, 1.1)  # 관리 칸: 「외부 도구 전송」이 한 줄에 들어가게 (제목 칸에서 덜어 옴)
 HEADERS = ("회의명", "회의 일시", "주관자", "진행 상태", "액션 아이템", "관리")
 
 _BUTTON_VARIANT = {

@@ -384,3 +384,18 @@ body:has(.ld-cover) .st-key-topbar { z-index: 99995; }  /* 상단바(알림)는 
 .stage-fail .sp-step.on .dot { background: #D93025; box-shadow: 0 0 0 3px rgba(217,48,37,.2); }
 .stage-panel .sp-arrow { color: #B9BDC4; font-weight: 700; }
 .stHtml p.sp-text { margin: 12px 0 0; font-size: 14px; color: #3B4048; line-height: 1.5; word-break: keep-all; }
+
+/* 회의 목록 「관리」 버튼 = 고른 예시 H4-W128 그대로: 폭 128 · 높이 44(위아래 14 + 글자 14) · 좌우 여백 10 · 글자 14px 500
+   옅은 그림자 · 한 줄 · 마우스를 올리면 버튼 종류별 배경(주황 테두리 → 연주황 · 회색 → 연회색) + 1px 떠오름 */
+[class*="st-key-b-"][class*="_act_"] button {
+  width: 128px !important; min-width: 128px !important; height: 44px !important; min-height: 44px !important;
+  padding: 0 10px !important; border-radius: 3px !important; white-space: nowrap !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, .08), 0 1px 4px rgba(26, 26, 26, .05);
+  transition: background .15s, box-shadow .15s, transform .15s;
+}
+[class*="st-key-b-"][class*="_act_"] button:hover {
+  transform: translateY(-1px); box-shadow: 0 2px 4px rgba(26, 26, 26, .10), 0 2px 6px rgba(26, 26, 26, .06);
+}
+[class*="st-key-b-"][class*="_act_"] button * { white-space: nowrap !important; word-break: keep-all !important; }
+[class*="st-key-b-"][class*="_act_"] button p { font-size: 14px !important; font-weight: 500 !important;
+  line-height: 1 !important; margin: 0 !important; }
