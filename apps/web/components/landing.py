@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-import base64
-
 import streamlit as st
 
 from ui.html import markup
@@ -28,11 +26,11 @@ FEATURES = (
     ("user-check", "담당자 없는 업무에, 딱 맞는 후보 추천",
      "담당자가 정해지지 않은 일은 스킬·부서·업무 여유로 상위 3명을 추천해요. 최종 선택은 주관자가 하고, 확정 전까지 바꿀 수 있어요.",
      ("추천 이유 표시", "추천 밖 선택 이유 기록", "확정 전 변경 가능")),
-    ("wiki", "폴더별로 쌓이는 회의 위키",
-     "같은 주제의 회의는 한 폴더에 모이고, 사람·주제·결정을 잇는 위키가 자동으로 만들어져요. 빠진 회차의 맥락도 따라잡을 수 있어요.",
-     ("폴더 멤버만 열람", "사람·주제·결정 연결", "출처 발언으로 이동")),
+    ("search", "지난 회의에 묻고, 근거로 답 받기",
+     "「PG사는 어디로 정했어요?」처럼 편하게 물으면 회의·안건·원문 발언을 찾아 답해요. 답 문장마다 근거 발언이 달려 있어 빠진 회의의 맥락도 바로 확인할 수 있어요.",
+     ("문장마다 근거 발언", "근거 있음 · 일부 근거 표시", "회의록으로 바로 이동")),
     ("send", "확정하면 참석자에게 바로 전달",
-     "검토를 마치고 확정하면 요약·결정·할 일을 참석자에게 보내고 위키에 반영해요. 실패한 사람에게만 다시 보낼 수 있어요.",
+     "검토를 마치고 확정하면 요약·결정·할 일을 참석자에게 보내고, 할 일은 Jira 이슈로 이어 보내요. 실패한 사람·도구에만 다시 보낼 수 있어요.",
      ("실시간 진행 상황", "실패 건만 재시도", "다른 부서에 범위 지정 공유")),
 )
 
@@ -40,12 +38,12 @@ STEPS = (
     ("upload", "올리기", "txt · docx · md · pdf 회의록을 올리고 주제 폴더를 골라요."),
     ("lines-full", "정리", "안건·결정·할 일·키워드·일정으로 자동 정리돼요."),
     ("edit", "검토·확정", "주관자가 근거를 확인하며 고치고 담당자를 정해요."),
-    ("send", "전달·위키", "참석자에게 결과를 보내고 회의 위키에 쌓여요."),
+    ("send", "전달·연동", "참석자에게 결과를 보내고, 할 일은 Jira 이슈로 이어져요."),
 )
 
 ROLES = (
     ("주관자", "host", "회의를 정리하고 확정해요", ("요약·안건 검토와 편집", "담당자 추천에서 최종 선택", "다른 부서에 범위를 정해 공유")),
-    ("참석자", "att", "내 할 일만 빠르게 확인해요", ("내 할 일과 마감일 모아 보기", "근거 발언으로 맥락 확인", "폴더 위키로 지난 맥락 확인")),
+    ("참석자", "att", "내 할 일만 빠르게 확인해요", ("내 할 일과 마감일 모아 보기", "근거 발언으로 맥락 확인", "지난 회의에 물어 맥락 확인")),
     ("다른 부서", "shared", "필요한 만큼만 받아 봐요", ("요약·결정만 / 원문 포함 선택", "읽기 전용으로 안전하게", "폴더 멤버가 아니어도 열람")),
 )
 
@@ -78,27 +76,24 @@ def _mock_assign() -> str:
     return f'<div class="mk mk-assign"><span class="mk-cap">결제 오류 고객 안내 문구 작성 · 담당자 추천</span>{body}</div>'
 
 
-def _mock_wiki() -> str:
-    nodes = {"c": (50, 50, "11월 릴리즈 준비", "project"), "a": (20, 22, "PG사 선정", "topic"),
-             "b": (80, 24, "중복 결제 오류", "topic"), "d": (22, 80, "신규 온보딩", "topic"),
-             "e": (78, 80, "박도윤", "person"), "f": (50, 12, "PG 후보 2곳", "decision")}
-    edges = (("c", "a"), ("c", "b"), ("c", "d"), ("b", "e"), ("a", "f"))
-    lines = "".join(
-        f'<line x1="{nodes[a][0]}" y1="{nodes[a][1]}" x2="{nodes[b][0]}" y2="{nodes[b][1]}" '
-        'stroke="#D3D6DB" stroke-width="1.6" vector-effect="non-scaling-stroke"/>'
-        for a, b in edges
+def _mock_ask() -> str:
+    """회의에 물어보기 (views/ask.py): 질문 → 근거 상태 · 답 문장 · 근거 발언 · 관련 회의."""
+    return (
+        '<div class="mk mk-ask">'
+        '<div class="mk-q"><span>PG사는 어디로 정했어요?</span></div>'
+        '<div class="mk-a">'
+        '<div class="mk-a-head"><span class="mk-a-ok">근거 있음</span><span class="mk-a-src">회의 2건에서 찾았어요</span></div>'
+        '<p>PG사는 <b>토스페이먼츠</b>로 정했어요.<sup>1</sup> 수수료가 더 낮고 정산 주기가 짧다는 점이 이유였어요.<sup>2</sup></p>'
+        '<div class="mk-cite"><i>1</i><span><b>박도윤</b> 수수료가 0.2%p 낮으니 토스로 가죠.</span>'
+        '<em>11/4 주간 회의</em></div>'
+        '<div class="mk-cite"><i>2</i><span><b>이서윤</b> 정산도 D+1이라 운영이 편해요.</span><em>11/4 주간 회의</em></div>'
+        '<div class="mk-a-links"><span>PG사 선정 회의 →</span><span>11월 릴리즈 준비 →</span></div>'
+        "</div></div>"
     )
-    svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">{lines}</svg>'
-    src = base64.b64encode(svg.encode()).decode()
-    chips = "".join(
-        f'<span class="mk-node {kind}" style="left:{x}%;top:{y}%">{esc(label)}</span>'
-        for x, y, label, kind in nodes.values()
-    )
-    return f'<div class="mk mk-wiki"><img class="mk-lines" alt="" src="data:image/svg+xml;base64,{src}">{chips}</div>'
 
 
 def _mock_deliver() -> str:
-    steps = (("done", "회의록 확정 저장"), ("done", "할 일·담당자 반영"), ("run", "참석자에게 결과 전송"), ("wait", "위키 반영"))
+    steps = (("done", "회의록 확정 저장"), ("done", "할 일·담당자 반영"), ("run", "참석자에게 결과 전송"), ("wait", "Jira 이슈로 할 일 보내기"))
     body = "".join(
         f'<div class="mk-step {st_}"><i>{"✓" if st_ == "done" else ""}</i><span>{label}</span></div>' for st_, label in steps
     )
@@ -107,7 +102,7 @@ def _mock_deliver() -> str:
             '<span class="mk-note">참석자 5명 중 4명 전달됨</span></div>')
 
 
-_MOCKS = (_mock_evidence, _mock_assign, _mock_wiki, _mock_deliver)
+_MOCKS = (_mock_evidence, _mock_assign, _mock_ask, _mock_deliver)
 
 
 # ---------------------------------------------------------------- 섹션
