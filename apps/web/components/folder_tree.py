@@ -224,6 +224,7 @@ const net = new vis.Network(document.getElementById("net"), {nodes, edges}, {
 });
 function draw(fit) {
   const {N, E} = build();
+  if (selected && !N.some(n => n.id === selected)) selected = null;  // 접혀서 안 보이는 칸이면 패널을 안내 문구로 되돌림
   nodes.clear(); edges.clear(); nodes.add(N); edges.add(E);
   document.getElementById("all").textContent = opened.size ? "모두 접기" : "모두 펼치기";
   if (fit) net.once("afterDrawing", () => net.fit({animation: {duration: 400}}));  // 직접 그린 칸(폴더 · 안건)은 그려진 뒤에야 크기를 앎
