@@ -16,6 +16,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from followup.adapters.postgres import meetings
 from followup.application import ask_meetings
 from followup.entrypoints.api.routes.auth import current_user
 
@@ -29,12 +30,14 @@ class Question(BaseModel):
 
 # 동기 함수: 답하는 동안(LLM 2번, 수 초) 다른 요청을 막지 않음 · 로그인한 사람만 (LLM 비용 보호)
 @router.post("/ask")
-def ask(body: Question) -> dict[str, Any]:
+def ask(body: Question, user: dict = Depends(current_user)) -> dict[str, Any]:
+    """내가 볼 수 있는 회의(주관 · 작성 · 검토 · 참석 · 공유받음 — 회의 목록과 같은 규칙)만 근거로 답함."""
     question = body.question.strip()
     if not question:
         raise HTTPException(status_code=422, detail="질문을 적어 주세요.")
+    visible = [m["id"] for m in meetings.list_meetings(actor_id=user["user_id"])]  # 실패하면 답하지 않음 (범위 모르면 전체를 쓰지 않게)
     try:
-        return ask_meetings.ask(question)
+        return ask_meetings.ask(question, meeting_ids=visible)
     except Exception as e:
         logger.exception("회의에 물어보기 실패")  # 원인은 서버 로그에만 (응답에 내부 정보를 넣지 않음)
         raise HTTPException(status_code=502, detail="답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.") from e

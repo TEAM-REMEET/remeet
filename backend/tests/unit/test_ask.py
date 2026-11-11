@@ -52,10 +52,35 @@ class AgentTests(unittest.TestCase):
         self.assertEqual((utt["speaker"], utt["role"], utt["text"]), ("바트", "PM", "안녕"))
 
 
+class ScopeTests(unittest.TestCase):
+    """질문한 사람이 볼 수 있는 회의만: 모든 조회에 $allowed (회의 id 목록) · None 이면 전체."""
+
+    def test_every_meeting_query_is_scoped(self):
+        for name in ("MEETINGS_QUERY", "TOPICS_QUERY", "DECISION_EVIDENCE", "HISTORY_EVIDENCE", "ACTION_EVIDENCE",
+                     "OVERVIEW_EVIDENCE", "PEOPLE_EVIDENCE", "SKILL_EVIDENCE", "CONTACTS_QUERY", "DISCUSSIONS_QUERY"):
+            self.assertIn("$allowed", getattr(agent, name), name)
+
+    def test_tools_pass_visible_meetings(self):
+        sent = []
+
+        class FakeDriver:
+            def execute_query(self, query, params, routing_=None):
+                sent.append(params)
+                return type("R", (), {"records": []})()
+        agent.neo4j_tools(FakeDriver(), ["M1", "M2"])["meetings"]()
+        agent.neo4j_tools(FakeDriver(), [])["topics"]()  # 볼 회의가 없으면 빈 목록 (전체가 아님)
+        agent.neo4j_tools(FakeDriver())["meetings"]()
+        self.assertEqual([x["allowed"] for x in sent], [["M1", "M2"], [], None])
+
+
 class AskRouteTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
         self.addCleanup(app.dependency_overrides.clear)
+        from followup.adapters.postgres import meetings
+        visible = patch.object(meetings, "list_meetings", lambda actor_id: [{"id": "M1"}, {"id": "M7"}])
+        visible.start()
+        self.addCleanup(visible.stop)
 
     def login(self):
         app.dependency_overrides[current_user] = lambda: {"user_id": "u1"}
@@ -80,7 +105,7 @@ class AskRouteTests(unittest.TestCase):
             res = self.client.post("/api/ask", json={"question": "  PG사는?  "})
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json(), answer)
-        run.assert_called_once_with("PG사는?")
+        run.assert_called_once_with("PG사는?", meeting_ids=["M1", "M7"])  # 내가 볼 수 있는 회의만 근거로
 
     def test_failure_hides_internal_error(self):
         self.login()

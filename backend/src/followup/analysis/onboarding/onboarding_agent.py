@@ -35,6 +35,7 @@ INTENTS = ("decision", "history", "action", "overview", "people", "skill", "othe
 RELATIONS = ("supersedes", "complements", "unrelated")
 SUPERSEDE_MIN_CONFIDENCE = 0.7  # 미만이면 자동 반영하지 않고 HITL 후보로
 ALLOWED_VISIBILITY = ["public"]  # shortcut: Meeting.visibility가 아직 없어 전부 public 취급, 팀 권한 생기면 질문자 기준으로
+# 질문자 범위는 회의 id 목록($allowed)으로: neo4j_tools(driver, meeting_ids) · None = 전체 (결정 정리 backfill · 평가용)
 NO_EVIDENCE = "관련 회의 기록이 없어요. 담당자에게 문의해 주세요."
 LLM_EFFORT = "low"  # 질문 해석 · 문장화만 하므로 낮게 (원본과 같은 값)
 LLM_TIMEOUT = 60
@@ -44,10 +45,12 @@ LLM_RETRIES = 1
 
 CONSTRAINT = "CREATE CONSTRAINT decision_id IF NOT EXISTS FOR (d:Decision) REQUIRE d.decision_id IS UNIQUE"
 MEETINGS_QUERY = """
-    MATCH (m:Meeting) RETURN m.meeting_id AS meeting_id, m.title AS title, toString(m.held_at) AS held_at
+    MATCH (m:Meeting) WHERE ($allowed IS NULL OR m.meeting_id IN $allowed) RETURN m.meeting_id AS meeting_id, m.title AS title, toString(m.held_at) AS held_at
     ORDER BY held_at, meeting_id"""
 TOPICS_QUERY = """
-    MATCH (t:Topic) OPTIONAL MATCH (t)-[:SUBTOPIC_OF]->(p:Topic)
+    MATCH (t:Topic)
+    WHERE $allowed IS NULL OR EXISTS { MATCH (m:Meeting)-[:HAS_AGENDA]->(:Agenda)-[:ABOUT]->(t) WHERE m.meeting_id IN $allowed }
+    OPTIONAL MATCH (t)-[:SUBTOPIC_OF]->(p:Topic)
     RETURN t.topic_id AS topic_id, t.title AS title, p.topic_id AS parent_id ORDER BY topic_id"""
 AGENDAS_QUERY = """
     MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:ABOUT]->(t:Topic)
@@ -73,7 +76,7 @@ WRITE_SUPERSEDES = """
 DECISION_EVIDENCE = """
     MATCH (d:Decision)-[:ABOUT]->(t:Topic) WHERE t.topic_id IN $topic_ids
     MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:DECIDED]->(d)
-    WHERE coalesce(m.visibility, 'public') IN $visibility
+    WHERE coalesce(m.visibility, 'public') IN $visibility AND ($allowed IS NULL OR m.meeting_id IN $allowed)
     OPTIONAL MATCH (n:Decision)-[:SUPERSEDES]->(d)
     WITH d, a, m, head(collect(n {.decision_id, .content})) AS superseded_by
     OPTIONAL MATCH (a)-[:HAS_DISCUSSION]->(dn:Discussion)
@@ -86,7 +89,7 @@ DECISION_EVIDENCE = """
     ORDER BY held_at DESC, source_id DESC LIMIT 40"""
 HISTORY_EVIDENCE = """
     MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:ABOUT]->(t:Topic)
-    WHERE coalesce(m.visibility, 'public') IN $visibility
+    WHERE coalesce(m.visibility, 'public') IN $visibility AND ($allowed IS NULL OR m.meeting_id IN $allowed)
       AND ($date_from IS NULL OR m.held_at >= datetime($date_from))
       AND ($date_to IS NULL OR m.held_at < datetime($date_to) + duration('P1D'))
       AND (size($topic_ids) = 0 OR t.topic_id IN $topic_ids)
@@ -107,7 +110,7 @@ HISTORY_EVIDENCE = """
 # 확정 담당자(ASSIGNED_TO), 회의에서 말한 담당자 원문(owner_raw), 담당자 추천 에이전트의 pending 추천(RECOMMENDED_FOR).
 ACTION_EVIDENCE = """
     MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:ABOUT]->(t:Topic)
-    WHERE t.topic_id IN $topic_ids AND coalesce(m.visibility, 'public') IN $visibility
+    WHERE t.topic_id IN $topic_ids AND coalesce(m.visibility, 'public') IN $visibility AND ($allowed IS NULL OR m.meeting_id IN $allowed)
     MATCH (a)-[:HAS_DISCUSSION]->(dn:Discussion)-[:PRODUCED]->(ai:ActionItem)
     OPTIONAL MATCH (p:Person)-[asg:ASSIGNED_TO]->(ai)
     WITH m, a, dn, ai, [x IN collect(DISTINCT CASE WHEN p IS NULL THEN null
@@ -129,12 +132,13 @@ OVERVIEW_EVIDENCE = """
     OPTIONAL MATCH (t)-[:IN]->(pr:Project)
     OPTIONAL MATCH (t)-[:SUBTOPIC_OF]->(pt:Topic)
     OPTIONAL MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:ABOUT]->(t)
-    WHERE coalesce(m.visibility, 'public') IN $visibility
+    WHERE coalesce(m.visibility, 'public') IN $visibility AND ($allowed IS NULL OR m.meeting_id IN $allowed)
     OPTIONAL MATCH (a)-[:DECIDED]->(d:Decision {status: 'active'})
     WITH t, pr, pt, m, a, collect(d.content) AS decisions
     WITH t, pr, pt, [x IN collect(CASE WHEN a IS NULL THEN null ELSE {meeting_id: m.meeting_id,
         meeting_title: m.title, held_at: toString(m.held_at), agenda_id: a.agenda_id,
         agenda_title: a.title, current_decisions: decisions} END) WHERE x IS NOT NULL] AS refs
+    WHERE $allowed IS NULL OR size(refs) > 0
     RETURN t.topic_id AS source_id, 'topic' AS kind, t.title AS topic, t.status AS topic_status,
         toString(t.last_discussed_at) AS last_discussed_at, pt.title AS parent_topic,
         pr.project_id AS project_id, pr.name AS project, refs
@@ -148,12 +152,13 @@ PEOPLE_EVIDENCE = """
     WITH p, collect(DISTINCT tm.name) AS teams, collect(DISTINCT ro.name) AS roles,
         [x IN collect(DISTINCT {name: s.name, level: h.level}) WHERE x.name IS NOT NULL] AS skills
     OPTIONAL MATCH (p)-[:ATTENDED]->(m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:ABOUT]->(t:Topic)
-    WHERE t.topic_id IN $topic_ids AND coalesce(m.visibility, 'public') IN $visibility
+    WHERE t.topic_id IN $topic_ids AND coalesce(m.visibility, 'public') IN $visibility AND ($allowed IS NULL OR m.meeting_id IN $allowed)
     WITH p, teams, roles, skills, [x IN collect(DISTINCT CASE WHEN a IS NULL THEN null ELSE {
         meeting_id: m.meeting_id, meeting_title: m.title, held_at: toString(m.held_at),
         agenda_id: a.agenda_id, agenda_title: a.title} END) WHERE x IS NOT NULL] AS refs
-    OPTIONAL MATCH (p)-[:RECOMMENDED_FOR {status: 'pending'}]->(ai:ActionItem)<-[:PRODUCED]-(:Discussion)<-[:HAS_DISCUSSION]-(:Agenda)-[:ABOUT]->(t2:Topic)
-    WHERE t2.topic_id IN $topic_ids
+    OPTIONAL MATCH (p)-[:RECOMMENDED_FOR {status: 'pending'}]->(ai:ActionItem)<-[:PRODUCED]-(:Discussion)<-[:HAS_DISCUSSION]-(a2:Agenda)-[:ABOUT]->(t2:Topic),
+        (m2:Meeting)-[:HAS_AGENDA]->(a2)
+    WHERE t2.topic_id IN $topic_ids AND ($allowed IS NULL OR m2.meeting_id IN $allowed)
     WITH p, teams, roles, skills, refs, collect(DISTINCT ai.description) AS recommended_tasks
     WHERE size($topic_ids) = 0 OR size(refs) > 0 OR size(recommended_tasks) > 0
     RETURN p.user_id AS source_id, 'person' AS kind, p.name AS name, p.position AS position, teams, roles,
@@ -165,7 +170,7 @@ SKILL_EVIDENCE = """
     WITH s, p, h, collect(tm.name) AS teams
     OPTIONAL MATCH (p)-[r:RECOMMENDED_FOR {status: 'pending'}]->(ai:ActionItem)<-[:PRODUCED]-(:Discussion)<-[:HAS_DISCUSSION]-(a:Agenda)-[:ABOUT]->(t:Topic),
         (m:Meeting)-[:HAS_AGENDA]->(a)
-    WHERE (size($topic_ids) = 0 OR t.topic_id IN $topic_ids) AND coalesce(m.visibility, 'public') IN $visibility
+    WHERE (size($topic_ids) = 0 OR t.topic_id IN $topic_ids) AND coalesce(m.visibility, 'public') IN $visibility AND ($allowed IS NULL OR m.meeting_id IN $allowed)
     OPTIONAL MATCH (ai)-[rq:REQUIRES_SKILL]->(s)  // 이 업무에 이 스킬이 필요한 이유 (추천 에이전트가 저장)
     WITH s, {name: p.name, position: p.position, level: h.level, teams: teams} AS holder,
         collect(CASE WHEN ai IS NULL THEN null ELSE {task: ai.description, reason: rq.reason, total: r.score,
@@ -182,7 +187,7 @@ SKILL_EVIDENCE = """
 # "더 물어보려면" 후보: 근거 안건 회의의 참석자 + 그 안건 할 일의 담당자·추천 후보. 고르는 건 compose(LLM), 검증은 코드.
 # shortcut: 참석자만 후보라 회의에 없던 추천 후보는 빠짐, 발언 기록(CONTRIBUTED_TO) 생기면 그걸로 교체
 CONTACTS_QUERY = """
-    MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda) WHERE a.agenda_id IN $agenda_ids
+    MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda) WHERE a.agenda_id IN $agenda_ids AND ($allowed IS NULL OR m.meeting_id IN $allowed)
     MATCH (p:Person)-[:ATTENDED]->(m) WHERE coalesce(p.is_active, true)
     OPTIONAL MATCH (p)-[:HAS_ROLE]->(r:Role)
     OPTIONAL MATCH (p)-[:RECOMMENDED_FOR|ASSIGNED_TO]->(ai:ActionItem)<-[:PRODUCED]-(:Discussion)<-[:HAS_DISCUSSION]-(a)
@@ -191,7 +196,7 @@ CONTACTS_QUERY = """
     ORDER BY user_id"""
 # 원문 연결: 논의 문장(discussions[i])마다 근거 발화 번호(evidence[i] = "109,110,121")가 짝으로 있다
 DISCUSSIONS_QUERY = """
-    MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:HAS_DISCUSSION]->(dn:Discussion) WHERE a.agenda_id IN $agenda_ids
+    MATCH (m:Meeting)-[:HAS_AGENDA]->(a:Agenda)-[:HAS_DISCUSSION]->(dn:Discussion) WHERE a.agenda_id IN $agenda_ids AND ($allowed IS NULL OR m.meeting_id IN $allowed)
     RETURN m.meeting_id AS meeting_id, m.title AS meeting_title, a.agenda_id AS agenda_id,
         dn.discussion_id AS discussion_id, dn.title AS discussion_title, dn.discussions AS points, dn.evidence AS evidence
     ORDER BY agenda_id, dn.order"""
@@ -605,9 +610,12 @@ def ask(graph, tools: dict, question: str, today: str | None = None) -> dict:
 
 # ─────────────────────────────── Neo4j ───────────────────────────────
 
-def neo4j_tools(driver) -> dict:
+def neo4j_tools(driver, meeting_ids: list[str] | None = None) -> dict:
+    """meeting_ids = 질문한 사람이 볼 수 있는 회의 (주관 · 작성 · 검토 · 참석 · 공유받음). None 이면 전체."""
+    allowed = None if meeting_ids is None else list(meeting_ids)
+
     def q(query, **params):
-        return [r.data() for r in driver.execute_query(query, params, routing_="r").records]
+        return [r.data() for r in driver.execute_query(query, {**params, "allowed": allowed}, routing_="r").records]
 
     def write_tx(tx, decisions, supersedes):
         tx.run(WRITE_DECISIONS, rows=decisions).consume()

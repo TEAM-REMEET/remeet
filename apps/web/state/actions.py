@@ -120,7 +120,10 @@ def ask_meetings(question: str) -> None:
     if not q:
         return
     from state.delivery import now_text
+    from ui.loading import callback_overlay
 
+    # 답을 만드는 동안(LLM 2번 · 수 초) 화면을 덮고 스피너 · 끝나면 app.py 가 다시 그려 지움
+    callback_overlay("회의 기록에서 답을 찾고 있어요", f"「{q[:40]}」 · 근거 회의를 모아 답을 만드는 중이에요")
     s = get_state()
     s.ask_history = [{**repo.ask(q), "asked_at": now_text()}] + [a for a in s.ask_history if a["question"] != q]
     s.ask_current = q
