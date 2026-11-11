@@ -29,12 +29,14 @@ def build_llm():
                       max_retries=agent.LLM_RETRIES, callbacks=[usage.langchain_callback("ask")])
 
 
-def ask(question: str, *, llm=None, tools: dict | None = None) -> dict[str, Any]:
-    """llm · tools 를 넘기면 그것으로 (테스트용), 아니면 OpenAI · Neo4j 로."""
+def ask(question: str, *, meeting_ids: list[str] | None = None, llm=None, tools: dict | None = None) -> dict[str, Any]:
+    """meeting_ids = 질문한 사람이 볼 수 있는 회의 → 그 회의만 근거로 답함 (None = 전체 · 평가용).
+    llm · tools 를 넘기면 그것으로 (테스트용), 아니면 OpenAI · Neo4j 로."""
     llm = llm or build_llm()
-    tools = tools or agent.neo4j_tools(get_driver())
+    everything = tools or agent.neo4j_tools(get_driver())  # 결정 정리(backfill)는 그래프 전체를 한 번에
+    tools = tools or agent.neo4j_tools(get_driver(), meeting_ids)
     try:
-        result = agent.backfill(tools, llm, write=True)
+        result = agent.backfill(everything, llm, write=True)
         if result["hitl"]:  # 확신이 낮은 결정 변경은 자동으로 잇지 않음 (사람 확인 대상)
             logger.info("결정 변경 확인 필요 %d건: %s", len(result["hitl"]), [h["new_id"] for h in result["hitl"]])
     except Exception:  # 결정 정리가 실패해도 이미 있는 결정으로 답은 할 수 있음
