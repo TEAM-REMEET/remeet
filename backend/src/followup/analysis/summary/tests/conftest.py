@@ -22,6 +22,9 @@ ROOT = Path(__file__).resolve().parents[6]      # remeet/
 DATASETS = ROOT / "evals" / "datasets"
 GOLDEN = ROOT / "playground" / "chaewon" / "dataset" / "GoldenSet" / "hj"
 settings.load_env()     # 가짜 LLM 시나리오도 summarize_meeting이 OPENAI_MODEL을 읽으므로 모듈 로드 때 읽음
+import baseline
+
+TARGET = os.getenv("SUMMARY_EVAL_TARGET", "agent")   # agent | baseline
 MEETINGS = os.getenv("SUMMARY_EVAL_MEETINGS", "TS3003a,TS3003b,TS3003c,TS3003d").split(",")
 
 
@@ -65,6 +68,8 @@ class CountingLLM:
 
 
 def run(meeting_id: str, text: str, llm) -> SimpleNamespace:
+    if TARGET == "baseline" and not isinstance(llm, CountingLLM):   # 고장 주입 시나리오는 에이전트로
+        return baseline.run(meeting_id, text, llm)
     counting = llm if isinstance(llm, CountingLLM) else CountingLLM(llm)
     start = time.perf_counter()
     # store=None: save=False · use_cache=False 이면 store를 쓰지 않음
